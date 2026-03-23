@@ -23,7 +23,7 @@ export default function ComingSoonPage() {
                                 </div>
                                 <div className="text-center max-w-82.5 md:max-w-150 mx-auto my-20">
                                         <h1 className="text-[54px] md:text-[110px] font-bold mt-4 leading-[0.95]">
-                                                We Are Almost Ready To Lauch!
+                                                We Are Almost Ready To Launch!
                                         </h1>
 
                                         <p className="text-lg mt-2">
