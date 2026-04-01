@@ -10,12 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-bebas-neue);
   --font-mono: var(--font-bebas-neue);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-
-  }
+  --font-text: var(--font-dm-sans);
 }
 
 body {
@@ -24,6 +19,8 @@ body {
   font-family: 'Bebas Neue', Arial, Helvetica, sans-serif;
 }
 
-p {
-  font-family: 'Inter', Arial, Helvetica, sans-serif;
+p,
+a,
+span {
+  font-family: var(--font-dm-sans), Arial, Helvetica, sans-serif;
 }
