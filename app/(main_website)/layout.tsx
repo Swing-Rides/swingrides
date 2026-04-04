@@ -42,7 +42,7 @@ export default function RootLayout({
       lang="en"
       className={`${bebasNeue.variable} ${bebasNeueGoogle.variable} ${dmSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">.
+      <body className="flex flex-col">
         <HeaderNav/>
         {children}
         <Footer/>
