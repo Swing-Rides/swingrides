@@ -14,7 +14,7 @@ type NavLinksProps = {
 
 export default function Desktop() {
         return (
-                <div className='hidden max-w-344 w-full mx-auto md:flex items-center justify-between text-base font-regular text-[#0B0B0B]'>
+                <div className='hidden w-full md:flex items-center justify-between text-base font-regular text-[#0B0B0B]'>
                         <Link href={'/'} title='Swing Rides Logo'>
                                 <Logo/>
                         </Link>

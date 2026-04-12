@@ -1,9 +1,9 @@
-import React from 'react'
+import AboutPageComponents from '@/components/pages/aboutPage'
 
 export default function AboutPage() {
         return (
                 <main>
-                        About Page
+                        <AboutPageComponents/>
                 </main>
         )
 }

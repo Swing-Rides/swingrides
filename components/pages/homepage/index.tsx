@@ -49,7 +49,7 @@ const HeroSection = () => {
                         </div>
                         <div className='absolute inset-0 size-full z-10 px-4 md:px-8'>
                                 <div className='pt-25 md:pt-37.5 max-w-80 md:max-w-147.5 mx-auto text-center'>
-                                        <h1 className='text-4xl md:text-[64px] text-white leading-[101.563%]'>
+                                        <h1 className='text-4xl md:text-[64px] text-white leading-[101.563%] font-black'>
                                                 <span className='text-[#1A56DB] font-sans'>Rent </span>From Local Car Owners. Zero <span className='text-[#1A56DB] font-sans'> Commission.</span>
                                         </h1>
                                         <p className='max-w-97.5 mx-auto mt-1.5 md:mt-4'>
@@ -76,7 +76,7 @@ const NumberSection = () => {
                 <section className='bg-[#F4F6F9] pt-32.5 pb-10 px-4 md:px-20 md:pt-44.25 md:pb-11.25'>
                         <div className='grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto'>
                                 <div className='max-w-70.25 col-span-1'>
-                                        <h3 className='text-4xl md:text-[64px] text-[#333333] leading-[101.563%] text-center mx-auto md:mx-0 md:text-left'>
+                                        <h3 className='text-4xl md:text-[64px] text-[#333333] font-black leading-[101.563%] text-center mx-auto md:mx-0 md:text-left'>
                                                 <span className='text-[#1A56DB] font-sans'>The Numbers </span> Don&apos;t Lie
                                         </h3>
                                 </div>
@@ -111,7 +111,7 @@ const NumberSection = () => {
 const NumberCard = ({ number, label }: { number: string; label: string }) => {
         return (
                 <div className='flex flex-col p-4 gap-10 md:gap-20 bg-white rounded aspect-41/18 max-w-102.5 w-full'>
-                        <span className='text-[#1A56DB] font-medium text-3xl md:text-[56px] leading-[85.714%]'>
+                        <span className='text-[#1A56DB] font-black text-3xl md:text-[56px] leading-[85.714%]'>
                                 {number}
                         </span>
                         <span className='uppercase text-base text-[#6B7280] font-medium'>
@@ -126,7 +126,7 @@ const HowItWorksSection = () => {
                 <section className='px-4 py-12.5 md:px-20 md:py-20 bg-[#F4F6F9] '>
                         <div className='flex flex-col gap-6 md:gap-15'>
                                 <div className='flex flex-col gap-3.5 max-w-120 w-full mx-auto text-center'>
-                                        <h3 className='text-4xl md:text-[64px]'>
+                                        <h3 className='text-4xl md:text-[64px] font-black'>
                                                 How it <span className='text-[#1A56DB] font-sans'>works</span>
                                         </h3>
                                         <p className='text-[#333333]'>
@@ -160,7 +160,7 @@ const HowItWorksCard = ({ content }: HowItWorksProps) => {
                                 />
                         </div>
                         <div className='p-6 gap-3'>
-                                <h4 className='px-2 py-1 text-[20px] text-[#1A56DB] font-text font-medium'>
+                                <h4 className='px-2 py-1 text-[20px] text-[#1A56DB] font-text font-black'>
                                         0{content.number}
                                 </h4>
                                 <p className='text-base leading-6'>
@@ -176,7 +176,7 @@ const FeaturedCars = () => {
                 <section className='px-4 py-12.5 md:px-20 md:py-20 bg-white'>
                         <div>
                                 <div className='text-center'>
-                                        <h3 className='text-4xl md:text-[64px]'>
+                                        <h3 className='text-4xl md:text-[64px] font-black'>
                                                 Featured<span className='text-[#1A56DB] font-sans'> Cars</span>
                                         </h3>
                                         <p className='text-[#333333]'>
@@ -204,7 +204,7 @@ const FeaturedCars = () => {
         )
 }
 
-const FeaturedCarsErrorMessage = () => {
+export const FeaturedCarsErrorMessage = () => {
         return (
                 <div className='max-w-200 bg-[#6B7280] p-5 rounded-xs mx-auto mt-6'>
                         <p className='text-center text-red-700'>
@@ -219,7 +219,7 @@ const TrustSection = () => {
                 <section className='px-4 py-12.5 md:px-20 md:py-20 bg-[#F4F6F9]'>
                         <div className='max-w-240 w-full mx-auto text-center'>
                                 <div className='max-w-156 mx-auto'>
-                                        <h3 className='text-4xl md:text-[64px]'>
+                                        <h3 className='text-4xl md:text-[64px] font-black'>
                                                 The smarter way to <span className='text-[#1A56DB] font-sans'> rent</span> and <span className='text-[#1A56DB] font-sans'> manage</span> your fleet
                                         </h3>
                                 </div>

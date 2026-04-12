@@ -1,4 +1,3 @@
-import { link } from "fs"
 import Link from "next/link"
 
 type BtnProps = {
@@ -15,7 +14,7 @@ const PriBtn = ({ btn }: BtnProps) => {
                         title={btn.label}
                 >
                         <button 
-                                className="py-2 px-6 rounded-xs bg-[#1A56DB] text-white font-semibold capitalize hover:bg-[#1A56DB]/80 transition-colors duration-300 cursor-pointer"
+                                className="py-2 px-6 rounded-xs bg-[#1A56DB] text-white font-semibold capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
                         >
                                 {btn.label}
                         </button>

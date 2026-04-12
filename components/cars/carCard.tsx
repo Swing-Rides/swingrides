@@ -2,24 +2,26 @@ import React from 'react'
 import Image from 'next/image'
 import { PriBtn } from '../buttons'
 
-type CarCardProps = {
-        content : {
-                id: number;
-                imageUrl: string;
-                name: string;
-                price:{
-                        daily: number;
-                }
-                reviewsAndRatings: {
-                        averageRating: number;
-                        totalRating: number;
-                }
-                specifications: {
-                        seats: number;
-                        fuelType: string;
-                        transmission: string;
-                }
+export type Content = {
+        id: number;
+        imageUrl: string;
+        name: string;
+        price: {
+                daily: number;
         }
+        reviewsAndRatings: {
+                averageRating: number;
+                totalRating: number;
+        }
+        specifications: {
+                seats: number;
+                fuelType: string;
+                transmission: string;
+        }
+}
+
+export type CarCardProps = {
+        content: Content
 }
 
 

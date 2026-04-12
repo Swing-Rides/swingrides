@@ -19,7 +19,7 @@ export const carsTestData = [
                         horsepower: 255,
                         transmission: 'Automatic (8-speed)',
                         driveType: 'Rear-Wheel Drive',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         fuelEfficiency: '8.1L / 100km',
                         seats: 5,
                         doors: 4,
@@ -87,7 +87,7 @@ export const carsTestData = [
                         horsepower: 255,
                         transmission: 'Automatic (8-speed)',
                         driveType: 'Rear-Wheel Drive',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         fuelEfficiency: '8.1L / 100km',
                         seats: 5,
                         doors: 4,
@@ -154,7 +154,7 @@ export const carsTestData = [
                         horsepower: 255,
                         transmission: 'Automatic (8-speed)',
                         driveType: 'Rear-Wheel Drive',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         fuelEfficiency: '8.1L / 100km',
                         seats: 5,
                         doors: 4,
@@ -221,7 +221,7 @@ export const carsTestData = [
                         horsepower: 255,
                         transmission: 'Automatic (8-speed)',
                         driveType: 'Rear-Wheel Drive',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         fuelEfficiency: '8.1L / 100km',
                         seats: 5,
                         doors: 4,
@@ -288,7 +288,7 @@ export const carsTestData = [
                         horsepower: 255,
                         transmission: 'Automatic (8-speed)',
                         driveType: 'Rear-Wheel Drive',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         fuelEfficiency: '8.1L / 100km',
                         seats: 5,
                         doors: 4,
@@ -355,7 +355,7 @@ export const carsTestData = [
                         horsepower: 255,
                         transmission: 'Automatic (8-speed)',
                         driveType: 'Rear-Wheel Drive',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         fuelEfficiency: '8.1L / 100km',
                         seats: 5,
                         doors: 4,
@@ -418,7 +418,7 @@ export const carsCardData = [
                 },
                 specifications: {
                         transmission: 'Automatic (8-speed)',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         seats: 5,
                 },
         },
@@ -435,7 +435,7 @@ export const carsCardData = [
                 },
                 specifications: {
                         transmission: 'Automatic (8-speed)',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         seats: 5,
                 },
         },
@@ -452,7 +452,7 @@ export const carsCardData = [
                 },
                 specifications: {
                         transmission: 'Automatic (8-speed)',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         seats: 5,
                 },
         },
@@ -469,7 +469,7 @@ export const carsCardData = [
                 },
                 specifications: {
                         transmission: 'Automatic (8-speed)',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         seats: 5,
                 },
         },
@@ -486,7 +486,7 @@ export const carsCardData = [
                 },
                 specifications: {
                         transmission: 'Automatic (8-speed)',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         seats: 5,
                 },
         },
@@ -503,9 +503,101 @@ export const carsCardData = [
                 },
                 specifications: {
                         transmission: 'Automatic (8-speed)',
-                        fuelType: `Petrol`,
+                        fuelType: `Gas`,
                         seats: 5,
                 },
         },
         
+]
+
+export const vehicleTypeFilterData = {
+        filterTitle: 'Vehicle Type',
+        content: [
+                {
+                        id: 'sedan',
+                        title: 'Sedan'
+                },
+                {
+                        id: 'suv',
+                        title: 'SUV'
+                },
+                {
+                        id: 'hatchback',
+                        title: 'Hatchback'
+                },
+                {
+                        id: 'van',
+                        title: 'Van'
+                },
+                {
+                        id: 'luxury',
+                        title: 'Luxury'
+                },
+                {
+                        id: 'convertible',
+                        title: 'Convertible'
+                },
+        ]
+}
+
+export const transmissionFilterData = {
+        filterTitle: 'Transmission',
+        content: [
+                {
+                        id: 'any',
+                        title: 'Any'
+                },
+                {
+                        id: 'automatic',
+                        title: 'Automatic'
+                },
+                {
+                        id: 'manual',
+                        title: 'Manual'
+                },
+        ]
+}
+
+export const carSeatsFilterData = {
+        filterTitle: 'Seats',
+        content: [
+                {
+                        id: 'any',
+                        title: 'Any'
+                },
+                {
+                        id: 'two',
+                        title: '2'
+                },
+                {
+                        id: 'four',
+                        title: '4'
+                },
+                {
+                        id: 'five',
+                        title: '5'
+                },
+                {
+                        id: 'seven-plus',
+                        title: '7+'
+                },
+        ]
+}
+
+export const carsSortData = [
+        {
+                id: 1,
+                label: 'Default Sorting',
+                value: 'default-sorting'
+        },
+        {
+                id: 2,
+                label: 'Sort by Average Ratings',
+                value: 'sort-by-average-ratings'
+        },
+        {
+                id: 3,
+                label: 'Sort by Latest',
+                value: 'sort-by-latest'
+        }
 ]

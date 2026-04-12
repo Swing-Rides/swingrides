@@ -44,7 +44,9 @@ export default function RootLayout({
     >
       <body className="flex flex-col">
         <HeaderNav/>
-        {children}
+        <main className="mt-17.75 overflow-x-clip">
+          {children}
+        </main>
         <Footer/>
       </body>
     </html>
