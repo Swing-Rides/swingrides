@@ -22,6 +22,6 @@ export const navLinks = [
         {
                 id: 5,
                 label: 'My Profile',
-                href: 'my-profile',
+                href: 'profile',
         },
 ]

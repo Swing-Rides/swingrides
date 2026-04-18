@@ -1,8 +1,9 @@
 export const carsTestData = [
         {
-                id: 1,
+                id: 'metroCarRentals-toyotaCamry-012024',
                 imageUrl: `/images/test-car-1.webp`,
                 name: `BMW M4 Competition`,
+                plateNumber: `ABC-1234`,
                 price:{
                         hourly: 25,
                         daily: 150,
@@ -68,9 +69,10 @@ export const carsTestData = [
                 }
         },
         {
-                id: 2,
+                id: 'urbanRentalsUK-toyotaCamry-012024',
                 imageUrl: `/images/test-car-1.webp`,
                 name: `BMW M4 Competition`,
+                plateNumber: `ABC-1234`,
                 price:{
                         hourly: 25,
                         daily: 150,
@@ -135,9 +137,10 @@ export const carsTestData = [
                 }
         },
         {
-                id: 3,
+                id: 'coastalCarSharing-toyotaCamry-012024',
                 imageUrl: `/images/test-car-1.webp`,
                 name: `BMW M4 Competition`,
+                plateNumber: `ABC-1234`,
                 price:{
                         hourly: 25,
                         daily: 150,
@@ -202,9 +205,10 @@ export const carsTestData = [
                 }
         },
         {
-                id: 4,
+                id: 'nordicVentures-toyotaCamry-012024',
                 imageUrl: `/images/test-car-1.webp`,
                 name: `BMW M4 Competition`,
+                plateNumber: `ABC-1234`,
                 price:{
                         hourly: 25,
                         daily: 150,
@@ -272,6 +276,7 @@ export const carsTestData = [
                 id: 5,
                 imageUrl: `/images/test-car-1.webp`,
                 name: `BMW M4 Competition`,
+                plateNumber: `ABC-1234`,
                 price:{
                         hourly: 25,
                         daily: 150,
@@ -339,6 +344,7 @@ export const carsTestData = [
                 id: 6,
                 imageUrl: `/images/test-car-1.webp`,
                 name: `BMW M4 Competition`,
+                plateNumber: `ABC-1234`,
                 price:{
                         hourly: 25,
                         daily: 150,
