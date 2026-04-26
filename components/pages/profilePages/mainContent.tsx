@@ -82,7 +82,7 @@ export default function MainContent({ rentals }: MainContentProps) {
                                 onValueChange={handleTabChange}
                                 className='gap-6 md:gap-6'
                         >
-                                <TabsList className='gap-3'>
+                                <TabsList className='gap-3 overflow-y-hidden overflow-x-'>
                                         {['all', ...statuses].map((tab) => (
                                                 <TabsTrigger
                                                         key={tab}
@@ -164,7 +164,7 @@ const TripCard = ({ rentals }: TripCardProps) => {
         })
 
         return (
-                <div className='p-2.5 md:p-6 flex gap-6 bg-white rounded-[10px] shadow-[0px_1px_3px_1px_rgba(0,0,0,0.30)] overflow-clip'>
+                <div className='p-2.5 md:p-6 flex flex-col md:flex-row gap-6 bg-white rounded-[10px] shadow-[0px_1px_3px_1px_rgba(0,0,0,0.30)] overflow-clip'>
                         <div className='aspect-3/2 min-w-30 max-w-60 size-full object-center object-cover overflow-clip rounded-[10px]'>
                                 <Image
                                         src={rentals.car.imageUrl}
@@ -199,7 +199,7 @@ const TripCard = ({ rentals }: TripCardProps) => {
                                                 {rentals.car.plateNumber}
                                         </span>
                                 </div>
-                                <div className='flex gap-3'>
+                                <div className='flex flex-wrap gap-3'>
                                         <Badge variant="outline">Pickup: {rentals.pickUpDate}</Badge>
                                         <Badge variant="outline">Return: {rentals.returnDate}</Badge>
                                         <Badge variant="outline">{tripDuration} days</Badge>
@@ -210,7 +210,7 @@ const TripCard = ({ rentals }: TripCardProps) => {
                                                 {rentals.rentId}
                                         </span>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col md:flex-row flex-wrap gap-2">
                                         {buttons.map((btn) => (
                                                 <TripCardButton
                                                         key={btn.label}
@@ -242,7 +242,7 @@ const TripCardButton = ({ label, href, status }: TripCardButtonProps) => {
                         title={label}
                 >
                         <button
-                                className={`text-sm font-medium font-text leading-5 border rounded-xs py-2 px-4.25 bg-transparent ${colorClass} hover:text-white transition-colors duration-300 cursor-pointer`}
+                                className={`text-sm w-full md:w-fit text-nowrap font-medium font-text leading-5 border rounded-xs py-2 px-4.25 bg-transparent ${colorClass} hover:text-white transition-colors duration-300 cursor-pointer`}
                         >
                                 {label}
                         </button>
