@@ -16,6 +16,7 @@ export const testGuestUserProfile: User = {
                         hostRatingForGuest: '',
                         pickUpDate: 'Mar 14, 2026',
                         returnDate: 'Mar 17, 2026',
+                        pickupLocation: 'Downtown Office',
                         price: 255.00,
                         car: {
                                 carId: 'urbanRentalsUK-toyotaCamry-012024',
@@ -23,7 +24,14 @@ export const testGuestUserProfile: User = {
                                 carName: 'Toyota Camry',
                                 carType: 'Sedan',
                                 manufactureYear: 2024,
-                                plateNumber: 'JYB 8358'
+                                plateNumber: 'JYB 8358',
+                                features: [
+                                        'Air Conditioning',
+                                        'GPS Navigator', 
+                                        'Child Seat',
+                                        'Bluetooth',
+                                        'Backup Camera',
+                                ]
                         },
                         host: {
                                 hostId: 'urbanRentalsUK-012025',
@@ -38,6 +46,7 @@ export const testGuestUserProfile: User = {
                         hostRatingForGuest: '',
                         pickUpDate: 'Mar 10, 2026',
                         returnDate: 'Mar 17, 2026',
+                        pickupLocation: 'Downtown Office',
                         price: 112.50,
                         car: {
                                 carId: 'metroCarRentals-toyotaCamry-012024',
@@ -45,7 +54,17 @@ export const testGuestUserProfile: User = {
                                 carName: 'Porsche Macan',
                                 carType: 'SUV',
                                 manufactureYear: 2019,
-                                plateNumber: 'DMN 403'
+                                plateNumber: 'DMN 403',
+                                features: [
+                                        'Air Conditioning',
+                                        'GPS Navigator',
+                                        'Child Seat',
+                                        'Sunroof',
+                                        'Bluetooth',
+                                        'Backup Camera',
+                                        'Wireless Charging',
+                                        '360 Camera View'
+                                ],                                
                         },
                         host: {
                                 hostId: 'metroCarRentals-012025',
@@ -60,6 +79,7 @@ export const testGuestUserProfile: User = {
                         hostRatingForGuest: 4,
                         pickUpDate: 'Feb 20, 2026',
                         returnDate: 'Feb 24, 2026',
+                        pickupLocation: 'Downtown Office',
                         price: 180.00,
                         car: {
                                 carId: 'coastalCarSharing-toyotaCamry-012024',
@@ -67,7 +87,17 @@ export const testGuestUserProfile: User = {
                                 carName: 'Lexus LX 570',
                                 carType: 'SUV',
                                 manufactureYear: 2021,
-                                plateNumber: 'JYB 8358'
+                                plateNumber: 'JYB 8358',
+                                features: [
+                                        'Air Conditioning',
+                                        'GPS Navigator',
+                                        'Child Seat',
+                                        'Sunroof',
+                                        'Bluetooth',
+                                        'Backup Camera',
+                                        'Wireless Charging',
+                                        '360 Camera View'
+                                ],                         
                         },
                         host: {
                                 hostId: 'coastalCarSharing-012025',
@@ -82,6 +112,7 @@ export const testGuestUserProfile: User = {
                         hostRatingForGuest: '',
                         pickUpDate: 'Jan 8, 2026',
                         returnDate: 'Jan 10, 2026',
+                        pickupLocation: 'Downtown Office',
                         price: 190.00,
                         car: {
                                 carId: 'nordicVentures-toyotaCamry-012024',
@@ -89,7 +120,17 @@ export const testGuestUserProfile: User = {
                                 carName: 'Mercedes S500',
                                 carType: 'Sedan',
                                 manufactureYear: 2025,
-                                plateNumber: 'RDT 996'
+                                plateNumber: 'RDT 996',
+                                features: [
+                                        'Air Conditioning',
+                                        'GPS Navigator',
+                                        'Child Seat',
+                                        'Sunroof',
+                                        'Bluetooth',
+                                        'Backup Camera',
+                                        'Wireless Charging',
+                                        '360 Camera View'
+                                ],                      
                         },
                         host: {
                                 hostId: 'nordicVentures-012025',
@@ -104,6 +145,7 @@ export const testGuestUserProfile: User = {
                         hostRatingForGuest: '',
                         pickUpDate: 'Mar 14, 2026',
                         returnDate: 'Mar 17, 2026',
+                        pickupLocation: 'Downtown Office',
                         price: 255.00,
                         car: {
                                 carId: 'urbanRentalsUK-toyotaCamry-012024',
@@ -111,7 +153,17 @@ export const testGuestUserProfile: User = {
                                 carName: 'Toyota Camry',
                                 carType: 'Sedan',
                                 manufactureYear: 2024,
-                                plateNumber: 'JYB 8358'
+                                plateNumber: 'JYB 8358',
+                                features: [
+                                        'Air Conditioning',
+                                        'GPS Navigator',
+                                        'Child Seat',
+                                        'Sunroof',
+                                        'Bluetooth',
+                                        'Backup Camera',
+                                        'Wireless Charging',
+                                        '360 Camera View'
+                                ],                      
                         },
                         host: {
                                 hostId: 'urbanRentalsUK-012025',
@@ -121,11 +173,12 @@ export const testGuestUserProfile: User = {
                         },
                 },
                 {
-                        rentId: 'SR-2026-0039',
+                        rentId: 'SR-2026-0069',
                         status: 'Active',
                         hostRatingForGuest: '',
                         pickUpDate: 'Mar 10, 2026',
                         returnDate: 'Mar 17, 2026',
+                        pickupLocation: 'Downtown Office',
                         price: 112.50,
                         car: {
                                 carId: 'metroCarRentals-toyotaCamry-012024',
@@ -133,7 +186,17 @@ export const testGuestUserProfile: User = {
                                 carName: 'Porsche Macan',
                                 carType: 'SUV',
                                 manufactureYear: 2019,
-                                plateNumber: 'DMN 403'
+                                plateNumber: 'DMN 403',
+                                features: [
+                                        'Air Conditioning',
+                                        'GPS Navigator',
+                                        'Child Seat',
+                                        'Sunroof',
+                                        'Bluetooth',
+                                        'Backup Camera',
+                                        'Wireless Charging',
+                                        '360 Camera View'
+                                ],                      
                         },
                         host: {
                                 hostId: 'metroCarRentals-012025',
@@ -148,6 +211,7 @@ export const testGuestUserProfile: User = {
                         hostRatingForGuest: 4,
                         pickUpDate: 'Feb 20, 2026',
                         returnDate: 'Feb 24, 2026',
+                        pickupLocation: 'Downtown Office',
                         price: 180.00,
                         car: {
                                 carId: 'coastalCarSharing-toyotaCamry-012024',
@@ -155,7 +219,17 @@ export const testGuestUserProfile: User = {
                                 carName: 'Lexus LX 570',
                                 carType: 'SUV',
                                 manufactureYear: 2021,
-                                plateNumber: 'JYB 8358'
+                                plateNumber: 'JYB 8358',
+                                features: [
+                                        'Air Conditioning',
+                                        'GPS Navigator',
+                                        'Child Seat',
+                                        'Sunroof',
+                                        'Bluetooth',
+                                        'Backup Camera',
+                                        'Wireless Charging',
+                                        '360 Camera View'
+                                ],                      
                         },
                         host: {
                                 hostId: 'coastalCarSharing-012025',
@@ -170,6 +244,7 @@ export const testGuestUserProfile: User = {
                         hostRatingForGuest: '',
                         pickUpDate: 'Jan 8, 2026',
                         returnDate: 'Jan 10, 2026',
+                        pickupLocation: 'Downtown Office',
                         price: 190.00,
                         car: {
                                 carId: 'nordicVentures-toyotaCamry-012024',
@@ -177,7 +252,17 @@ export const testGuestUserProfile: User = {
                                 carName: 'Mercedes S500',
                                 carType: 'Sedan',
                                 manufactureYear: 2025,
-                                plateNumber: 'RDT 996'
+                                plateNumber: 'RDT 996',
+                                features: [
+                                        'Air Conditioning',
+                                        'GPS Navigator',
+                                        'Child Seat',
+                                        'Sunroof',
+                                        'Bluetooth',
+                                        'Backup Camera',
+                                        'Wireless Charging',
+                                        '360 Camera View'
+                                ],                      
                         },
                         host: {
                                 hostId: 'nordicVentures-012025',
