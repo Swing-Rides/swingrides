@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import Image from 'next/image'
 import { howItWorksContent, trustContent } from '@/constants/homePage';
-import { carsCardData } from '@/constants/carsTestData';
+import { carsTestData } from '@/constants/carsTestData';
 import CarCard from '@/components/cars/carCard';
 import Link from 'next/link';
 
@@ -123,7 +123,7 @@ const NumberCard = ({ number, label }: { number: string; label: string }) => {
 
 const HowItWorksSection = () => {
         return (
-                <section className='px-4 py-12.5 md:px-20 md:py-20 bg-[#F4F6F9] '>
+                <section className='px-4 py-12.5 md:px-20 md:py-20 bg-[#F4F6F9]' id='how-it-works' >
                         <div className='flex flex-col gap-6 md:gap-15'>
                                 <div className='flex flex-col gap-3.5 max-w-120 w-full mx-auto text-center'>
                                         <h3 className='text-4xl md:text-[64px] font-black'>
@@ -185,9 +185,17 @@ const FeaturedCars = () => {
                                 </div>
                                 <div>
                                         <div className='grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-5 mt-8'>
-                                                {carsCardData ? carsCardData.map((item) => (
+                                                {carsTestData ? carsTestData.map((item) => (
                                                         <Fragment key={item.id}>
-                                                                <CarCard content={item} />
+                                                                <CarCard 
+                                                                        slug={item.slug}
+                                                                        featuredImage={item.featuredImage}
+                                                                        carName={item.carName}
+                                                                        specifications={item.specifications}
+                                                                        dailyPrice={item.price.daily}
+                                                                        averageRating={item.reviewsAndRatings.averageRating}
+                                                                        totalRatings={item.reviewsAndRatings.totalRatings}
+                                                                />
                                                         </Fragment>
                                                 )) : <FeaturedCarsErrorMessage /> }
                                         </div>                                        
