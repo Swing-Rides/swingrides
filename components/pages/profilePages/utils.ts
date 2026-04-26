@@ -59,7 +59,7 @@ export const getTripButtons = (
         currentParams: string,
         contactNumber: string
 ): ButtonConfig[] => {
-        const params = new URLSearchParams(currentParams)
+        // const params = new URLSearchParams(currentParams)
 
         const modifyParams = new URLSearchParams(currentParams)
         modifyParams.set('modify', rentId)
@@ -67,23 +67,23 @@ export const getTripButtons = (
         switch (status) {
                 case 'Upcoming':
                         return [
-                                { label: 'View Details', href: `/trip/${rentId}?${params}` },
+                                { label: 'View Details', href: `/trip/${rentId}` },
                                 { label: 'Modify', href: `?${modifyParams.toString()}` },
                                 { label: 'Cancel', href: `?${(() => { const p = new URLSearchParams(currentParams); p.set('cancel', rentId); return p.toString() })()}` },
                         ]
                 case 'Active':
                         return [
-                                { label: 'View Details', href: `/trip/${rentId}?${params}` },
+                                { label: 'View Details', href: `/trip/${rentId}` },
                                 { label: 'Contact Host', href: `tel:${contactNumber}` },
                         ]
                 case 'Completed':
                         return [
-                                { label: 'View Details', href: `/trip/${rentId}?${params}` },
-                                { label: 'Rate Trip', href: `/trip/${rentId}/rate?${params}` },
+                                { label: 'View Details', href: `/trip/${rentId}` },
+                                { label: 'Rate Trip', href: `/trip/${rentId}/rate` },
                         ]
                 case 'Cancelled':
                         return [
-                                { label: 'View Details', href: `/trip/${rentId}?${params}` },
+                                { label: 'View Details', href: `/trip/${rentId}` },
                         ]
                 default:
                         return []
