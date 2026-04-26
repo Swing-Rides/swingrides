@@ -4,6 +4,7 @@ import { howItWorksContent, trustContent } from '@/constants/homePage';
 import { carsTestData } from '@/constants/carsTestData';
 import CarCard from '@/components/cars/carCard';
 import Link from 'next/link';
+import HomePageSearchForm from '@/components/forms/homePageSearchForm';
 
 type HowItWorksProps = {
         content: {
@@ -64,8 +65,8 @@ const HeroSection = () => {
 const OrderForm = () => {
         return (
                 <div className='relative py-6 px-7 -mt-27.5 -mb-17.25 rounded bg-white max-w-240.5 min-h-44 mx-auto shadow-[0_-8px_60px_-12px_rgba(0,0,0,0.16)] z-10'>
-                        <div className='text-center'>
-                                The Form Comes Here
+                        <div>
+                                <HomePageSearchForm/>
                         </div>
                 </div>
         )
