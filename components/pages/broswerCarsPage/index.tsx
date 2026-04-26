@@ -58,7 +58,7 @@ import {
 import CarCard from '@/components/cars/carCard'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { SideBarProps } from './types'
-import { CarCardSkeleton, CarCardSkeletonGrid } from '@/components/loading/carCardSkeleton'
+import { CarCardSkeletonGrid } from '@/components/loading/carCardSkeleton'
 
 const CARS_PER_PAGE = 9
 
