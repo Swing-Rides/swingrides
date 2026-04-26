@@ -3,9 +3,9 @@ import Image from 'next/image'
 import { PriBtn } from '../buttons'
 
 export type Content = {
-        id: number;
+        id: string;
         imageUrl: string;
-        name: string;
+        carName: string;
         price: {
                 daily: number;
         }
@@ -21,21 +21,34 @@ export type Content = {
 }
 
 export type CarCardProps = {
-        content: Content
+        slug?: string;
+        featuredImage: {
+                src: string;
+                alt: string;
+        }
+        carName: string;
+        specifications: {
+                seats: number;
+                fuelType: string;
+                transmission: string;
+        }
+        dailyPrice: number;
+        averageRating: number;
+        totalRatings?: number;
 }
 
 
-export default function CarCard({ content }: CarCardProps ) {
+export default function CarCard({ slug, featuredImage, carName, specifications, dailyPrice, averageRating, totalRatings }: CarCardProps ) {
 
-        const carSlug = content.name.toLowerCase().replace(/\s+/g, '-');
-        const carUrl = content.id ? `/browse-cars/${carSlug}-${content.id}` : '#';
+        const carUrl = slug?.toLowerCase()
 
         return (
-                <div key={content.id} className='bg-white'>
+                <div className='bg-white'>
                         <div>
                                 <Image
-                                        src={content.imageUrl}
-                                        alt={content.name}
+                                        src={featuredImage?.src}
+                                        alt={featuredImage.alt}
+                                        title={featuredImage.alt}
                                         width={420}
                                         height={215}
                                         className='w-full aspect-420/215 object-cover'
@@ -44,32 +57,32 @@ export default function CarCard({ content }: CarCardProps ) {
                         <div className='flex flex-col gap-3 p-2.5 md:p-5 border border-[#E5E7EB]'>
                                 <div className='flex items-center gap-1'>
                                         <StarIcon/>
-                                        <span className='text-sm text-[#1F2937] font-semibold'>{content.reviewsAndRatings.averageRating}</span>
-                                        <span className='text-sm text-[#6B7280] font-normal'>{`(${content.reviewsAndRatings.totalRating})`}</span> 
+                                        <span className='text-sm text-[#1F2937] font-semibold'>{averageRating}</span>
+                                        <span className='text-sm text-[#6B7280] font-normal'>{`(${totalRatings})`}</span> 
                                 </div>
                                 <div>
-                                        <h4 className='text-lg text-[#1F2937] font-bold font-text'>{content.name}</h4>
+                                        <h4 className='text-lg text-[#1F2937] font-bold font-text'>{carName}</h4>
                                 </div>
                                 <div className='flex flex-wrap gap-4 items-center'>
                                         <div className='flex items-center gap-1'>
                                                 <PassengersIcon/>
-                                                <span className='text-sm text-[#333333] font-normal'>{content.specifications.seats}</span>
+                                                <span className='text-sm text-[#333333] font-normal'>{specifications.seats}</span>
                                         </div>
 
                                         <div className='flex items-center gap-1'>
                                                 <FuelIcon/>
-                                                <span className='text-sm text-[#333333] font-normal'>{content.specifications.fuelType}</span>
+                                                <span className='text-sm text-[#333333] font-normal'>{specifications.fuelType}</span>
                                         </div>
 
                                         <div className='flex items-center gap-1'>
                                                 <TransmissionIcon/>
-                                                <span className='text-sm text-[#333333] font-normal'>{content.specifications.transmission}</span>
+                                                <span className='text-sm text-[#333333] font-normal'>{specifications.transmission}</span>
                                         </div>
                                 </div>
                                 <div className='flex justify-between items-center gap-2'>
                                         <div>
                                                 <p className='text-2xl text-[#1A56DB] font-medium'>
-                                                        {'$'}{content?.price?.daily}
+                                                        {'$'}{dailyPrice}
                                                 </p>
                                                 <span className='text-xs text-[#6B7280] font-normal'>
                                                         per day
@@ -79,7 +92,7 @@ export default function CarCard({ content }: CarCardProps ) {
                                                 <PriBtn 
                                                         btn={{
                                                                 label: 'Book Now',
-                                                                link: `${carUrl}`
+                                                                link: `/browse-cars/${carUrl}`
                                                         }}
                                                 />
                                         </div>
