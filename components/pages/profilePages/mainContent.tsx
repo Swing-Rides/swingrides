@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { 
@@ -11,7 +12,6 @@ import {
         Tabs,
         TabsList,
         TabsTrigger,
-        TabsContent
 } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -77,68 +77,70 @@ export default function MainContent({ rentals }: MainContentProps) {
                                         Your complete rental history
                                 </span>
                         </div>
-                        <Tabs
-                                value={currentTab}
-                                onValueChange={handleTabChange}
-                                className='gap-6 md:gap-6'
-                        >
-                                <TabsList className='gap-3 overflow-y-hidden overflow-x-'>
-                                        {['all', ...statuses].map((tab) => (
-                                                <TabsTrigger
-                                                        key={tab}
-                                                        value={tab}
-                                                        className='text-center px-4 text-[#6B7280] text-sm font-medium font-text leading-5 cursor-pointer border border-[#E5E7EB] rounded-full data-active:bg-[#1A56DB] data-active:text-white data-active:hover:text-white'
-                                                >
-                                                        {tab === 'all' ? 'All' : tab}
-                                                </TabsTrigger>
-                                        ))}
-                                </TabsList>
+                        <Suspense>
+                                <Tabs
+                                        value={currentTab}
+                                        onValueChange={handleTabChange}
+                                        className='gap-6 md:gap-6'
+                                >
+                                        <TabsList className='gap-3 overflow-y-hidden overflow-x-'>
+                                                {['all', ...statuses].map((tab) => (
+                                                        <TabsTrigger
+                                                                key={tab}
+                                                                value={tab}
+                                                                className='text-center px-4 text-[#6B7280] text-sm font-medium font-text leading-5 cursor-pointer border border-[#E5E7EB] rounded-full data-active:bg-[#1A56DB] data-active:text-white data-active:hover:text-white'
+                                                        >
+                                                                {tab === 'all' ? 'All' : tab}
+                                                        </TabsTrigger>
+                                                ))}
+                                        </TabsList>
 
-                                <div className='flex flex-col gap-4'>
-                                        {paginatedRentals.map((rental) => (
-                                                <TripCard key={rental.rentId} rentals={rental} />
-                                        ))}
-                                        {paginatedRentals.length === 0 && (
-                                                <p className='text-[#6B7280] text-sm font-normal font-text'>
-                                                        No rentals found.
-                                                </p>
-                                        )}
-                                </div>
+                                        <div className='flex flex-col gap-4'>
+                                                {paginatedRentals.map((rental) => (
+                                                        <TripCard key={rental.rentId} rentals={rental} />
+                                                ))}
+                                                {paginatedRentals.length === 0 && (
+                                                        <p className='text-[#6B7280] text-sm font-normal font-text'>
+                                                                No rentals found.
+                                                        </p>
+                                                )}
+                                        </div>
 
-                                {totalPages > 1 && (
-                                        <Pagination>
-                                                <PaginationContent className='gap-2'>
-                                                        <PaginationItem>
-                                                                <PaginationPrevious
-                                                                        href={createHref(currentTab, currentPage - 1)}
-                                                                        aria-disabled={currentPage === 1}
-                                                                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                                                                />
-                                                        </PaginationItem>
-
-                                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                                                <PaginationItem key={page}>
-                                                                        <PaginationLink
-                                                                                href={createHref(currentTab, page)}
-                                                                                isActive={page === currentPage}
-                                                                                className={`border ${page === currentPage ? "bg-[#1A56DB] text-white border-[#1A56DB] hover:bg-white" : "border-[#D1D5DB] hover:bg-[#6B7280] hover:text-white transition-colors duration-300"}`}
-                                                                        >
-                                                                                {page}
-                                                                        </PaginationLink>
+                                        {totalPages > 1 && (
+                                                <Pagination>
+                                                        <PaginationContent className='gap-2'>
+                                                                <PaginationItem>
+                                                                        <PaginationPrevious
+                                                                                href={createHref(currentTab, currentPage - 1)}
+                                                                                aria-disabled={currentPage === 1}
+                                                                                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                                                                        />
                                                                 </PaginationItem>
-                                                        ))}
 
-                                                        <PaginationItem>
-                                                                <PaginationNext
-                                                                        href={createHref(currentTab, currentPage + 1)}
-                                                                        aria-disabled={currentPage === totalPages}
-                                                                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                                                                />
-                                                        </PaginationItem>
-                                                </PaginationContent>
-                                        </Pagination>
-                                )}
-                        </Tabs>
+                                                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                                                        <PaginationItem key={page}>
+                                                                                <PaginationLink
+                                                                                        href={createHref(currentTab, page)}
+                                                                                        isActive={page === currentPage}
+                                                                                        className={`border ${page === currentPage ? "bg-[#1A56DB] text-white border-[#1A56DB] hover:bg-white" : "border-[#D1D5DB] hover:bg-[#6B7280] hover:text-white transition-colors duration-300"}`}
+                                                                                >
+                                                                                        {page}
+                                                                                </PaginationLink>
+                                                                        </PaginationItem>
+                                                                ))}
+
+                                                                <PaginationItem>
+                                                                        <PaginationNext
+                                                                                href={createHref(currentTab, currentPage + 1)}
+                                                                                aria-disabled={currentPage === totalPages}
+                                                                                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                                                                        />
+                                                                </PaginationItem>
+                                                        </PaginationContent>
+                                                </Pagination>
+                                        )}
+                                </Tabs>
+                        </Suspense>
                 </div>
         )
 }

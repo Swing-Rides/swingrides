@@ -1,7 +1,7 @@
 import { contactSupportPageContent } from '@/constants/contact'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { Fragment } from 'react'
+import { Fragment } from 'react'
 
 type ContactListProps = {
         content: {

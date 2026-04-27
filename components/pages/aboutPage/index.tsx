@@ -1,4 +1,4 @@
-import { PriBtn, SecBtn } from "@/components/buttons"
+import { PriBtn } from "@/components/buttons"
 import { FieldSeparator } from "@/components/ui/field"
 import Image from "next/image"
 import Link from "next/link"

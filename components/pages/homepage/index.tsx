@@ -186,7 +186,7 @@ const FeaturedCars = () => {
                                 </div>
                                 <div>
                                         <div className='grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-5 mt-8'>
-                                                {carsTestData ? carsTestData.map((item) => (
+                                                {carsTestData ? carsTestData.slice(0, 6).map((item) => (
                                                         <Fragment key={item.id}>
                                                                 <CarCard 
                                                                         slug={item.slug}

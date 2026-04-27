@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTransition, Fragment, useCallback, useEffect, useMemo, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useDebouncedCallback } from 'use-debounce'
@@ -142,28 +142,32 @@ export default function BrowseCarsComponentPage() {
                 <>
                         <NotificationBar/>
                         <div className='flex flex-col px-2.5 md:px-0 md:flex-row w-full'>
-                                <SideBar
-                                        filterParams={filterParams}
-                                        priceRange={priceRange}
-                                        effectivePriceMin={effectivePriceMin}
-                                        effectivePriceMax={effectivePriceMax}
-                                        vehicleTypeOptions={vehicleTypeOptions}
-                                        seatOptions={seatOptions}
-                                        transmissionOptions={transmissionOptions}
-                                        onSearch={handleSearch}
-                                        onRentalType={handleRentalType}
-                                        onAvailableOnly={handleAvailableOnly}
-                                        onPriceRange={handlePriceRange}
-                                        onCheckboxFilter={handleCheckboxFilter}
-                                        onResetAll={handleResetAll}
-                                />
-                                <PageMainContent
-                                        cars={filteredCars}
-                                        totalCount={filteredCars.length}
-                                        currentSort={filterParams.sort}
-                                        onSort={handleSort}
-                                        isPending={isPending} 
-                                />
+                                <Suspense>
+                                        <SideBar
+                                                filterParams={filterParams}
+                                                priceRange={priceRange}
+                                                effectivePriceMin={effectivePriceMin}
+                                                effectivePriceMax={effectivePriceMax}
+                                                vehicleTypeOptions={vehicleTypeOptions}
+                                                seatOptions={seatOptions}
+                                                transmissionOptions={transmissionOptions}
+                                                onSearch={handleSearch}
+                                                onRentalType={handleRentalType}
+                                                onAvailableOnly={handleAvailableOnly}
+                                                onPriceRange={handlePriceRange}
+                                                onCheckboxFilter={handleCheckboxFilter}
+                                                onResetAll={handleResetAll}
+                                        />
+                                </Suspense>
+                                <Suspense>
+                                        <PageMainContent
+                                                cars={filteredCars}
+                                                totalCount={filteredCars.length}
+                                                currentSort={filterParams.sort}
+                                                onSort={handleSort}
+                                                isPending={isPending} 
+                                        />
+                                </Suspense>
                         </div>
                 </>
         )

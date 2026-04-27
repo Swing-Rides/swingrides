@@ -175,17 +175,19 @@ const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
                                         Use this when returning the vehicle to your host. You will be asked to upload return photos, mileage, and fuel level.
                                 </span>
                         </div>
-                        <div className="flex flex-col gap-3">
-                                {buttons.map((item) => (
-                                        <ManageBookingButton 
-                                                key={item.label}
-                                                icon={item.icon}
-                                                href={item.href}
-                                                className={item.className}
-                                                label={item.label}
-                                        />
-                                ))}
-                        </div>
+                        <Suspense>
+                                <div className="flex flex-col gap-3">
+                                        {buttons.map((item) => (
+                                                <ManageBookingButton 
+                                                        key={item.label}
+                                                        icon={item.icon}
+                                                        href={item.href}
+                                                        className={item.className}
+                                                        label={item.label}
+                                                />
+                                        ))}
+                                </div>
+                        </Suspense>
                 </div>
         )
 })
