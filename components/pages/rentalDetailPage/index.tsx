@@ -10,6 +10,30 @@ import RightContent from "./rightContent"
 import { ManageBookingCardProps } from "./types"
 import { getTripDuration } from "../profilePages/utils"
 
+type TripSummaryCardProps = {
+        pickUpDate: string;
+        returnDate: string;
+        pickUpLocation: string;
+        price: number;
+        features: string[];
+}
+
+type VechicleCardProps = {
+        featuredImage?: {
+                src: string;
+                alt: string;
+        }
+        carName?: string;
+        carType?: string;
+        transmission?: string;
+        seats?: number;
+        year?: number;
+        plateNumber?: string;
+        averageRating?: number;
+        reviews?: ReviewType[];
+}
+
+
 export default function RentalDetailPage({ rentId, status, pickUpDate, returnDate, pickUpLocation, price, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews, rentals }: PageTitleSectionProps & TripSummaryCardProps & VechicleCardProps & ManageBookingCardProps ) {
         return (
                 <>
@@ -129,15 +153,6 @@ const LeftContent = memo(({ pickUpDate, returnDate, pickUpLocation, price, featu
         )
 })
 LeftContent.displayName = "LeftContent"
-
-
-type TripSummaryCardProps ={
-        pickUpDate: string;
-        returnDate: string;
-        pickUpLocation: string;
-        price: number;
-        features: string[];
-}
 
 const TripSummaryCard = memo(({ pickUpDate, returnDate, pickUpLocation, price, features }: TripSummaryCardProps) => {
 
@@ -260,21 +275,6 @@ const TripSummaryCard = memo(({ pickUpDate, returnDate, pickUpLocation, price, f
 })
 TripSummaryCard.displayName = "TripSummaryCard"
 
-type VechicleCardProps = {
-        featuredImage?: {
-                src: string;
-                alt: string;
-        }
-        carName?: string; 
-        carType?: string; 
-        transmission?: string; 
-        seats?: number; 
-        year?: number; 
-        plateNumber?: string;
-        averageRating?: number;
-        reviews?: ReviewType[];
-}
-
 const VechicleCard = memo(({ featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews }: VechicleCardProps) => {
         return (
                 <div className="p-4 md:p-6 bg-white rounded-[10px] border border-gray-200">
@@ -286,8 +286,8 @@ const VechicleCard = memo(({ featuredImage, carName, carType, transmission, seat
                                         <div className="aspect-160/109 rounded-[10px] overflow-clip">
                                                 <Image 
                                                         src={featuredImage?.src || ""}
-                                                        alt={featuredImage?.alt || ""}
-                                                        title={featuredImage?.alt || ""}
+                                                        alt={featuredImage?.alt || "image not found"}
+                                                        title={featuredImage?.alt || "image not found"}
                                                         width={800}
                                                         height={545}
                                                         className="aspect-160/109 object-center object-cover max-w-40 w-full group-hover:scale-105 duration-300"
