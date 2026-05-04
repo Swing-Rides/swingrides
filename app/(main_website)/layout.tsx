@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "@/app/globals.css";
 import HeaderNav from "@/components/headerNav";
 import Footer from "@/components/footer";
+import GuestSignUpModal from "@/components/signUp/guestSignUpModal";
 
 const bebasNeue = localFont({
   src: [
@@ -48,6 +49,7 @@ export default function RootLayout({
           {children}
         </main>
         <Footer/>
+        <GuestSignUpModal/>
       </body>
     </html>
   );
