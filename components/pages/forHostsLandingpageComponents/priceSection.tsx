@@ -10,16 +10,16 @@ import { PriceCardProps } from "./types"
 const PERCENT_DISCOUNT = 17
 
 export default function PriceSection(
-        { 
-                pricingContents 
-        }:{ 
-                pricingContents: PriceCardProps[] 
+        {
+                pricingContents
+        }: {
+                pricingContents: PriceCardProps[]
         }) {
 
         const [isYearly, setIsYearly] = useState(false)
 
         return (
-                <section className='section-bg-gradaint'>
+                <section className='section-bg-gradient'>
                         <div className='px-4 py-12.5 md:px-20 md:py-20 space-y-10.5'>
                                 <div className='flex flex-col gap-5 items-center max-w-120 mx-auto'>
                                         <Pill
@@ -48,11 +48,11 @@ export default function PriceSection(
                                 </div>
 
                                 <div className='grid grid-cols-1 md:grid-cols-3 items-start gap-8 md:gap-4 max-w-300 mx-auto'>
-                                        {pricingContents.map(( item ) => (
+                                        {pricingContents.map((item) => (
                                                 <Fragment key={item.cardTitle}>
-                                                        <PriceCard 
-                                                                {...item} 
-                                                                isYearly={isYearly} 
+                                                        <PriceCard
+                                                                {...item}
+                                                                isYearly={isYearly}
                                                         />
                                                 </Fragment>
                                         ))}
@@ -67,20 +67,20 @@ interface PriceCardDisplayProps extends PriceCardProps {
 }
 
 
-const PriceCard = ({ 
+const PriceCard = ({
         badge,
         cardTitle,
         price,
         vechileQuantity,
         features,
         isYearly,
-}: PriceCardDisplayProps ) => {
+}: PriceCardDisplayProps) => {
 
         const mainButton = cardTitle === 'Professional'
 
         const buttonStyle = `py-3 px-5.25 w-full rounded-xs text-sm font-semibold font-text border border-[#1A56DB] cursor-pointer transition-color duration-300 
-                                ${mainButton ? 'bg-[#1A56DB] text-white hover:bg-blue-900' : 
-                                'text-[#1A56DB] bg-[#EBF0FB] hover:text-[#EBF0FB] hover:bg-blue-900'}`
+                                ${mainButton ? 'bg-[#1A56DB] text-white hover:bg-blue-900' :
+                        'text-[#1A56DB] bg-[#EBF0FB] hover:text-[#EBF0FB] hover:bg-blue-900'}`
 
         const isCustom = price === 'Custom'
 
@@ -100,7 +100,7 @@ const PriceCard = ({
                                         </span>
                                 </div>
                         )}
-                        
+
                         <div>
                                 <h4 className="text-black text-2xl font-medium font-text">
                                         {cardTitle}
@@ -147,17 +147,17 @@ const PriceCard = ({
                                         {vechileQuantity}
                                 </span>
                         </div>
-                        
+
                         <div className="flex flex-col gap-6">
                                 {features.map((item, index) => (
-                                        <div 
+                                        <div
                                                 key={index}
                                                 className="flex items-center gap-3"
                                         >
                                                 <CheckIcon />
                                                 <div>
                                                         <span className="text-[#333333] text-base font-medium font-text">
-                                                                {item}                                                                
+                                                                {item}
                                                         </span>
                                                 </div>
                                         </div>

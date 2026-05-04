@@ -60,7 +60,12 @@ span {
   font-family: var(--font-dm-sans), Arial, Helvetica, sans-serif;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-bebas-neue), Arial, Helvetica, sans-serif;
   line-height: 100%;
 }
@@ -155,13 +160,22 @@ p {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+.section-bg-gradient {
+  background-image: url(/images/bg.webp);
+  background-size: 300%;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }

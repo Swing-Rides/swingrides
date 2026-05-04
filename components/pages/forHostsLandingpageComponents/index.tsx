@@ -2,7 +2,7 @@ import { Fragment, Suspense } from 'react'
 import { PriBtn } from '@/components/buttons'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Tabs, TabsList, TabsTrigger , TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { TabContentProps } from './types'
 import { bookingContent, fleetManagementContent, financesContent, maintenanceContent, reportsContent, pricingContents } from '@/constants/forHostPageContents'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -12,11 +12,11 @@ import PriceSection from './priceSection'
 export default function ForHostLandingPage() {
         return (
                 <>
-                        <HeroSection/>
-                        <NumberSection/>
+                        <HeroSection />
+                        <NumberSection />
                         <HowItWork />
                         <EverythingYouNeedSection />
-                        <PriceSection 
+                        <PriceSection
                                 pricingContents={pricingContents}
                         />
                 </>
@@ -25,14 +25,14 @@ export default function ForHostLandingPage() {
 
 const HeroSection = () => {
         return (
-                <section className='section-bg-gradaint'>
+                <section className='section-bg-gradient'>
                         <div className='mx-auto py-12 px-2.5'>
                                 <div className='flex flex-col items-center gap-5 max-w-157.25 mx-auto'>
-                                        <Pill 
+                                        <Pill
                                                 label='For Car Owners & Fleet Operators'
                                         />
                                         <h2 className='text-6xl text-center font-normal leading-16.25'>
-                                                YOUR <span className="text-blue-700 font-sans"> CAR.</span> <br/>
+                                                YOUR <span className="text-blue-700 font-sans"> CAR.</span> <br />
                                                 <span className=" text-blue-700 font-sans">YOUR EARNINGS.</span> <br />
                                                 <span className="text-blue-700 font-sans">ZERO </span>COMMISSION<span className="text-blue-700 font-sans">.</span>
                                         </h2>
@@ -55,11 +55,11 @@ const HeroSection = () => {
                                                         >
                                                                 Log In
                                                         </button>
-                                                </Link> 
+                                                </Link>
                                         </div>
                                 </div>
                                 <div>
-                                        <Image 
+                                        <Image
                                                 src={'/images/for-host-dashboard.png'}
                                                 alt={'List your vehicles on SwingRides and keep 100% of every rental'}
                                                 title={'List your vehicles on SwingRides and keep 100% of every rental'}
@@ -74,7 +74,7 @@ const HeroSection = () => {
 }
 
 const NumberSection = () => {
-        
+
         const contentLeft = [
                 {
                         number: '0%',
@@ -102,10 +102,10 @@ const NumberSection = () => {
         ]
 
         return (
-                <section className='section-bg-gradaint px-4 py-12.5 md:px-20 md:py-20 '>
+                <section className='section-bg-gradient px-4 py-12.5 md:px-20 md:py-20 '>
                         <div className='grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto'>
                                 <div className='col-span-1'>
-                                        <Pill 
+                                        <Pill
                                                 label='Why Hosts Choose SwingRides'
                                         />
                                         <h2 className='text-6xl font-bold leading-16.25'>
@@ -115,9 +115,9 @@ const NumberSection = () => {
                                 </div>
                                 <div className='col-span-2 gap-6 grid md:grid-cols-2'>
                                         <div className='flex flex-col gap-6 max-w-102.5 w-full'>
-                                                {contentLeft.map(( item ) => (
+                                                {contentLeft.map((item) => (
                                                         <Fragment key={item.number}>
-                                                                <NumberCard 
+                                                                <NumberCard
                                                                         number={item.number}
                                                                         title={item.title}
                                                                         desc={item.desc}
@@ -126,9 +126,9 @@ const NumberSection = () => {
                                                 ))}
                                         </div>
                                         <div className='flex flex-col gap-6 mt-0 md:mt-15 max-w-102.5 w-full'>
-                                                {contentRight.map(( item ) => (
+                                                {contentRight.map((item) => (
                                                         <Fragment key={item.number}>
-                                                                <NumberCard 
+                                                                <NumberCard
                                                                         number={item.number}
                                                                         title={item.title}
                                                                         desc={item.desc}
@@ -173,12 +173,12 @@ const HowItWork = () => {
                         desc: 'Renters book directly. You get notified, confirm via the dashboard, and receive payment straight — zero commission deducted, ever.',
                 },
         ]
-        
+
         return (
-                <section className='section-bg-gradaint'>
+                <section className='section-bg-gradient'>
                         <div className='px-4 py-12.5 md:px-20 md:py-20 space-y-10.5'>
                                 <div className='flex flex-col items-center max-w-120 mx-auto'>
-                                        <Pill 
+                                        <Pill
                                                 label='Getting Started'
                                         />
                                         <h3 className='text-6xl font-bold leading-16.25 mt-5 mb-4'>
@@ -191,7 +191,7 @@ const HowItWork = () => {
                                 <div className='grid grid-cols-1 md:grid-cols-3 gap-4 max-w-246 mx-auto'>
                                         {content.map((item) => (
                                                 <Fragment key={item.number}>
-                                                        <HowItWorksCard 
+                                                        <HowItWorksCard
                                                                 {...item}
                                                         />
                                                 </Fragment>
@@ -212,11 +212,11 @@ type HowItWorksCardProps = {
         desc: string;
 }
 
-const HowItWorksCard = ({ image, number, title, desc }: HowItWorksCardProps ) => {
+const HowItWorksCard = ({ image, number, title, desc }: HowItWorksCardProps) => {
         return (
                 <div className='divide-y bg-white rounded-xs overflow-clip'>
                         <div className='overflow-clip rounded-xs aspect-320/200 object-cover'>
-                                <Image 
+                                <Image
                                         src={image.src}
                                         alt={image.alt}
                                         title={image.alt}
@@ -263,30 +263,30 @@ const EverythingYouNeedSection = () => {
         ]
 
         return (
-                <section className='section-bg-gradaint'>
+                <section className='section-bg-gradient'>
                         <div className='px-4 py-12.5 md:px-20 md:py-20 space-y-10.5'>
                                 <div className='flex flex-col items-start max-w-120'>
                                         <Pill
                                                 label='Dashboard Features'
                                         />
                                         <h3 className='text-6xl font-bold leading-16.25 mt-5 mb-4'>
-                                                EVERYTHING YOU <br/><span className='text-[#1A56DB] font-sans'> NEED</span> TO RUN YOUR FLEET
+                                                EVERYTHING YOU <br /><span className='text-[#1A56DB] font-sans'> NEED</span> TO RUN YOUR FLEET
                                         </h3>
                                         <span className="text-left text-[#333333] text-lg font-medium font-text">
                                                 One dashboard. Every tool you need to manage, monitor, and grow your car rental business.
                                         </span>
                                 </div>
                                 <div className='flex justify-center mt-5 md:mt-17.5'>
-                                        <Tabs 
+                                        <Tabs
                                                 defaultValue='fleet-management'
                                                 className='justify-center items-center'
                                         >
                                                 <TabsList
                                                         className='divide-x py-6.25 border-y-2 rounded-none bg-transparent overflow-clip'
                                                 >
-                                                        {content.map(( item ) => (
+                                                        {content.map((item) => (
                                                                 <div key={item.value}>
-                                                                        <TabsTrigger 
+                                                                        <TabsTrigger
                                                                                 value={item.value}
                                                                                 className='text-center text-[#333333] data-active:text-[#1A56DB] bg-transparent data-active:bg-transparent text-base font-semibold font-text px-12.5 py-6.25 rounded-none cursor-pointer divide-x-[#6B7280] opacity-30 data-active:opacity-100 transition-colors duration-300'
                                                                         >
@@ -296,43 +296,43 @@ const EverythingYouNeedSection = () => {
                                                         ))}
                                                 </TabsList>
 
-                                                <TabsContent 
-                                                       value="fleet-management"
-                                                       className='mt-5 md:mt-12.5'
+                                                <TabsContent
+                                                        value="fleet-management"
+                                                        className='mt-5 md:mt-12.5'
                                                 >
-                                                        <TabContent 
+                                                        <TabContent
                                                                 {...fleetManagementContent}
                                                         />
                                                 </TabsContent>
-                                                <TabsContent 
-                                                       value="bookings"
-                                                       className='mt-5 md:mt-12.5'
+                                                <TabsContent
+                                                        value="bookings"
+                                                        className='mt-5 md:mt-12.5'
                                                 >
-                                                        <TabContent 
+                                                        <TabContent
                                                                 {...bookingContent}
                                                         />
                                                 </TabsContent>
-                                                <TabsContent 
+                                                <TabsContent
                                                         value="finances"
-                                                       className='mt-5 md:mt-12.5'
+                                                        className='mt-5 md:mt-12.5'
                                                 >
-                                                        <TabContent 
+                                                        <TabContent
                                                                 {...financesContent}
                                                         />
                                                 </TabsContent>
-                                                <TabsContent 
+                                                <TabsContent
                                                         value="maintenance"
-                                                       className='mt-5 md:mt-12.5'
+                                                        className='mt-5 md:mt-12.5'
                                                 >
-                                                        <TabContent 
+                                                        <TabContent
                                                                 {...maintenanceContent}
                                                         />
                                                 </TabsContent>
-                                                <TabsContent 
+                                                <TabsContent
                                                         value="reports"
-                                                       className='mt-5 md:mt-12.5'
+                                                        className='mt-5 md:mt-12.5'
                                                 >
-                                                        <TabContent 
+                                                        <TabContent
                                                                 {...reportsContent}
                                                         />
                                                 </TabsContent>
@@ -343,7 +343,7 @@ const EverythingYouNeedSection = () => {
         )
 }
 
-export const Pill = ({ label }: { label: string; } ) => {
+export const Pill = ({ label }: { label: string; }) => {
         return (
                 <div
                         className='mb-5 py-1 px-3 w-fit flex gap-2.5 items-center border border-[#1A56DB] bg-[#DCE6FB] rounded-full'
@@ -364,7 +364,7 @@ type NumberCardProps = {
         desc: string;
 }
 
-const NumberCard = ({ number, title, desc }: NumberCardProps ) => {
+const NumberCard = ({ number, title, desc }: NumberCardProps) => {
         return (
                 <div className='p-4 bg-white rounded flex flex-col gap-10.5 overflow-hidden'>
                         <div>
@@ -404,8 +404,8 @@ const TabContent = ({ image, content }: TabContentProps) => {
                         </div>
                         <div>
                                 <div className='grid gap-10'>
-                                        {content.map(( item ) => (
-                                                <div 
+                                        {content.map((item) => (
+                                                <div
                                                         key={item.label}
                                                         className='flex items-center justify-start gap-3 bg-white border-l-[6px] border-l-[#1A56DB] py-5.5 px-7.5 rounded-[8px]'
                                                 >
