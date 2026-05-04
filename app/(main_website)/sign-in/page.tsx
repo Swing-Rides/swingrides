@@ -1,9 +1,11 @@
-import React from 'react'
+import GuestSignInComponent from '@/components/signIn/guestSignInComponent'
 
 export default function SignInPage() {
         return (
                 <main>
-                        SIGN IN FORM COMES HERE
+                        <div className='w-full flex justify-center py-10'>
+                                <GuestSignInComponent />
+                        </div>
                 </main>
         )
 }
