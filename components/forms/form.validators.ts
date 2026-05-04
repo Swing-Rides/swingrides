@@ -107,4 +107,9 @@ export const validators = {
                         message: `${label} must not exceed ${length} characters`,
                 },
         }),
+
+        checkbox: (label = 'This field'): RegisterOptions => ({
+                validate: (value: boolean) =>
+                        value === true || `${label} must be checked to proceed`,
+        }),
 }
