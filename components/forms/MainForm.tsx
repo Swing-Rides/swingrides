@@ -81,7 +81,7 @@ export default function MainForm({
                         <Button
                                 type='submit'
                                 disabled={isLoading}
-                                className='w-full bg-[#1A56DB] hover:bg-[#1E429F] text-white font-medium font-text cursor-pointer transition-colors duration-200'
+                                className='w-full h-fit px-10 py-3 bg-[#1A56DB] hover:bg-[#1E429F] text-white text-base font-semibold font-text leading-6 rounded-xs cursor-pointer transition-colors duration-300'
                         >
                                 {isLoading ? (
                                         <span className='flex items-center gap-2'>
@@ -112,7 +112,7 @@ const FormField = ({ field, register, control, errors }: FormFieldProps) => {
                         {field.label && (
                                 <Label
                                         htmlFor={field.name}
-                                        className='text-[#1F2937] text-sm font-semibold font-text'
+                                        className='text-[#6B7280] text-xs font-semibold font-text uppercase'
                                 >
                                         {field.label}
                                         {field.validation?.required && (
@@ -127,10 +127,10 @@ const FormField = ({ field, register, control, errors }: FormFieldProps) => {
                                 </p>
                         )}
                         {error && (
-                                <p className='text-[#EF4444] text-xs font-normal font-text flex items-center gap-1'>
+                                <span className='text-[#EF4444] text-xs font-normal font-text flex items-center gap-1'>
                                         <ErrorIcon />
                                         {error}
-                                </p>
+                                </span>
                         )}
                 </div>
         )
@@ -150,7 +150,7 @@ const FormField = ({ field, register, control, errors }: FormFieldProps) => {
                 case 'image':
                         return wrapper(<FileInput field={field} register={register} error={error} />)
                 case 'checkbox':
-                        return wrapper(<CheckboxInput field={field} register={register} error={error} />)
+                        return wrapper(<CheckboxInput field={field} control={control} error={error} />)
                 default:
                         return wrapper(<TextInput field={field} register={register} error={error} />)
         }
@@ -171,7 +171,7 @@ type ControllerProps = {
 }
 
 const inputClass = (error?: string) => cn(
-        'border-[#E5E7EB] focus-visible:ring-[#1A56DB] font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF]',
+        'border-[#E5E7EB] focus-visible:ring-[#1A56DB] font-text text-sm text-[#1F2937] rounded-xs placeholder:text-[#9CA3AF]',
         error && 'border-[#EF4444] focus-visible:ring-[#EF4444]'
 )
 
@@ -483,32 +483,41 @@ const FileInput = ({ field, register, error }: InputProps) => {
 }
 
 // Checkbox
-const CheckboxInput = ({ field, register, error }: InputProps) => {
+const CheckboxInput = ({ field, control, error }: ControllerProps) => {
         return (
-                <div className='flex items-start gap-2'>
-                        <Checkbox
-                                id={field.name}
-                                disabled={field.disabled}
-                                className={cn(
-                                        'mt-0.5 border-[#E5E7EB]',
-                                        error && 'border-[#EF4444]'
-                                )}
-                                {...register(field.name, field.validation)}
-                        />
-                        {field.label && (
-                                <label
-                                        htmlFor={field.name}
-                                        className='text-[#6B7280] text-sm font-normal font-text leading-5 cursor-pointer'
-                                >
-                                        {field.label}
-                                </label>
+                <Controller
+                        name={field.name}
+                        control={control}
+                        defaultValue={false}
+                        rules={field.validation}
+                        render={({ field: ctrl }) => (
+                                <div className='flex items-start gap-2'>
+                                        <Checkbox
+                                                id={field.name}
+                                                disabled={field.disabled}
+                                                checked={!!ctrl.value}
+                                                onCheckedChange={ctrl.onChange}
+                                                className={cn(
+                                                        'mt-0.5 border-[#E5E7EB] data-[state=checked]:bg-[#1A56DB] data-[state=checked]:border-[#1A56DB]',
+                                                        error && 'border-[#EF4444]'
+                                                )}
+                                        />
+                                        {field.label && (
+                                                <label
+                                                        htmlFor={field.name}
+                                                        className='text-[#6B7280] text-sm font-normal font-text leading-5 cursor-pointer'
+                                                >
+                                                        {field.label}
+                                                </label>
+                                        )}
+                                </div>
                         )}
-                </div>
+                />
         )
 }
 
 const ErrorIcon = () => (
-        <svg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'>
+        <svg className='size-3' width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'>
                 <path d='M6 1L11 10H1L6 1Z' stroke='#EF4444' strokeWidth='1' strokeLinecap='round' strokeLinejoin='round' />
                 <path d='M6 5V7' stroke='#EF4444' strokeWidth='1' strokeLinecap='round' />
                 <circle cx='6' cy='8.5' r='0.5' fill='#EF4444' />
