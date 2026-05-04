@@ -18,6 +18,7 @@ import {
 } from './utils'
 import { FieldSeparator } from '@/components/ui/field'
 import ContentLoading from '@/components/loading/contentLoading'
+import { LogOut } from 'lucide-react'
 
 export default function GuestProfilePage(
         { 
@@ -71,6 +72,8 @@ export default function GuestProfilePage(
         )
 }
 
+const handleSignOut = () => console.log('log out clicked')
+
 const UserCard = ({ userAvaterUrl, fullName, email, memberSince, rentals }: User) => {
 
         const totalTrip = getTotalTrips(rentals)
@@ -104,6 +107,17 @@ const UserCard = ({ userAvaterUrl, fullName, email, memberSince, rentals }: User
                                         <span className='text-gray-500 text-sm font-normal font-text'>
                                                 Member since {memberSince}
                                         </span>
+                                </div>
+                                <div>
+                                        <button
+                                                className='flex gap-1.5 items-center opacity-70 pb-px border-b border-b-red-700 cursor-pointer hover:opacity-100 transition-opacity duration-300'
+                                                onClick={handleSignOut}
+                                        >
+                                                <span className='text-red-700 text-xs font-normal font-text'>
+                                                        Signout
+                                                </span>
+                                                <LogOut className='size-3 text-red-700'/>
+                                        </button>
                                 </div>
                         </div>
                         <FieldSeparator />
