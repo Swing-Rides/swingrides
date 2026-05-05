@@ -33,7 +33,6 @@ type VechicleCardProps = {
         reviews?: ReviewType[];
 }
 
-
 export default function RentalDetailPage({ rentId, status, pickUpDate, returnDate, pickUpLocation, price, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews, rentals }: PageTitleSectionProps & TripSummaryCardProps & VechicleCardProps & ManageBookingCardProps ) {
         return (
                 <>
