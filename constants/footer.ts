@@ -9,12 +9,12 @@ export const footerLinksOne = {
                 {
                         id: 2,
                         label: 'How It Works',
-                        href: '/how-it-works',
+                        href: '/#how-it-works',
                 },
                 {
                         id: 3,
                         label: 'My Reservations',
-                        href: '/my-reservations',
+                        href: '/profile',
                 },
         ]
 }

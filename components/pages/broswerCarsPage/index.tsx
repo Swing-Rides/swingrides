@@ -59,6 +59,7 @@ import CarCard from '@/components/cars/carCard'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { SideBarProps } from './types'
 import { CarCardSkeletonGrid } from '@/components/loading/carCardSkeleton'
+import NotificationConnectHostForm from './notificationConnectHostForm'
 
 const CARS_PER_PAGE = 9
 
@@ -187,14 +188,7 @@ const NotificationBar = () => {
                                         </span>
                                 </div>
                                 <div className='flex justify-start items-center gap-3'>
-                                        Form Input comes here
-                                        <Link 
-                                                href={'/connect-host'}
-                                        >
-                                                <button className='px-4 py-1.5 cursor-pointer text-white bg-blue-700 hover:bg-blue-950 transition-colors duration-300 rounded-xs text-nowrap'>
-                                                        Connect →
-                                                </button>
-                                        </Link>
+                                        <NotificationConnectHostForm />
                                         <div>
                                                 <CloseIcon/>
                                         </div>

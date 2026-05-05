@@ -1,3 +1,15 @@
+export type PageIntroProps = {
+        imageSrc: string;
+        pageTitle: string;
+        description: string;
+}
+
+export const pageIntro: PageIntroProps  = {
+        imageSrc: '/images/connect-to-host-icon.svg',
+        pageTitle: 'Connect to host',
+        description: `Link your phone number to your host's fleet. Their vehicles will be highlighted when you browse — making it faster to find and book your regular car.`,
+}
+
 export const whatHappens = [
         {
                 id: 1,
