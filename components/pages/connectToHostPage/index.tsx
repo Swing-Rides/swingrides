@@ -1,8 +1,10 @@
-import { Fragment } from 'react'
+import { Suspense, Fragment } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { FieldSeparator } from '@/components/ui/field'
-import { whatHappens } from '@/constants/connectToHost'
+import { Skeleton } from '@/components/ui/skeleton'
+import { whatHappens, pageIntro, PageIntroProps } from '@/constants/connectToHost'
+import ConnectHostForm from '@/components/forms/connectHostForm'
 
 export type ListProps = {
         content: {
@@ -13,28 +15,10 @@ export type ListProps = {
 
 export default function ConnectToHostPageComponent() {
         return (
-                <div className='w-full mx-auto py-12.5 px-4 overflow-clip bg-[#F4F6F9]'>
-                        <div className='max-w-146 mx-auto'>
-                                <div>
-                                        <Image
-                                                src={'/images/connect-to-host-icon.svg'}
-                                                alt='Connect to host'
-                                                title='Connect to host'
-                                                width={196}
-                                                height={156}
-                                                loading="eager"
-                                                className='max-w-48 size-full mx-auto'
-                                        />
-                                </div>
-                                <div>
-                                        <h2 className="text-center text-neutral-950 text-4xl font-normal leading-10">
-                                                Connect to Your Host
-                                        </h2>
-                                        <p className="text-center text-zinc-800 text-base font-medium font-text leading-6 mt-2">
-                                                {`Link your phone number to your host's fleet. Their vehicles will be highlighted when you browse — making it faster to find and book your regular car.`}
-                                        </p>
-                                </div>
-                        </div>
+                <div className='w-full mx-auto py-12.5 px-4 overflow-clip section-bg-gradient'>
+                        <PageIntro 
+                                {...pageIntro}
+                        />
                         <div className='max-w-146 mx-auto w-full p-4 md:p-8 overflow-clip bg-white rounded-[10px] outline outline-offset-[-0.89px] outline-gray-200 mt-8 mb-6'>
                                 <div className='grid gap-5'>
                                         <div className='text-center md:text-left'>
@@ -46,13 +30,10 @@ export default function ConnectToHostPageComponent() {
                                                 </p>
                                         </div>
                                         <FieldSeparator/>
-                                        <div>
-                                                FORM COMES HERE
-                                                <Link
-                                                        href={'/connect-host/confirmed'}
-                                                >
-                                                        Connect to Host →
-                                                </Link>
+                                        <div className='w-full'>
+                                                <Suspense fallback={<ConnectHostFormSkeleton />}>
+                                                        <ConnectHostForm/>
+                                                </Suspense>
                                         </div>
                                         <FieldSeparator />
                                         <div className='grid gap-4'>
@@ -87,6 +68,32 @@ export default function ConnectToHostPageComponent() {
         )
 }
 
+export const PageIntro = ({ imageSrc, pageTitle, description }: PageIntroProps ) => {
+        return (
+                <div className='max-w-146 mx-auto'>
+                        <div>
+                                <Image
+                                        src={imageSrc}
+                                        alt={pageTitle}
+                                        title={pageTitle}
+                                        width={196}
+                                        height={156}
+                                        loading="eager"
+                                        className='max-w-48 size-full mx-auto'
+                                />
+                        </div>
+                        <div>
+                                <h2 className="text-center text-neutral-950 text-4xl font-normal leading-10">
+                                        {pageTitle}
+                                </h2>
+                                <p className="text-center text-zinc-800 text-base font-medium font-text leading-6 mt-2">
+                                        {description}
+                                </p>
+                        </div>
+                </div>
+        )
+}
+
 const List = ({ content }: ListProps) => {
         return (
                 <div className='flex gap-3 items-center'>
@@ -103,3 +110,18 @@ const List = ({ content }: ListProps) => {
                 </div>
         )
 }
+
+const ConnectHostFormSkeleton = () => (
+        <div className='flex flex-col gap-5'>
+                <div className='flex flex-col gap-1'>
+                        <Skeleton className='h-6 w-40' />
+                        <Skeleton className='h-4 w-72' />
+                </div>
+                <div className='flex flex-col gap-1.5'>
+                        <Skeleton className='h-4 w-24' />
+                        <Skeleton className='h-10 w-full' />
+                        <Skeleton className='h-3 w-64' />
+                </div>
+                <Skeleton className='h-10 w-full' />
+        </div>
+)
