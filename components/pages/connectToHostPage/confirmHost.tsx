@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React, { Fragment, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { FieldSeparator } from '@/components/ui/field'
@@ -7,85 +7,87 @@ import { benefitOfConnecting } from '@/constants/connectToHost'
 
 export default function ConfirmHostPageComponent() {
         return (
-                <div className='w-full mx-auto py-12.5 px-4 overflow-clip bg-[#F4F6F9]'>
-                        <div className='max-w-146 mx-auto'>
-                                <div>
-                                        <Image
-                                                src={'/images/you-are-connected.svg'}
-                                                alt='Connect to host'
-                                                title='Connect to host'
-                                                width={196}
-                                                height={156}
-                                                loading="eager"
-                                                className='max-w-48 size-full mx-auto'
-                                        />
+                <Suspense>
+                        <div className='w-full mx-auto py-12.5 px-4 overflow-clip bg-[#F4F6F9]'>
+                                <div className='max-w-146 mx-auto'>
+                                        <div>
+                                                <Image
+                                                        src={'/images/you-are-connected.svg'}
+                                                        alt='Connect to host'
+                                                        title='Connect to host'
+                                                        width={196}
+                                                        height={156}
+                                                        loading="eager"
+                                                        className='max-w-48 size-full mx-auto'
+                                                />
+                                        </div>
+                                        <div>
+                                                <h2 className="text-center text-neutral-950 text-4xl font-normal leading-10">
+                                                        {`You’re connected`}
+                                                </h2>
+                                                <p className="text-center text-zinc-800 text-base font-medium font-text leading-6 mt-2">
+                                                        {`You are now linked to Metro Car Rentals. Their vehicles will be highlighted when you browse.`}
+                                                </p>
+                                        </div>
                                 </div>
-                                <div>
-                                        <h2 className="text-center text-neutral-950 text-4xl font-normal leading-10">
-                                                {`You’re connected`}
-                                        </h2>
-                                        <p className="text-center text-zinc-800 text-base font-medium font-text leading-6 mt-2">
-                                                {`You are now linked to Metro Car Rentals. Their vehicles will be highlighted when you browse.`}
+
+                                <div className='max-w-146 mx-auto w-full p-4 md:p-8 bg-white rounded-[10px] outline outline-offset-[-0.89px] outline-gray-200 mt-8 mb-6'>
+                                        <div className='grid gap-5'>
+
+                                                <HostCard/>
+                                                
+                                                <FieldSeparator />
+
+                                                <div className='grid gap-3'>
+                                                        {benefitOfConnecting.map((item) => (
+                                                                <Fragment key={item.id}>
+                                                                        <List content={item}/>
+                                                                </Fragment>
+                                                        ))}
+                                                </div>
+
+                                                <FieldSeparator />
+
+                                                <div className='flex items-center flex-wrap gap-3'>
+                                                        <Link 
+                                                                href={'/'}
+                                                                className='w-full md:w-fit'  
+                                                        >
+                                                                <button className='w-full px-8 md:px-24 py-3 bg-blue-700 rounded-xs text-white text-base font-semibold leading-6 cursor-pointer'>
+                                                                        Browse Their Fleet →
+                                                                </button>
+                                                        </Link>
+
+                                                        <Link 
+                                                                href={'/'}  
+                                                                className='w-full md:w-fit'                                                      
+                                                        >
+                                                                <button className='w-full px-6 py-3 rounded-xs outline outline-offset-[-0.89px] outline-red-500 text-red-500 text-base font-semibold leading-6 cursor-pointer'>
+                                                                        Disconnect
+                                                                </button>
+                                                        </Link>
+                                                </div>
+                                                <div className='flex justify-center'>
+                                                        <span className='text-center text-zinc-800 text-xs font-normal leading-4'>
+                                                                {`Disconnecting will remove fleet priority from your search results.`}
+                                                        </span>
+                                                </div>
+                                        </div>
+                                </div>
+
+                                <div className='flex flex-col items-center gap-2'>
+                                        <p className='text-center text-zinc-800 text-base font-normal leading-5'>
+                                                {`Don't have a specific host?`}
                                         </p>
+                                        <Link
+                                                href={'/browse-cars'}
+                                                className='text-blue-700 text-base font-medium leading-5'
+                                        >
+                                                Browse all available cars →
+                                        </Link>
                                 </div>
                         </div>
-
-                        <div className='max-w-146 mx-auto w-full p-4 md:p-8 bg-white rounded-[10px] outline outline-offset-[-0.89px] outline-gray-200 mt-8 mb-6'>
-                                <div className='grid gap-5'>
-
-                                        <HostCard/>
-                                        
-                                        <FieldSeparator />
-
-                                        <div className='grid gap-3'>
-                                                {benefitOfConnecting.map((item) => (
-                                                        <Fragment key={item.id}>
-                                                                <List content={item}/>
-                                                        </Fragment>
-                                                ))}
-                                        </div>
-
-                                        <FieldSeparator />
-
-                                        <div className='flex items-center flex-wrap gap-3'>
-                                                <Link 
-                                                        href={'/'}
-                                                        className='w-full md:w-fit'  
-                                                >
-                                                        <button className='w-full px-8 md:px-24 py-3 bg-blue-700 rounded-xs text-white text-base font-semibold leading-6 cursor-pointer'>
-                                                                Browse Their Fleet →
-                                                        </button>
-                                                </Link>
-
-                                                <Link 
-                                                        href={'/'}  
-                                                        className='w-full md:w-fit'                                                      
-                                                >
-                                                        <button className='w-full px-6 py-3 rounded-xs outline outline-offset-[-0.89px] outline-red-500 text-red-500 text-base font-semibold leading-6 cursor-pointer'>
-                                                                Disconnect
-                                                        </button>
-                                                </Link>
-                                        </div>
-                                        <div className='flex justify-center'>
-                                                <span className='text-center text-zinc-800 text-xs font-normal leading-4'>
-                                                        {`Disconnecting will remove fleet priority from your search results.`}
-                                                </span>
-                                        </div>
-                                </div>
-                        </div>
-
-                        <div className='flex flex-col items-center gap-2'>
-                                <p className='text-center text-zinc-800 text-base font-normal leading-5'>
-                                        {`Don't have a specific host?`}
-                                </p>
-                                <Link
-                                        href={'/browse-cars'}
-                                        className='text-blue-700 text-base font-medium leading-5'
-                                >
-                                        Browse all available cars →
-                                </Link>
-                        </div>
-                </div>
+                </Suspense>
         )
 }
 

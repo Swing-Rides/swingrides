@@ -31,9 +31,11 @@ export default function RightContent({ rentals: initialRentals }: ManageBookingC
         return (
                 <>
                         <div className="col-span-1 md:col-span-5 w-full">
-                                <ManageBookingCard
-                                        rentals={rental}
-                                />
+                                <Suspense>
+                                        <ManageBookingCard
+                                                rentals={rental}
+                                        />
+                                </Suspense>
                         </div>
 
                         <Suspense>

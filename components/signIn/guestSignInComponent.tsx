@@ -3,8 +3,18 @@
 import Link from 'next/link'
 import { useSearchParams, usePathname } from 'next/navigation'
 import GuestLoginForm from '../forms/GuestLoginForm'
+import { Suspense } from 'react'
 
 export default function GuestSignInComponent() {
+
+        return (
+                <Suspense>
+                        <SignIn/>
+                </Suspense>
+        )
+}
+
+const SignIn = () => {
 
         const searchParams = useSearchParams()
         const pathname = usePathname()
