@@ -5,7 +5,7 @@ import { useSearchParams, usePathname } from 'next/navigation'
 import { Progress } from "@/components/ui/progress"
 import { getStarPercentage } from "./util"
 import { getInitials } from "../profilePages/utils"
-import ReviewsModal from "@/components/reviewsModal"
+import CarReviewsModal from "@/components/reviewsModal"
 import { ReviewCardProps, ReviewTabProps, StarProgressProps } from "./types"
 import Link from "next/link"
 
@@ -68,7 +68,7 @@ export default function ReviewTab({ reviewsAndRatings }: ReviewTabProps) {
                         </div>
 
                         <Suspense>
-                                <ReviewsModal
+                                <CarReviewsModal
                                         reviews={reviewsAndRatings.reviews}
                                         averageRating={reviewsAndRatings.averageRating}
                                 />

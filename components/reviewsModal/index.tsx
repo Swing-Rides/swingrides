@@ -17,7 +17,7 @@ type ReviewsModalProps = {
         averageRating?: number
 }
 
-export default function ReviewsModal({ reviews, averageRating }: ReviewsModalProps) {
+export default function CarReviewsModal({ reviews, averageRating }: ReviewsModalProps) {
         const searchParams = useSearchParams()
         const router = useRouter()
         const pathname = usePathname()
