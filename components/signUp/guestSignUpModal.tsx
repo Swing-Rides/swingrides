@@ -10,11 +10,9 @@ import ModelBackdrop from './modelBackdrop';
 export default function GuestSignUpModal() {
 
         return (
-                <ModelBackdrop>
-                        <Suspense>
-                                <ModalComponent/>
-                        </Suspense>
-                </ModelBackdrop>
+                <Suspense>
+                        <ModalComponent/>
+                </Suspense>
         )
 }
 
@@ -36,53 +34,55 @@ const ModalComponent = () => {
         if (!isOpen) return null
 
         return (
-                <div className="max-w-120 p-6 bg-white rounded-sm border border-gray-200 flex flex-col justify-start items-center gap-5">
-                        <div className="w-full flex gap-5 justify-between">
-                                <h3 className="text-[#1F2937] text-xl font-bold font-text">
-                                        Create Your Account
-                                </h3>
-                                <button
-                                        onClick={handleClose}
-                                        aria-label='Close'
-                                        className='text-[#6B7280] hover:text-[#1F2937] transition-colors duration-200 cursor-pointer'
-                                >
-                                        <X className='w-5 h-5' />
-                                </button>
-                        </div>
+                <ModelBackdrop>
+                        <div className="max-w-120 p-6 bg-white rounded-sm border border-gray-200 flex flex-col justify-start items-center gap-5">
+                                <div className="w-full flex gap-5 justify-between">
+                                        <h3 className="text-[#1F2937] text-xl font-bold font-text">
+                                                Create Your Account
+                                        </h3>
+                                        <button
+                                                onClick={handleClose}
+                                                aria-label='Close'
+                                                className='text-[#6B7280] hover:text-[#1F2937] transition-colors duration-200 cursor-pointer'
+                                        >
+                                                <X className='w-5 h-5' />
+                                        </button>
+                                </div>
 
-                        <div>
-                                <span className="text-[#333333] text-sm font-normal font-text leading-5">
-                                        You need an account to complete your booking. It only takes 30 seconds.
-                                </span>
-                        </div>
-
-                        <GuestSignUpForm />
-
-                        <div className='flex gap-4 items-center w-full'>
-                                <div className='flex-1 h-px bg-[#E5E7EB]' />
-                                <span className='text-[#6B7280] text-sm font-normal font-text'>or</span>
-                                <div className='flex-1 h-px bg-[#E5E7EB]' />
-                        </div>
-
-                        <div className='w-full'>
-                                <button className='w-full flex gap-3 items-center justify-center px-10 py-3 bg-transparent hover:bg-blue-900 hover:text-white transition-color duration-300 rounded-xs border border-[#E5E7EB] cursor-pointer'>
-                                        <GoogleIcon />
-                                        <span className="text-nowrap">
-                                                Continue with Google
+                                <div>
+                                        <span className="text-[#333333] text-sm font-normal font-text leading-5">
+                                                You need an account to complete your booking. It only takes 30 seconds.
                                         </span>
-                                </button>
-                        </div>
+                                </div>
 
-                        <div>
-                                <span className="text-center text-[#6B7280] text-xs font-normal font-text leading-5">Already have an account? <Link href={'/sign-in'} className='text-[#1A56DB]'>Sign in →</Link> </span>
-                        </div>
+                                <GuestSignUpForm />
 
-                        <div>
-                                <span className="text-center text-[#6B7280] text-xs font-normal font-text leading-5">
-                                        🔒 Your information is encrypted and secure.
-                                </span>
+                                <div className='flex gap-4 items-center w-full'>
+                                        <div className='flex-1 h-px bg-[#E5E7EB]' />
+                                        <span className='text-[#6B7280] text-sm font-normal font-text'>or</span>
+                                        <div className='flex-1 h-px bg-[#E5E7EB]' />
+                                </div>
+
+                                <div className='w-full'>
+                                        <button className='w-full flex gap-3 items-center justify-center px-10 py-3 bg-transparent hover:bg-blue-900 hover:text-white transition-color duration-300 rounded-xs border border-[#E5E7EB] cursor-pointer'>
+                                                <GoogleIcon />
+                                                <span className="text-nowrap">
+                                                        Continue with Google
+                                                </span>
+                                        </button>
+                                </div>
+
+                                <div>
+                                        <span className="text-center text-[#6B7280] text-xs font-normal font-text leading-5">Already have an account? <Link href={'/sign-in'} className='text-[#1A56DB]'>Sign in →</Link> </span>
+                                </div>
+
+                                <div>
+                                        <span className="text-center text-[#6B7280] text-xs font-normal font-text leading-5">
+                                                🔒 Your information is encrypted and secure.
+                                        </span>
+                                </div>
                         </div>
-                </div>
+                </ModelBackdrop>
         )
 }
 
