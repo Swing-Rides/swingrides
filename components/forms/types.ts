@@ -50,4 +50,5 @@ export type MainFormProps = {
         submitLabel?: string
         isLoading?: boolean
         className?: string
+        rowPairs?: [string, string][]
 }

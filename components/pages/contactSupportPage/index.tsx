@@ -1,3 +1,4 @@
+import ContactForm from '@/components/forms/contactForm'
 import { contactSupportPageContent } from '@/constants/contact'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -51,8 +52,8 @@ const Content = () => {
                                                         </Fragment>
                                                 ))}
                                         </div>
-                                        <div>
-                                                FORM COMES HERE
+                                        <div className='w-full'>
+                                                <ContactForm />
                                         </div>
                                 </div>
                                 <div className='grid place-content-center'>

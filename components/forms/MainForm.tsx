@@ -35,6 +35,7 @@ export default function MainForm({
         submitLabel = 'Submit',
         isLoading = false,
         className,
+        rowPairs = [],
 }: MainFormProps) {
         const {
                 register,
@@ -43,6 +44,8 @@ export default function MainForm({
                 getValues,
                 formState: { errors },
         } = useForm({ mode: 'onTouched' })
+
+        const renderedPairs = new Set<string>()
 
         return (
                 <form
@@ -66,22 +69,54 @@ export default function MainForm({
                         )}
 
                         <div className='flex flex-col gap-4'>
-                                {fields.map((field) => (
-                                        <FormField
-                                                key={field.name}
-                                                field={field}
-                                                register={register}
-                                                control={control}
-                                                getValues={getValues}
-                                                errors={errors}
-                                        />
-                                ))}
+                                {fields.map((field) => {
+                                        const pair = rowPairs.find(p => p.includes(field.name))
+
+                                        if (pair) {
+
+                                                if (renderedPairs.has(pair[0])) return null
+                                                renderedPairs.add(pair[0])
+
+                                                const secondField = fields.find(f => f.name === pair[1])
+                                                if (!secondField) return null
+
+                                                return (
+                                                        <div key={pair.join('-')} className='flex flex-col md:flex-row gap-4'>
+                                                                <FormField
+                                                                        field={field}
+                                                                        register={register}
+                                                                        control={control}
+                                                                        getValues={getValues}
+                                                                        errors={errors}
+                                                                />
+                                                                <FormField
+                                                                        field={secondField}
+                                                                        register={register}
+                                                                        control={control}
+                                                                        getValues={getValues}
+                                                                        errors={errors}
+                                                                />
+                                                        </div>
+                                                )
+                                        }
+
+                                        return (
+                                                <FormField
+                                                        key={field.name}
+                                                        field={field}
+                                                        register={register}
+                                                        control={control}
+                                                        getValues={getValues}
+                                                        errors={errors}
+                                                />
+                                        )
+                                })}
                         </div>
 
                         <Button
                                 type='submit'
                                 disabled={isLoading}
-                                className='w-full h-fit px-10 py-3 bg-[#1A56DB] hover:bg-[#1E429F] text-white text-base font-semibold font-text leading-6 rounded-xs cursor-pointer transition-colors duration-300'
+                                className='w-full bg-[#1A56DB] hover:bg-[#1E429F] text-white font-medium font-text rounded-xs cursor-pointer transition-colors duration-200 disabled:opacity-50 disabled:pointer-events-none'
                         >
                                 {isLoading ? (
                                         <span className='flex items-center gap-2'>
@@ -122,9 +157,9 @@ const FormField = ({ field, register, control, errors }: FormFieldProps) => {
                         )}
                         {children}
                         {field.description && !error && (
-                                <p className='text-[#9CA3AF] text-xs font-normal font-text'>
+                                <span className='text-[#9CA3AF] text-xs font-normal font-text'>
                                         {field.description}
-                                </p>
+                                </span>
                         )}
                         {error && (
                                 <span className='text-[#EF4444] text-xs font-normal font-text flex items-center gap-1'>
@@ -195,6 +230,7 @@ const TextInput = ({ field, register, error }: InputProps) => {
                                 min={field.min}
                                 max={field.max}
                                 step={field.step}
+                                defaultValue={field.defaultValue as string}
                                 className={cn(inputClass(error), hasIcon && 'pl-9')}
                                 {...register(field.name, field.validation)}
                         />
