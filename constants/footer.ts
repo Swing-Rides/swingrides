@@ -25,17 +25,17 @@ export const footerLinksTwo = {
                 {
                         id: 1,
                         label: 'List Your Car',
-                        href: '/list-your-car',
+                        href: '/for-hosts',
                 },
                 {
                         id: 2,
                         label: 'Host Dashboard',
-                        href: '/host-dashboard',
+                        href: '/us/host',
                 },
                 {
                         id: 3,
                         label: 'How It Works for Hosts',
-                        href: '/how-it-works-for-hosts',
+                        href: '/for-hosts/#how-it-works',
                 },
                 {
                         id: 4,

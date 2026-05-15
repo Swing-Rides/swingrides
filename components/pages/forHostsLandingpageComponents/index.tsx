@@ -175,7 +175,7 @@ const HowItWork = () => {
         ]
 
         return (
-                <section className='section-bg-gradient'>
+                <section className='section-bg-gradient' id='how-it-works'>
                         <div className='px-4 py-12.5 md:px-20 md:py-20 space-y-10.5'>
                                 <div className='flex flex-col items-center max-w-120 mx-auto'>
                                         <Pill
