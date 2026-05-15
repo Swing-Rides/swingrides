@@ -1,7 +1,10 @@
+import { FleetStatus } from "@/types/subscribers.type";
+
 export interface PricingTierType {
         hourly: number;
         daily: number;
         weekly: number;
+        monthly: number;
 }
 
 export interface CarSpecificationsType {
@@ -67,7 +70,7 @@ export interface CarDataType {
         slug?: string;
         plateNumber: string;
         price: PricingTierType;
-        status: string;
+        status: FleetStatus;
         overview: string;
         specifications: CarSpecificationsType;
         host: HostInfoType;
@@ -115,8 +118,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 25,
                         daily: 150,
                         weekly: 900,
+                        monthly: 3150,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The BMW 3 Series combines sporty performance with everyday practicality. Perfect for business trips or weekend getaways. This 2024 model comes fully serviced and ready to drive.`,
                 specifications: {
                         make: 'BMW',
@@ -241,8 +245,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 25,
                         daily: 150,
                         weekly: 900,
+                        monthly: 3150,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The BMW 3 Series combines sporty performance with everyday practicality. Perfect for business trips or weekend getaways. This 2024 model comes fully serviced and ready to drive.`,
                 specifications: {
                         make: 'BMW',
@@ -334,6 +339,11 @@ export const carsTestData: CarDataType[] = [
                 },
                 gallery: [
                         {
+                                id: '1sft373',
+                                src: `/images/test-cars/2025-Mercedes-Benz-S-Class-AMG-S-63-E-PERFORMANCE-Sedan-Exterior.webp`,
+                                alt: `BMW M4 Competition`,
+                        },
+                        {
                                 id: '1g3fy8373',
                                 src: '/images/test-cars/2025_mercedes-benz_s-class_sedan_s-580-4matic_shf_oem_1_1600x1067.webp',
                                 alt: 'interior part 1',
@@ -366,8 +376,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 10,
                         daily: 186,
                         weekly: 1250,
+                        monthly: 4375,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The 2025 Mercedes-Benz S-Class S 580 4MATIC Sedan is a pinnacle luxury sedan featuring a 4.0L V8 biturbo engine with mild-hybrid EQ Boost, 4MATIC all-wheel drive, and a 9G-TRONIC automatic transmission. It offers advanced features like AIRMATIC suspension, optional rear-axle steering, a Burmester 3D sound system, and extensive safety, including front/rear side airbags`,
                 specifications: {
                         make: 'Mercedes-Benz S-Class',
@@ -473,8 +484,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 45,
                         daily: 320,
                         weekly: 2000,
+                        monthly: 7000,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The iconic Porsche 911 Carrera — a sports car legend that blends everyday drivability with exhilarating performance. This 2024 model features the latest PDK transmission and the unmistakable flat-six soundtrack.`,
                 specifications: {
                         make: 'Porsche',
@@ -546,8 +558,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 38,
                         daily: 260,
                         weekly: 1650,
+                        monthly: 3150,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The fastest production sedan ever made. The Tesla Model S Plaid delivers 1,020 horsepower and 0–100 km/h in under 2.1 seconds. Perfect for those who want the future of driving today.`,
                 specifications: {
                         make: 'Tesla',
@@ -620,8 +633,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 40,
                         daily: 280,
                         weekly: 1800,
+                        monthly: 4150,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `Commanding presence, luxury interior, and serious off-road capability. The 2024 Range Rover Sport HSE offers the perfect blend of performance and refinement for any road condition.`,
                 specifications: {
                         make: 'Land Rover',
@@ -694,8 +708,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 120,
                         daily: 850,
                         weekly: 5500,
+                        monthly: 19250,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The Lamborghini Huracán EVO is pure Italian drama on four wheels. A naturally aspirated V10 screaming to 8,000 RPM and a body that turns every street into a runway. An experience unlike anything else.`,
                 specifications: {
                         make: 'Lamborghini',
@@ -768,8 +783,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 15,
                         daily: 95,
                         weekly: 600,
+                        monthly: 3150,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The Honda CR-V Hybrid is the practical choice for families and road trippers alike. Great fuel economy, a roomy interior, and Honda's trusted reliability make it ideal for any journey.`,
                 specifications: {
                         make: 'Honda',
@@ -842,8 +858,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 35,
                         daily: 230,
                         weekly: 1450,
+                        monthly: 5075,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The Audi Q7 Quattro is the premium 7-seat SUV for those who refuse to compromise. Audi's legendary build quality, a cutting-edge MMI infotainment system, and Quattro AWD make every journey effortless.`,
                 specifications: {
                         make: 'Audi',
@@ -916,8 +933,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 20,
                         daily: 140,
                         weekly: 880,
+                        monthly: 3150,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `Built for any road or lack thereof. The Toyota Hilux GR Sport combines the legendary Hilux toughness with sporty GR styling. Ideal for long-distance road trips, construction site visits, or off-road adventures.`,
                 specifications: {
                         make: 'Toyota',
@@ -990,8 +1008,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 200,
                         daily: 1400,
                         weekly: 9000,
+                        monthly: 34200,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The Rolls-Royce Ghost is the definitive statement in ultra-luxury motoring. Whisper-quiet ride, handcrafted Phantom-grade interior, and the iconic Spirit of Ecstasy on the bonnet. Reserve for weddings, corporate events, or simply the finest of occasions.`,
                 specifications: {
                         make: 'Rolls-Royce',
@@ -1064,8 +1083,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 12,
                         daily: 80,
                         weekly: 500,
+                        monthly: 2800,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The Kia Sportage Hybrid punches well above its price bracket. Smart design, a large panoramic display, and hybrid efficiency make it an excellent everyday choice at a very accessible price point.`,
                 specifications: {
                         make: 'Kia',
@@ -1138,8 +1158,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 180,
                         daily: 1200,
                         weekly: 7800,
+                        monthly: 27300,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The Mercedes-Maybach S 680 is chauffeur-grade luxury at its most extreme. An extended wheelbase rear cabin with reclining first-class seats, champagne cooler, and a twin-turbo V12 engine make this the ultimate executive transport.`,
                 specifications: {
                         make: 'Mercedes-Benz',
@@ -1212,8 +1233,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 30,
                         daily: 195,
                         weekly: 1250,
+                        monthly: 4375,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `An American icon reborn. The 2024 Ford Mustang GT delivers a thundering 5.0L V8 soundtrack, muscle-car attitude, and modern tech wrapped in a timeless silhouette. Perfect for weekend drives that demand attention.`,
                 specifications: {
                         make: 'Ford',
@@ -1286,8 +1308,9 @@ export const carsTestData: CarDataType[] = [
                         hourly: 18,
                         daily: 120,
                         weekly: 750,
+                        monthly: 3150,
                 },
-                status: `Available`,
+                status: `available`,
                 overview: `The Hyundai IONIQ 6 is the sleek, aerodynamic EV sedan redefining what electric cars can look and feel like. With up to 614km of range and 800V ultra-fast charging, it's the most practical long-distance EV in its class.`,
                 specifications: {
                         make: 'Hyundai',
