@@ -1,0 +1,142 @@
+import { BookingPaymentStatusType, MaintenanceStatusType, SubscriberPlan } from "@/constants/superAdminSidebar";
+import { BOOKING_PAYMENT_STATUS_STYLE, CAR_BOOKING_STATUS_STYLE, MAINTENANCE_STATUS_STYLE, RENTER_STATUS_STYLE, RENTER_VERIFICATION_STATUS_STYLE, SUBSCRIPTION_PLAN_STYLE } from "../utils/helpers";
+import { RenterStatus } from "@/constants/renterTestData";
+import { CarBookingStatus, RenterVerificationDocumentStatus } from "@/types/renters.type";
+
+type MaintenanceStatusPillProps = {
+        status: MaintenanceStatusType
+}
+
+type SubscriptionPlanPillProps = {
+        status: SubscriberPlan
+}
+
+type BookingPaymentPillProps = {
+        status: BookingPaymentStatusType
+}
+
+type RenterStatusPillProps = {
+        status: RenterStatus
+}
+
+type RenterVerificationStatusPillProps = {
+        status: RenterVerificationDocumentStatus
+}
+
+type CarBookingStatusProps = {
+        status: CarBookingStatus
+}
+
+export const MaintenanceStatusPill = ({ status }: MaintenanceStatusPillProps ) => {
+
+        const styleMap = MAINTENANCE_STATUS_STYLE
+        const normalizedStatus = status.toLowerCase()
+
+        const { label, textColor, bgColor } = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        return (
+                <span
+                        className="py-1 px-2.5 rounded-full text-xs font-semibold font-text leading-4"
+                        style={{ color: textColor, backgroundColor: bgColor }}
+                >
+                        {label}
+                </span>
+        )
+}
+
+export const SubscriptionPlanPill = ({ status }: SubscriptionPlanPillProps ) => {
+
+        const styleMap = SUBSCRIPTION_PLAN_STYLE
+        const normalizedStatus = status.toLowerCase()
+
+        const { label, textColor, bgColor } = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        return (
+                <span
+                        className="py-1 px-2.5 rounded-full text-xs font-semibold font-text leading-4"
+                        style={{ color: textColor, backgroundColor: bgColor }}
+                >
+                        {label}
+                </span>
+        )
+}
+
+export const BookingPaymentPill = ({ status }: BookingPaymentPillProps ) => {
+
+        const styleMap = BOOKING_PAYMENT_STATUS_STYLE
+        const normalizedStatus = status.toLowerCase()
+
+        const { label, textColor, bgColor } = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        return (
+                <span
+                        className="py-1 px-2.5 rounded-full text-xs font-semibold font-text leading-4"
+                        style={{ color: textColor, backgroundColor: bgColor }}
+                >
+                        {label}
+                </span>
+        )
+}
+
+export const RenterStatusPill = ({ status }: RenterStatusPillProps ) => {
+
+        const styleMap = RENTER_STATUS_STYLE
+        const normalizedStatus = status.toLowerCase() as RenterStatus
+
+        const style = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        if (!style) return <span className="text-xs text-gray-400">{status}</span>
+
+        const { label, textColor, bgColor } = style
+
+        return (
+                <span
+                        className="py-1 px-2.5 rounded-full text-xs font-semibold font-text leading-4"
+                        style={{ color: textColor, backgroundColor: bgColor }}
+                >
+                        {label}
+                </span>
+        )
+}
+
+export const RenterVerificationStatusPill = ({ status }: RenterVerificationStatusPillProps ) => {
+
+        const styleMap = RENTER_VERIFICATION_STATUS_STYLE
+        const normalizedStatus = status.toLowerCase() as RenterVerificationDocumentStatus
+
+        const style = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        if (!style) return <span className="text-xs bg-black text-gray-400">{status}</span>
+
+        const { label, textColor, bgColor } = style
+
+        return (
+                <span
+                        className="py-1 px-2.5 rounded-full text-xs font-semibold font-text leading-4"
+                        style={{ color: textColor, backgroundColor: bgColor }}
+                >
+                        {label}
+                </span>
+        )
+}
+
+export const CarBookingStatusPill = ({ status }: CarBookingStatusProps) => {
+
+        const styleMap = CAR_BOOKING_STATUS_STYLE
+        const normalizedStatus = status.toLowerCase() as CarBookingStatus
+
+        const style = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        if (!style) return <span className="text-xs bg-black text-gray-400">{status}</span>
+
+        const { label, textColor, bgColor } = style
+
+        return (
+                <span
+                        className="py-1 px-2.5 rounded-full text-xs font-semibold font-text leading-4"
+                        style={{ color: textColor, backgroundColor: bgColor }}
+                >
+                        {label}
+                </span>
+        )       
+}
