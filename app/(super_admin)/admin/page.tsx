@@ -1,10 +1,9 @@
-import AdminPageComponents from '@/components/superAdminPages/pages/adminPageComponents'
-
+import AdminDashboardClient from "@/components/superAdminPages/pages/adminDashboardClient";
 
 export default function AdminDashboard() {
-        return (
-                <div>
-                        <AdminPageComponents />
-                </div>
-        )
+  return (
+    <div>
+      <AdminDashboardClient />
+    </div>
+  );
 }

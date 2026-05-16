@@ -1,10 +1,10 @@
-import BillingPageComponents from '@/components/superAdminPages/pages/billingPageComponents'
-import React from 'react'
+import BillingPageClient from "@/components/superAdminPages/pages/billingPageClient";
 
 export default function BillingPage() {
-        return (
-                <div>
-                        <BillingPageComponents/>
-                </div>
-        )
+
+  return (
+    <div>
+      <BillingPageClient />
+    </div>
+  );
 }
