@@ -1,19 +1,9 @@
-import { fetchAdminSubscribers } from '@/app/services/subscribers'
-import SubscribersPageComponents from '@/components/superAdminPages/pages/subscribersPageComponents'
+import SubscribersPageClient from "@/components/superAdminPages/pages/subscribersPageClient";
 
-
-export default async function SubscribersPage() {
-
-        const subscriber = await fetchAdminSubscribers()
-        const data = subscriber.data
-
-        // console.log("SUBSCRIBER DATA", data)
-
-        return (
-                <div>
-                        <SubscribersPageComponents
-                                subscriberData={data}
-                        />
-                </div>
-        )
+export default function SubscribersPage() {
+  return (
+    <div>
+      <SubscribersPageClient />
+    </div>
+  );
 }
