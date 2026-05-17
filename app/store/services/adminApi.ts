@@ -8,6 +8,7 @@ import {
 } from "@/types/admin.type";
 import { AdminRenterByIdResponse } from "@/types/renters.type";
 import {
+  AdminISubscriberFleetDetailResponse,
   AdminISubscriberByIdResponse,
   ISubscribersResponse,
 } from "@/types/subscribers.type";
@@ -88,6 +89,11 @@ type AdminVerificationQueueQuery = {
   limit?: number;
 };
 
+type AdminSubscriberFleetDetailQuery = {
+  subscriberId: string;
+  fleetId: string;
+};
+
 const toQueryString = <T extends object>(filters?: T) => {
   if (!filters) return "";
 
@@ -138,6 +144,13 @@ export const adminApi = createApi({
         query: (subscriberId) => `/api/auth/admin/subscribers/${subscriberId}`,
       },
     ),
+    getAdminSubscriberFleetDetail: builder.query<
+      AdminISubscriberFleetDetailResponse,
+      AdminSubscriberFleetDetailQuery
+    >({
+      query: ({ subscriberId, fleetId }) =>
+        `/api/auth/admin/subscribers/${subscriberId}/fleet/${fleetId}`,
+    }),
     getAdminRenterById: builder.query<AdminRenterByIdResponse, string>({
       query: (renterId) => `/api/auth/admin/renters/${renterId}`,
       providesTags: (_result, _error, renterId) => [
@@ -197,6 +210,7 @@ export const {
   useGetAdminBillingQuery,
   useGetAdminSubscribersQuery,
   useGetAdminSubscriberByIdQuery,
+  useGetAdminSubscriberFleetDetailQuery,
   useGetAdminRenterByIdQuery,
   useGetAdminRentersQuery,
   useGetAdminVerificationPendingRentersQuery,

@@ -173,14 +173,6 @@ function SubscribersTableSection({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // ── Fake loading — swap for real isLoading from your data fetch ───────
-  // const [isLoading, setIsLoading] = useState(true)
-
-  // useEffect(() => {
-  //         const timer = setTimeout(() => setIsLoading(false), FAKE_LOAD_MS)
-  //         return () => clearTimeout(timer)   // cleanup on unmount
-  // }, [])
-
   // ── URL param helper ──────────────────────────────────────────────────
   const setParam = useCallback(
     (key: string, value: string) => {
