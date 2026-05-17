@@ -1,10 +1,9 @@
-import RentersPageComponents from "@/components/superAdminPages/pages/rentersPageComponent/rentersPageComponents"
-
+import RentersPageComponents from "@/components/superAdminPages/pages/rentersPageComponent/rentersPageComponents";
 
 export default function RentersPage() {
-        return (
-                <div>
-                        <RentersPageComponents/>
-                </div>
-        )
+  return (
+    <div>
+      <RentersPageComponents />
+    </div>
+  );
 }

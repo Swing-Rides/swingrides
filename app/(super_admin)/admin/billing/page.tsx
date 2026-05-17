@@ -1,9 +1,10 @@
-import { fetchAdminBillings } from '@/app/services/billing'
-import BillingPageComponents from '@/components/superAdminPages/pages/billingPageComponent/billingPageComponents'
+import BillingPageClient from "@/components/superAdminPages/pages/billingPageClient";
 
+export default function BillingPage() {
 
-export default async function BillingPage() {
-
-        const response = await fetchAdminBillings()
-        return <BillingPageComponents data={response.data} />
+  return (
+    <div>
+      <BillingPageClient />
+    </div>
+  );
 }
