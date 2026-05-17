@@ -1,29 +1,40 @@
 import { ReactNode, Suspense } from 'react'
+import { AlertCircle, CalendarRange, CircleDollarSign, TrendingUp } from 'lucide-react'
 import PageWrapper from '../dashboard/pageWrapper'
 import { SalesChart, RevenueByPlanChart } from '../dashboard/dynamicImport';
 import { CardIntro } from '../dashboard/cardIntro';
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-        MonthlyRevenueBillingOverviewCardContent,
-        AnnualRevenueBillingOverviewCardContent,
-        FailedPaymentsBillingOverviewCardContent,
-        ChurnRateBillingOverviewCardContent
-} from '@/constants/superAdminSidebar';
-import { formatNumberToUSD } from '../utils/formatNumbertoUSD';
-import { calcPercentageDiff } from '../utils/chart';
-import { MonthlyRecurringRevenueChartData } from '@/constants/superAdminSidebar';
+import { AdminBillingResponseData } from '@/types/admin.type';
 
 type OverviewCardProps = {
         icon: ReactNode
         title: string
-        presentDayNumber: number          // always raw number
-        last30Days: number
-        formatValue?: (n: number) => string   // optional display formatter
-        invertColors?: boolean            // true for churn rate, failed payments
+        value: string
+        trend: string
+        trendDirection: 'up' | 'down' | 'flat'
 }
 
+type BillingPageComponentsProps = {
+        billing: AdminBillingResponseData
+}
 
-export default function BillingPageComponents() {
+const CARD_ICON_MAP: Record<string, ReactNode> = {
+        mrr: <CircleDollarSign className='size-5 text-emerald-600' />,
+        arr: <TrendingUp className='size-5 text-blue-700' />,
+        failed_payments: <AlertCircle className='size-5 text-red-500' />,
+        churn_mtd: <CalendarRange className='size-5 text-amber-500' />,
+}
+
+export default function BillingPageComponents({ billing }: BillingPageComponentsProps) {
+
+        const graphData = {
+                data: billing.charts.mrrTrend.data.map((point) => ({
+                        month: point.month,
+                        sales: point.value,
+                })),
+                series: [{ name: 'sales', color: '#1A56DB' }],
+        }
+
         return (
                 <PageWrapper
                         pageTitle='Billing'
@@ -31,32 +42,22 @@ export default function BillingPageComponents() {
                 >
                         <div>
                                 <div className='flex flex-wrap gap-4 mt-8'>
-                                        <OverviewCard
-                                                {...MonthlyRevenueBillingOverviewCardContent}
-                                                formatValue={formatNumberToUSD}
-                                        />
-
-                                        <OverviewCard
-                                                {...AnnualRevenueBillingOverviewCardContent}
-                                                formatValue={formatNumberToUSD}
-                                        />
-
-                                        <OverviewCard
-                                                {...FailedPaymentsBillingOverviewCardContent}
-                                                invertColors
-                                        />
-
-                                        <OverviewCard
-                                                {...ChurnRateBillingOverviewCardContent}
-                                                formatValue={(n) => `${n}%`}
-                                                invertColors
-                                        />
+                                        {billing.summaryCards.map((card) => (
+                                                <OverviewCard
+                                                        key={card.key}
+                                                        icon={CARD_ICON_MAP[card.key] ?? <CircleDollarSign className='size-5 text-blue-700' />}
+                                                        title={card.label}
+                                                        value={card.formattedValue}
+                                                        trend={card.trend}
+                                                        trendDirection={card.trendDirection}
+                                                />
+                                        ))}
                                 </div>
 
                                 <div className='flex flex-wrap gap-4 my-4'>
                                         <div className='basis-183 grow p-3 md:p-6 bg-white rounded-lg border border-gray-200 flex flex-col gap-6'>
                                                 <SalesChart 
-                                                        graphData={MonthlyRecurringRevenueChartData}
+                                                        graphData={graphData}
                                                 />
                                         </div>
                                         <div className='basis-95 grow md:grow-0 p-3 md:p-6 bg-white rounded-lg border border-gray-200 flex flex-col gap-6'>
@@ -65,7 +66,7 @@ export default function BillingPageComponents() {
                                                                 title='Revenue by Plan'
                                                                 desc='Monthly revenue breakdown by subscription tier'
                                                         />
-                                                        <RevenueByPlanChart/>
+                                                        <RevenueByPlanChart chartData={billing.charts.revenueByPlan} />
                                                 </div>
                                         </div>
                                 </div>
@@ -78,21 +79,10 @@ export default function BillingPageComponents() {
 const OverviewCard = ({
         icon,
         title,
-        presentDayNumber,
-        last30Days,
-        formatValue,
-        invertColors = false,
+        value,
+        trend,
+        trendDirection,
 }: OverviewCardProps) => {
-
-        const { percentage, colorClass } = calcPercentageDiff(
-                presentDayNumber,
-                last30Days,
-                { invertColors },
-        )
-
-        const displayValue = formatValue
-                ? formatValue(presentDayNumber)
-                : presentDayNumber.toLocaleString()
 
         return (
                 <div className='basis-62.5 shrink-0 grow p-6 bg-white hover:bg-blue-100 hover:border-blue-200 transition-colors duration-300 rounded-md border border-gray-200 flex flex-col justify-start items-start gap-2'>
@@ -105,14 +95,14 @@ const OverviewCard = ({
                         <Suspense fallback={<Skeleton className='w-20 h-10' />}>
                                 <div>
                                         <span className="text-neutral-950 text-3xl font-medium font-text">
-                                                {displayValue}
+                                                {value}
                                         </span>
                                 </div>
                         </Suspense>
                         <Suspense fallback={<Skeleton className='w-30 h-4' />}>
                                 <div>
-                                        <span className={`text-xs font-semibold font-text ${colorClass}`}>
-                                                {percentage} vs last month
+                                        <span className={`text-xs font-semibold font-text ${trendDirection === 'down' ? 'text-red-500' : trendDirection === 'up' ? 'text-emerald-600' : 'text-gray-500'}`}>
+                                                {trend}
                                         </span>
                                 </div>
                         </Suspense>
