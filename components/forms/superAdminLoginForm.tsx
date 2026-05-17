@@ -47,9 +47,9 @@ export default function SuperAdminLoginForm() {
           response.message || "Sign in failed. Please try again.",
         );
         return;
+      } else {
+        router.push("/admin");
       }
-
-      router.push("/admin");
     } catch (error) {
       console.error("Admin login failed:", error);
       const apiError = error as { data?: { message?: string } };
