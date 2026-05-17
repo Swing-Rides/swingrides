@@ -1,7 +1,7 @@
 import { RenterStatus } from "@/constants/renterTestData";
 import { ReimbursementRequestsStatus, MaintenanceStatusType, BookingPaymentStatusType } from "@/constants/superAdminSidebar";
 import { CarBookingStatus, RenterVerificationDocumentStatus } from "@/types/renters.type";
-import { SubscriberPlan, SubscriberStatus, FleetStatus, BookingStatus, BillingStatus } from "@/types/subscribers.type";
+import { SubscriberPlan, SubscriberStatus, FleetStatus, BookingStatus, BillingStatus, SubscriberBillingStatus } from "@/types/subscribers.type";
 
 
 export const plansItems: { value: SubscriberPlan; label: string }[] = [
@@ -26,6 +26,13 @@ export const SUBSCRIPTION_PLAN_STYLE: Record<SubscriberPlan, { label: string; te
         'starter': { label: 'Starter', textColor: '#3B82F6', bgColor: '#E3EEFF' },
         'professional': { label: 'Professional', textColor: '#92400E', bgColor: '#FEF3C7' },
         'enterprise': { label: 'Enterprise', textColor: '#3B82F6', bgColor: '#000000' },
+}
+
+export const SUBSCRIPTION_BILLING_STATUS_STYLE: Record<SubscriberBillingStatus, { label: string; textColor: string; bgColor: string }> = {
+        'paid': { label: 'Paid', textColor: '#10B981', bgColor: '#DAFFF3' },
+        'pending': { label: 'Pending', textColor: '#F59E0B', bgColor: '#FFF7E9' },
+        'failed': { label: 'Failed', textColor: '#EF4444', bgColor: '#FFE9E9' },
+        'refunded': { label: 'Refunded', textColor: '#6B7280', bgColor: '#E5E7EB' },
 }
 
 export const STATUS_STYLE: Record<SubscriberStatus, { label: string; textColor: string; bgColor: string }> = {

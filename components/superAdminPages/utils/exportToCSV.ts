@@ -53,3 +53,78 @@ export function exportRentersToCSV(rows: AdminRenterDataRow[]) {
         link.click()
         URL.revokeObjectURL(url)
 }
+
+type PaymentCSVRow = {
+        id: string
+        organization: string
+        email: string
+        plan: string
+        amountFormatted: string
+        billingDate: string
+        paymentMethod: string
+        status: string
+}
+
+type PlanChangeCSVRow = {
+        id: string
+        name: string
+        changedFrom: string
+        changedTo: string
+        changeType: string
+        date: string
+        actionedBy: string
+}
+
+function downloadCSV(filename: string, headers: string[], rows: string[][]): void {
+        const csv = [
+                headers.join(','),
+                ...rows.map((row) =>
+                        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+                ),
+        ].join('\n')
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = filename
+        link.click()
+        URL.revokeObjectURL(url)
+}
+
+export function exportAllPaymentsToCSV(rows: PaymentCSVRow[]): void {
+        const headers = [
+                'ID', 'Organisation', 'Email', 'Plan',
+                'Amount', 'Billing Date', 'Payment Method', 'Status',
+        ]
+        const data = rows.map((r) => [
+                r.id,
+                r.organization,
+                r.email,
+                r.plan,
+                r.amountFormatted,
+                new Date(r.billingDate).toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'short', day: 'numeric',
+                }),
+                r.paymentMethod,
+                r.status,
+        ])
+        downloadCSV('payments.csv', headers, data)
+}
+
+export function exportAllChangeHistoryToCSV(rows: PlanChangeCSVRow[]): void {
+        const headers = [
+                'ID', 'Organisation', 'Changed From',
+                'Changed To', 'Change Type', 'Date', 'Actioned By',
+        ]
+        const data = rows.map((r) => [
+                r.id,
+                r.name,
+                r.changedFrom,
+                r.changedTo,
+                r.changeType,
+                r.date,
+                r.actionedBy,
+        ])
+        downloadCSV('plan-change-history.csv', headers, data)
+}

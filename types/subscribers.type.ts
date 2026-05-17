@@ -23,6 +23,7 @@ export interface AdminSubscribersFilters {
 }
 
 export type SubscriberStatus = "active" | "past due" | "cancelled" | "suspended"
+export type SubscriberBillingStatus = "paid" | "failed" | "pending" | "refunded"
 export type SubscriberPlan = "enterprise" | "professional" | "starter"
 export type FleetStatus =
         | "available"
