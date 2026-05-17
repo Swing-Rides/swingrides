@@ -4,7 +4,9 @@ import axios, {
         InternalAxiosRequestConfig,
 } from 'axios';
 
-const API_BASE_URL = 'http://147.93.190.15:3000';
+// const API_BASE_URL = 'http://147.93.190.15:3000';
+const API_BASE_URL = 'http://localhost:3000';
+// const API_BASE_URL = '';
 
 class ApiClient {
         private instance: AxiosInstance;
@@ -13,6 +15,7 @@ class ApiClient {
                 this.instance = axios.create({
                         baseURL: API_BASE_URL,
                         timeout: 30000,
+                        withCredentials: true,
                         headers: {
                                 'Content-Type': 'application/json',
                                 Accept: 'application/json',
