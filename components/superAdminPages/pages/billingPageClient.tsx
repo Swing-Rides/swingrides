@@ -1,16 +1,5 @@
-"use client";
-
-import BillingPageComponents from "@/components/superAdminPages/pages/billingPageComponents";
-import { useGetAdminBillingQuery } from "@/app/store/services/adminApi";
+import BillingPageComponents from "@/components/superAdminPages/pages/billingPageComponent/billingPageComponents";
 
 export default function BillingPageClient() {
-  const { data, isLoading, isError } = useGetAdminBillingQuery(undefined);
-
-  return (
-    <BillingPageComponents
-      billing={data?.data}
-      isLoading={isLoading}
-      isError={isError}
-    />
-  );
+  return <BillingPageComponents />;
 }

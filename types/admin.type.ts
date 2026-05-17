@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export type AdminOverviewCardTrendDirection = "up" | "down" | "flat";
 
 export interface AdminOverviewCard {
@@ -72,6 +74,7 @@ export interface AdminBillingSummaryCard {
   formattedValue: string;
   trend: string;
   trendDirection: "up" | "down" | "flat";
+  icon?: ReactNode;
 }
 
 export interface AdminBillingTrendPoint {
@@ -84,6 +87,32 @@ export interface AdminBillingRevenueByPlanItem {
   plan: "starter" | "professional" | "enterprise";
   value: number;
   percentage: number;
+}
+
+export interface AdminBillingPaymentRow {
+  id: string;
+  organization: string;
+  email: string;
+  plan: string;
+  amount: number;
+  amountFormatted: string;
+  billingDate: string;
+  paymentMethod: string;
+  status: "Paid" | "Pending" | "Failed" | "Refunded";
+  actions: {
+    canRetry: boolean;
+    canDownloadInvoice: boolean;
+  };
+}
+
+export interface AdminBillingPlanChangeRow {
+  id: string;
+  name: string;
+  changedFrom: string;
+  changedTo: string;
+  changeType: string;
+  date: string;
+  actionedBy: string;
 }
 
 export interface AdminBillingResponseData {
@@ -111,7 +140,7 @@ export interface AdminBillingResponseData {
     endDate: string | null;
   };
   payments: {
-    rows: unknown[];
+    rows: AdminBillingPaymentRow[];
     pagination: {
       page: number;
       limit: number;
@@ -120,7 +149,7 @@ export interface AdminBillingResponseData {
     };
   };
   planChanges: {
-    rows: unknown[];
+    rows: AdminBillingPlanChangeRow[];
     pagination: {
       page: number;
       limit: number;
