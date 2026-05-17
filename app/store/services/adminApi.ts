@@ -1,4 +1,6 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, BaseQueryFn } from "@reduxjs/toolkit/query/react";
+import { AxiosError, Method } from "axios";
+import apiClient from "@/lib";
 import {
   AdminBillingFilters,
   AdminBillingResponse,
@@ -15,8 +17,56 @@ import {
   IRentersResponse,
 } from "@/types/renters.type";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+type AxiosBaseQueryArgs =
+  | string
+  | {
+      url: string;
+      method?: Method;
+      body?: unknown;
+      data?: unknown;
+      params?: Record<string, string | number | boolean | undefined>;
+    };
+
+type AxiosBaseQueryError = {
+  status?: number;
+  data: unknown;
+};
+
+const axiosBaseQuery = (): BaseQueryFn<
+  AxiosBaseQueryArgs,
+  unknown,
+  AxiosBaseQueryError
+> => {
+  return async (args) => {
+    const request =
+      typeof args === "string"
+        ? { url: args, method: "GET" as Method }
+        : {
+            url: args.url,
+            method: args.method ?? "GET",
+            data: args.data ?? args.body,
+            params: args.params,
+          };
+
+    try {
+      const result = await apiClient({
+        url: request.url,
+        method: request.method,
+        data: request.data,
+        params: request.params,
+      });
+      return { data: result.data };
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      return {
+        error: {
+          status: axiosError.response?.status,
+          data: axiosError.response?.data ?? axiosError.message,
+        },
+      };
+    }
+  };
+};
 
 type AdminSubscribersQuery = {
   search?: string;
@@ -52,10 +102,8 @@ const toQueryString = <T extends object>(filters?: T) => {
 
 export const adminApi = createApi({
   reducerPath: "adminApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: API_BASE_URL,
-    credentials: "include",
-  }),
+  baseQuery: axiosBaseQuery(),
+  tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter"],
   endpoints: (builder) => ({
     adminLogin: builder.mutation<AdminSignInResponse, AdminSignInPayload>({
       query: (payload) => ({
@@ -92,6 +140,9 @@ export const adminApi = createApi({
     ),
     getAdminRenterById: builder.query<AdminRenterByIdResponse, string>({
       query: (renterId) => `/api/auth/admin/renters/${renterId}`,
+      providesTags: (_result, _error, renterId) => [
+        { type: "AdminRenter", id: renterId },
+      ],
     }),
     getAdminRenters: builder.query<
       IRentersResponse,
@@ -101,6 +152,7 @@ export const adminApi = createApi({
         const query = toQueryString(filters);
         return `/api/auth/admin/renters${query ? `?${query}` : ""}`;
       },
+      providesTags: [{ type: "AdminRenters", id: "LIST" }],
     }),
     getAdminVerificationPendingRenters: builder.query<
       AdminVerificationPendingRenterResponse,
@@ -110,6 +162,7 @@ export const adminApi = createApi({
         const query = toQueryString(filters);
         return `/api/auth/admin/renters/verification-queue${query ? `?${query}` : ""}`;
       },
+      providesTags: [{ type: "AdminVerificationQueue", id: "LIST" }],
     }),
     approveRenterVerification: builder.mutation<unknown, string>({
       query: (renterId) => ({
@@ -117,6 +170,11 @@ export const adminApi = createApi({
         method: "PATCH",
         body: { status: "verified" },
       }),
+      invalidatesTags: (_result, _error, renterId) => [
+        { type: "AdminRenters", id: "LIST" },
+        { type: "AdminVerificationQueue", id: "LIST" },
+        { type: "AdminRenter", id: renterId },
+      ],
     }),
     rejectRenterVerification: builder.mutation<unknown, string>({
       query: (renterId) => ({
@@ -124,6 +182,11 @@ export const adminApi = createApi({
         method: "PATCH",
         body: { status: "rejected" },
       }),
+      invalidatesTags: (_result, _error, renterId) => [
+        { type: "AdminRenters", id: "LIST" },
+        { type: "AdminVerificationQueue", id: "LIST" },
+        { type: "AdminRenter", id: renterId },
+      ],
     }),
   }),
 });

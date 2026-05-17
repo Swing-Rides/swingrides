@@ -98,7 +98,7 @@ export const RentersListTable = ({
   return (
     <>
       <Suspense>
-        <TableSection rowData={data.rows} />
+        <TableSection rowData={data.rows} pagination={data.pagination} />
       </Suspense>
 
       <div className="my-3 md:my-8 space-y-5">
@@ -115,13 +115,22 @@ export const RentersListTable = ({
       </div>
 
       <Suspense>
-        <VerificationTableSection rowData={pendingVerificationData.queue} />
+        <VerificationTableSection
+          rowData={pendingVerificationData.queue}
+          pagination={pendingVerificationData.pagination}
+        />
       </Suspense>
     </>
   );
 };
 
-const TableSection = ({ rowData }: { rowData: AdminRenterDataRow[] }) => {
+const TableSection = ({
+  rowData,
+  pagination,
+}: {
+  rowData: AdminRenterDataRow[];
+  pagination: AdminRenterData["pagination"];
+}) => {
   const [rows, setRows] = useState<AdminRenterDataRow[]>(
     normalizeRenterRows(rowData),
   );
@@ -193,17 +202,20 @@ const TableSection = ({ rowData }: { rowData: AdminRenterDataRow[] }) => {
   );
 
   // ── Pagination ────────────────────────────────────────────────────────
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
-  const paginated = filtered.slice(
-    (page - 1) * ROWS_PER_PAGE,
-    page * ROWS_PER_PAGE,
-  );
+  const totalPages = Math.max(1, pagination.totalPages);
+  const paginated = filtered;
   const goToPage = (p: number) => setParam("page", String(p));
 
+  const pageStart = paginated.length === 0 ? 0 : (page - 1) * pagination.limit + 1;
+  const pageEnd =
+    paginated.length === 0
+      ? 0
+      : (page - 1) * pagination.limit + paginated.length;
+
   const paginationLabel =
-    filtered.length === 0
+    paginated.length === 0
       ? "0 results"
-      : `${(page - 1) * ROWS_PER_PAGE + 1}-${Math.min(page * ROWS_PER_PAGE, filtered.length)} of ${filtered.length}`;
+      : `${pageStart}-${pageEnd} of ${pagination.total}`;
 
   return (
     <>
@@ -356,8 +368,10 @@ const TableSection = ({ rowData }: { rowData: AdminRenterDataRow[] }) => {
 
 const VerificationTableSection = ({
   rowData,
+  pagination,
 }: {
   rowData: AdminVerificationPendingRenterRow[];
+  pagination: AdminVerificationPendingRenterData["pagination"];
 }) => {
   const [approveRenterVerification] = useApproveRenterVerificationMutation();
   const [rejectRenterVerification] = useRejectRenterVerificationMutation();
@@ -400,7 +414,6 @@ const VerificationTableSection = ({
     if (!pendingApproveId) return;
     try {
       await approveRenterVerification(pendingApproveId).unwrap();
-      // Remove from queue on success
       setRows((prev) => prev.filter((r) => r.id !== pendingApproveId));
     } catch (error) {
       console.error("Approve failed:", error);
@@ -413,7 +426,6 @@ const VerificationTableSection = ({
     if (!pendingRejectId) return;
     try {
       await rejectRenterVerification(pendingRejectId).unwrap();
-      // Remove from queue on success
       setRows((prev) => prev.filter((r) => r.id !== pendingRejectId));
     } catch (error) {
       console.error("Reject failed:", error);
@@ -425,17 +437,20 @@ const VerificationTableSection = ({
   const page = Math.max(1, Number(searchParams.get("verification-page") ?? 1));
 
   // ── Pagination ────────────────────────────────────────────────────────
-  const totalPages = Math.max(1, Math.ceil(rows.length / ROWS_PER_PAGE));
-  const paginated = rows.slice(
-    (page - 1) * ROWS_PER_PAGE,
-    page * ROWS_PER_PAGE,
-  );
+  const totalPages = Math.max(1, pagination.totalPages);
+  const paginated = rows;
   const goToPage = (p: number) => setParam("verification-page", String(p));
 
+  const pageStart = paginated.length === 0 ? 0 : (page - 1) * pagination.limit + 1;
+  const pageEnd =
+    paginated.length === 0
+      ? 0
+      : (page - 1) * pagination.limit + paginated.length;
+
   const paginationLabel =
-    rows.length === 0
+    paginated.length === 0
       ? "0 results"
-      : `${(page - 1) * ROWS_PER_PAGE + 1}-${Math.min(page * ROWS_PER_PAGE, rows.length)} of ${rows.length}`;
+      : `${pageStart}-${pageEnd} of ${pagination.total}`;
 
   return (
     <>

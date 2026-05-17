@@ -15,6 +15,10 @@ export default function RentersPageComponents() {
   const searchParams = useSearchParams();
 
   const statusParam = searchParams.get("status");
+  const pageParam = Number(searchParams.get("page") ?? 1);
+  const verificationPageParam = Number(
+    searchParams.get("verification-page") ?? 1,
+  );
 
   const renterFilters = useMemo(() => {
     let status: AdminRenterDataStatus | undefined;
@@ -28,8 +32,20 @@ export default function RentersPageComponents() {
 
     return {
       status,
+      page: Number.isFinite(pageParam) ? Math.max(1, pageParam) : 1,
+      limit: 10,
     };
-  }, [statusParam]);
+  }, [statusParam, pageParam]);
+
+  const verificationQueueFilters = useMemo(
+    () => ({
+      page: Number.isFinite(verificationPageParam)
+        ? Math.max(1, verificationPageParam)
+        : 1,
+      limit: 10,
+    }),
+    [verificationPageParam],
+  );
 
   const {
     data: renterResponse,
@@ -40,7 +56,7 @@ export default function RentersPageComponents() {
     data: pendingVerificationResponse,
     isLoading: isQueueLoading,
     isError: isQueueError,
-  } = useGetAdminVerificationPendingRentersQuery(undefined);
+  } = useGetAdminVerificationPendingRentersQuery(verificationQueueFilters);
 
   if (isRentersLoading || isQueueLoading) {
     return <div className="p-6 text-sm text-gray-500">Loading renters...</div>;
