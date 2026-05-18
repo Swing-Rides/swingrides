@@ -3,6 +3,8 @@ import { ReimbursementRequestsStatus, MaintenanceStatusType, BookingPaymentStatu
 import { CarBookingStatus, RenterVerificationDocumentStatus } from "@/types/renters.type";
 import { SubscriberPlan, SubscriberStatus, FleetStatus, BookingStatus, BillingStatus, SubscriberBillingStatus } from "@/types/subscribers.type";
 
+export type AdminUsersRoleType = 'super admin' | 'admin' | 'support';
+export type AdminUsersStatusType = 'active' | 'suspended' | 'invited';
 
 export const plansItems: { value: SubscriberPlan; label: string }[] = [
         { value: 'enterprise', label: 'Enterprise' },
@@ -14,6 +16,18 @@ export const statusItems: { value: SubscriberStatus; label: string }[] = [
         { value: 'active', label: 'Active' },
         { value: 'past due', label: 'Past Due' },
         { value: 'cancelled', label: 'Cancelled' },
+]
+
+export const adminUsersRoleItems: { value: AdminUsersRoleType; label: string }[] = [
+        { value: 'super admin', label: 'Super Admin' },
+        { value: 'admin', label: 'Admin' },
+        { value: 'support', label: 'Support' },
+]
+
+export const adminUsersStatusItems: { value: AdminUsersStatusType; label: string }[] = [
+        { value: 'active', label: 'Active' },
+        { value: 'suspended', label: 'Suspended' },
+        { value: 'invited', label: 'Invited' },
 ]
 
 export const renterStatusItems: { value: RenterStatus; label: string }[] = [
