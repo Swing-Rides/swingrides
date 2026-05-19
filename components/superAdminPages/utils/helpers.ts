@@ -125,3 +125,15 @@ export const CAR_BOOKING_STATUS_STYLE: Record<CarBookingStatus, { label: string;
         "cancelled": { label: "Cancelled", textColor: "#EF4444", bgColor: "#FFE9E9" },
         "confirmed": { label: "Confirmed", textColor: "#6B7280", bgColor: "#E5E7EB" },
 }
+
+export const ADMIN_USER_ROLE_STYLE: Record<AdminUsersRoleType, { label: string; textColor: string; bgColor: string }> = {
+        "super admin": { label: "Super admin", textColor: "#FFFFFF", bgColor: "#111928" },
+        "admin": { label: "Admin", textColor: "#ffffff", bgColor: "#1A56DB" },
+        "support": { label: "Support", textColor: "#ffffff", bgColor: "#0891B2" },
+}
+
+export const ADMIN_USER_STATUS_STYLE: Record<AdminUsersStatusType, { label: string; textColor: string; bgColor: string }> = {
+        "active": { label: "Active", textColor: "#10B981", bgColor: "#DAFFF3" },
+        "suspended": { label: "Suspended", textColor: "#F59E0B", bgColor: "#FFF7E9" },
+        "invited": { label: "Invited", textColor: "#EF4444", bgColor: "#FFE9E9" },
+}

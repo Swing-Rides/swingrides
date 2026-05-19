@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageWrapper from "../../dashboard/pageWrapper";
 import { CircleAlert, Flag, Lock, Mail, Settings2, SlidersVertical } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import AdminCommunicationSettingsForm from "@/components/forms/adminCommunicationSettingsForm";
+import AdminCommunicationSettingsForm from "@/components/superAdminPages/forms/adminCommunicationSettingsForm";
 
 
 const tabTitle = [
