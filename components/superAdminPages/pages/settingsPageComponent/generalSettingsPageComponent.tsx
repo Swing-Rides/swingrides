@@ -1,12 +1,14 @@
 "use client"
 
-import { useCallback } from "react";
+import { Suspense, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageWrapper from "../../dashboard/pageWrapper";
 import { CircleAlert, Flag, Lock, Mail, Settings2, SlidersVertical } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import AdminCommunicationSettingsForm from "@/components/superAdminPages/forms/adminCommunicationSettingsForm";
+import SystemSettingsForm, { SystemSettingsFormValues } from "../../forms/systemSettingsForm";
+import SystemSettingsFormSkeleton from "../../loadingSkeletons/systemSettingsFormSkeleton";
 
 
 const tabTitle = [
@@ -102,6 +104,11 @@ export type PlatformFeaturesTabProps = {
         handleSaveChanges: () => void;
 }
 
+async function handleSave(values: SystemSettingsFormValues) {
+        // Replace with your real API call
+        console.log('saving system settings', values)
+}
+
 export default function GeneralSettingsPageComponent( ) {
 
         const platformFeaturesHandleSaveChanges = () => {
@@ -194,7 +201,7 @@ const PageTabs = ({ platformFeatures, platformFeaturesHandleSaveChanges, operati
                                 </TabsContent>
 
                                 <TabsContent value="system-settings">
-                                        system-settings
+                                        <SystemSettings />
                                 </TabsContent>
 
                                 <TabsContent value="operational-controls">
@@ -303,6 +310,32 @@ const PlatformFeaturesTab = ({ hostRegistrationsSwitch, renterBookingFlowSwitch,
         )
 }
 
+const SystemSettings = () => {
+
+        const settings = {
+                defaultTaxRate: 7.5,
+                platformCurrency: 'USD $',
+                globalTimezone: 'America/New_York',
+                minBookingDuration: 1,
+                maxBookingDuration: 30,
+                cancellationPolicyWindow: 24,
+                plans: {
+                        starter: { maxVehicles: 5, monthlyPrice: 29 },
+                        professional: { maxVehicles: 20, monthlyPrice: 79 },
+                        enterprise: { maxVehicles: 100, monthlyPrice: 199 },
+                },
+        }
+
+        return (
+                <Suspense fallback={<SystemSettingsFormSkeleton />}>
+                        <SystemSettingsForm
+                                defaultValues={settings}
+                                onSubmit={handleSave}
+                        />
+                </Suspense>
+        )
+}
+
 const OperationalTab = ({ automaticHostApprovalSwitch, automaticRenterVerificationSwitch, auditLoggingSwitch, handleSaveChanges }: OperationalTabProps & { handleSaveChanges: () => void; }) => {
         return (
                 <div className="space-y-5">
@@ -360,7 +393,6 @@ const CommunicationTab = () => {
                 </>
         )
 }
-
 
 const SwitchDataList = ({ title, label, value }: SwitchDataListProps) => {
         return (
