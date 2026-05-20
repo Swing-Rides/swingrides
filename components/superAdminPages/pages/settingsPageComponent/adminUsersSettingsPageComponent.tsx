@@ -28,6 +28,16 @@ import { AdminUsersRolePill, AdminUsersStatusPill } from '../../dashboard/status
 import InviteNewAdminForm from '../../forms/inviteNewAdmin'
 import EditAdminRoleForm from '../../forms/editAdminRoleForm'
 import { exportActivityLog } from '../../utils/exportToCSV'
+import {
+        useGetAdminUsersListQuery,
+        useGetAdminActivityLogQuery,
+        useInviteAdminMutation,
+        useUpdateAdminRoleMutation,
+        useSuspendAdminUserMutation,
+        useReactivateAdminUserMutation,
+        useResendAdminInviteMutation,
+        useRemoveAdminUserMutation,
+} from '@/app/store/services/adminApi'
 
 const ITEMS_PER_PAGE = 8
 
@@ -41,12 +51,6 @@ type AdminUserRow = {
         dateAdded: string
 }
 
-const ALL_ROWS: AdminUserRow[] = [
-        { id: '12334', name: 'name surname', email: 'email@mail.cc', role: 'super admin', status: 'active', lastActive: '2 hours ago', dateAdded: '15 Jan, 2024' },
-        { id: '12434', name: 'name name', email: 'email@mail.cc', role: 'admin', status: 'invited', lastActive: '2 hours ago', dateAdded: '15 Jan, 2024' },
-        { id: '12534', name: 'name name', email: 'email@mail.cc', role: 'support', status: 'suspended', lastActive: '2 hours ago', dateAdded: '15 Jan, 2024' },
-]
-
 export type ActivityLogRow = {
         id: string
         name: string
@@ -55,16 +59,28 @@ export type ActivityLogRow = {
         timestamp: string
 }
 
-const ACTIVITY_LOG_ROWS: ActivityLogRow[] = [
-        { id: 'log-001', name: 'name surname', action: 'Invited admin user', target: 'newadmin@mail.cc', timestamp: '15 Jan, 2024 · 10:32 AM' },
-        { id: 'log-002', name: 'name surname', action: 'Suspended user', target: 'user@mail.cc', timestamp: '15 Jan, 2024 · 09:14 AM' },
-        { id: 'log-003', name: 'name name', action: 'Changed role', target: 'other@mail.cc', timestamp: '14 Jan, 2024 · 04:55 PM' },
-        { id: 'log-004', name: 'name name', action: 'Removed user', target: 'gone@mail.cc', timestamp: '13 Jan, 2024 · 11:00 AM' },
-]
-
 export default function AdminUsersSettingsPageComponent() {
         const [inviteOpen, setInviteOpen] = useState(false)
         const [editUser, setEditUser] = useState<AdminUserRow | null>(null)
+
+        const searchParams = useSearchParams()
+        const page = Number(searchParams.get('page') ?? 1)
+
+        const { data: usersData } = useGetAdminUsersListQuery({
+                search: searchParams.get('search') ?? undefined,
+                role: searchParams.get('status') ?? undefined,
+                status: searchParams.get('plan') ?? undefined,
+                page,
+                limit: ITEMS_PER_PAGE,
+        })
+
+        const { data: logsData } = useGetAdminActivityLogQuery({
+                page: Number(searchParams.get('activity-log') ?? 1),
+                limit: ITEMS_PER_PAGE,
+        })
+
+        const adminUserRows: AdminUserRow[] = (usersData?.data?.admins ?? []) as AdminUserRow[]
+        const activityLogRows: ActivityLogRow[] = logsData?.data?.logs ?? []
 
         return (
                 <div className='p-3 md:p-8'>
@@ -72,12 +88,18 @@ export default function AdminUsersSettingsPageComponent() {
                                 <PageTitle onInvite={() => setInviteOpen(true)} />
                                 <Suspense>
                                         <AdminUserListTable
-                                                adminUserRows={ALL_ROWS}
+                                                adminUserRows={adminUserRows}
+                                                total={usersData?.data?.total ?? 0}
+                                                totalPages={usersData?.data?.totalPages ?? 1}
                                                 onEditRole={(user) => setEditUser(user)}
                                         />
                                 </Suspense>
                                 <Suspense>
-                                        <ActivityLogSection activityLogRows={ACTIVITY_LOG_ROWS} />
+                                        <ActivityLogSection
+                                                activityLogRows={activityLogRows}
+                                                total={logsData?.data?.total ?? 0}
+                                                totalPages={logsData?.data?.totalPages ?? 1}
+                                        />
                                 </Suspense>
                         </div>
 
@@ -126,39 +148,18 @@ const PageTitle = ({ onInvite }: { onInvite: () => void }) => (
 
 type AdminUserListTableProps = {
         adminUserRows: AdminUserRow[]
+        total: number
+        totalPages: number
         onEditRole: (user: AdminUserRow) => void
 }
 
-const AdminUserListTable = ({ adminUserRows, onEditRole }: AdminUserListTableProps) => {
+const AdminUserListTable = ({ adminUserRows, total, totalPages, onEditRole }: AdminUserListTableProps) => {
         const searchParams = useSearchParams()
         const router = useRouter()
         const pathname = usePathname()
+        const { handleResendInvite, handleSuspend, handleReactivate, handleRemove } = useAdminActions()
 
-        const search = searchParams.get('search')?.toLowerCase() ?? ''
-        const roleFilter = searchParams.get('status') ?? ''
-        const statusFilter = searchParams.get('plan') ?? ''
         const currentPage = Number(searchParams.get('page') ?? 1)
-
-        // Filter
-        const filtered = useMemo(() => {
-                return adminUserRows.filter(row => {
-                        const matchSearch = !search ||
-                                row.name.toLowerCase().includes(search) ||
-                                row.email.toLowerCase().includes(search) ||
-                                row.id.toLowerCase().includes(search)
-
-                        const matchRole = !roleFilter || row.role === roleFilter
-                        const matchStatus = !statusFilter || row.status === statusFilter
-
-                        return matchSearch && matchRole && matchStatus
-                })
-        }, [adminUserRows, search, roleFilter, statusFilter])
-
-        const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
-        const paginated = filtered.slice(
-                (currentPage - 1) * ITEMS_PER_PAGE,
-                currentPage * ITEMS_PER_PAGE
-        )
 
         const goToPage = useCallback((page: number) => {
                 const params = new URLSearchParams(searchParams.toString())
@@ -166,8 +167,8 @@ const AdminUserListTable = ({ adminUserRows, onEditRole }: AdminUserListTablePro
                 router.replace(`${pathname}?${params.toString()}`, { scroll: false })
         }, [searchParams, router, pathname])
 
-        const startItem = filtered.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
-        const endItem = Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)
+        const startItem = total === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
+        const endItem = Math.min(currentPage * ITEMS_PER_PAGE, total)
 
         return (
                 <div className='space-y-5 md:space-y-8'>
@@ -187,13 +188,13 @@ const AdminUserListTable = ({ adminUserRows, onEditRole }: AdminUserListTablePro
                                                 </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                                {paginated.length === 0 ? (
+                                                {adminUserRows.length === 0 ? (
                                                         <TableRow>
                                                                 <TableCell colSpan={6} className='text-center py-16 text-gray-400 text-sm'>
                                                                         No users match your filters.
                                                                 </TableCell>
                                                         </TableRow>
-                                                ) : paginated.map(item => (
+                                                ) : adminUserRows.map(item => (
                                                         <TableRow key={item.id} className='px-5'>
                                                                 <TableCell className='pl-5'>
                                                                         <TableUserCard name={item.name} email={item.email} />
@@ -230,7 +231,7 @@ const AdminUserListTable = ({ adminUserRows, onEditRole }: AdminUserListTablePro
                                 {/* Pagination */}
                                 <div className='flex items-center justify-between p-5 rounded-b-sm bg-white border border-gray-200'>
                                         <span className='block text-gray-500 text-sm font-normal font-text'>
-                                                Showing {startItem}-{endItem} of {filtered.length} admin user{filtered.length !== 1 ? 's' : ''}
+                                                Showing {startItem}-{endItem} of {total} admin user{total !== 1 ? 's' : ''}
                                         </span>
                                         <div className='flex items-center gap-1'>
                                                 <button
@@ -258,10 +259,19 @@ const AdminUserListTable = ({ adminUserRows, onEditRole }: AdminUserListTablePro
 
 // ─── Placeholder API handlers ─────────────────────────────────────────────────
 
-const handleResendInvite = (id: string) => console.log('resend invite', id)
-const handleSuspend = (id: string) => console.log('suspend', id)
-const handleReactivate = (id: string) => console.log('reactivate', id)
-const handleRemove = (id: string) => console.log('remove', id)
+function useAdminActions() {
+        const [suspendAdmin] = useSuspendAdminUserMutation()
+        const [reactivateAdmin] = useReactivateAdminUserMutation()
+        const [resendInvite] = useResendAdminInviteMutation()
+        const [removeAdmin] = useRemoveAdminUserMutation()
+
+        const handleResendInvite = (id: string) => resendInvite(id)
+        const handleSuspend = (id: string) => suspendAdmin(id)
+        const handleReactivate = (id: string) => reactivateAdmin(id)
+        const handleRemove = (id: string) => removeAdmin(id)
+
+        return { handleResendInvite, handleSuspend, handleReactivate, handleRemove }
+}
 
 // ─── Table action ─────────────────────────────────────────────────────────────
 
@@ -409,21 +419,35 @@ const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () =
 
 // ─── Invite modal ─────────────────────────────────────────────────────────────
 
-const InviteNewAdminModal = ({ onClose }: { onClose: () => void }) => (
-        <div className='w-full max-w-md p-6 bg-white border border-gray-200 rounded-sm flex flex-col gap-4'>
-                <div className='flex items-center justify-between'>
-                        <h3 className='text-[#1F2937] text-lg font-bold font-text'>Invite New Admin</h3>
-                        <button
-                                onClick={onClose}
-                                className='text-gray-400 hover:text-gray-600 transition-colors duration-150 cursor-pointer'
-                                aria-label='Close'
-                        >
-                                <X className='size-4 text-red-500 hover:text-red-900 transition-colors duration-300' />
-                        </button>
+const InviteNewAdminModal = ({ onClose }: { onClose: () => void }) => {
+        const [inviteAdmin] = useInviteAdminMutation()
+
+        const handleInvite = async (values: Record<string, unknown>) => {
+                await inviteAdmin({
+                        firstName: values.firstName as string,
+                        lastName: values.lastName as string,
+                        email: values.email as string,
+                        role: values.role as 'admin' | 'support',
+                })
+                onClose()
+        }
+
+        return (
+                <div className='w-full max-w-md p-6 bg-white border border-gray-200 rounded-sm flex flex-col gap-4'>
+                        <div className='flex items-center justify-between'>
+                                <h3 className='text-[#1F2937] text-lg font-bold font-text'>Invite New Admin</h3>
+                                <button
+                                        onClick={onClose}
+                                        className='text-gray-400 hover:text-gray-600 transition-colors duration-150 cursor-pointer'
+                                        aria-label='Close'
+                                >
+                                        <X className='size-4 text-red-500 hover:text-red-900 transition-colors duration-300' />
+                                </button>
+                        </div>
+                        <InviteNewAdminForm onSubmit={handleInvite} />
                 </div>
-                <InviteNewAdminForm onSubmit={(values) => console.log(values)} />
-        </div>
-)
+        )
+}
 
 // ─── Edit role modal ──────────────────────────────────────────────────────────
 
@@ -434,6 +458,7 @@ const EditAdminRoleModal = ({
         user: AdminUserRow
         onClose: () => void
 }) => {
+        const [updateRole] = useUpdateAdminRoleMutation()
         const [first, ...rest] = user.name.trim().split(' ')
         const firstName = first ?? ''
         const lastName = rest.join(' ')
@@ -454,8 +479,8 @@ const EditAdminRoleModal = ({
                                 firstName={firstName}
                                 lastName={lastName}
                                 email={user.email}
-                                onSubmit={(values) => {
-                                        console.log('update role', values)
+                                onSubmit={async (values) => {
+                                        await updateRole({ adminId: user.id, role: values.role as 'admin' | 'support' })
                                         onClose()
                                 }}
                         />
@@ -463,7 +488,7 @@ const EditAdminRoleModal = ({
         )
 }
 
-const ActivityLogSection = ({ activityLogRows }: { activityLogRows: ActivityLogRow[] }) => {
+const ActivityLogSection = ({ activityLogRows, total, totalPages }: { activityLogRows: ActivityLogRow[]; total: number; totalPages: number }) => {
         return (
                 <section className='space-y-4'>
                         <div className='flex justify-between items-start gap-4'>
@@ -486,25 +511,18 @@ const ActivityLogSection = ({ activityLogRows }: { activityLogRows: ActivityLogR
                                 </div>
                         </div>
                         <div>
-                                <ActivityLogTable activityLogRows={activityLogRows}/>
+                                <ActivityLogTable activityLogRows={activityLogRows} total={total} totalPages={totalPages} />
                         </div>
                 </section>
         )
 }
 
-const ActivityLogTable = ({ activityLogRows }: { activityLogRows: ActivityLogRow[] }) => {
+const ActivityLogTable = ({ activityLogRows, total, totalPages }: { activityLogRows: ActivityLogRow[]; total: number; totalPages: number }) => {
         const searchParams = useSearchParams()
         const router = useRouter()
         const pathname = usePathname()
 
-        // Fix 1: read currentPage from searchParams (was missing entirely)
         const currentPage = Number(searchParams.get('activity-log') ?? 1)
-
-        const totalPages = Math.ceil(activityLogRows.length / ITEMS_PER_PAGE)
-        const paginated = activityLogRows.slice(
-                (currentPage - 1) * ITEMS_PER_PAGE,
-                currentPage * ITEMS_PER_PAGE
-        )
 
         const goToPage = useCallback((page: number) => {
                 const params = new URLSearchParams(searchParams.toString())
@@ -512,8 +530,8 @@ const ActivityLogTable = ({ activityLogRows }: { activityLogRows: ActivityLogRow
                 router.replace(`${pathname}?${params.toString()}`, { scroll: false })
         }, [searchParams, router, pathname])
 
-        const startItem = activityLogRows.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
-        const endItem = Math.min(currentPage * ITEMS_PER_PAGE, activityLogRows.length)
+        const startItem = total === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
+        const endItem = Math.min(currentPage * ITEMS_PER_PAGE, total)
 
         return (
                 <>
@@ -531,13 +549,13 @@ const ActivityLogTable = ({ activityLogRows }: { activityLogRows: ActivityLogRow
                                         </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                        {paginated.length === 0 ? (
+                                        {activityLogRows.length === 0 ? (
                                                 <TableRow>
                                                         <TableCell colSpan={4} className='text-center py-16 text-gray-400 text-sm'>
                                                                 No activity found.
                                                         </TableCell>
                                                 </TableRow>
-                                        ) : paginated.map(item => (
+                                        ) : activityLogRows.map(item => (
                                                 <TableRow key={item.id}>
                                                         <TableCell className='pl-5'>
                                                                 {/* Fix 3: removed duplicate {item.name} text node */}
@@ -573,7 +591,7 @@ const ActivityLogTable = ({ activityLogRows }: { activityLogRows: ActivityLogRow
                         {/* Pagination */}
                         <div className='flex items-center justify-between p-5 rounded-b-sm bg-white border border-gray-200'>
                                 <span className='block text-gray-500 text-sm font-normal font-text'>
-                                        Showing {startItem}-{endItem} of {activityLogRows.length} log entr{activityLogRows.length !== 1 ? 'ies' : 'y'}
+                                        Showing {startItem}-{endItem} of {total} log entr{total !== 1 ? 'ies' : 'y'}
                                 </span>
                                 <div className='flex items-center gap-1'>
                                         <button

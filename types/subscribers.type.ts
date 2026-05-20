@@ -78,6 +78,65 @@ export interface AdminISubscriberFleetDetailResponse {
   data: AdminSubscriberFleetDetailData;
 }
 
+export interface AdminISubscriberBookingDetailResponse {
+  success: boolean;
+  data: AdminSubscriberBookingDetailData;
+}
+
+export interface AdminSubscriberBookingDetailData {
+  subscriber: {
+    id: string;
+    organization: string;
+    ownerEmail: string;
+    plan: SubscriberPlan;
+  };
+  booking: {
+    id: string;
+    status: BookingStatus;
+    totalCost: string;
+    bookingDate: string;
+    pickupDateAndTime: string;
+    returnDateAndTime: string;
+    pickupLocation: string;
+    returnLocation: string;
+    paymentStatus: "paid" | "pending" | "declined";
+    paymentDateTime: string;
+    renter: {
+      fullname: string;
+      phoneNumber: string;
+      licenseNumber?: string;
+      email: string;
+    };
+    vehicleInformation: {
+      id: string;
+      vehicleName: string;
+      plateNumber: string;
+      transmission: string;
+      bodyType: string;
+    };
+    pricing: {
+      dailyRate: number;
+      weeklyRate: number;
+      monthlyRate: number;
+      insuranceFee: number;
+    };
+    damageReport: {
+      name: string;
+      submittedDate: string;
+      totalCost: number;
+      status: "approved" | "declined" | "pending";
+      description: string;
+    } | null;
+    reimbursementRequests: {
+      name: string;
+      submittedDate: string;
+      totalCost: number;
+      status: "approved" | "declined" | "pending";
+      description: string;
+    } | null;
+  };
+}
+
 export interface AdminSubscriberFleetDetailData {
   subscriber: {
     id: string;

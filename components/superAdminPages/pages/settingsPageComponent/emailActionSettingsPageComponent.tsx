@@ -25,52 +25,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+        useGetRecentEmailSendsQuery,
+        useSearchEmailRecipientsQuery,
+        useSendSystemEmailMutation,
+} from "@/app/store/services/adminApi";
 
 
 export default function EmailActionSettingsPageComponent() {
+        const [sendSystemEmail] = useSendSystemEmailMutation()
+        const { data: recentSendsData } = useGetRecentEmailSendsQuery({ limit: 10 })
 
-        const onSubmit = () => {
-                
+        const recentSendRows = recentSendsData?.data?.sends ?? []
+
+        const handleSendEmail = async (emailType: string, recipientId: string) => {
+                await sendSystemEmail({ emailType, recipientId })
         }
-
-        const recentSendRows = [
-                {
-                        id: "string-11029",
-                        emailType: "string",
-                        name: "string",
-                        email: "string@mail.cc",
-                        triggeredBy: "string",
-                        sentAt: "string",
-                        status: "failed",
-                },
-                {
-                        id: "string-12303",
-                        emailType: "string",
-                        name: "string",
-                        email: "string@mail.cc",
-                        triggeredBy: "string",
-                        sentAt: "string",
-                        status: "sent",
-                },
-                {
-                        id: "string-13429",
-                        emailType: "string",
-                        name: "string",
-                        email: "string@mail.cc",
-                        triggeredBy: "string",
-                        sentAt: "string",
-                        status: "failed",
-                },
-                {
-                        id: "string-15603",
-                        emailType: "string",
-                        name: "string",
-                        email: "string@mail.cc",
-                        triggeredBy: "string",
-                        sentAt: "string",
-                        status: "sent",
-                },
-        ] as const satisfies RecentSendsSectionTableProps["recentSendRows"];
 
         return (
                 <PageWrapper
@@ -86,19 +56,22 @@ export default function EmailActionSettingsPageComponent() {
                                                         title="Booking Confirmation"
                                                         label="Sends a booking confirmation with vehicle and pickup details to the renter"
                                                         type="Bookings"
-                                                        handleSendEmail={onSubmit}
+                                                        emailType="booking_confirmation"
+                                                        handleSendEmail={handleSendEmail}
                                                 />
                                                 <DataList 
                                                         title="Booking Cancellation"
                                                         label="Notifies the renter that their booking has been cancelled"
                                                         type="Bookings"
-                                                        handleSendEmail={onSubmit}
+                                                        emailType="booking_cancellation"
+                                                        handleSendEmail={handleSendEmail}
                                                 />
                                                 <DataList 
                                                         title="Booking Reminder"
                                                         label="Sends a 24-hour pickup reminder to the renter"
                                                         type="Bookings"
-                                                        handleSendEmail={onSubmit}
+                                                        emailType="booking_reminder"
+                                                        handleSendEmail={handleSendEmail}
                                                 />
                                         </SectionWrapper>
 
@@ -109,19 +82,22 @@ export default function EmailActionSettingsPageComponent() {
                                                         title="Payment Receipt"
                                                         label="Sends a payment receipt after a successful transaction"
                                                         type="Payments"
-                                                        handleSendEmail={onSubmit}
+                                                        emailType="payment_receipt"
+                                                        handleSendEmail={handleSendEmail}
                                                 />
                                                 <DataList 
                                                         title="Payment Failed Alert"
                                                         label="Notifies the user that their payment attempt was unsuccessful"
                                                         type="Payments"
-                                                        handleSendEmail={onSubmit}
+                                                        emailType="payment_failed"
+                                                        handleSendEmail={handleSendEmail}
                                                 />
                                                 <DataList 
                                                         title="Subscription Renewal"
                                                         label="Sends a subscription renewal confirmation to a host organisation"
                                                         type="Payments"
-                                                        handleSendEmail={onSubmit}
+                                                        emailType="subscription_renewal"
+                                                        handleSendEmail={handleSendEmail}
                                                 />
                                         </SectionWrapper>
 
@@ -132,19 +108,22 @@ export default function EmailActionSettingsPageComponent() {
                                                         title="Welcome Email"
                                                         label="Sent to new host organisations upon account creation"
                                                         type="System"
-                                                        handleSendEmail={onSubmit}
+                                                        emailType="welcome"
+                                                        handleSendEmail={handleSendEmail}
                                                 />
                                                 <DataList 
                                                         title="Agreement Signing Request"
                                                         label="Sends a rental agreement to a renter for e-signature"
                                                         type="System"
-                                                        handleSendEmail={onSubmit}
+                                                        emailType="agreement_signing"
+                                                        handleSendEmail={handleSendEmail}
                                                 />
                                                 <DataList 
                                                         title="Password Reset"
                                                         label="Triggers a password reset link email to an admin or host user"
                                                         type="System"
-                                                        handleSendEmail={onSubmit}
+                                                        emailType="password_reset"
+                                                        handleSendEmail={handleSendEmail}
                                                 />
                                         </SectionWrapper>
                                 </div>
@@ -182,45 +161,37 @@ type DataListProps = {
         title: string;
         label: string;
         type: "Bookings" | "Payments" | "System";
-        handleSendEmail: () => void;
+        emailType: string;
+        handleSendEmail: (emailType: string, recipientId: string) => void;
 }
 
-const DataList = ({ title, label, type, handleSendEmail }: DataListProps ) => {
-        // Replace with API call
-        const allRecipients = [
-                { id: "1", name: "Alice Johnson", email: "alice@example.com" },
-                { id: "2", name: "Bob Smith", email: "bob@example.com" },
-                { id: "3", name: "Carol White", email: "carol@example.com" },
-        ];
-
+const DataList = ({ title, label, type, emailType, handleSendEmail }: DataListProps ) => {
         const typeStyle =
                 type === "Bookings" ? "bg-blue-50 text-blue-700"
                         : type === "Payments" ? "bg-emerald-50 text-emerald-600"
                                 : "bg-gray-100 text-gray-500";
 
         const [query, setQuery] = useState("");
-        const [suggestions, setSuggestions] = useState<{ id: string; name: string; email: string }[]>([]);
+        const [selectedRecipient, setSelectedRecipient] = useState<{ id: string; name: string; email: string } | null>(null);
+
+        const { data: recipientsData } = useSearchEmailRecipientsQuery(query, { skip: query.trim().length < 2 });
+        const suggestions = recipientsData?.data ?? [];
 
         const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const value = e.target.value;
                 setQuery(value);
-
-                if (value.trim() === "") {
-                        setSuggestions([]);
-                        return;
-                }
-
-                const filtered = allRecipients.filter(
-                        (r) =>
-                                r.name.toLowerCase().includes(value.toLowerCase()) ||
-                                r.email.toLowerCase().includes(value.toLowerCase())
-                );
-                setSuggestions(filtered);
+                if (!value.trim()) setSelectedRecipient(null);
         };
 
         const handleSelect = (r: { id: string; name: string; email: string }) => {
+                setSelectedRecipient(r);
                 setQuery(r.name);
-                setSuggestions([]);
+        };
+
+        const handleSubmit = () => {
+                if (selectedRecipient) {
+                        handleSendEmail(emailType, selectedRecipient.id);
+                }
         };
 
         return (
@@ -317,7 +288,7 @@ const DataList = ({ title, label, type, handleSendEmail }: DataListProps ) => {
                                                 </DialogClose>
                                                 <button
                                                         className="text-white text-sm font-medium font-text leading-5 px-5 py-2.5 bg-blue-700 rounded-xs hover:bg-blue-900 transition-color duration-300 cursor-pointer"
-                                                        onClick={handleSendEmail}
+                                                        onClick={handleSubmit}
                                                 >
                                                         Send Email
                                                 </button>

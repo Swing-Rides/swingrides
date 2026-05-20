@@ -8,6 +8,7 @@ import {
 } from "@/types/admin.type";
 import { AdminRenterByIdResponse } from "@/types/renters.type";
 import {
+  AdminISubscriberBookingDetailResponse,
   AdminISubscriberFleetDetailResponse,
   AdminISubscriberByIdResponse,
   ISubscribersResponse,
@@ -17,6 +18,24 @@ import {
   AdminVerificationPendingRenterResponse,
   IRentersResponse,
 } from "@/types/renters.type";
+import {
+  AdminUsersListResponse,
+  AdminActivityLogResponse,
+  InviteAdminPayload,
+  InviteAdminResponse,
+  PlatformSettingsResponse,
+  PlatformFeaturesSettings,
+  SystemSettings,
+  OperationalControlsSettings,
+  SecuritySettings,
+  CommunicationSettings,
+  RecentSendsResponse,
+  RecipientsResponse,
+  SendEmailPayload,
+  AdminUsersQuery,
+  ActivityLogQuery,
+  RecentSendsQuery,
+} from "@/types/settings.type";
 
 type AxiosBaseQueryArgs =
   | string
@@ -94,6 +113,11 @@ type AdminSubscriberFleetDetailQuery = {
   fleetId: string;
 };
 
+type AdminSubscriberBookingDetailQuery = {
+  subscriberId: string;
+  bookingId: string;
+};
+
 const toQueryString = <T extends object>(filters?: T) => {
   if (!filters) return "";
 
@@ -109,7 +133,7 @@ const toQueryString = <T extends object>(filters?: T) => {
 export const adminApi = createApi({
   reducerPath: "adminApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter"],
+  tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter", "AdminSettingsUsers", "AdminActivityLog", "PlatformSettings", "EmailSends"],
   endpoints: (builder) => ({
     adminLogin: builder.mutation<AdminSignInResponse, AdminSignInPayload>({
       query: (payload) => ({
@@ -150,6 +174,13 @@ export const adminApi = createApi({
     >({
       query: ({ subscriberId, fleetId }) =>
         `/api/auth/admin/subscribers/${subscriberId}/fleet/${fleetId}`,
+    }),
+    getAdminSubscriberBookingDetail: builder.query<
+      AdminISubscriberBookingDetailResponse,
+      AdminSubscriberBookingDetailQuery
+    >({
+      query: ({ subscriberId, bookingId }) =>
+        `/api/auth/admin/subscribers/${subscriberId}/bookings/${bookingId}`,
     }),
     getAdminRenterById: builder.query<AdminRenterByIdResponse, string>({
       query: (renterId) => `/api/auth/admin/renters/${renterId}`,
@@ -201,6 +232,147 @@ export const adminApi = createApi({
         { type: "AdminRenter", id: renterId },
       ],
     }),
+
+    // ─── Settings: Admin Users ───────────────────────────────────────────────
+    getAdminUsersList: builder.query<AdminUsersListResponse, AdminUsersQuery | undefined>({
+      query: (filters) => {
+        const query = toQueryString(filters);
+        return `/api/auth/admin/settings/admin-users${query ? `?${query}` : ""}`;
+      },
+      providesTags: [{ type: "AdminSettingsUsers", id: "LIST" }],
+    }),
+    inviteAdmin: builder.mutation<InviteAdminResponse, InviteAdminPayload>({
+      query: (payload) => ({
+        url: "/api/auth/admin/settings/admin-users/invite",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [
+        { type: "AdminSettingsUsers", id: "LIST" },
+        { type: "AdminActivityLog", id: "LIST" },
+      ],
+    }),
+    updateAdminRole: builder.mutation<unknown, { adminId: string; role: "admin" | "support" }>({
+      query: ({ adminId, role }) => ({
+        url: `/api/auth/admin/settings/admin-users/${adminId}/role`,
+        method: "PATCH",
+        body: { role },
+      }),
+      invalidatesTags: [
+        { type: "AdminSettingsUsers", id: "LIST" },
+        { type: "AdminActivityLog", id: "LIST" },
+      ],
+    }),
+    suspendAdminUser: builder.mutation<unknown, string>({
+      query: (adminId) => ({
+        url: `/api/auth/admin/settings/admin-users/${adminId}/suspend`,
+        method: "PATCH",
+      }),
+      invalidatesTags: [
+        { type: "AdminSettingsUsers", id: "LIST" },
+        { type: "AdminActivityLog", id: "LIST" },
+      ],
+    }),
+    reactivateAdminUser: builder.mutation<unknown, string>({
+      query: (adminId) => ({
+        url: `/api/auth/admin/settings/admin-users/${adminId}/reactivate`,
+        method: "PATCH",
+      }),
+      invalidatesTags: [
+        { type: "AdminSettingsUsers", id: "LIST" },
+        { type: "AdminActivityLog", id: "LIST" },
+      ],
+    }),
+    resendAdminInvite: builder.mutation<unknown, string>({
+      query: (adminId) => ({
+        url: `/api/auth/admin/settings/admin-users/${adminId}/resend-invite`,
+        method: "PATCH",
+      }),
+    }),
+    removeAdminUser: builder.mutation<unknown, string>({
+      query: (adminId) => ({
+        url: `/api/auth/admin/settings/admin-users/${adminId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [
+        { type: "AdminSettingsUsers", id: "LIST" },
+        { type: "AdminActivityLog", id: "LIST" },
+      ],
+    }),
+    getAdminActivityLog: builder.query<AdminActivityLogResponse, ActivityLogQuery | undefined>({
+      query: (filters) => {
+        const query = toQueryString(filters);
+        return `/api/auth/admin/settings/activity-log${query ? `?${query}` : ""}`;
+      },
+      providesTags: [{ type: "AdminActivityLog", id: "LIST" }],
+    }),
+
+    // ─── Settings: General ───────────────────────────────────────────────────
+    getPlatformSettings: builder.query<PlatformSettingsResponse, void>({
+      query: () => "/api/auth/admin/settings/general",
+      providesTags: ["PlatformSettings"],
+    }),
+    updatePlatformFeatures: builder.mutation<unknown, Partial<PlatformFeaturesSettings>>({
+      query: (body) => ({
+        url: "/api/auth/admin/settings/general/platform-features",
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["PlatformSettings"],
+    }),
+    updateSystemSettings: builder.mutation<unknown, Partial<SystemSettings>>({
+      query: (body) => ({
+        url: "/api/auth/admin/settings/general/system",
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["PlatformSettings"],
+    }),
+    updateOperationalControls: builder.mutation<unknown, Partial<OperationalControlsSettings>>({
+      query: (body) => ({
+        url: "/api/auth/admin/settings/general/operational-controls",
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["PlatformSettings"],
+    }),
+    updateSecuritySettings: builder.mutation<unknown, Partial<SecuritySettings>>({
+      query: (body) => ({
+        url: "/api/auth/admin/settings/general/security",
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["PlatformSettings"],
+    }),
+    updateCommunicationSettings: builder.mutation<unknown, Partial<CommunicationSettings>>({
+      query: (body) => ({
+        url: "/api/auth/admin/settings/general/communication",
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["PlatformSettings"],
+    }),
+
+    // ─── Settings: Email Actions ─────────────────────────────────────────────
+    getRecentEmailSends: builder.query<RecentSendsResponse, RecentSendsQuery | undefined>({
+      query: (filters) => {
+        const query = toQueryString(filters);
+        return `/api/auth/admin/settings/email-actions/recent-sends${query ? `?${query}` : ""}`;
+      },
+      providesTags: ["EmailSends"],
+    }),
+    searchEmailRecipients: builder.query<RecipientsResponse, string>({
+      query: (search) =>
+        `/api/auth/admin/settings/email-actions/recipients?search=${encodeURIComponent(search)}`,
+    }),
+    sendSystemEmail: builder.mutation<unknown, SendEmailPayload>({
+      query: (payload) => ({
+        url: "/api/auth/admin/settings/email-actions/send",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["EmailSends"],
+    }),
   }),
 });
 
@@ -211,9 +383,30 @@ export const {
   useGetAdminSubscribersQuery,
   useGetAdminSubscriberByIdQuery,
   useGetAdminSubscriberFleetDetailQuery,
+  useGetAdminSubscriberBookingDetailQuery,
   useGetAdminRenterByIdQuery,
   useGetAdminRentersQuery,
   useGetAdminVerificationPendingRentersQuery,
   useApproveRenterVerificationMutation,
   useRejectRenterVerificationMutation,
+  // Settings: Admin Users
+  useGetAdminUsersListQuery,
+  useInviteAdminMutation,
+  useUpdateAdminRoleMutation,
+  useSuspendAdminUserMutation,
+  useReactivateAdminUserMutation,
+  useResendAdminInviteMutation,
+  useRemoveAdminUserMutation,
+  useGetAdminActivityLogQuery,
+  // Settings: General
+  useGetPlatformSettingsQuery,
+  useUpdatePlatformFeaturesMutation,
+  useUpdateSystemSettingsMutation,
+  useUpdateOperationalControlsMutation,
+  useUpdateSecuritySettingsMutation,
+  useUpdateCommunicationSettingsMutation,
+  // Settings: Email Actions
+  useGetRecentEmailSendsQuery,
+  useSearchEmailRecipientsQuery,
+  useSendSystemEmailMutation,
 } = adminApi;
