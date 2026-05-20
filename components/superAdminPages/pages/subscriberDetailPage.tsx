@@ -5,7 +5,6 @@ import React, {
   useCallback,
   Suspense,
   useState,
-  useEffect,
   useMemo,
 } from "react";
 import Link from "next/link";
@@ -16,6 +15,7 @@ import {
   Eye,
   ChevronRight as BreadcrumbChevron,
   Trash,
+  Download,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatNumberToUSD } from "../utils/formatNumbertoUSD";
@@ -58,7 +58,7 @@ import {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const FAKE_LOAD_MS = 3000;
+// const FAKE_LOAD_MS = 3000;
 const ROWS_PER_PAGE = 10;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -354,13 +354,13 @@ function DataTable(props: DataTableVariant & SlugType) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // ── Fake loading ──────────────────────────────────────────────────────
-  const [isLoading, setIsLoading] = useState(true);
+  // // ── Fake loading ──────────────────────────────────────────────────────
+  // const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), FAKE_LOAD_MS);
-    return () => clearTimeout(timer);
-  }, []);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => setIsLoading(false), FAKE_LOAD_MS);
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   // ── URL param helper ──────────────────────────────────────────────────
   // Each tab uses its own page param key to avoid collisions
@@ -425,54 +425,55 @@ function DataTable(props: DataTableVariant & SlugType) {
           </TableHeader>
 
           <TableBody>
-            {isLoading ? (
-              <TableSkeletonRows />
-            ) : paginated.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center py-16 text-gray-400 text-sm"
-                >
-                  {config.emptyMsg}
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginated.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="py-4">
-                    <span className="text-neutral-950 text-sm font-medium font-text leading-5">
-                      {item.name}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4">
-                    <span className="text-gray-500 text-xs font-normal font-text leading-5">
-                      {item.id}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4">
-                    <StatusBadge dataType={dataType} status={item.status} />
-                  </TableCell>
-                  <TableCell className="py-4">
-                    <span className="text-neutral-950 text-sm font-medium font-text leading-5">
-                      {formatNumberToUSD(item.cost)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4">
-                    <span className="text-gray-500 text-sm font-normal font-text leading-5">
-                      {item.date}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4">
-                    <TableUIActionTab
-                      slug={slug}
-                      itemId={item.id}
-                      dataType={dataType}
-                      onDelete={() => setPendingDeleteId(item.id)}
-                    />
+            <Suspense fallback={<TableSkeletonRows />}>
+              {paginated.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-16 text-gray-400 text-sm"
+                  >
+                    {config.emptyMsg}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
+              ) : (
+                paginated.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="py-4">
+                      <span className="text-neutral-950 text-sm font-medium font-text leading-5">
+                        {item.name}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <span className="text-gray-500 text-xs font-normal font-text leading-5">
+                        {item.id}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <StatusBadge dataType={dataType} status={item.status} />
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <span className="text-neutral-950 text-sm font-medium font-text leading-5">
+                        {formatNumberToUSD(item.cost)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <span className="text-gray-500 text-sm font-normal font-text leading-5">
+                        {item.date}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <TableUIActionTab
+                        slug={slug}
+                        itemId={item.id}
+                        dataType={dataType}
+                        onDelete={() => setPendingDeleteId(item.id)}
+                        onDownload={() => console.log("Downloading billing history")}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </Suspense>
           </TableBody>
         </Table>
 
@@ -599,11 +600,13 @@ function TableUIActionTab({
   itemId,
   dataType,
   onDelete,
+  onDownload
 }: {
   slug: string;
   itemId: string;
   dataType: DataTableVariant["dataType"];
   onDelete: () => void;
+  onDownload: () => void;
 }) {
   // Route per tab type so the eye icon goes to the right detail page
   const href =
@@ -615,7 +618,7 @@ function TableUIActionTab({
 
   return (
     <div className="flex gap-5 items-center">
-      <Link
+      {dataType!== "Billing History" ? <><Link
         href={href}
         className="text-[#6B7280] hover:text-blue-600 transition-colors"
       >
@@ -626,7 +629,13 @@ function TableUIActionTab({
         className="text-[#6B7280] hover:text-red-500 transition-colors cursor-pointer"
       >
         <Trash className="size-4" />
-      </button>
+        </button></> : <button className="text-[#6B7280] hover:text-red-500 transition-colors cursor-pointer">
+          <Download 
+            className="size-4" 
+            onClick={onDownload}
+          />
+      </button> }
+      
     </div>
   );
 }

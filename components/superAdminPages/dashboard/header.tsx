@@ -1,9 +1,10 @@
 "use client"
 
 import { getInitials } from "@/components/pages/profilePages/utils"
-import { Search } from "lucide-react"
+import { ChevronDown, LogOut, Search } from "lucide-react"
 import Image from "next/image"
 import { userContent } from "@/constants/superAdminSidebar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export function DashboardHeader() {
         return (
@@ -41,20 +42,45 @@ type HeaderAvatarProps = {
 const HeaderAvatar = ({ user }: HeaderAvatarProps) => {
         const userInitials = getInitials(user.fullname)
 
+        const handleLogout = () => {
+                console.log("user logout")
+        }
+
         return (
-                <div className="rounded-full aspect-square size-10 overflow-clip bg-blue-700 text-white flex items-center justify-center text-sm font-semibold font-text shrink-0">
-                        {user.avatar ? (
-                                <Image
-                                        src={user.avatar}
-                                        alt={user.fullname}
-                                        title={user.fullname}
-                                        width={40}
-                                        height={40}
-                                        className="w-full aspect-square object-cover"
-                                />
-                        ) : (
-                                userInitials
-                        )}
+                <div className="flex gap-2 items-center justify-start">
+                        <div className="rounded-full aspect-square size-10 overflow-clip bg-blue-700 text-white flex items-center justify-center text-sm font-semibold font-text shrink-0">
+                                {user.avatar ? (
+                                        <Image
+                                                src={user.avatar}
+                                                alt={user.fullname}
+                                                title={user.fullname}
+                                                width={40}
+                                                height={40}
+                                                className="w-full aspect-square object-cover"
+                                        />
+                                ) : (
+                                        userInitials
+                                )}
+                        </div>
+                        <Popover>
+                                <PopoverTrigger asChild>
+                                        <button className="cursor-pointer">
+                                                <ChevronDown className="size-4" />
+                                        </button>
+                                </PopoverTrigger>
+                                <PopoverContent align="end" className="w-25">
+                                        <button 
+                                                className="flex items-center justify-start gap-2 cursor-pointer text-red-500 hover:text-red-900 transition-colors duration-300"
+                                                onClick={handleLogout}
+                                        >
+                                                <LogOut className="size-4" />
+                                                <span>
+                                                        logout
+                                                </span>
+                                        </button>
+                                </PopoverContent>
+                        </Popover>
+
                 </div>
         )
 }
