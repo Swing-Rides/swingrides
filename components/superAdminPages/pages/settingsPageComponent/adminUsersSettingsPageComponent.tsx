@@ -382,7 +382,7 @@ const SearchFilterSection = () => {
 
 // ─── User card ────────────────────────────────────────────────────────────────
 
-const TableUserCard = ({ name, email }: { name: string; email: string }) => (
+export const TableUserCard = ({ name, email }: { name: string; email: string }) => (
         <div className='flex items-center justify-start gap-3'>
                 <div className='flex justify-center items-center aspect-square size-10 rounded-full text-white bg-blue-700 text-sm font-bold font-text'>
                         {getInitials(name)}

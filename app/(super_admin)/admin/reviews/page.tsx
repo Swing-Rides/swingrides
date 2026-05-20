@@ -1,6 +1,9 @@
+import ReviewsPageComponents from "@/components/superAdminPages/pages/reviewsPageComponents/reviewsPageComponents";
 
 export default function ReviewsPage() {
         return (
-                <div>reviews page</div>
+                <>
+                        <ReviewsPageComponents />
+                </>
         )
 }

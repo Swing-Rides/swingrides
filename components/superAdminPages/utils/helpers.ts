@@ -5,6 +5,7 @@ import { SubscriberPlan, SubscriberStatus, FleetStatus, BookingStatus, BillingSt
 
 export type AdminUsersRoleType = 'super admin' | 'admin' | 'support';
 export type AdminUsersStatusType = 'active' | 'suspended' | 'invited';
+export type ReviewStarRatingType = '1' | '2' | '3' | '4' | '5';
 
 export const plansItems: { value: SubscriberPlan; label: string }[] = [
         { value: 'enterprise', label: 'Enterprise' },
@@ -22,6 +23,14 @@ export const adminUsersRoleItems: { value: AdminUsersRoleType; label: string }[]
         { value: 'super admin', label: 'Super Admin' },
         { value: 'admin', label: 'Admin' },
         { value: 'support', label: 'Support' },
+]
+
+export const reviewStarRatingItems: { value: ReviewStarRatingType; label: string }[] = [
+        { value: '1', label: '1 Star' },
+        { value: '2', label: '2 Stars' },
+        { value: '3', label: '3 Stars' },
+        { value: '4', label: '4 Stars' },
+        { value: '5', label: '5 Stars' },
 ]
 
 export const adminUsersStatusItems: { value: AdminUsersStatusType; label: string }[] = [
