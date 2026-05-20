@@ -36,6 +36,12 @@ import {
   ActivityLogQuery,
   RecentSendsQuery,
 } from "@/types/settings.type";
+import {
+  AdminReviewsQuery,
+  AdminReviewsModerationResponse,
+  AdminReviewDetailResponse,
+  AdminReviewActionResponse,
+} from "@/types/admin-reviews.type";
 
 type AxiosBaseQueryArgs =
   | string
@@ -133,7 +139,7 @@ const toQueryString = <T extends object>(filters?: T) => {
 export const adminApi = createApi({
   reducerPath: "adminApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter", "AdminSettingsUsers", "AdminActivityLog", "PlatformSettings", "EmailSends"],
+  tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter", "AdminSettingsUsers", "AdminActivityLog", "PlatformSettings", "EmailSends", "AdminReviews"],
   endpoints: (builder) => ({
     adminLogin: builder.mutation<AdminSignInResponse, AdminSignInPayload>({
       query: (payload) => ({
@@ -373,6 +379,45 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["EmailSends"],
     }),
+
+    // ─── Reviews ─────────────────────────────────────────────────────────────
+    getAdminReviewsModeration: builder.query<
+      AdminReviewsModerationResponse,
+      AdminReviewsQuery | undefined
+    >({
+      query: (filters) => {
+        const query = toQueryString(filters);
+        return `/api/auth/admin/reviews${query ? `?${query}` : ""}`;
+      },
+      providesTags: [{ type: "AdminReviews", id: "LIST" }],
+    }),
+    getAdminReviewDetail: builder.query<AdminReviewDetailResponse, string>({
+      query: (reviewId) => `/api/auth/admin/reviews/${reviewId}`,
+      providesTags: (_result, _error, reviewId) => [
+        { type: "AdminReviews", id: reviewId },
+      ],
+    }),
+    flagAdminReview: builder.mutation<AdminReviewActionResponse, string>({
+      query: (reviewId) => ({
+        url: `/api/auth/admin/reviews/${reviewId}/flag`,
+        method: "PATCH",
+      }),
+      invalidatesTags: [{ type: "AdminReviews", id: "LIST" }],
+    }),
+    unflagAdminReview: builder.mutation<AdminReviewActionResponse, string>({
+      query: (reviewId) => ({
+        url: `/api/auth/admin/reviews/${reviewId}/unflag`,
+        method: "PATCH",
+      }),
+      invalidatesTags: [{ type: "AdminReviews", id: "LIST" }],
+    }),
+    deleteAdminReview: builder.mutation<AdminReviewActionResponse, string>({
+      query: (reviewId) => ({
+        url: `/api/auth/admin/reviews/${reviewId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [{ type: "AdminReviews", id: "LIST" }],
+    }),
   }),
 });
 
@@ -409,4 +454,10 @@ export const {
   useGetRecentEmailSendsQuery,
   useSearchEmailRecipientsQuery,
   useSendSystemEmailMutation,
+  // Reviews
+  useGetAdminReviewsModerationQuery,
+  useGetAdminReviewDetailQuery,
+  useFlagAdminReviewMutation,
+  useUnflagAdminReviewMutation,
+  useDeleteAdminReviewMutation,
 } = adminApi;
