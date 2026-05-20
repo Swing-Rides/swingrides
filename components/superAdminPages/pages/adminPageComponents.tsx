@@ -7,6 +7,7 @@ import { SalesChart } from "../dashboard/dynamicImport";
 import { CardIntro } from "../dashboard/cardIntro";
 import { formatNumberToUSD } from "../utils/formatNumbertoUSD";
 import { AdminOverviewResponseData } from "@/types/admin.type";
+import { GraphDataType } from "../charts/salesChart";
 
 type OverviewCardProps = {
   icon: ReactNode;
@@ -30,19 +31,19 @@ const CARD_ICON_MAP: Record<string, ReactNode> = {
 export default function AdminPageComponents({
   overview,
 }: AdminPageComponentsProps) {
-  const graphData = {
+  const graphData: GraphDataType = {
     data: overview?.mrrGrowth.data.map((point) => ({
       sales: point.value,
       month: point.month,
-    })),
+    })) ?? [],                          
     series: [{ name: "sales", color: "#1A56DB" }],
-  };
+  }
 
   const donutData = overview?.subscriberDistribution.map((item, index) => ({
     userPackage: item.plan.charAt(0).toUpperCase() + item.plan.slice(1),
     userCount: item.count,
-    color: ["#1A56DB", "#10B981", "#F59E0B"][index] ?? "#6B7280",
-  }));
+    color: (["#1A56DB", "#10B981", "#F59E0B"][index]) ?? "#6B7280",
+  })) ?? [] 
 
   return (
     <div className="p-3 md:p-8">
@@ -75,7 +76,7 @@ export default function AdminPageComponents({
 
         <div className="flex flex-wrap gap-4 my-4">
           <div className="basis-183 grow p-3 md:p-6 bg-white rounded-lg border border-gray-200 flex flex-col gap-6">
-            {/* <SalesChart graphData={graphData} /> */}
+            <SalesChart graphData={graphData} />
           </div>
           <div className="basis-95 grow md:grow-0 p-3 md:p-6 bg-white rounded-lg border border-gray-200 flex flex-col gap-6">
             <div>
@@ -84,7 +85,9 @@ export default function AdminPageComponents({
                 desc="Active plans breakdown"
               />
             </div>
-            <div>{/* <UsersDonutChart chartData={donutData} /> */}</div>
+            <div>
+              {donutData.length > 0 && <UsersDonutChart chartData={donutData} />}
+            </div>
           </div>
         </div>
 
