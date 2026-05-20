@@ -1,11 +1,21 @@
 import type { NextConfig } from "next";
 
+const backendUrl =
+  process.env.BACKEND_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "http://147.93.190.15:3000"
+    : "http://localhost:3000");
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "files.example.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.example.com",
       },
       {
         protocol: "https",
@@ -17,7 +27,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/backend/:path*",
-        destination: "http://147.93.190.15:3000/:path*",
+        destination: `${backendUrl}/:path*`,
       },
     ];
   },
