@@ -1,6 +1,7 @@
 import { AdminRenterDataRow } from "@/types/renters.type"
 import { AdminSubscriberRow } from "@/types/subscribers.type"
 import { formatDate } from "./formatDate"
+import { ActivityLogRow } from "../pages/settingsPageComponent/adminUsersSettingsPageComponent"
 
 export function exportToCSV(rows: AdminSubscriberRow[]) {
         const headers = ['ID', 'Organisation', 'Email', 'Plan', 'Vehicles', 'Status', 'Monthly Revenue', 'Date Joined']
@@ -127,4 +128,26 @@ export function exportAllChangeHistoryToCSV(rows: PlanChangeCSVRow[]): void {
                 r.actionedBy,
         ])
         downloadCSV('plan-change-history.csv', headers, data)
+}
+
+export function exportActivityLog(activityLogRows: ActivityLogRow[]){
+        const headers = ['Admin', 'Action', 'Target', 'Timestamp']
+        const rows = activityLogRows.map(item => [
+                item.name,
+                item.action,
+                item.target,
+                item.timestamp,
+        ])
+
+        const csv = [headers, ...rows]
+                .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+                .join('\n')
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `activity-log-${new Date().toISOString().slice(0, 10)}.csv`
+        link.click()
+        URL.revokeObjectURL(url)
 }

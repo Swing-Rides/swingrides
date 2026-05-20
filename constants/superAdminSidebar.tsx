@@ -95,7 +95,7 @@ export const sidebarContent = [
                                                         </svg>
                                                 ),
                                                 label: 'General',
-                                                url: '/admin/settings/general'
+                                                url: '/admin/settings/general?tab=platform-features'
                                         },
                                         {
                                                 icon: (

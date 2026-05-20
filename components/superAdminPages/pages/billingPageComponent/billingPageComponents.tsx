@@ -254,219 +254,219 @@ function AllPaymentTable({
   rows: PaymentRow[];
   pagination: AdminBillingResponseData["payments"]["pagination"];
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
 
-  const search = searchParams.get("search") ?? "";
-  const parsedPage = Number(searchParams.get("page") ?? pagination.page ?? 1);
-  const page =
-    Number.isFinite(parsedPage) && parsedPage > 0
-      ? parsedPage
-      : (pagination.page ?? 1);
-  const parsedLimit = Number(
-    searchParams.get("limit") ?? pagination.limit ?? ROWS_PER_PAGE,
-  );
-  const limit =
-    Number.isFinite(parsedLimit) && parsedLimit > 0
-      ? parsedLimit
-      : (pagination.limit ?? ROWS_PER_PAGE);
+    const search = searchParams.get("search") ?? "";
+    const parsedPage = Number(searchParams.get("page") ?? pagination.page ?? 1);
+    const page =
+        Number.isFinite(parsedPage) && parsedPage > 0
+        ? parsedPage
+        : (pagination.page ?? 1);
+    const parsedLimit = Number(
+        searchParams.get("limit") ?? pagination.limit ?? ROWS_PER_PAGE,
+    );
+    const limit =
+        Number.isFinite(parsedLimit) && parsedLimit > 0
+        ? parsedLimit
+        : (pagination.limit ?? ROWS_PER_PAGE);
 
-  // Sorting
-  const [sortDir, setSortDir] = useState<SortDir>(null);
+    // Sorting
+    const [sortDir, setSortDir] = useState<SortDir>(null);
 
-  const toggleSort = () =>
-    setSortDir((prev) =>
-      prev === "asc" ? "desc" : prev === "desc" ? null : "asc",
+    const toggleSort = () =>
+        setSortDir((prev) =>
+        prev === "asc" ? "desc" : prev === "desc" ? null : "asc",
+        );
+
+    const setPage = useCallback(
+        (p: number) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("page", String(p));
+        params.set("limit", String(limit));
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        },
+        [router, pathname, searchParams, limit],
     );
 
-  const setPage = useCallback(
-    (p: number) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("page", String(p));
-      params.set("limit", String(limit));
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [router, pathname, searchParams, limit],
-  );
+    const setSearch = useCallback(
+        (value: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (value.trim()) {
+            params.set("search", value);
+        } else {
+            params.delete("search");
+        }
+        params.set("page", "1");
+        params.set("limit", String(limit));
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        },
+        [router, pathname, searchParams, limit],
+    );
 
-  const setSearch = useCallback(
-    (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value.trim()) {
-        params.set("search", value);
-      } else {
-        params.delete("search");
-      }
-      params.set("page", "1");
-      params.set("limit", String(limit));
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [router, pathname, searchParams, limit],
-  );
+    const sortedRows = useMemo(() => {
+        let result = rows;
+        if (sortDir) {
+        result = [...result].sort((a, b) => {
+            const da = new Date(a.billingDate).getTime();
+            const db = new Date(b.billingDate).getTime();
+            return sortDir === "asc" ? da - db : db - da;
+        });
+        }
 
-  const sortedRows = useMemo(() => {
-    let result = rows;
-    if (sortDir) {
-      result = [...result].sort((a, b) => {
-        const da = new Date(a.billingDate).getTime();
-        const db = new Date(b.billingDate).getTime();
-        return sortDir === "asc" ? da - db : db - da;
-      });
-    }
+        return result;
+    }, [rows, sortDir]);
 
-    return result;
-  }, [rows, sortDir]);
+    const totalPages = Math.max(1, pagination.totalPages || 1);
 
-  const totalPages = Math.max(1, pagination.totalPages || 1);
+    const paginationLabel =
+        pagination.total === 0
+        ? "0 results"
+        : `${(page - 1) * limit + 1}–${Math.min(page * limit, pagination.total)} of ${pagination.total}`;
 
-  const paginationLabel =
-    pagination.total === 0
-      ? "0 results"
-      : `${(page - 1) * limit + 1}–${Math.min(page * limit, pagination.total)} of ${pagination.total}`;
+    return (
+        <div className="p-4 md:p-6 flex flex-col gap-4.5">
+        {/* Toolbar */}
+        <div className="flex flex-wrap gap-3 items-center">
+            <div className="relative flex items-center flex-1 min-w-48 max-w-xl">
+            <Search className="absolute left-3 size-4 text-gray-400 pointer-events-none shrink-0" />
+            <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search organization, email or ID..."
+                className={[
+                "w-full pl-9 pr-4 py-2 rounded-lg",
+                "bg-gray-50 border border-gray-300",
+                "text-xs text-[#0B0B0B]/50 placeholder:text-gray-400 font-text",
+                "outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100",
+                "transition-all duration-200",
+                ].join(" ")}
+            />
+            </div>
 
-  return (
-    <div className="p-4 md:p-6 flex flex-col gap-4.5">
-      {/* Toolbar */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex items-center flex-1 min-w-48 max-w-xl">
-          <Search className="absolute left-3 size-4 text-gray-400 pointer-events-none shrink-0" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search organization, email or ID..."
-            className={[
-              "w-full pl-9 pr-4 py-2 rounded-lg",
-              "bg-gray-50 border border-gray-300",
-              "text-xs text-[#0B0B0B]/50 placeholder:text-gray-400 font-text",
-              "outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100",
-              "transition-all duration-200",
-            ].join(" ")}
-          />
+            <button
+            onClick={() => exportAllPaymentsToCSV(sortedRows)}
+            className="flex flex-nowrap text-nowrap gap-2 items-center px-3 py-2 rounded-[10px] border border-blue-700 cursor-pointer hover:bg-blue-900 duration-300 transition-colors group"
+            >
+            <span className="text-blue-700 text-sm font-medium font-text leading-5 group-hover:text-blue-200 duration-300 transition-colors">
+                Export CSV
+            </span>
+            <Download className="size-4 text-blue-700 group-hover:text-blue-200 duration-300 transition-colors" />
+            </button>
         </div>
 
-        <button
-          onClick={() => exportAllPaymentsToCSV(sortedRows)}
-          className="flex flex-nowrap text-nowrap gap-2 items-center px-3 py-2 rounded-[10px] border border-blue-700 cursor-pointer hover:bg-blue-900 duration-300 transition-colors group"
-        >
-          <span className="text-blue-700 text-sm font-medium font-text leading-5 group-hover:text-blue-200 duration-300 transition-colors">
-            Export CSV
-          </span>
-          <Download className="size-4 text-blue-700 group-hover:text-blue-200 duration-300 transition-colors" />
-        </button>
-      </div>
-
-      {/* Table */}
-      <Table>
-        <TableHeader className="bg-gray-100">
-          <TableRow>
-            <TableHead className="w-56 text-gray-500 text-xs font-semibold font-text uppercase leading-4">
-              Organisation
-            </TableHead>
-            <TableHead className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
-              Plan
-            </TableHead>
-            <TableHead className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
-              Amount
-            </TableHead>
-            <TableHead className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
-              <button
-                onClick={toggleSort}
-                className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-              >
-                Billing Date
-                <CalendarArrowDown
-                  className={`size-3 transition-colors ${sortDir === "asc" ? "text-blue-600" : "text-gray-400"}`}
-                />
-                <CalendarArrowUp
-                  className={`size-3 transition-colors ${sortDir === "desc" ? "text-blue-600" : "text-gray-400"}`}
-                />
-              </button>
-            </TableHead>
-            <TableHead className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
-              Payment Method
-            </TableHead>
-            <TableHead className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
-              Status
-            </TableHead>
-            <TableHead className="w-20 text-gray-500 text-xs font-semibold font-text uppercase leading-4">
-              Actions
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedRows.length === 0 ? (
+        {/* Table */}
+        <Table>
+            <TableHeader className="bg-gray-100">
             <TableRow>
-              <TableCell
-                colSpan={7}
-                className="text-center py-16 text-gray-400 text-sm"
-              >
-                No payments match your filters.
-              </TableCell>
+                <TableHead className="w-56 text-gray-500 text-xs font-semibold font-text uppercase leading-4">
+                Organisation
+                </TableHead>
+                <TableHead className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
+                Plan
+                </TableHead>
+                <TableHead className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
+                Amount
+                </TableHead>
+                <TableHead className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
+                <button
+                    onClick={toggleSort}
+                    className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                >
+                    Billing Date
+                    <CalendarArrowDown
+                    className={`size-3 transition-colors ${sortDir === "asc" ? "text-blue-600" : "text-gray-400"}`}
+                    />
+                    <CalendarArrowUp
+                    className={`size-3 transition-colors ${sortDir === "desc" ? "text-blue-600" : "text-gray-400"}`}
+                    />
+                </button>
+                </TableHead>
+                <TableHead className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
+                Payment Method
+                </TableHead>
+                <TableHead className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
+                Status
+                </TableHead>
+                <TableHead className="w-20 text-gray-500 text-xs font-semibold font-text uppercase leading-4">
+                Actions
+                </TableHead>
             </TableRow>
-          ) : (
-            sortedRows.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <div className="flex flex-col">
+            </TableHeader>
+            <TableBody>
+            {sortedRows.length === 0 ? (
+                <TableRow>
+                <TableCell
+                    colSpan={7}
+                    className="text-center py-16 text-gray-400 text-sm"
+                >
+                    No payments match your filters.
+                </TableCell>
+                </TableRow>
+            ) : (
+                sortedRows.map((item) => (
+                <TableRow key={item.id}>
+                    <TableCell>
+                    <div className="flex flex-col">
+                        <span className="text-neutral-950 text-sm font-medium font-text leading-5">
+                        {item.organization}
+                        </span>
+                        <span className="text-gray-500 text-xs font-normal font-text leading-5">
+                        {item.email}
+                        </span>
+                    </div>
+                    </TableCell>
+                    <TableCell>
+                    <span className="inline-flex text-blue-700 text-xs font-semibold font-text uppercase leading-4 px-2.5 py-1 bg-indigo-50 rounded-full">
+                        {item.plan}
+                    </span>
+                    </TableCell>
+                    <TableCell>
                     <span className="text-neutral-950 text-sm font-medium font-text leading-5">
-                      {item.organization}
+                        {item.amountFormatted}
                     </span>
-                    <span className="text-gray-500 text-xs font-normal font-text leading-5">
-                      {item.email}
+                    </TableCell>
+                    <TableCell>
+                    <span className="text-gray-500 text-sm font-normal font-text leading-5">
+                        {new Date(item.billingDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        })}
                     </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span className="inline-flex text-blue-700 text-xs font-semibold font-text uppercase leading-4 px-2.5 py-1 bg-indigo-50 rounded-full">
-                    {item.plan}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-neutral-950 text-sm font-medium font-text leading-5">
-                    {item.amountFormatted}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-gray-500 text-sm font-normal font-text leading-5">
-                    {new Date(item.billingDate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-gray-500 text-sm font-normal font-text leading-5">
-                    {item.paymentMethod}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <SubscriptionBillingStatusPill
-                    status={
-                      item.status.toLowerCase() as SubscriberBillingStatus
-                    }
-                  />
-                </TableCell>
-                <TableCell>
-                  <PaymentActions actions={item.actions} />
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+                    </TableCell>
+                    <TableCell>
+                    <span className="text-gray-500 text-sm font-normal font-text leading-5">
+                        {item.paymentMethod}
+                    </span>
+                    </TableCell>
+                    <TableCell>
+                    <SubscriptionBillingStatusPill
+                        status={
+                        item.status.toLowerCase() as SubscriberBillingStatus
+                        }
+                    />
+                    </TableCell>
+                    <TableCell>
+                    <PaymentActions actions={item.actions} />
+                    </TableCell>
+                </TableRow>
+                ))
+            )}
+            </TableBody>
+        </Table>
 
-      <PaginationBar
-        page={page}
-        totalPages={totalPages}
-        limit={limit}
-        label={paginationLabel}
-        onPageChange={setPage}
-      />
-    </div>
-  );
+        <PaginationBar
+            page={page}
+            totalPages={totalPages}
+            limit={limit}
+            label={paginationLabel}
+            onPageChange={setPage}
+        />
+        </div>
+    );
 }
 
 // ─── Plan Changes table ───────────────────────────────────────────────────────
