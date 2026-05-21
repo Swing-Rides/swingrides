@@ -1,5 +1,5 @@
 import { BookingPaymentStatusType, MaintenanceStatusType, SubscriberPlan } from "@/constants/superAdminSidebar";
-import { ADMIN_USER_ROLE_STYLE, ADMIN_USER_STATUS_STYLE, AdminUsersRoleType, AdminUsersStatusType, BOOKING_PAYMENT_STATUS_STYLE, CAR_BOOKING_STATUS_STYLE, MAINTENANCE_STATUS_STYLE, RENTER_STATUS_STYLE, RENTER_VERIFICATION_STATUS_STYLE, SUBSCRIPTION_BILLING_STATUS_STYLE, SUBSCRIPTION_PLAN_STYLE } from "../utils/helpers";
+import { ADMIN_TICKET_STATUS_STYLE, ADMIN_USER_ROLE_STYLE, ADMIN_USER_STATUS_STYLE, AdminTicketStatusItemsType, AdminUsersRoleType, AdminUsersStatusType, BOOKING_PAYMENT_STATUS_STYLE, CAR_BOOKING_STATUS_STYLE, MAINTENANCE_STATUS_STYLE, RENTER_STATUS_STYLE, RENTER_VERIFICATION_STATUS_STYLE, SUBSCRIPTION_BILLING_STATUS_STYLE, SUBSCRIPTION_PLAN_STYLE } from "../utils/helpers";
 import { RenterStatus } from "@/constants/renterTestData";
 import { CarBookingStatus, RenterVerificationDocumentStatus } from "@/types/renters.type";
 import { SubscriberBillingStatus } from "@/types/subscribers.type";
@@ -188,6 +188,27 @@ export const AdminUsersStatusPill = ({ status }: { status: AdminUsersStatusType 
 
         const styleMap = ADMIN_USER_STATUS_STYLE
         const normalizedStatus = status.toLowerCase() as AdminUsersStatusType
+
+        const style = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        if (!style) return <span className="text-xs bg-black text-gray-400">{status}</span>
+
+        const { label, textColor, bgColor } = style
+
+        return (
+                <span
+                        className="py-1 px-2.5 rounded-full text-xs font-semibold font-text leading-4"
+                        style={{ color: textColor, backgroundColor: bgColor }}
+                >
+                        {label}
+                </span>
+        )       
+}
+
+export const AdminTicketStatusPill = ({ status }: { status: AdminTicketStatusItemsType }) => {
+
+        const styleMap = ADMIN_TICKET_STATUS_STYLE
+        const normalizedStatus = status.toLowerCase() as AdminTicketStatusItemsType
 
         const style = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
 
