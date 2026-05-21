@@ -73,7 +73,8 @@ function getFilteredData(filter: FilterType, graphData: GraphDataType) {
  * Produces exactly 5 evenly-spaced Y-axis ticks: [0, 25%, 50%, 75%, 100%] of max.
  */
 function getYTicks(maxVal: number): number[] {
-  const step = maxVal / 4;
+  const safeMax = maxVal === 0 ? 100 : maxVal
+  const step = safeMax / 4;
   return [0, 1, 2, 3, 4].map((i) => Math.round(step * i));
 }
 
@@ -111,7 +112,12 @@ export default function SalesChart({
 }: {
   graphData?: GraphDataType;
 }) {
-  const [activeFilter, setActiveFilter] = useState<FilterType>("1Y");
+
+  const defaultFilter: FilterType =
+    graphData.data.length <= 3 ? "3M" :
+      graphData.data.length <= 6 ? "6M" : "1Y"
+
+  const [activeFilter, setActiveFilter] = useState<FilterType>(defaultFilter);
 
   const filteredData = useMemo(
     () => getFilteredData(activeFilter, graphData),
@@ -188,7 +194,7 @@ export default function SalesChart({
             tickLine={false}
             tick={{ fontSize: 12, fill: "#9CA3AF" }}
             width={52}
-            domain={[0, maxVal]}
+            domain={[0, maxVal === 0 ? 100 : Math.ceil(maxVal * 1.1)]}
           />
 
           <Tooltip
