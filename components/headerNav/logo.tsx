@@ -4,11 +4,11 @@ import Image from 'next/image'
 export default function Logo() {
         return (
                 <Image
-                        src={'/swingrides_logo.svg'}
+                        src={'/swing-rides-logo.png'}
                         alt='Swing Rides Logo'
                         title='Swing Rides Logo'
-                        width={148}
-                        height={38}
+                        width={98}
+                        height={49}
                         loading="eager"
                 />
         )

@@ -9,6 +9,7 @@ export type ReviewStarRatingType = '1' | '2' | '3' | '4' | '5';
 export type AdminTicketStatusItemsType = 'open' | 'in progress' | 'resolved';
 export type AdminTicketTypesItemsType = 'technical issue' | 'billing query' | 'dispute' | 'relist request' | 'damage report' | 'incidental charge' | 'feature request';
 export type AdminTicketPriorityItemsType = 'yes' | 'no';
+export type AdminUserTypeItemsType = 'host' | 'renter' | 'both';
 
 export const plansItems: { value: SubscriberPlan; label: string }[] = [
         { value: 'enterprise', label: 'Enterprise' },
@@ -175,4 +176,10 @@ export const ADMIN_TICKET_STATUS_STYLE: Record<AdminTicketStatusItemsType, { lab
         "open": { label: "Open", textColor: "#F59E0B", bgColor: "#FFF7E9" },
         "in progress": { label: "In Progress", textColor: "#3B82F6", bgColor: "#E3EEFF" },
         "resolved": { label: "Resolved", textColor: "#10B981", bgColor: "#DAFFF3" },
+}
+
+export const ADMIN_USER_TYPE_STYLE: Record<AdminUserTypeItemsType, { label: string; textColor: string; bgColor: string }> = {
+        "host": { label: "Host", textColor: "#1A56DB", bgColor: "#EBF0FB" },
+        "renter": { label: "Renter", textColor: "#0891B2", bgColor: "#D1F6FF" },
+        "both": { label: "Both", textColor: "#dddddd", bgColor: "#000000" },
 }
