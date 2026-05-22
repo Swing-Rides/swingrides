@@ -2,6 +2,7 @@
 
 import SubscriberDetailPage from "@/components/superAdminPages/pages/subscriberDetailPage";
 import { useGetAdminSubscriberByIdQuery } from "@/app/store/services/adminApi";
+import { SubscriberDetailPageSkeleton } from "../loadingSkeletons/subscriberDetailPageSkeleton";
 
 type SubscriberDetailPageClientProps = {
   slug: string;
@@ -14,7 +15,7 @@ export default function SubscriberDetailPageClient({
 
   if (isLoading) {
     return (
-      <div className="p-6 text-sm text-gray-500">Loading subscriber details...</div>
+      <SubscriberDetailPageSkeleton/>
     );
   }
 

@@ -52,6 +52,7 @@ import {
 } from "@/types/subscribers.type";
 import { formatDate } from "../utils/formatDate";
 import { useGetAdminSubscribersQuery } from "@/app/store/services/adminApi";
+import { SubscribersPageSkeleton } from "../loadingSkeletons/subscribersPageSkeleton";
 
 type SelectUIProps = {
   title: string;
@@ -107,7 +108,7 @@ export default function SubscribersPageComponents() {
 
   if (isLoading) {
     return (
-      <div className="p-6 text-sm text-gray-500">Loading subscribers...</div>
+      <SubscribersPageSkeleton />
     );
   }
 
@@ -127,7 +128,6 @@ export default function SubscribersPageComponents() {
       pageDescription="Manage all host organisations on the platform"
     >
       <div>
-        {/* Overview cards — always visible, no loading needed */}
         <div className="flex flex-wrap gap-4 mt-8">
           <OverviewCard
             label="Total subscribers"

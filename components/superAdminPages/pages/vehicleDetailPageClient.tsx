@@ -1,5 +1,6 @@
 "use client";
 
+import { skipToken } from "@reduxjs/toolkit/query/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import VehicleDetailPage from "@/components/superAdminPages/pages/vehicleDetailPage";
@@ -8,6 +9,7 @@ import {
   MaintenanceStatusType,
   SubscriberPlan,
 } from "@/constants/superAdminSidebar";
+import { VehicleDetailPageSkeleton } from "../loadingSkeletons/vehicleDetailPageSkeleton";
 
 const FALLBACK_GALLERY = [
   {
@@ -34,7 +36,14 @@ export default function VehicleDetailPageClient() {
   }>();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  console.log("VehicleDetailPageClient params:", { slug, id });
+  // console.log("VehicleDetailPageClient params:", { slug, id });
+
+
+  const { data, isLoading, isError } = useGetAdminSubscriberFleetDetailQuery(
+    slug && id
+      ? { subscriberId: slug, fleetId: id }
+      : skipToken,
+  );
 
   if (!slug || !id) {
     return (
@@ -44,14 +53,9 @@ export default function VehicleDetailPageClient() {
     );
   }
 
-  const { data, isLoading, isError } = useGetAdminSubscriberFleetDetailQuery({
-    subscriberId: slug,
-    fleetId: id,
-  });
-
   if (isLoading) {
     return (
-      <div className="p-6 text-sm text-gray-500">Loading fleet details...</div>
+      <VehicleDetailPageSkeleton />
     );
   }
 
