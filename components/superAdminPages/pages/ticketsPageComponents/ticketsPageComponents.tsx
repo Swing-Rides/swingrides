@@ -18,6 +18,7 @@ import {
         adminTicketStatusItems,
         AdminTicketStatusItemsType,
         adminTicketTypesItems,
+        AdminTicketTypesItemsType,
 } from "../../utils/helpers";
 import { formatDate } from "../../utils/formatDate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -40,7 +41,7 @@ type AdminTicketRow = {
         ticketId: string
         submitterName: string
         submitterEmail: string
-        type: string
+        type: AdminTicketTypesItemsType
         subject: string
         status: AdminTicketStatusItemsType
         photos: string[]
@@ -72,11 +73,11 @@ const SAMPLE_SUMMARY: TicketSummary = {
 }
 
 const SAMPLE_ROWS: AdminTicketRow[] = [
-        { id: "1", ticketId: "TKT-0001", submitterName: "Alice Johnson", submitterEmail: "alice@example.com", type: "Billing", subject: "Overcharged for last booking", status: "open", photos: [], date: "2025-01-10T09:00:00Z" },
-        { id: "2", ticketId: "TKT-0002", submitterName: "Bob Smith", submitterEmail: "bob@example.com", type: "Damage Report", subject: "Scratch on rear bumper", status: "in progress", photos: ["photo1.jpg", "photo2.jpg"], date: "2025-01-14T11:30:00Z" },
-        { id: "3", ticketId: "TKT-0003", submitterName: "Carol White", submitterEmail: "carol@example.com", type: "Complaint", subject: "Host was unresponsive during pickup", status: "resolved", photos: [], date: "2025-01-18T08:15:00Z" },
-        { id: "4", ticketId: "TKT-0004", submitterName: "David Lee", submitterEmail: "david@example.com", type: "Technical", subject: "App crashed during booking confirmation", status: "open", photos: [], date: "2025-02-01T14:00:00Z" },
-        { id: "5", ticketId: "TKT-0005", submitterName: "Eva Brown", submitterEmail: "eva@example.com", type: "Damage Report", subject: "Windshield crack not listed in photos", status: "in progress", photos: ["photo1.jpg"], date: "2025-02-05T10:45:00Z" },
+        { id: "1", ticketId: "TKT-0001", submitterName: "Alice Johnson", submitterEmail: "alice@example.com", type: "billing query", subject: "Overcharged for last booking", status: "open", photos: ["photo1.jpg", "photo2.jpg"], date: "2025-01-10T09:00:00Z" },
+        { id: "2", ticketId: "TKT-0002", submitterName: "Bob Smith", submitterEmail: "bob@example.com", type: "damage report", subject: "Scratch on rear bumper", status: "in progress", photos: ["photo1.jpg", "photo2.jpg", "photo3.jpg", "photo4.jpg"], date: "2025-01-14T11:30:00Z" },
+        { id: "3", ticketId: "TKT-0003", submitterName: "Carol White", submitterEmail: "carol@example.com", type: "dispute", subject: "Host was unresponsive during pickup", status: "resolved", photos: [], date: "2025-01-18T08:15:00Z" },
+        { id: "4", ticketId: "TKT-0004", submitterName: "David Lee", submitterEmail: "david@example.com", type: "technical issue", subject: "App crashed during booking confirmation", status: "open", photos: ["photo1.jpg", "photo2.jpg", "photo3.jpg"], date: "2025-02-01T14:00:00Z" },
+        { id: "5", ticketId: "TKT-0005", submitterName: "Eva Brown", submitterEmail: "eva@example.com", type: "damage report", subject: "Windshield crack not listed in photos", status: "in progress", photos: ["photo1.jpg"], date: "2025-02-05T10:45:00Z" },
 ]
 
 const SAMPLE_PAGINATION: TicketPagination = {
@@ -213,23 +214,23 @@ const TicketListTable = ({ rows, pagination, isLoading, goToPage }: TicketListTa
                                                                                 {item.ticketId}
                                                                         </span>
                                                                 </TableCell>
-                                                                <TableCell className="pl-5">
+                                                                <TableCell className="px-5">
                                                                         <TableUserCard name={item.submitterName} email={item.submitterEmail ?? "—"} />
                                                                 </TableCell>
-                                                                <TableCell>
-                                                                        <span className="text-gray-700 text-xs font-normal font-text leading-5">
+                                                                <TableCell className="max-w-26.25 w-full px-5">
+                                                                        <span className="text-gray-700 text-xs font-normal font-text leading-5 capitalize">
                                                                                 {item.type}
                                                                         </span>
                                                                 </TableCell>
-                                                                <TableCell>
+                                                                <TableCell className="px-5">
                                                                         <span className="text-neutral-950 text-xs font-normal font-text leading-5">
                                                                                 {item.subject}
                                                                         </span>
                                                                 </TableCell>
-                                                                <TableCell>
+                                                                <TableCell className="px-5">
                                                                         <AdminTicketStatusPill status={item.status} />
                                                                 </TableCell>
-                                                                <TableCell>
+                                                                <TableCell className="px-5">
                                                                         <div className="flex items-center gap-1.5">
                                                                                 <span>📎</span>
                                                                                 <span className="text-blue-700 text-xs font-medium font-text leading-4">
@@ -237,12 +238,12 @@ const TicketListTable = ({ rows, pagination, isLoading, goToPage }: TicketListTa
                                                                                 </span>
                                                                         </div>
                                                                 </TableCell>
-                                                                <TableCell>
+                                                                <TableCell className="px-5">
                                                                         <span className="text-gray-500 text-sm font-normal font-text leading-5">
                                                                                 {formatDate(item.date)}
                                                                         </span>
                                                                 </TableCell>
-                                                                <TableCell className="pr-5">
+                                                                <TableCell className="px-5 justify-center">
                                                                         <TableAction
                                                                                 status={item.status}
                                                                                 ticketId={item.ticketId}
@@ -330,7 +331,7 @@ const TableAction = ({ status, ticketId, handleMarkResolved }: TableActionProps)
                 <PopoverContent className="max-w-62.5 min-w-37.5 w-full p-0">
                         <div className="flex flex-col justify-start divide-y">
                                 <Link href={`/admin/tickets/${ticketId}`} className="w-full">
-                                        <button className="p-3.5 text-neutral-950 text-sm font-semibold font-text leading-4 cursor-pointer w-full text-left">
+                                        <button className="p-3.5 text-neutral-950 text-sm font-semibold font-text leading-4 outline-none cursor-pointer w-full text-left">
                                                 View Ticket
                                         </button>
                                 </Link>

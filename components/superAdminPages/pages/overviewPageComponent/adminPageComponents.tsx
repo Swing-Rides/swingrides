@@ -1,13 +1,13 @@
 import { ReactNode, Suspense } from "react";
 import { BarChart3, CarFront, DollarSign, Users } from "lucide-react";
-import PageIntro from "../dashboard/pageIntro";
+import PageIntro from "../../dashboard/pageIntro";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UsersDonutChart } from "../dashboard/dynamicImport";
-import { SalesChart } from "../dashboard/dynamicImport";
-import { CardIntro } from "../dashboard/cardIntro";
-import { formatNumberToUSD } from "../utils/formatNumbertoUSD";
+import { UsersDonutChart, SalesChart } from "../../dashboard/dynamicImport";
+import { CardIntro } from "../../dashboard/cardIntro";
+import { formatNumberToUSD } from "../../utils/formatNumbertoUSD";
 import { AdminOverviewResponseData } from "@/types/admin.type";
-import { GraphDataType } from "../charts/salesChart";
+import { GraphDataType } from "../../charts/salesChart";
+import RecentActivityTable from "./recentActivityTable";
 
 type OverviewCardProps = {
   icon: ReactNode;
@@ -19,6 +19,7 @@ type OverviewCardProps = {
 
 type AdminPageComponentsProps = {
   overview?: AdminOverviewResponseData;
+  isLoading: boolean;
 };
 
 const CARD_ICON_MAP: Record<string, ReactNode> = {
@@ -30,7 +31,9 @@ const CARD_ICON_MAP: Record<string, ReactNode> = {
 
 export default function AdminPageComponents({
   overview,
+  isLoading
 }: AdminPageComponentsProps) {
+
   const graphData: GraphDataType = {
     data: overview?.mrrGrowth.data.map((point) => ({
       sales: point.value,
@@ -92,29 +95,14 @@ export default function AdminPageComponents({
         </div>
 
         <div className="p-3 md:p-6 bg-white rounded-lg border border-gray-200 flex flex-col gap-6">
-          <div className="flex justify-between items-center pb-6 border-b">
+          <div className="flex justify-between items-center">
             <CardIntro title="Recent Activity" desc="Latest platform events" />
           </div>
           <div className="grid gap-3">
-            {overview?.recentActivity.map((item, index) => (
-              <div
-                key={`${item.eventType}-${item.time}-${item.action}-${index}`}
-                className="flex flex-col gap-1 rounded-lg border border-gray-100 bg-slate-50 p-4 md:flex-row md:items-center md:justify-between"
-              >
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-neutral-900">
-                    {item.eventType}{" "}
-                    <span className="font-normal text-gray-500">on</span>{" "}
-                    {item.entity}
-                  </p>
-                  <p className="text-sm text-gray-600">{item.details}</p>
-                </div>
-                <div className="text-sm text-gray-500 md:text-right">
-                  <p>{item.time}</p>
-                  <p className="font-medium text-blue-700">{item.action}</p>
-                </div>
-              </div>
-            ))}
+            <RecentActivityTable
+              rows={overview?.recentActivity ?? []}
+              isLoading={isLoading}
+            />
           </div>
         </div>
       </div>
