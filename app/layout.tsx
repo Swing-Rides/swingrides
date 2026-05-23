@@ -40,9 +40,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bebasNeue.variable} ${bebasNeueGoogle.variable} ${dmSans.variable} h-full antialiased`}
+      className={`${bebasNeue.variable} ${bebasNeueGoogle.variable} ${dmSans.variable} h-full antialiased bg-slate-100`}
     >
-      <body className="flex flex-col">
+      <body className="flex flex-col bg-slate-100">
         <ReduxProvider>
           <ChakraUIProvider>{children}</ChakraUIProvider>
         </ReduxProvider>
