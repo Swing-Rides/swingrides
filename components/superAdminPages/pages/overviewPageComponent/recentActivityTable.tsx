@@ -30,8 +30,8 @@ export default function RecentActivityTable({ isLoading, rows }: RecentActivityT
         }, []);
 
         return (
-                <div>
-                        <Table className="py-2.5 bg-white rounded-lg border border-gray-200">
+                <>
+                        <Table className="py-2.5 bg-white rounded-lg border border-gray-200 overflow-x-auto w-full min-w-160">
                                 <TableHeader className="bg-gray-100">
                                         <TableRow>
                                                 {["Time", "Event Type", "Entity", "Details"].map(h => (
@@ -116,6 +116,6 @@ export default function RecentActivityTable({ isLoading, rows }: RecentActivityT
                                         </button>
                                 </div>
                         </div>
-                </div>
+                </>
         )
 }

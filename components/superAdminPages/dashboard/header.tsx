@@ -1,14 +1,25 @@
 "use client"
 
 import { getInitials } from "@/components/pages/profilePages/utils"
-import { ChevronDown, LogOut, Search } from "lucide-react"
+import { useSidebar } from "@/components/ui/sidebar"
+import { ChevronDown, LogOut, Search, Menu } from "lucide-react"
 import Image from "next/image"
 import { userContent } from "@/constants/superAdminSidebar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export function DashboardHeader() {
+
+        const { toggleSidebar } = useSidebar()
+
         return (
-                <header className="sticky top-0 z-10 flex items-center justify-between gap-4 h-16 px-6 bg-white border-b border-gray-100">
+                <header className="sticky top-0 z-10 flex items-center justify-between gap-4 h-16 px-2.5 md:px-6 bg-white border-b border-gray-100">
+                        {/* Mobile-only hamburger */}
+                        <button
+                                onClick={toggleSidebar}
+                                className="md:hidden flex items-center justify-center size-9 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-300 shrink-0 cursor-pointer"
+                        >
+                                <Menu className="size-5" />
+                        </button>
 
                         {/* Search */}
                         <div className="relative flex items-center w-full max-w-md">

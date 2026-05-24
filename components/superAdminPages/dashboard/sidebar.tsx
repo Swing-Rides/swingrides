@@ -83,7 +83,7 @@ export function SuperAdminSidebar() {
 
 function NavItem({ item }: { item: MenuItem }) {
         const pathname = usePathname()
-        const { state } = useSidebar()
+        const { state, setOpenMobile } = useSidebar()
         const isCollapsed = state === "collapsed"
 
         const isActive = pathname === item.url
@@ -94,11 +94,14 @@ function NavItem({ item }: { item: MenuItem }) {
 
         const itemPadding = isCollapsed ? "px-0 justify-center" : "px-3"
 
+        const handleNavClick = () => setOpenMobile(false)
+
         if (!hasSubMenu) {
                 return (
                         <SidebarMenuItem>
                                 <Link 
                                         href={item.url}
+                                        onClick={handleNavClick}
                                         className={[linkBase, itemPadding, isActive ? linkActive : linkInactive].join(" ")}
                                 >
                                         {item.icon}
@@ -160,6 +163,7 @@ function NavItem({ item }: { item: MenuItem }) {
                                                                                 >
                                                                                         <Link
                                                                                                 href={subItem.url}
+                                                                                                onClick={handleNavClick}
                                                                                                 className={[
                                                                                                         linkBase,
                                                                                                         "px-3",
