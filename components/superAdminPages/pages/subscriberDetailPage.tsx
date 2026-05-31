@@ -354,14 +354,6 @@ function DataTable(props: DataTableVariant & SlugType) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // // ── Fake loading ──────────────────────────────────────────────────────
-  // const [isLoading, setIsLoading] = useState(true);
-
-  // useEffect(() => {
-  //   const timer = setTimeout(() => setIsLoading(false), FAKE_LOAD_MS);
-  //   return () => clearTimeout(timer);
-  // }, []);
-
   // ── URL param helper ──────────────────────────────────────────────────
   // Each tab uses its own page param key to avoid collisions
   const pageKey = `${dataType.replace(" ", "_").toLowerCase()}_page`;
