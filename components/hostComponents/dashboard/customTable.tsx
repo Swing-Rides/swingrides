@@ -118,6 +118,7 @@ export interface LinkAction<TRow> {
         /** Visible link text */
         label: string;
         href: (row: TRow) => string;
+        linkIcon?: ReactNode;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -328,11 +329,11 @@ export function SearchInput({
                                 onChange={(e) => setParam(paramKey, e.target.value)}
                                 placeholder={placeholder}
                                 className={[
-                                        "w-full pl-9 pr-4 py-2 rounded-lg",
+                                        "w-full pl-9 pr-4 py-2 rounded-xs cursor-pointer",
                                         "bg-gray-50 border border-gray-300",
                                         "text-xs text-[#0B0B0B]/50 placeholder:text-gray-400 font-text",
                                         "outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100",
-                                        "transition-all duration-200",
+                                        "transition-all duration-300",
                                 ].join(" ")}
                         />
                 </div>
@@ -373,8 +374,8 @@ export function SelectFilter({ title, items, paramKey }: SelectFilterProps) {
                         <button
                                 onClick={() => setOpen((o) => !o)}
                                 className={[
-                                        "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium font-text",
-                                        "border transition-all duration-200 whitespace-nowrap",
+                                        "flex items-center gap-2 px-3 py-2 rounded-xs text-xs font-medium font-text cursor-pointer",
+                                        "border transition-all duration-300 whitespace-nowrap",
                                         active
                                                 ? "bg-blue-50 border-blue-500 text-blue-700"
                                                 : "bg-gray-50 border-gray-300 text-[#0B0B0B]/50 hover:border-gray-400",
@@ -433,7 +434,7 @@ export interface TableToolbarProps {
 
 export function TableToolbar({ search, filters = [], dateSort = false, actions }: TableToolbarProps) {
         return (
-                <div className="p-4 my-4 md:mt-6 md:mb-8 bg-white rounded-[10px] border border-gray-200">
+                <div className="p-4 my-4 mt-4 md:mb-6 bg-white rounded-[10px] border border-gray-200">
                         <div className="flex flex-wrap gap-4 items-center">
                                 {search && <SearchInput {...search} />}
                                 {filters.slice(0, 3).map((f) => (
@@ -484,8 +485,8 @@ function DateSortFilter() {
                         <button
                                 onClick={() => setOpen((o) => !o)}
                                 className={[
-                                        "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium font-text",
-                                        "border transition-all duration-200 whitespace-nowrap",
+                                        "flex items-center gap-2 px-3 py-2 rounded-xs text-xs font-medium font-text cursor-pointer",
+                                        "border transition-all duration-300 whitespace-nowrap",
                                         active
                                                 ? "bg-blue-50 border-blue-500 text-blue-700"
                                                 : "bg-gray-50 border-gray-300 text-[#0B0B0B]/50 hover:border-gray-400",
@@ -732,7 +733,7 @@ export function DataTable<TRow extends { id: string }>({
                                         <TableHeader>
                                                 <TableRow>
                                                         {columns.map((col) => (
-                                                                <TableHead key={col.key} className={col.className}>
+                                                                <TableHead key={col.key} className={`px-3 md:px-6 text-gray-500 text-xs font-semibold font-text uppercase ${col.className}`}>
                                                                         {col.header ?? col.key}
                                                                 </TableHead>
                                                         ))}
@@ -745,7 +746,7 @@ export function DataTable<TRow extends { id: string }>({
                                                         <TableSkeletonRows cols={colCount} />
                                                 ) : rows.length === 0 ? (
                                                         <TableRow>
-                                                                <TableCell colSpan={colCount} className="text-center py-16 text-gray-400 text-sm">
+                                                                <TableCell colSpan={colCount} className="text-center px-3 md:px-6 py-8 md:py-16 text-gray-400 text-sm">
                                                                         {emptyMessage}
                                                                 </TableCell>
                                                         </TableRow>
@@ -753,7 +754,7 @@ export function DataTable<TRow extends { id: string }>({
                                                         rows.map((row) => (
                                                                 <TableRow key={row.id}>
                                                                         {columns.map((col) => (
-                                                                                <TableCell key={col.key} className={`py-4 text-xs font-text leading-4 ${col.className}`}>
+                                                                                <TableCell key={col.key} className={`px-3 md:px-6 py-4 text-sm font-text leading-5 ${col.className}`}>
                                                                                         {col.cell
                                                                                                 ? col.cell(row)
                                                                                                 : String((row as Record<string, unknown>)[col.key] ?? "")}
@@ -811,8 +812,9 @@ export function DataTable<TRow extends { id: string }>({
                                                                                                 {linkAction && (
                                                                                                         <Link
                                                                                                                 href={linkAction.href(row)}
-                                                                                                                className="ml-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline underline-offset-2 transition-colors whitespace-nowrap"
+                                                                                                                className="flex items-center gap-1 ml-1 text-xs font-medium text-blue-500 hover:text-blue-900 transition-colors whitespace-nowrap"
                                                                                                         >
+                                                                                                                {linkAction.linkIcon ? linkAction.linkIcon : ''}
                                                                                                                 {linkAction.label}
                                                                                                         </Link>
                                                                                                 )}
@@ -839,14 +841,14 @@ export function DataTable<TRow extends { id: string }>({
                                                 <button
                                                         onClick={() => goToPage(page - 1)}
                                                         disabled={page <= 1}
-                                                        className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                                        className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                                                 >
                                                         <ChevronLeft className="size-4 text-gray-600" />
                                                 </button>
                                                 <button
                                                         onClick={() => goToPage(page + 1)}
                                                         disabled={page >= totalPages}
-                                                        className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                                        className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                                                 >
                                                         <ChevronRight className="size-4 text-gray-600" />
                                                 </button>
