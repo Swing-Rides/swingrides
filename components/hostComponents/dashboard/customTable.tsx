@@ -66,6 +66,13 @@ export interface FilterDef<TRow> {
 export interface FilterDef<TRow> {
         paramKey: string;
         field: keyof TRow;
+        /**
+   * How to compare the filter value against the row field value.
+   * - "exact" (default) — full string equality: "active" === "active"
+   * - "floor" — Math.floor the row value then compare: Math.floor(4.8) === 4
+   *             Use this for numeric ratings stored as decimal strings ("4.8").
+   */
+        matchMode?: "exact" | "floor";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -117,8 +124,21 @@ export interface DeleteAction<TRow> {
 export interface LinkAction<TRow> {
         /** Visible link text */
         label: string;
+        /**
+         * Returns the path + any *new* params to set (e.g. "/reviews?review=R-001").
+         * When mergeParams is true (default), existing URL params are preserved and
+         * only the params in this href are merged in — so table state (page, filters,
+         * sort) is never lost.
+         */
         href: (row: TRow) => string;
+        /** Optional icon rendered after the label text. */
         linkIcon?: ReactNode;
+        /**
+         * When true (default), merges the href params into the current URL instead of
+         * replacing them — preserving table state (pagination, filters, sort).
+         * Set to false to navigate to the exact href as-is.
+         */
+        mergeParams?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -223,9 +243,16 @@ export function useTableRows<TRow extends { id: string }>({
         }
 
         // 2. Select filters
-        for (const { paramKey, field } of filters) {
+        for (const { paramKey, field, matchMode = "exact" } of filters) {
                 const value = getParam(paramKey) ?? "";
-                if (value) result = result.filter((row) => String(row[field]) === value);
+                if (!value) continue;
+                result = result.filter((row) => {
+                        const raw = String(row[field] ?? "");
+                        if (matchMode === "floor") {
+                                return String(Math.floor(parseFloat(raw))) === value;
+                        }
+                        return raw === value;
+                });
         }
 
         // 3. Date sort — only runs when sortField is declared on useTableRows
@@ -390,7 +417,7 @@ export function SelectFilter({ title, items, paramKey }: SelectFilterProps) {
                                         <button
                                                 onClick={() => { setParam(paramKey, ""); setOpen(false); }}
                                                 className={[
-                                                        "w-full text-left px-3 py-2 text-xs font-text transition-colors",
+                                                        "w-full text-left px-3 py-2 text-xs font-text transition-colors cursor-pointer",
                                                         !active ? "text-blue-700 bg-blue-50" : "text-gray-700 hover:bg-gray-50",
                                                 ].join(" ")}
                                         >
@@ -632,6 +659,47 @@ function TableDialog({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// LinkActionCell
+// Separate component so it can call useSearchParams (a hook) inside a row
+// render without violating the rules-of-hooks ordering in DataTable itself.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function LinkActionCell<TRow extends { id: string }>({
+        row,
+        action,
+}: {
+        row: TRow;
+        action: LinkAction<TRow>;
+}) {
+        const searchParams = useSearchParams();
+        const { mergeParams = true, linkIcon } = action;
+
+        const rawHref = action.href(row);
+
+        const finalHref = (() => {
+                if (!mergeParams) return rawHref;
+                // Parse the href the parent gave us
+                const [rawPath, rawQuery] = rawHref.split("?");
+                // Start from the current URL params to preserve table state
+                const merged = new URLSearchParams(searchParams.toString());
+                // Overlay the params from the parent href
+                new URLSearchParams(rawQuery ?? "").forEach((v, k) => merged.set(k, v));
+                const qs = merged.toString();
+                return qs ? `${rawPath}?${qs}` : rawPath;
+        })();
+
+        return (
+                <Link
+                        href={finalHref}
+                        className="ml-1 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline underline-offset-2 transition-colors whitespace-nowrap"
+                >
+                        {action.label}
+                        {linkIcon && <span className="opacity-70">{linkIcon}</span>}
+                </Link>
+        );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // TableSkeletonRows
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -810,13 +878,7 @@ export function DataTable<TRow extends { id: string }>({
 
                                                                                                 {/* Text link — no icon, sits after the icon group */}
                                                                                                 {linkAction && (
-                                                                                                        <Link
-                                                                                                                href={linkAction.href(row)}
-                                                                                                                className="flex items-center gap-1 ml-1 text-xs font-medium text-blue-500 hover:text-blue-900 transition-colors whitespace-nowrap"
-                                                                                                        >
-                                                                                                                {linkAction.linkIcon ? linkAction.linkIcon : ''}
-                                                                                                                {linkAction.label}
-                                                                                                        </Link>
+                                                                                                        <LinkActionCell row={row} action={linkAction} />
                                                                                                 )}
 
                                                                                         </div>
