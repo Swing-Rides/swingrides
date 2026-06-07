@@ -7,7 +7,6 @@ import RevenueChart, { FilterType } from "../../charts/revenueChart";
 import { sampleBookingDonutData, sampleRevenueGraphData } from "@/constants/saleschartdata";
 import { BookingsDonutChart } from "../../dashboard/dynamicImport";
 import { Separator } from "@/components/ui/separator";
-import TestingTable from "../../dashboard/testingTable";
 import RecentBookingsTable from "./recentBookingsTable";
 
 export default function DashboardPageComponent() {
