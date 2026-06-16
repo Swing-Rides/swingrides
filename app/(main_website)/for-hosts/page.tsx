@@ -1,9 +1,9 @@
-import ForHostLandingPage from '@/components/pages/forHostsLandingpageComponents'
+import ForHostLandingPage from "@/components/pages/forHostsLandingpageComponents";
 
 export default function ForHostsPage() {
-        return (
-                <>
-                        <ForHostLandingPage/>
-                </>
-        )
+  return (
+    <>
+      <ForHostLandingPage />
+    </>
+  );
 }
