@@ -36,6 +36,7 @@ export default function MainForm({
         isLoading = false,
         className,
         rowPairs = [],
+        footerSlot,
 }: MainFormProps) {
         const {
                 register,
@@ -113,6 +114,8 @@ export default function MainForm({
                                 })}
                         </div>
 
+                        {footerSlot}
+                        
                         <Button
                                 type='submit'
                                 disabled={isLoading}

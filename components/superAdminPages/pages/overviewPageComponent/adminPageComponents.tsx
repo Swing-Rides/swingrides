@@ -98,7 +98,7 @@ export default function AdminPageComponents({
           <div className="flex justify-between items-center">
             <CardIntro title="Recent Activity" desc="Latest platform events" />
           </div>
-          <div className="grid gap-3">
+          <div className="grid gap-3 overflow-hidden">
             <RecentActivityTable
               rows={overview?.recentActivity ?? []}
               isLoading={isLoading}

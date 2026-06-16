@@ -21,7 +21,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { useState } from "react"
-import { sidebarContent, userContent } from "@/constants/superAdminSidebar"
+import { sidebarContent, userContent } from "@/constants/hostSidebar"
 import { AnimatePresence, motion } from "motion/react"
 
 const linkBase = [
@@ -48,8 +48,7 @@ type MenuItem = {
         subMenu?: Omit<MenuItem, "subMenu">[]
 }
 
-
-export function SuperAdminSidebar() {
+export function HostSidebar() {
         return (
                 <Sidebar collapsible="icon">
                         <SidebarHeader className="border-b border-sidebar-border px-4 py-3">
@@ -83,10 +82,13 @@ export function SuperAdminSidebar() {
 
 function NavItem({ item }: { item: MenuItem }) {
         const pathname = usePathname()
-        const { state, setOpenMobile } = useSidebar()
+        const { state } = useSidebar()
         const isCollapsed = state === "collapsed"
 
-        const isActive = pathname === item.url
+        const isActive = pathname === `/us/host${item.url}`
+        const isDashboardPage = pathname === "/us/host"
+        const isCurrentItemActive = isActive || (isDashboardPage && item.url === "/")
+
         const hasSubMenu = Boolean(item.subMenu?.length)
         const isSubMenuActive = hasSubMenu && item.subMenu!.some((sub) => pathname === sub.url)
 
@@ -94,15 +96,16 @@ function NavItem({ item }: { item: MenuItem }) {
 
         const itemPadding = isCollapsed ? "px-0 justify-center" : "px-3"
 
-        const handleNavClick = () => setOpenMobile(false)
-
         if (!hasSubMenu) {
                 return (
                         <SidebarMenuItem>
                                 <Link 
-                                        href={item.url}
-                                        onClick={handleNavClick}
-                                        className={[linkBase, itemPadding, isActive ? linkActive : linkInactive].join(" ")}
+                                        href={`/us/host${item.url}`}
+                                        className={[
+                                                linkBase,
+                                                itemPadding,
+                                                isCurrentItemActive ? linkActive : linkInactive,
+                                        ].join(" ")}
                                 >
                                         {item.icon}
                                         {!isCollapsed && <span>{item.label}</span>}
@@ -163,7 +166,6 @@ function NavItem({ item }: { item: MenuItem }) {
                                                                                 >
                                                                                         <Link
                                                                                                 href={subItem.url}
-                                                                                                onClick={handleNavClick}
                                                                                                 className={[
                                                                                                         linkBase,
                                                                                                         "px-3",
