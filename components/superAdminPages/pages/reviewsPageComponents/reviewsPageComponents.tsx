@@ -466,7 +466,7 @@ const ActionButton = ({
 
 // ─── Modal wrapper ────────────────────────────────────────────────────────────
 
-const Modal = ({
+export const Modal = ({
   children,
   onClose,
 }: {

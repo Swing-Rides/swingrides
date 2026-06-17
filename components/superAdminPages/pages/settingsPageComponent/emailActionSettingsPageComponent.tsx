@@ -200,7 +200,7 @@ const DataList = ({ title, label, type, emailType, handleSendEmail }: DataListPr
                                 <div className="flex items-center justify-center bg-blue-50 size-10 aspect-square rounded-full">
                                         <Mail className="text-blue-700 size-5" />
                                 </div>
-                                <div className="flex flex-col gap-1 basis-210 grow shrink">
+                                <div className="flex flex-col gap-1 md:basis-210 grow shrink">
                                         <span className="justify-start text-neutral-950 text-sm font-semibold font-text leading-5">
                                                 {title}
                                         </span>

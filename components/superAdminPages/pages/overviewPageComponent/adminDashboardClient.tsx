@@ -1,13 +1,15 @@
 "use client";
 
-import AdminPageComponents from "@/components/superAdminPages/pages/adminPageComponents";
+// import AdminPageComponents from "@/components/superAdminPages/pages/adminPageComponents";
 import { useGetAdminOverviewQuery } from "@/app/store/services/adminApi";
+import { AdminPageSkeleton } from "../../loadingSkeletons/adminPageSkeleton";
+import AdminPageComponents from "./adminPageComponents";
 
 export default function AdminDashboardClient() {
   const { data, isLoading, isError } = useGetAdminOverviewQuery();
 
   if (isLoading) {
-    return <div className="p-6 text-sm text-gray-500">Loading overview...</div>;
+    return <AdminPageSkeleton />;
   }
 
   if (isError || !data?.data) {
@@ -18,5 +20,5 @@ export default function AdminDashboardClient() {
     );
   }
 
-  return <AdminPageComponents overview={data.data} />;
+  return <AdminPageComponents isLoading={isLoading} overview={data.data} />;
 }

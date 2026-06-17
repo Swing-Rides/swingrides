@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useCallback, useState, useMemo } from 'react'
+import { Suspense, useCallback, useState } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { EllipsisVertical, Search, ChevronLeft, ChevronRight, X, Download } from 'lucide-react'
 import { SelectUI } from '../subscribersPageComponents'

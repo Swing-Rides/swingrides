@@ -6,6 +6,10 @@ import { SubscriberPlan, SubscriberStatus, FleetStatus, BookingStatus, BillingSt
 export type AdminUsersRoleType = 'super admin' | 'admin' | 'support';
 export type AdminUsersStatusType = 'active' | 'suspended' | 'invited';
 export type ReviewStarRatingType = '1' | '2' | '3' | '4' | '5';
+export type AdminTicketStatusItemsType = 'open' | 'in progress' | 'resolved';
+export type AdminTicketTypesItemsType = 'technical issue' | 'billing query' | 'dispute' | 'relist request' | 'damage report' | 'incidental charge' | 'feature request';
+export type AdminTicketPriorityItemsType = 'yes' | 'no';
+export type AdminUserTypeItemsType = 'host' | 'renter' | 'both';
 
 export const plansItems: { value: SubscriberPlan; label: string }[] = [
         { value: 'enterprise', label: 'Enterprise' },
@@ -31,6 +35,27 @@ export const reviewStarRatingItems: { value: ReviewStarRatingType; label: string
         { value: '3', label: '3 Stars' },
         { value: '4', label: '4 Stars' },
         { value: '5', label: '5 Stars' },
+]
+
+export const adminTicketStatusItems: { value: AdminTicketStatusItemsType; label: string }[] = [
+        { value: 'open', label: 'Open' },
+        { value: 'in progress', label: 'In progress' },
+        { value: 'resolved', label: 'Resolved' },
+]
+
+export const adminTicketTypesItems: { value: AdminTicketTypesItemsType; label: string }[] = [
+        { value: 'technical issue', label: 'Technical Issue' },
+        { value: 'billing query', label: 'Billing Query' },
+        { value: 'dispute', label: 'Dispute' },
+        { value: 'relist request', label: 'Relist Request' },
+        { value: 'damage report', label: 'Damage Report' },
+        { value: 'incidental charge', label: 'Incidental Charge' },
+        { value: 'feature request', label: 'Feature Request' },
+]
+
+export const adminTicketPriorityItems: { value: AdminTicketPriorityItemsType; label: string }[] = [
+        { value: 'yes', label: 'Yes' },
+        { value: 'no', label: 'No' },
 ]
 
 export const adminUsersStatusItems: { value: AdminUsersStatusType; label: string }[] = [
@@ -145,4 +170,16 @@ export const ADMIN_USER_STATUS_STYLE: Record<AdminUsersStatusType, { label: stri
         "active": { label: "Active", textColor: "#10B981", bgColor: "#DAFFF3" },
         "suspended": { label: "Suspended", textColor: "#F59E0B", bgColor: "#FFF7E9" },
         "invited": { label: "Invited", textColor: "#EF4444", bgColor: "#FFE9E9" },
+}
+
+export const ADMIN_TICKET_STATUS_STYLE: Record<AdminTicketStatusItemsType, { label: string; textColor: string; bgColor: string }> = {
+        "open": { label: "Open", textColor: "#F59E0B", bgColor: "#FFF7E9" },
+        "in progress": { label: "In Progress", textColor: "#3B82F6", bgColor: "#E3EEFF" },
+        "resolved": { label: "Resolved", textColor: "#10B981", bgColor: "#DAFFF3" },
+}
+
+export const ADMIN_USER_TYPE_STYLE: Record<AdminUserTypeItemsType, { label: string; textColor: string; bgColor: string }> = {
+        "host": { label: "Host", textColor: "#1A56DB", bgColor: "#EBF0FB" },
+        "renter": { label: "Renter", textColor: "#0891B2", bgColor: "#D1F6FF" },
+        "both": { label: "Both", textColor: "#dddddd", bgColor: "#000000" },
 }

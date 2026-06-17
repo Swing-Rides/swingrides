@@ -145,7 +145,7 @@ export default function MainContent({ rentals }: MainContentProps) {
         )
 }
 
-const TripCard = ({ rentals }: TripCardProps) => {
+const  TripCard = ({ rentals }: TripCardProps) => {
         const searchParams = useSearchParams()
         
         const buttons = getTripButtons(

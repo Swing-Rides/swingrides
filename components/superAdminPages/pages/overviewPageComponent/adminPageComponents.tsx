@@ -1,12 +1,13 @@
 import { ReactNode, Suspense } from "react";
 import { BarChart3, CarFront, DollarSign, Users } from "lucide-react";
-import PageIntro from "../dashboard/pageIntro";
+import PageIntro from "../../dashboard/pageIntro";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UsersDonutChart } from "../dashboard/dynamicImport";
-import { SalesChart } from "../dashboard/dynamicImport";
-import { CardIntro } from "../dashboard/cardIntro";
-import { formatNumberToUSD } from "../utils/formatNumbertoUSD";
+import { UsersDonutChart, SalesChart } from "../../dashboard/dynamicImport";
+import { CardIntro } from "../../dashboard/cardIntro";
+import { formatNumberToUSD } from "../../utils/formatNumbertoUSD";
 import { AdminOverviewResponseData } from "@/types/admin.type";
+import { GraphDataType } from "../../charts/salesChart";
+import RecentActivityTable from "./recentActivityTable";
 
 type OverviewCardProps = {
   icon: ReactNode;
@@ -18,6 +19,7 @@ type OverviewCardProps = {
 
 type AdminPageComponentsProps = {
   overview?: AdminOverviewResponseData;
+  isLoading: boolean;
 };
 
 const CARD_ICON_MAP: Record<string, ReactNode> = {
@@ -29,20 +31,22 @@ const CARD_ICON_MAP: Record<string, ReactNode> = {
 
 export default function AdminPageComponents({
   overview,
+  isLoading
 }: AdminPageComponentsProps) {
-  const graphData = {
+
+  const graphData: GraphDataType = {
     data: overview?.mrrGrowth.data.map((point) => ({
       sales: point.value,
       month: point.month,
-    })),
+    })) ?? [],                          
     series: [{ name: "sales", color: "#1A56DB" }],
-  };
+  }
 
   const donutData = overview?.subscriberDistribution.map((item, index) => ({
     userPackage: item.plan.charAt(0).toUpperCase() + item.plan.slice(1),
     userCount: item.count,
-    color: ["#1A56DB", "#10B981", "#F59E0B"][index] ?? "#6B7280",
-  }));
+    color: (["#1A56DB", "#10B981", "#F59E0B"][index]) ?? "#6B7280",
+  })) ?? [] 
 
   return (
     <div className="p-3 md:p-8">
@@ -75,7 +79,7 @@ export default function AdminPageComponents({
 
         <div className="flex flex-wrap gap-4 my-4">
           <div className="basis-183 grow p-3 md:p-6 bg-white rounded-lg border border-gray-200 flex flex-col gap-6">
-            {/* <SalesChart graphData={graphData} /> */}
+            <SalesChart graphData={graphData} />
           </div>
           <div className="basis-95 grow md:grow-0 p-3 md:p-6 bg-white rounded-lg border border-gray-200 flex flex-col gap-6">
             <div>
@@ -84,34 +88,21 @@ export default function AdminPageComponents({
                 desc="Active plans breakdown"
               />
             </div>
-            <div>{/* <UsersDonutChart chartData={donutData} /> */}</div>
+            <div>
+              {donutData.length > 0 && <UsersDonutChart chartData={donutData} />}
+            </div>
           </div>
         </div>
 
         <div className="p-3 md:p-6 bg-white rounded-lg border border-gray-200 flex flex-col gap-6">
-          <div className="flex justify-between items-center pb-6 border-b">
+          <div className="flex justify-between items-center">
             <CardIntro title="Recent Activity" desc="Latest platform events" />
           </div>
-          <div className="grid gap-3">
-            {overview?.recentActivity.map((item, index) => (
-              <div
-                key={`${item.eventType}-${item.time}-${item.action}-${index}`}
-                className="flex flex-col gap-1 rounded-lg border border-gray-100 bg-slate-50 p-4 md:flex-row md:items-center md:justify-between"
-              >
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-neutral-900">
-                    {item.eventType}{" "}
-                    <span className="font-normal text-gray-500">on</span>{" "}
-                    {item.entity}
-                  </p>
-                  <p className="text-sm text-gray-600">{item.details}</p>
-                </div>
-                <div className="text-sm text-gray-500 md:text-right">
-                  <p>{item.time}</p>
-                  <p className="font-medium text-blue-700">{item.action}</p>
-                </div>
-              </div>
-            ))}
+          <div className="grid gap-3 overflow-hidden">
+            <RecentActivityTable
+              rows={overview?.recentActivity ?? []}
+              isLoading={isLoading}
+            />
           </div>
         </div>
       </div>
