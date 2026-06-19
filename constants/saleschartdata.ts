@@ -1,4 +1,6 @@
 import { BookingDonutDataItem } from "@/components/hostComponents/charts/bookingDonutChart";
+import { ExpensesByCategoryDataRow } from "@/components/hostComponents/charts/expensesByCategoryChart";
+import { RevenueAndBookingChartDataRow } from "@/components/hostComponents/charts/revenueAndBookingChart";
 import { GraphDataType, GraphDataPoint } from "@/components/hostComponents/charts/revenueChart";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -80,4 +82,28 @@ export const sampleBookingDonutData: BookingDonutDataItem[] = [
         { bookingStatus: "Pending", bookingCount: 18, color: "#F59E0B" },
         { bookingStatus: "Completed", bookingCount: 31, color: "#10B981" },
         { bookingStatus: "Cancelled", bookingCount: 8, color: "#EF4444" },
+]
+
+export const sampleRevenueAndBookingData: RevenueAndBookingChartDataRow[] = [
+        { type: "jul", revenue: 14500, bookings: 7 },
+        { type: "aug", revenue: 13750, bookings: 8 },
+        { type: "sept", revenue: 16770, bookings: 6 },
+        { type: "oct", revenue: 21250, bookings: 17 },
+        { type: "nov", revenue: 45500, bookings: 21 },
+        { type: "dec", revenue: 59933, bookings: 33 },
+        { type: "jan", revenue: 37500, bookings: 18 },
+        { type: "feb", revenue: 41705, bookings: 24 },
+        { type: "mar", revenue: 38175, bookings: 11 },
+        { type: "apr", revenue: 29733, bookings: 17 },
+        { type: "may", revenue: 15500, bookings: 8 },
+        { type: "jun", revenue: 21575, bookings: 12 },
+]
+
+export const sampleExpensesCategoryData: ExpensesByCategoryDataRow[] = [
+        { name: "Fuel", value: 1254000 },
+        { name: "Maintenance", value: 1050000 },
+        { name: "Insurance", value: 821680 },
+        { name: "Tolls", value: 493750 },
+        { name: "Cleaning", value: 378500 },
+        { name: "Registration", value: 353100 },
 ]
