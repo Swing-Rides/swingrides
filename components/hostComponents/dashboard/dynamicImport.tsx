@@ -26,3 +26,11 @@ export const ExpensesCategoryChart = dynamic(
       loading: () => <Skeleton className="w-full h-116 rounded-lg bg-gray-300" />,
     },
 );
+
+export const ExpenseBarSegment = dynamic(
+  () => import("@/components/hostComponents/charts/expensesBarSegment"),
+    {
+      ssr: false,
+      loading: () => <Skeleton className="w-full h-40 rounded-lg bg-gray-300" />,
+    },
+);
