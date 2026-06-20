@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, use, Suspense, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { format } from 'date-fns'
 import { CalendarIcon, LockIcon, EyeIcon, EyeOffIcon, UploadIcon, ImageIcon } from 'lucide-react'
@@ -24,6 +24,7 @@ import {
         PopoverContent,
         PopoverTrigger,
 } from '@/components/ui/popover'
+import { Skeleton } from '@/components/ui/skeleton'
 
 import { FormFieldConfig, MainFormProps } from './types'
 
@@ -189,6 +190,8 @@ const FormField = ({ field, register, control, errors }: FormFieldProps) => {
                         return wrapper(<FileInput field={field} register={register} error={error} />)
                 case 'checkbox':
                         return wrapper(<CheckboxInput field={field} control={control} error={error} />)
+                case 'number-dollar':
+                        return wrapper(<DollarInput field={field} register={register} error={error} />)
                 default:
                         return wrapper(<TextInput field={field} register={register} error={error} />)
         }
@@ -281,7 +284,8 @@ const TextareaInput = ({ field, register, error }: InputProps) => {
                         id={field.name}
                         placeholder={field.placeholder}
                         disabled={field.disabled}
-                        rows={field.rows ?? 4}
+                        rows={field.rows ?? 8}
+                        style={field.height ? { height: `${field.height}px` } : undefined}
                         className={cn(inputClass(error), 'resize-none')}
                         {...register(field.name, field.validation)}
                 />
@@ -289,7 +293,12 @@ const TextareaInput = ({ field, register, error }: InputProps) => {
 }
 
 // Select
-const SelectInput = ({ field, control, error }: ControllerProps) => {
+const AsyncSelectInput = ({ field, control, error }: ControllerProps) => {
+        // useMemo keeps the promise stable across re-renders as long as
+        // field.loadOptions keeps the same reference — no effect, no setState
+        const optionsPromise = useMemo(() => field.loadOptions!(), [field.loadOptions])
+        const options = use(optionsPromise)
+
         return (
                 <Controller
                         name={field.name}
@@ -297,24 +306,47 @@ const SelectInput = ({ field, control, error }: ControllerProps) => {
                         defaultValue={field.defaultValue ?? ''}
                         rules={field.validation}
                         render={({ field: ctrl }) => (
-                                <Select
-                                        onValueChange={ctrl.onChange}
-                                        value={ctrl.value}
-                                        disabled={field.disabled}
-                                >
-                                        <SelectTrigger
-                                                id={field.name}
-                                                className={cn(inputClass(error), 'w-full')}
-                                        >
+                                <Select onValueChange={ctrl.onChange} value={ctrl.value} disabled={field.disabled}>
+                                        <SelectTrigger id={field.name} className={cn(inputClass(error), 'w-full')}>
                                                 <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                                {field.options?.map((opt) => (
-                                                        <SelectItem
-                                                                key={opt.value}
-                                                                value={opt.value}
-                                                                className='font-text text-sm'
-                                                        >
+                                                {options.map((opt) => (
+                                                        <SelectItem key={opt.value} value={opt.value} className='font-text text-sm'>
+                                                                {opt.label}
+                                                        </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                </Select>
+                        )}
+                />
+        )
+}
+
+const SelectInput = ({ field, control, error }: ControllerProps) => {
+
+        if (field.loadOptions) {
+                return (
+                        <Suspense fallback={<Skeleton className='h-10 w-full rounded-md' />}>
+                                <AsyncSelectInput field={field} control={control} error={error} />
+                        </Suspense>
+                )
+        }
+
+        return (
+                <Controller
+                        name={field.name}
+                        control={control}
+                        defaultValue={field.defaultValue ?? ''}
+                        rules={field.validation}
+                        render={({ field: ctrl }) => (
+                                <Select onValueChange={ctrl.onChange} value={ctrl.value} disabled={field.disabled}>
+                                        <SelectTrigger id={field.name} className={cn(inputClass(error), 'w-full')}>
+                                                <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                                {(field.options ?? []).map((opt) => (
+                                                        <SelectItem key={opt.value} value={opt.value} className='font-text text-sm'>
                                                                 {opt.label}
                                                         </SelectItem>
                                                 ))}
@@ -554,6 +586,26 @@ const CheckboxInput = ({ field, control, error }: ControllerProps) => {
                 />
         )
 }
+
+// Money/Price Input
+const DollarInput = ({ field, register, error }: InputProps) => (
+        <div className='relative flex items-center'>
+                <span className='absolute left-3 text-[#6B7280] text-sm font-medium pointer-events-none select-none'>
+                        $
+                </span>
+                <Input
+                        id={field.name}
+                        type='number'
+                        placeholder={field.placeholder}
+                        disabled={field.disabled}
+                        min={field.min}
+                        max={field.max}
+                        step={field.step}
+                        className={cn(inputClass(error), 'pl-7')}
+                        {...register(field.name, field.validation)}
+                />
+        </div>
+)
 
 const ErrorIcon = () => (
         <svg className='size-3' width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'>

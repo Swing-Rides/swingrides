@@ -7,6 +7,7 @@ export type FieldType =
         | 'password'
         | 'tel'
         | 'number'
+        | 'number-dollar'
         | 'textarea'
         | 'select'
         | 'date'
@@ -31,7 +32,9 @@ export type FormFieldConfig = {
         accept?: string             // for file/image — e.g. "image/png, image/jpeg"
         multiple?: boolean          // for file upload
         options?: SelectOption[]    // for select fields
+        loadOptions?: () => Promise<SelectOption[]>     // ← add this for async selects
         rows?: number               // for textarea
+        height?: number             
         min?: number | string
         max?: number | string
         step?: number
