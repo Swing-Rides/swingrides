@@ -10,7 +10,7 @@ export const store = configureStore({
     [hostApi.reducerPath]: hostApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(adminApi.middleware, publicApi.middleware),
+    getDefaultMiddleware().concat(adminApi.middleware, publicApi.middleware, hostApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

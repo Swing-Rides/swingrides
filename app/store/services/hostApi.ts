@@ -7,6 +7,12 @@ import {
   HostSignInPayload,
   HostSignInResponse,
 } from "@/app/services/signIn";
+import {
+  CreateVehicle,
+  CreateVehicleResponse,
+  IListVehiclesResponse,
+  IVehicleDataFilters,
+} from "@/types/vehicle.type";
 
 type AxiosBaseQueryArgs =
   | string
@@ -74,7 +80,7 @@ const toQueryString = <T extends object>(filters?: T) => {
 export const hostApi = createApi({
   reducerPath: "hostApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["Host"],
+  tagTypes: ["Host", "Fleet"],
   endpoints: (builder) => ({
     hostLogin: builder.mutation<HostSignInResponse, HostSignInPayload>({
       query: (payload) => ({
@@ -91,7 +97,138 @@ export const hostApi = createApi({
         body: payload,
       }),
     }),
+
+    forgotPassword: builder.mutation<void, { email: string }>({
+      query: (payload) => ({
+        url: "/api/host/forgot-password",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
+    resetPassword: builder.mutation<
+      void,
+      { token: string; newPassword: string }
+    >({
+      query: (payload) => ({
+        url: "/api/host/reset-password",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
+    // vehicle management endpoints
+    listVehcle: builder.query<IListVehiclesResponse, IVehicleDataFilters>({
+      query: (filters) => ({
+        url: `/api/host/vehicles?${toQueryString(filters)}`,
+        method: "GET",
+      }),
+      providesTags: [{ type: "Fleet", id: "LIST" }],
+    }),
+
+    getVehicle: builder.query({
+      query: (vehicleId) => ({
+        url: `/api/host/vehicles/${vehicleId}`,
+        method: "GET",
+      }),
+      providesTags: (result, error, vehicleId) => [
+        { type: "Fleet", id: vehicleId },
+      ],
+    }),
+
+    addVehicle: builder.mutation<CreateVehicleResponse, CreateVehicle>({
+      query: (payload) => ({
+        url: "/api/host/vehicles",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [{ type: "Fleet", id: "LIST" }],
+    }),
+
+    unlistVehicle: builder.mutation<
+      void,
+      { vehicleId: string; reason: string }
+    >({
+      query: ({ vehicleId, reason }) => ({
+        url: `/api/host/vehicles/${vehicleId}/unlist`,
+        method: "PUT",
+        body: { reason },
+      }),
+      invalidatesTags: (result, error, { vehicleId }) => [
+        { type: "Fleet", id: vehicleId },
+        { type: "Fleet", id: "LIST" },
+      ],
+    }),
+
+    snoozeVehicle: builder.mutation<void, string>({
+      query: (vehicleId) => ({
+        url: `/api/host/vehicles/${vehicleId}/snooze`,
+        method: "PUT",
+      }),
+      invalidatesTags: (result, error, vehicleId) => [
+        { type: "Fleet", id: vehicleId },
+        { type: "Fleet", id: "LIST" },
+      ],
+    }),
+
+    markUnavailable: builder.mutation<void, string>({
+      query: (vehicleId) => ({
+        url: `/api/host/vehicles/${vehicleId}/unavailable`,
+        method: "PUT",
+      }),
+      invalidatesTags: (result, error, vehicleId) => [
+        { type: "Fleet", id: vehicleId },
+        { type: "Fleet", id: "LIST" },
+      ],
+    }),
+
+    relistVehicle: builder.mutation<void, string>({
+      query: (vehicleId) => ({
+        url: `/api/host/vehicles/${vehicleId}/relist`,
+        method: "PUT",
+      }),
+      invalidatesTags: (result, error, vehicleId) => [
+        { type: "Fleet", id: vehicleId },
+        { type: "Fleet", id: "LIST" },
+      ],
+    }),
+
+    updateVehicle: builder.mutation<
+      void,
+      { vehicleId: string; data: Partial<CreateVehicle> }
+    >({
+      query: ({ vehicleId, data }) => ({
+        url: `/api/host/vehicles/${vehicleId}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: [{ type: "Fleet", id: "LIST" }],
+    }),
+
+    deleteVehicle: builder.mutation<void, string>({
+      query: (vehicleId) => ({
+        url: `/api/host/vehicles/${vehicleId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [{ type: "Fleet", id: "LIST" }],
+    }),
   }),
 });
 
-export const { useHostLoginMutation, useHostRegisterMutation } = hostApi;
+export const {
+  useHostLoginMutation,
+  useHostRegisterMutation,
+  useAddVehicleMutation,
+  useDeleteVehicleMutation,
+  useForgotPasswordMutation,
+  useGetVehicleQuery,
+  useMarkUnavailableMutation,
+  useRelistVehicleMutation,
+  useSnoozeVehicleMutation,
+  useUpdateVehicleMutation,
+  useLazyGetVehicleQuery,
+  useResetPasswordMutation,
+  useUnlistVehicleMutation,
+  useLazyListVehcleQuery,
+  useListVehcleQuery,
+} = hostApi;
