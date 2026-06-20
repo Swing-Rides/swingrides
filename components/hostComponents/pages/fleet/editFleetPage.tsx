@@ -4,11 +4,48 @@ import FleetForm, { FleetFormValues } from '@/components/hostComponents/forms/fl
 import { HOST_DASHBOARD_PATH } from '@/constants/constant'
 import { useRouter } from 'next/navigation'
 
-type EditFleetPageProps = {
-        vehicleDefaults: Partial<FleetFormValues>   // fetched from server by parent/loader
+const FLEET_MOCK_DATA: FleetFormValues = {
+        vehicleName: "Model 3 Performance",
+        make: "Tesla",
+        model: "Model 3",
+        year: 2025,
+        color: "Deep Blue Metallic",
+        vehicleType: "Sedan",
+
+        insuranceCarrier: "Geico",
+        insurancePolicyNumber: "GEC-99887766",
+        insuranceExpiration: "2027-06-18",
+
+        licensePlate: "T-DRIVE-2025",
+        vin: "5YJ3E1EA5NF123456",
+
+        priceDaily: 120,
+        priceWeekly: 750,
+        priceMonthly: 2800,
+
+        status: "active",
+        instantlyAvailable: true,
+
+        transmission: "Automatic",
+        seats: 5,
+        mileage: 12500,
+
+        pickupAddress: "123 Tech Park Ave",
+        city: "San Francisco",
+
+        // vehicleImages and vehicleRegistration are undefined in this sample
+        description: "High-performance electric sedan with Full Self-Driving capability and premium audio system.",
+        pickupInstructions: "Vehicle is located in the parking garage at spot 42. Please use the mobile app to unlock."
+};
+
+
+type EditFleetComponentsProps = {
+        fleetId: string;
 }
 
-export default function EditFleetPage({ vehicleDefaults }: EditFleetPageProps) {
+export default function EditFleetComponents({ fleetId }: EditFleetComponentsProps) {
+
+        const vehicleDefaults = FLEET_MOCK_DATA
 
         const router = useRouter()
 
@@ -23,7 +60,7 @@ export default function EditFleetPage({ vehicleDefaults }: EditFleetPageProps) {
                         <div className='flex items-center justify-between gap-4'>
                                 <div className='flex flex-col gap-1'>
                                         <h2 className='text-neutral-950 text-2xl font-semibold font-text'>
-                                                Edit Vehicle
+                                                Edit Vehicle: {fleetId}
                                         </h2>
                                         <span className='text-gray-500 text-sm font-normal font-text'>
                                                 Update vehicle information and settings
