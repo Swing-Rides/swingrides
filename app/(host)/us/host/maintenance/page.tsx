@@ -1,8 +1,5 @@
-import MaintenancePageComponents from '@/components/hostComponents/pages/maintenance/maintenancePageComponents'
-import React from 'react'
+import MaintenancePageComponents from "@/components/hostComponents/pages/maintenance/maintenancePageComponents";
 
 export default function MaintenancePage() {
-        return (
-                <MaintenancePageComponents />
-        )
+  return <MaintenancePageComponents />;
 }

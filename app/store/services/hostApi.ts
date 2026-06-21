@@ -13,6 +13,13 @@ import {
   IListVehiclesResponse,
   IVehicleDataFilters,
 } from "@/types/vehicle.type";
+import {
+  LogServiceModalRequest,
+  LogServiceRequest,
+  MaintenanceDashboardQuery,
+  MaintenanceDashboardResponse,
+  ServiceHistoryItem,
+} from "@/types/logservice.type";
 
 type AxiosBaseQueryArgs =
   | string
@@ -80,7 +87,7 @@ const toQueryString = <T extends object>(filters?: T) => {
 export const hostApi = createApi({
   reducerPath: "hostApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["Host", "Fleet"],
+  tagTypes: ["Host", "Fleet", "Maintainance"],
   endpoints: (builder) => ({
     hostLogin: builder.mutation<HostSignInResponse, HostSignInPayload>({
       query: (payload) => ({
@@ -212,6 +219,45 @@ export const hostApi = createApi({
       }),
       invalidatesTags: [{ type: "Fleet", id: "LIST" }],
     }),
+    // vehicle management endpoints
+
+    // maintenance endpoints
+    getVehicleMaintenanceDashboard: builder.query<
+      MaintenanceDashboardResponse,
+      MaintenanceDashboardQuery
+    >({
+      query: (filters) => ({
+        url: `/api/host/maintenance/dashboard?${toQueryString(filters)}`,
+        method: "GET",
+      }),
+      providesTags: [{ type: "Maintainance", id: "LIST" }],
+    }),
+
+    logMaintenanceService: builder.mutation<void, LogServiceRequest>({
+      query: (payload) => ({
+        url: "/api/host/maintenance/services",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [{ type: "Maintainance", id: "LIST" }],
+    }),
+
+    logServiceModal: builder.mutation<
+      {
+        success: boolean;
+        data: ServiceHistoryItem;
+        message: string;
+      },
+      LogServiceModalRequest
+    >({
+      query: (payload) => ({
+        url: "/api/host/maintenance/log-service",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [{ type: "Maintainance", id: "LIST" }],
+    }),
+    // maintenance endpoints
   }),
 });
 
@@ -231,4 +277,11 @@ export const {
   useUnlistVehicleMutation,
   useLazyListVehcleQuery,
   useListVehcleQuery,
+
+  // maintenance endpoints
+  useGetVehicleMaintenanceDashboardQuery,
+  useLazyGetVehicleMaintenanceDashboardQuery,
+  useLogMaintenanceServiceMutation,
+  useLogServiceModalMutation,
+  // maintenance endpoints
 } = hostApi;
