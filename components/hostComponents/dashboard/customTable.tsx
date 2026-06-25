@@ -913,7 +913,7 @@ export function DataTable<TRow extends { id: string }>({
                                                                                                         ) : (
                                                                                                                 <button
                                                                                                                         onClick={() => openPanel("edit", row)}
-                                                                                                                        className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                                                                                                                        className="p-1.5 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
                                                                                                                         title="Edit"
                                                                                                                 >
                                                                                                                         <Pencil className="size-4 text-gray-500" />
@@ -925,7 +925,7 @@ export function DataTable<TRow extends { id: string }>({
                                                                                                 {deleteAction && (
                                                                                                         <button
                                                                                                                 onClick={() => openPanel("delete", row)}
-                                                                                                                className="p-1.5 rounded-md hover:bg-red-50 transition-colors"
+                                                                                                                className="p-1.5 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
                                                                                                                 title="Delete"
                                                                                                         >
                                                                                                                 <Trash2 className="size-4 text-red-400" />
