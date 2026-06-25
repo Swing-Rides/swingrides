@@ -292,7 +292,7 @@ function NewBookingFormInner({
                         <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
 
                                 {/* ── Left panel: booking inputs ──────────────── */}
-                                <div className='p-4 rounded-[10px] border border-gray-200 flex flex-col items-start gap-2.5'>
+                                <div className='p-4 rounded-[10px] border border-gray-200 bg-white flex flex-col items-start gap-2.5'>
                                         <div className='flex flex-col gap-5 w-full'>
 
                                                 {/* Section 1: Vehicle Selection */}
@@ -507,7 +507,7 @@ function NewBookingFormInner({
                                 </div>
 
                                 {/* ── Right panel: booking summary ────────────── */}
-                                <div className='p-4 rounded-[10px] border border-gray-200 flex flex-col items-start gap-2.5'>
+                                <div className='p-4 rounded-[10px] border border-gray-200 bg-white flex flex-col items-start gap-2.5'>
                                         <div className='flex flex-col gap-5 w-full'>
                                                 <h2 className='text-neutral-950 text-base font-semibold font-text'>
                                                         Booking Summary
@@ -748,7 +748,7 @@ const TaxPlaceholder = ({ subtotal }: { subtotal: number }) => (
 
 const FormSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
         <div className='flex flex-col gap-3 w-full'>
-                <span className='text-gray-500 text-xs font-semibold font-text uppercase'>
+                <span className='text-neutral-950 text-base font-semibold font-text'>
                         {title}
                 </span>
                 <div className='flex flex-col gap-3 w-full'>
