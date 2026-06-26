@@ -58,7 +58,7 @@ const HeroSection = () => {
                                 />
                         </div>
                         <div className='absolute inset-0 size-full z-10 px-4 md:px-8'>
-                                <div className='pt-25 md:pt-37.5 max-w-80 md:max-w-7xl space-y-6'>
+                                <div className='pt-20 md:pt-37.5 max-w-80 md:max-w-7xl space-y-6'>
                                         <div className='space-y-5'>
                                                 <h1 className='text-4xl md:text-6xl leading-[101.563%] font-black flex flex-col'>
                                                         <span className='text-neutral-950 font-sans'>Rent the perfect car,</span>
@@ -107,7 +107,7 @@ const Skip = () => {
         return (
                 <section className='relative px-4 md:px-20 -mt-7 z-9'>
                         <div className='max-w-202 p-5 border-l-4 border-blue-700 bg-indigo-50 rounded-xs overflow-hidden'>
-                                <p className="text-blue-700 text-xl font-semibold font-text">
+                                <p className="text-blue-700 text-sm md:text-xl font-semibold font-text">
                                         Skip the big rental chains. Rent from trusted independent businesses near you.
                                 </p>
                         </div>
