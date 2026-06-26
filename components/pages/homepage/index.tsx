@@ -49,7 +49,7 @@ const HeroSection = () => {
                 <section className='relative overflow-clip min-h-fit z-2'>
                         <div>
                                 <Image
-                                        src={"/images/swing-rides-homepage-hero-section.webp"}
+                                        src={"/images/swingRides-homepage.webp"}
                                         alt='Rent From Local Car Owners. Zero Commission.'
                                         title='Rent From Local Car Owners. Zero Commission.'
                                         width={1440}
@@ -269,7 +269,7 @@ export const FeaturedCarsErrorMessage = () => {
 const TrustSection = () => {
         return (
                 <section className='px-4 py-10 md:px-20 section-bg-gradient'>
-                        <div className='flex flex-wrap justify-center gap-2'>
+                        <div className='grid grid-cols-2 md:grid-cols-4 gap-2'>
                                 {trustContent.map((items) => (
                                         <TrustCard
                                                 key={items.title}
@@ -283,7 +283,7 @@ const TrustSection = () => {
 
 const TrustCard = ({ content }: TrustContentProps) => {
         return (
-                <div className='basis-80 shrink grow-0 flex items-center justify-start gap-3 p-8'>
+                <div className='basis-80 shrink grow-0 block space-y-3 md:flex items-center justify-start gap-3 p-3 md:p-8'>
                         <div className='size-9 px-2 bg-white rounded-[10px] border border-slate-200 flex justify-center items-center'>
                                 {content.icon}
                         </div>

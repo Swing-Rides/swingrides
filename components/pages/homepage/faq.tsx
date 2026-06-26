@@ -86,19 +86,19 @@ export default function Faq() {
         const [ tab, setTab ] = useState("allQuestions")
 
         return (
-                <div className='grid grid-cols-3 gap-5 w-full'>
-                        <div className='col-span-1 rounded-2xl border border-gray-200 bg-white py-6 px-5 flex flex-col gap-4.5 divide-y'>
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-5 w-full'>
+                        <div className='col-span-1 rounded-2xl border border-gray-200 bg-white py-3 md:py-6 px-2.5 md:px-5 flex flex-col gap-2 md:gap-4.5 divide-y'>
                                 {faqCategory.map((item) => (
                                         <button
                                                 key={item.value}
-                                                className={`text-left px-6 py-4 rounded-xs text-xl font-semibold font-text leading-6 cursor-pointer ${tab === item.value ? "bg-indigo-50 text-blue-700" : "bg-white text-gray-500"} hover:bg-gray-100 hover:text-blue-700 transition-colors duration-300`}
+                                                className={`text-left px-6 py-4 rounded-xs text-sm md:text-xl font-semibold font-text leading-6 cursor-pointer ${tab === item.value ? "bg-indigo-50 text-blue-700" : "bg-white text-gray-500"} hover:bg-gray-100 hover:text-blue-700 transition-colors duration-300`}
                                                 onClick={() => setTab(item.value)}
                                         >
                                                 {item.label}
                                         </button>
                                 ))}
                         </div>
-                        <div className='col-span-2 px-8 py-6 bg-white rounded-2xl border border-gray-200 flex flex-col'>
+                        <div className='col-span-1 md:col-span-2 px-3 md:px-8 py-2.5 md:py-6 bg-white rounded-2xl border border-gray-200 flex flex-col'>
                                 {tab && <Accordion
                                         type="single"
                                         collapsible
@@ -109,7 +109,7 @@ export default function Faq() {
                                                 <AccordionItem
                                                         key={item.value}
                                                         value={item.value}
-                                                        className="border-b px-4 last:border-b-0"
+                                                        className="border-b px-1.5 md:px-4 last:border-b-0"
                                                 >
                                                         <AccordionTrigger
                                                                 className="text-gray-800 text-base font-medium font-text leading-6 cursor-pointer"
