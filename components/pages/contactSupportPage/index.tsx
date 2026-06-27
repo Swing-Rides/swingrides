@@ -144,7 +144,7 @@ const FormSection = () => {
                                                 Fill out the form below and we&apos;ll get back to you as soon as possible.
                                         </p>
                                 </div>
-                                <div className='p-8 bg-white rounded-[10px] mx-auto max-w-160 w-full border border-gray-200'>
+                                <div className='p-4 lg:p-8 bg-white rounded-[10px] mx-auto max-w-160 w-full border border-gray-200'>
                                         <ContactForm />
                                 </div>
                         </div>
