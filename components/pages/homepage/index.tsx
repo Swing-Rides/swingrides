@@ -60,7 +60,7 @@ const HeroSection = () => {
                         <div className='absolute inset-0 size-full z-10 px-4 md:px-8'>
                                 <div className='pt-20 md:pt-37.5 max-w-80 md:max-w-7xl space-y-6'>
                                         <div className='space-y-5'>
-                                                <h1 className='text-4xl md:text-6xl leading-[101.563%] font-black flex flex-col'>
+                                                <h1 className='text-4xl md:text-6xl leading-16 font-black flex flex-col'>
                                                         <span className='text-neutral-950 font-sans'>Rent the perfect car,</span>
                                                         <span className='text-blue-700 font-sans'>your way.</span>
                                                 </h1>
