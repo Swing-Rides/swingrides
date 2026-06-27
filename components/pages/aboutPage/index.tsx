@@ -1,9 +1,9 @@
-import { PriBtn } from "@/components/buttons"
-import { FieldSeparator } from "@/components/ui/field"
 import Image from "next/image"
-import Link from "next/link"
 import { ListProps } from "../connectToHostPage"
 import { Fragment } from "react/jsx-runtime"
+import FAQsSection from '@/components/faqs';
+import { Compass } from "lucide-react";
+import Link from "next/link";
 
 const NumberContent = [
         {
@@ -30,82 +30,42 @@ export default function AboutPageComponents() {
                         <HeroSection/>
                         <BestRentalSection/>
                         <NumberSection/>
+                        <OurStorySection />
+                        <FAQsSection />
                 </>
         )
 }
 
 const HeroSection = () => {
         return (
-                <section className="relative px-4 pb-57.5 md:px-20 mt-10 md:mt-27">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                                <div>
-                                        <span className="text-zinc-800 text-xs font-medium uppercase leading-4 tracking-[3px]">
-                                                WHO WE ARE
-                                        </span>
-                                        <h1 className="w-full max-w-162.5 text-neutral-950 text-4xl md:text-7xl font-black mt-2.5">
-                                                THE RENTAL INDUSTRY WASN&apos;T BUILT FOR INDEPENDENT <span className='text-blue-700 font-sans'>HOSTS.</span>
-                                        </h1>
-                                        <FieldSeparator className="max-w-120"/>
-                                        <p className="max-w-135.5 w-full justify-center text-zinc-800 text-xl font-normal mt-5">
-                                                So we built something that is. SwingRides gives small and mid-sized hosts the same power once reserved for giant rental chains.
-                                        </p>
-                                        <div className="flex gap-3 mt-9">
-                                                <PriBtn 
-                                                        btn={{
-                                                                link: "/",
-                                                                label: "List Your Car",
-                                                        }}
+                <section className='relative overflow-clip min-h-fit z-2'>
+                                        <div>
+                                                <Image
+                                                        src={"/images/to-rent-cars.png"}
+                                                        alt={`We' re building a better way, to rent cars..`}
+                                                        title={`We' re building a better way, to rent cars..`}
+                                                        width={1441}
+                                                        height={579}
+                                                        className='w-full min-h-[70dvh] object-cover'
                                                 />
-                                                <Link
-                                                        href={'/browse-cars'}                                                        
-                                                >
-                                                        <button
-                                                                className="text-center text-cyan-600 text-base font-semibold capitalize py-2 px-6 rounded-xs outline -outline-offset-1 outline-cyan-600 hover:bg-blue-800 hover:text-white transition-colors duration-300 cursor-pointer"
-                                                        >
-                                                                Browse Cars
-                                                        </button>
-                                                </Link>
                                         </div>
-                                </div>
-                                <div>
-                                        <Image 
-                                                src={'/images/about-hero-section.png'}
-                                                alt="THE RENTAL INDUSTRY WASN'T BUILT FOR INDEPENDENT HOSTS."
-                                                title="THE RENTAL INDUSTRY WASN'T BUILT FOR INDEPENDENT HOSTS."
-                                                width={726}
-                                                height={454}
-                                        />
-                                </div>
-                        </div>
-                        <div className="mt-10 md:mt-33.75 flex flex-col gap-5 md:flex-row md:gap-10 lg:gap-50">
-                                <div className="w-full max-w-120">
-                                        <h3 className="text-neutral-950 text-4xl md:text-7xl font-black">
-                                                TOOLS FOR HOW REAL FLEETS  <span className='text-blue-700 font-sans'>RUN</span>
-                                        </h3>
-                                </div>
-                                <div className="space-y-4">
-                                        <p className="text-[#333333] text-base font-normal leading-7">
-                                                Managing a car rental business shouldn&apos;t require a legacy software suite or
-                                                a fleet of a thousand vehicles. We believe that local hosts provide the best
-                                                quality service when they have the right technology supporting them.
-                                        </p>
-                                        <p className="text-[#333333] text-base font-normal leading-7">
-                                                Our platform provides end-to-end management, from automated booking
-                                                systems to real-time tracking and maintenance alerts. We are leveling the
-                                                playing field so you can focus on what matters most: the drive.
-                                        </p>
-                                </div>
-                        </div>
-                        <div className="absolute bottom-5 -right-25">
-                                <Image 
-                                        src={'/images/2025-Toyota-Camry-at-Burnsville-Toyota.png'}
-                                        alt="TOOLS FOR HOW REAL FLEETS RUN"
-                                        title="TOOLS FOR HOW REAL FLEETS RUN"
-                                        width={495}
-                                        height={260}
-                                />
-                        </div>
-                </section>
+                                        <div className='absolute inset-0 size-full z-10 px-4 md:px-8 flex items-center'>
+                                                <div className='py-20 md:py-37.5 md:max-w-7xl space-y-6'>
+                                                        <div className='space-y-5'>
+                                                                <span className="block text-blue-700 text-sm font-semibold font-text">
+                                                                        WHO WE ARE
+                                                                </span>
+                                                                <h1 className='text-4xl md:text-6xl leading-16 font-black max-w-148'>
+                                                                        <span className='text-neutral-950 font-sans'>We&apos;re building a better</span>{' '}
+                                                                        <span className='text-blue-700 font-sans'>way to rent cars.</span>
+                                                                </h1>
+                                                                <p className='max-w-148 w-full text-lg font-normal font-text text-gray-600'>
+                                                                        SwingRides connects you with trusted independent rental businesses so you can enjoy quality cars, great service, and real value.
+                                                                </p>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                </section>
         )
 }
 
@@ -139,6 +99,11 @@ const NumberSection = () => {
         return (
                 <section className="px-4 pt-20 pb-33">
                         <div className="p-8 mx-auto max-w-7xl w-fit md:w-full rounded-2xl shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] outline outline-offset-[-0.89px] outline-gray-200">
+                                <div>
+                                        <h3 className="text-neutral-950 text-4xl md:text-[64px] font-black font-sans">
+                                                swingrides by the numbers
+                                        </h3>
+                                </div>
                                 <div className="flex flex-wrap gap-8 justify-center item-center">
                                         {NumberContent.map((item) => (
                                                 <Fragment key={item.id}>
@@ -163,5 +128,60 @@ const NumberCard = ({ content }: ListProps ) => {
                                 {content.label}
                         </p>
                 </div>
+        )
+}
+
+const OurStorySection = () => {
+        return (
+                <section className='py-12 px-4 md:px-8 md:py-20 section-bg-gradient'>
+                        <div className="space-y-6 md:space-y-10">
+                                <div>
+                                        <span className="text-blue-700 text-xs font-bold font-text uppercase leading-4 tracking-wider">
+                                                Our Story
+                                        </span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 justify-center">
+                                        <div className="flex flex-col gap-5 justify-center">
+                                                <h3 className="text-neutral-950 text-2xl font-bold font-text leading-8 max-w-102.5">
+                                                        Built from real experiences. Driven by a simple idea.
+                                                </h3>
+                                                <p className="text-gray-500 text-base font-normal font-text leading-6">
+                                                        SwingRides was founded by people who believe renting a car should be easy, fair, and trustworthy. We saw the challenges renters face — and the hard work independent operators put in every day. SwingRides is our way of making things better for both.
+                                                </p>
+                                        </div>
+                                        <div>
+                                                <Image 
+                                                        src={'/images/driven-by-a-simple-idea.png'}
+                                                        alt={`Built from real experiences. Driven by a simple idea.`}
+                                                        title={`Built from real experiences. Driven by a simple idea.`}
+                                                        width={411}
+                                                        height={395}
+                                                        className="aspect-411/395 object-cover w-full rounded-[14px]"
+                                                />
+                                        </div>
+                                        <div className="p-8 bg-blue-950 rounded-2xl flex flex-col gap-6 md:gap-8 justify-between items-stretch">
+                                                <div className="space-y-4">
+                                                        <div className="size-11 bg-blue-700 rounded-full flex justify-center items-center">
+                                                                <Compass className='size-5 text-white' />
+                                                        </div>
+                                                        <h4 className="justify-center text-white text-xl font-bold font-text leading-7">
+                                                                The road ahead
+                                                        </h4>
+                                                        <p className="text-slate-400 text-sm font-normal font-text leading-6">
+                                                                We&apos;re just getting started. Our goal is to become the most trusted car rental platform for renters and the most powerful growth partner for independent rental businesses worldwide.
+                                                        </p>
+                                                </div>
+                                                <div className="w-full">
+                                                        <Link 
+                                                                href={'/'} 
+                                                                className="flex justify-center text-white text-base font-semibold font-text leading-6 w-full px-8 py-3.5 rounded-xs border border-white"
+                                                        >
+                                                                Join the Journey
+                                                        </Link>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
         )
 }
