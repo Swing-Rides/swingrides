@@ -1,26 +1,62 @@
 import Image from "next/image"
-import { ListProps } from "../connectToHostPage"
 import { Fragment } from "react/jsx-runtime"
 import FAQsSection from '@/components/faqs';
-import { Compass } from "lucide-react";
+import { Building, Car, Compass, Globe, Handshake, Lightbulb, ShieldCheck, Star, Target, Users } from "lucide-react";
 import Link from "next/link";
+import { ReactNode } from "react";
 
 const NumberContent = [
         {
-                id: `300+`,
-                label: `Vehicles Listed`,
+                icon: <Car className="size-5 text-blue-700" />,
+                number: `25,000+`,
+                label: `Cars available`,
         },
         {
-                id: `90+`,
+                icon: <Building className="size-5 text-blue-700" />,
+                number: `2,500+`,
                 label: `Happy Renters`,
         },
         {
-                id: 50,
+                icon: <Users className="size-5 text-blue-700" />,
+                number: `150,000+`,
                 label: `Active Hosts`,
         },
         {
-                id: 4.9,
+                icon: <Globe className="size-5 text-blue-700" />,
+                number: `100+`,
                 label: `Average Rating`,
+        },
+        {
+                icon: <Star className="size-5 text-blue-700" />,
+                number: `4.8/5`,
+                label: `Average Rating`,
+        },
+]
+
+const ourVisionContent = [
+        {
+                icon: <ShieldCheck className="size-5 text-blue-700" />,
+                iconBgColor: "bg-blue-100",
+                title: "Trust First",
+                description: `We prioritize safety and transparency in everything we do.`,
+        },
+        {
+                icon: <Users className="size-5 text-green-600" />,
+                iconBgColor: "bg-green-100",
+                title: "People Focused",
+                description: `We put renters and hosts at the center of every decision.`,
+        },
+        {
+                icon: <Lightbulb className="size-5 text-amber-600" />,
+                iconBgColor: "bg-amber-100",
+                title: "Innovation",
+                description: `We continuously improve the rental experience through smart technology.`,
+        },
+        {
+                icon: <Handshake className="size-5 text-purple-600" />,
+                iconBgColor: "bg-purple-100",
+                title: "Stronger Together",
+                description: `We grow by supporting independent businesses and local communities.`
         },
 ]
 
@@ -28,7 +64,7 @@ export default function AboutPageComponents() {
         return (
                 <>
                         <HeroSection/>
-                        <BestRentalSection/>
+                        <OurMissionSection />
                         <NumberSection/>
                         <OurStorySection />
                         <FAQsSection />
@@ -69,27 +105,51 @@ const HeroSection = () => {
         )
 }
 
-const BestRentalSection = () => {
+const OurMissionSection = () => {
         return (
-                <section className="relative px-4 pt-20 pb-33">
-                        <div className="absolute top-0 left-0">
-                                <Image
-                                        src={'/images/Hennessey-VelociRaptoR-1000-Ford-Raptor-R-Red-2.png'}
-                                        alt="TOOLS FOR HOW REAL FLEETS RUN"
-                                        title="TOOLS FOR HOW REAL FLEETS RUN"
-                                        width={317}
-                                        height={317} 
-                                />
-                        </div>
-                        <div className="space-y-5">
-                                <h3 className="w-full max-w-170 mx-auto text-center text-neutral-950 text-4xl md:text-7xl font-black">
-                                        THE BEST RENTAL EXPERIENCES COME FROM PEOPLE WHO  <span className='text-blue-700 font-sans'>TAKE PRIDE </span>IN THEIR VEHICLES.
-                                </h3>
-                                <p className="max-w-159.25 mx-auto text-center text-[#333333] text-lg font-normal leading-7">
-                                        We&apos;ve seen it thousands of times. A car from an independent host isn&apos;t just a
-                                        vehicle; it&apos;s a reflection of their commitment to quality. SwingRides exists to
-                                        bring those dedicated owners directly to the modern traveler.
-                                </p>
+                <section className="py-12 px-4 md:px-8 md:py-20 section-bg-gradient">
+                        <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x bg-white rounded-2xl shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)] border border-gray-200">
+                                <div className="space-y-5 p-4 md:p-10 md:basis-102.5 grow-0 shrink">
+                                        <h3 className="text-blue-700 text-xs font-bold font-text uppercase leading-4 tracking-wider">
+                                                Our Mission
+                                        </h3>
+                                        <div className="bg-blue-100 size-12 rounded-full flex justify-center items-center">
+                                                <Target className='size-6 text-blue-700' />
+                                        </div>
+                                        <div className="space-y-4">
+                                                <h4 className="text-neutral-950 text-lg font-bold font-text leading-7">
+                                                        Empower independent rental businesses. Serve renters better.
+                                                </h4>
+                                                <p className="text-gray-500 text-sm font-normal font-text leading-6">
+                                                        We exist to empower independent rental operators with technology and visibility so renters can find reliable cars at fair prices.
+                                                </p>
+                                        </div>
+                                </div>
+                                <div className="space-y-5 p-4 md:p-10">
+                                        <h3 className="text-blue-700 text-xs font-bold font-text uppercase leading-4 tracking-wider">
+                                                Our Vision
+                                        </h3>
+                                        <div className="flex flex-wrap gap-6">
+                                                {ourVisionContent.map((item) => (
+                                                        <div 
+                                                                key={item.title}
+                                                                className="flex flex-col gap-3 basis-51.25 grow shrink"
+                                                        >
+                                                                <div className={`size-10 rounded-full inline-flex justify-center items-center ${item.iconBgColor}`}>
+                                                                        {item.icon}
+                                                                </div>
+                                                                <div className="space-y-1.5">
+                                                                        <h4 className="text-neutral-950 text-sm font-bold font-text leading-5">
+                                                                                {item.title}
+                                                                        </h4>
+                                                                        <p className="text-gray-500 text-xs font-normal font-text leading-5">
+                                                                                {item.description}
+                                                                        </p>
+                                                                </div>
+                                                        </div>
+                                                ))}
+                                        </div>
+                                </div>
                         </div>
                 </section>
         )
@@ -97,16 +157,16 @@ const BestRentalSection = () => {
 
 const NumberSection = () => {
         return (
-                <section className="px-4 pt-20 pb-33">
-                        <div className="p-8 mx-auto max-w-7xl w-fit md:w-full rounded-2xl shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] outline outline-offset-[-0.89px] outline-gray-200">
+                <section className="py-12 px-4 md:px-8 md:py-20 bg-white">
+                        <div className="space-y-6 md:space-y-12">
                                 <div>
-                                        <h3 className="text-neutral-950 text-4xl md:text-[64px] font-black font-sans">
-                                                swingrides by the numbers
+                                        <h3 className="text-neutral-950 text-4xl md:text-[64px] font-black font-sans text-center">
+                                                swingrides by the <span className='text-blue-700 font-sans'> numbers</span>
                                         </h3>
                                 </div>
-                                <div className="flex flex-wrap gap-8 justify-center item-center">
+                                <div className="flex flex-wrap mx-auto justify-center rounded-2xl shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] overflow-clip bg-slate-100 border border-gray-200 divide-y md:divide-y-0 md:divide-x">
                                         {NumberContent.map((item) => (
-                                                <Fragment key={item.id}>
+                                                <Fragment key={item.number}>
                                                         <NumberCard 
                                                                 content={item}
                                                         />
@@ -118,15 +178,26 @@ const NumberSection = () => {
         )
 }
 
-const NumberCard = ({ content }: ListProps ) => {
+type ContentProps = {
+        icon: ReactNode;
+        number: string;
+        label: string;
+}
+
+const NumberCard = ({ content }: { content: ContentProps} ) => {
         return (
-                <div className="max-w-66 w-full">
-                        <h4 className="text-center text-blue-700 text-5xl font-black leading-12 font-text">
-                                {content.id}
-                        </h4>
-                        <p className="text-center text-gray-500 text-sm font-normal uppercase leading-5 tracking-tight">
-                                {content.label}
-                        </p>
+                <div className="grow shrink basis-64 max-w-66 w-full space-y-4 py-6 px-10">
+                        <div className='size-10 bg-blue-50 rounded-full flex justify-center items-center mx-auto'>
+                                {content.icon}
+                        </div>
+                        <div className="space-y-1">
+                                <h4 className="text-center justify-center text-neutral-950 text-3xl font-bold font-text leading-7">
+                                        {content.number}
+                                </h4>
+                                <p className="text-center justify-center text-gray-500 text-xs font-normal font-text leading-5">
+                                        {content.label}
+                                </p>
+                        </div>
                 </div>
         )
 }
