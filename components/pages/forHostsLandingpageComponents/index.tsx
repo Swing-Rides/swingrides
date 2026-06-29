@@ -1,5 +1,4 @@
-import { Fragment, Suspense } from "react";
-import { PriBtn } from "@/components/buttons";
+import { Fragment, ReactNode, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -14,233 +13,216 @@ import {
 } from "@/constants/forHostPageContents";
 import { Skeleton } from "@/components/ui/skeleton";
 import PriceSection from "./priceSection";
+import { HOST_DASHBOARD_PATH } from "@/constants/constant";
+import { Building, CalendarCheck, Car, ChartColumn, Phone, Receipt, ThumbsUp, Wrench } from "lucide-react";
+import { StarRating } from "@/components/hostComponents/pages/reviewsPageComponents/reviewsPageComponents";
+import FAQsSection from "@/components/faqs";
+import { trustContent } from "@/constants/homePage";
+import { TrustContentProps } from "../homepage";
 
 export default function ForHostLandingPage() {
-  return (
-    <>
-      <HeroSection />
-      <NumberSection />
-      <HowItWork />
-      <EverythingYouNeedSection />
-      <PriceSection pricingContents={pricingContents} />
-    </>
-  );
+    return (
+        <>
+            <HeroSection />
+            <NumberSection />
+            <HowItWork />
+            <EverythingYouNeedSection />
+            <PriceSection pricingContents={pricingContents} />
+			<TrustSection />
+			<FAQsSection />
+        </>
+    );
 }
 
 const HeroSection = () => {
-  return (
-    <section className="section-bg-gradient">
-      <div className="mx-auto py-12 px-2.5">
-        <div className="flex flex-col items-center gap-5 max-w-157.25 mx-auto">
-          <Pill label="For Car Owners & Fleet Operators" />
-          <h2 className="text-6xl text-center font-normal leading-16.25">
-            YOUR <span className="text-blue-700 font-sans"> CAR.</span> <br />
-            <span className=" text-blue-700 font-sans">
-              YOUR EARNINGS.
-            </span>{" "}
-            <br />
-            <span className="text-blue-700 font-sans">ZERO </span>COMMISSION
-            <span className="text-blue-700 font-sans">.</span>
-          </h2>
-          <p className="text-center">
-            List your vehicles on SwingRides and keep 100% of every rental.
-            Manage your fleet, bookings, and finances from one powerful
-            dashboard.
-          </p>
-          <div className="flex gap-3 items-center justify-center">
-            <PriBtn
-              btn={{
-                link: "/us/host",
-                label: "List Your Car",
-              }}
-            />
-            <Link href={"/host/login"} title={"Log in"}>
-              <button className="py-2 px-6 rounded-xs border text-[#0891B2] border-[#0891B2] bg-transparent hover:bg-[#0891B2] hover:text-white transition-colors duration-300 cursor-pointer">
-                Log In
-              </button>
-            </Link>
-          </div>
-        </div>
-        <div>
-          <Image
-            src={"/images/for-host-dashboard.png"}
-            alt={
-              "List your vehicles on SwingRides and keep 100% of every rental"
-            }
-            title={
-              "List your vehicles on SwingRides and keep 100% of every rental"
-            }
-            width={1160}
-            height={919}
-            className="max-w-300 w-full mx-auto"
-          />
-        </div>
-      </div>
-    </section>
-  );
+    return (
+        <section className="py-12 px-4 md:pl-8 md:pr-0 md:py-20 section-bg-gradient">
+			<div className="flex flex-col md:flex-row md:justify-between md:items-start">
+                <div className="flex flex-col items-start gap-5 max-w-133.75">
+                    <Pill label="The Operating System for Rental Businesses" />
+                    <h2 className="text-4xl md:text-6xl leading-16 font-black ">
+                        Everything independent rental operators need.
+                    </h2>
+                    <h3 className="text-4xl md:text-6xl leading-16 font-black text-blue-700">
+                        Spend less time managing. More time growing.
+                    </h3>
+                    <p className="text-gray-500 text-lg font-normal font-text leading-6 text-left">
+                        SwingRides helps you manage bookings, fleet, customers, maintenance, invoices and more — all in one platform.
+                    </p>
+                    <div className="flex gap-3 items-center justify-center">
+                        <Link
+                            href={HOST_DASHBOARD_PATH}
+                            className="py-2 px-6 rounded-xs bg-blue-700 text-white font-semibold capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
+                        >
+                            List Your Car
+                        </Link>
+                    </div>
+                </div>
+                <div className="flex -mr-10 aspect-816/704 w-full">
+                    <Image
+                        src={"/images/host-dashboard-screenshot.png"}
+                        alt={"SwingRides Host Platform Dashboard - Everything independent rental operators need."}
+                        title={"Everything independent rental operators need."}
+						width={1224}
+                        height={1056}
+                        className="aspect-816/704 object-cover w-full"
+                    />
+                </div>
+            </div>
+        </section>
+    );
 };
 
 const NumberSection = () => {
-  const contentLeft = [
-    {
-      number: "0%",
-      title: "Commission",
-      desc: "Competitors take up to 33% of every rental. On SwingRides, you keep every Dollar you earn.",
-    },
-    {
-      number: "4.9",
-      title: "Average Host Rating",
-      desc: "Our verification system keeps your fleet filled with quality, trusted renters only.",
-    },
-  ];
 
-  const contentRight = [
-    {
-      number: "40",
-      title: "Max Vehicles",
-      desc: "Scale from a single car to a full fleet of 40 vehicles — all under one dashboard.",
-    },
-    {
-      number: "$50K+",
-      title: "Avg Monthly Earnings",
-      desc: "Top hosts on SwingRides earn over ₦500,000 monthly across their fleet.",
-    },
-  ];
+	const numberContent = [
+        {
+			icon: <Building className="text-blue-700 size-8" />,
+			number: "2,500+",
+			label: "Rental Businesses",
+        },
+        {
+			icon: <Car className="text-blue-700 size-8" />,
+			number: "2,500+",
+			label: "Vehicles Managed",
+        },
+        {
+			icon: <CalendarCheck className="text-blue-700 size-8" />,
+			number: "150,000+",
+			label: "Bookings Processed",
+        },
+        {
+			icon: <ThumbsUp className="text-blue-700 size-8" />,
+			number: "98%",
+			label: "Customer Satisfaction",
+        },
+	];
 
-  return (
-    <section className="section-bg-gradient px-4 py-12.5 md:px-20 md:py-20 ">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        <div className="col-span-1">
-          <Pill label="Why Hosts Choose SwingRides" />
-          <h2 className="text-6xl font-bold leading-16.25">
-            <span className="text-blue-700 font-sans">The Numbers</span> <br />
-            Don&apos;t Lie
-          </h2>
-        </div>
-        <div className="col-span-2 gap-6 grid md:grid-cols-2">
-          <div className="flex flex-col gap-6 max-w-102.5 w-full">
-            {contentLeft.map((item) => (
-              <Fragment key={item.number}>
-                <NumberCard
-                  number={item.number}
-                  title={item.title}
-                  desc={item.desc}
-                />
-              </Fragment>
-            ))}
-          </div>
-          <div className="flex flex-col gap-6 mt-0 md:mt-15 max-w-102.5 w-full">
-            {contentRight.map((item) => (
-              <Fragment key={item.number}>
-                <NumberCard
-                  number={item.number}
-                  title={item.title}
-                  desc={item.desc}
-                />
-              </Fragment>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+
+    return (
+        <section className="py-12 px-4 md:px-8 md:py-20 bg-indigo-50">
+			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 justify-between divide-x">
+                <div className="">
+					<h3 className="text-neutral-950 text-sm font-bold font-text leading-4">
+						Trusted by rental operators and fleet owners
+					</h3>
+                </div>
+                {numberContent.map((item) => (
+                    <Fragment key={item.label}>
+                        <NumberCard
+                            icon={item.icon}
+                            number={item.number}
+                            label={item.label}
+                        />
+                    </Fragment>
+                ))}
+                <div className="flex flex-col">
+                    <div className="flex gap-2 items-center justify-start">
+						<StarRating
+							rating={4.8}
+						/>
+						<span className="text-neutral-950 text-2xl font-bold font-text leading-8">
+							4.8/5
+						</span>
+					</div>
+					<span className="text-gray-500 text-sm font-normal font-text leading-5">
+						Based on 1,847 reviews
+					</span>
+                </div>
+            </div>
+        </section>
+    );
 };
 
 const HowItWork = () => {
-  const content: HowItWorksCardProps[] = [
-    {
-      image: {
-        src: "/images/sign-up-and-subscribe.webp",
-        alt: "Sign Up & Subscribe.",
-      },
-      number: "01",
-      title: "Sign Up & Subscribe.",
-      desc: "Create your host account and pick a subscription plan that fits your fleet size.",
-    },
-    {
-      image: {
-        src: "/images/list-your-vehicle.webp",
-        alt: "List Your Vehicle.",
-      },
-      number: "02",
-      title: "List Your Vehicle.",
-      desc: "Add your cars with photos, daily rates, and availability. Set your own prices. Your vehicles go live on the SwingRides renter portal immediately.",
-    },
-    {
-      image: {
-        src: "/images/get-booked-and-paid.webp",
-        alt: "Get Booked & Paid.",
-      },
-      number: "03",
-      title: "Get Booked & Paid.",
-      desc: "Renters book directly. You get notified, confirm via the dashboard, and receive payment straight — zero commission deducted, ever.",
-    },
-  ];
 
-  return (
-    <section className="section-bg-gradient" id="how-it-works">
-      <div className="px-4 py-12.5 md:px-20 md:py-20 space-y-10.5">
-        <div className="flex flex-col items-center max-w-120 mx-auto">
-          <Pill label="Getting Started" />
-          <h3 className="text-6xl font-bold leading-16.25 mt-5 mb-4">
-            How It <span className="text-[#1A56DB] font-sans"> Works</span>
-          </h3>
-          <span className="text-center text-[#333333] text-lg font-medium font-text">
-            Start earning in three simple steps. No middlemen, no commission
-            cuts, no complications.
-          </span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-246 mx-auto">
-          {content.map((item) => (
-            <Fragment key={item.number}>
-              <HowItWorksCard {...item} />
-            </Fragment>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+	const content: HowItWorksCardProps[] = [
+		{
+			icon: <Phone className="text-red-600 size-6"/>,
+			iconBgColor: "bg-red-100",
+			title: "Manual Bookings",
+			desc: `Juggling calls, texts and spreadsheets leads to double bookings and lost revenue.`,
+		},
+		{
+			icon: <Car className="text-blue-700 size-6" />,
+			iconBgColor: "bg-blue-100",
+			title: "Fleet Management Chaos",
+			desc: "No real-time visibility into availability, maintenance or vehicle performance.",
+		},
+		{
+			icon: <Wrench className="text-amber-500 size-6" />,
+			iconBgColor: "bg-amber-100",
+			title: "Maintenance Overdue",
+			desc: "Missed services lead to breakdowns, unhappy customers and extra costs.",
+		},
+		{
+			icon: <Receipt className="text-purple-500 size-6" />,
+			iconBgColor: "bg-purple-100",
+			title: "Financial Disorganization",
+			desc: "Tracking expenses, invoices and revenue across different tools wastes time and creates errors.",
+		},
+		{
+			icon: <ChartColumn className="text-green-500 size-6" />,
+			iconBgColor: "bg-green-100",
+			title: "No Business Insights",
+			desc: "No clear reports means poor decisions and missed opportunities to grow.",
+		},
+	];
+
+	return (
+		<section className="section-bg-gradient" id="how-it-works">
+			<div className="px-4 py-12.5 md:px-20 md:py-20 space-y-10.5">
+				<div className="flex flex-col items-center gap-4 max-w-120 mx-auto">
+					<span className="text-center text-blue-700 text-xs font-bold font-text uppercase leading-4">
+						Built for Operators
+					</span>
+					<h3 className="text-center justify-center text-neutral-950 text-4xl font-black font-sans tracking-tight">
+						Running a rental business is hard.
+					</h3>
+					<p className="text-center text-gray-500 text-lg font-normal font-text leading-7">
+						Too many tools. Too many tasks. Not enough time.
+					</p>
+				</div>
+				<div className="flex flex-wrap justify-center items-start gap-6 mx-auto">
+					{content.map((item) => (
+						<Fragment key={item.title}>
+							<HowItWorksCard {...item} />
+						</Fragment>
+					))}
+				</div>
+			</div>
+		</section>
+	);
 };
 
 type HowItWorksCardProps = {
-  image: {
-    src: string;
-    alt: string;
-  };
-  number: string;
-  title: string;
-  desc: string;
+  	icon: ReactNode
+	iconBgColor: string;
+  	title: string;
+  	desc: string;
 };
 
 const HowItWorksCard = ({
-  image,
-  number,
-  title,
-  desc,
+	icon,
+	iconBgColor,
+	title,
+	desc,
 }: HowItWorksCardProps) => {
-  return (
-    <div className="divide-y bg-white rounded-xs overflow-clip">
-      <div className="overflow-clip rounded-xs aspect-320/200 object-cover">
-        <Image
-          src={image.src}
-          alt={image.alt}
-          title={image.alt}
-          width={320}
-          height={200}
-          className="size-full aspect-320/200 object-cover"
-        />
-      </div>
-      <div className="p-6 space-y-3 text-center">
-        <h4 className="text-[#1A56DB] text-xl font-medium font-text leading-7">
-          {number}
-        </h4>
-        <span className="text-[#6B7280] font-medium font-text leading-6">
-          <span className="text-[#0B0B0B] font-semibold">{title} </span>
-          {desc}
-        </span>
-      </div>
-    </div>
-  );
+	return (
+		<div className="basis-60.75 shrink grow-0 space-y-4 overflow-clip">
+			<div className={`flex justify-center items-center size-12 mx-auto rounded-md aspect-square ${iconBgColor}`}>
+				{icon}
+			</div>
+			<div className="space-y-2 text-center">
+				<h4 className="text-neutral-950 text-base font-bold font-text leading-6">
+					{title}
+				</h4>
+				<span className="text-gray-500 text-sm font-normal font-text leading-5">
+					{desc}
+				</span>
+			</div>
+		</div>
+	);
 };
 
 const EverythingYouNeedSection = () => {
@@ -324,7 +306,7 @@ const EverythingYouNeedSection = () => {
 
 export const Pill = ({ label }: { label: string }) => {
   return (
-    <div className="mb-5 py-1 px-3 w-fit flex gap-2.5 items-center border border-[#1A56DB] bg-[#DCE6FB] rounded-full">
+    <div className="mb-5 py-1 px-3 w-fit flex gap-2.5 items-center bg-blue-100 rounded-full">
       <svg
         width="6"
         height="6"
@@ -342,29 +324,27 @@ export const Pill = ({ label }: { label: string }) => {
 };
 
 type NumberCardProps = {
+  icon: ReactNode;
   number: string;
-  title: string;
-  desc: string;
+  label: string;
 };
 
-const NumberCard = ({ number, title, desc }: NumberCardProps) => {
-  return (
-    <div className="p-4 bg-white rounded flex flex-col gap-10.5 overflow-hidden">
-      <div>
-        <span className="justify-start text-[#1A56DB] text-6xl font-bold font-text leading-12">
-          {number}
-        </span>
-      </div>
-      <div className="flex flex-col gap-3">
-        <h3 className="text-[#6B7280] text-xl font-medium font-text uppercase">
-          {title}
-        </h3>
-        <span className="text-[#333333] text-base font-medium font-text leading-5">
-          {desc}
-        </span>
-      </div>
-    </div>
-  );
+const NumberCard = ({ icon, number, label }: NumberCardProps) => {
+	return (
+		<div className="px-4 flex gap-4 overflow-hidden">
+			<div>
+				{icon}
+			</div>
+			<div className="flex flex-col gap-3">
+				<h3 className="text-neutral-950 text-2xl font-bold font-text leading-8">
+					{number}
+				</h3>
+				<span className="text-gray-500 text-sm font-normal font-text leading-5">
+					{label}
+				</span>
+			</div>
+		</div>
+	);
 };
 
 const TabContent = ({ image, content }: TabContentProps) => {
@@ -400,3 +380,35 @@ const TabContent = ({ image, content }: TabContentProps) => {
     </div>
   );
 };
+const TrustSection = () => {
+	return (
+		<section className='px-4 py-10 md:px-20 bg-blue-950'>
+			<div className='grid grid-cols-2 md:grid-cols-4 gap-2'>
+				{trustContent.map((items) => (
+					<TrustCard
+						key={items.title}
+						content={items}
+					/>
+				))}
+			</div>
+		</section>
+	)
+}
+
+const TrustCard = ({ content }: TrustContentProps) => {
+	return (
+		<div className='basis-80 shrink grow-0 block space-y-3 md:flex items-center justify-start gap-3 p-3 md:p-8'>
+			<div className='size-9 px-2 bg-white rounded-[10px] border border-slate-200 flex justify-center items-center m-0'>
+				{content.icon}
+			</div>
+			<div className='flex flex-col'>
+				<p className='text-white text-sm font-bold font-text leading-5'>
+					{content.title}
+				</p>
+				<span className='text-gray-500 text-xs font-normal font-text leading-4'>
+					{content.description}
+				</span>
+			</div>
+		</div>
+	)
+}
