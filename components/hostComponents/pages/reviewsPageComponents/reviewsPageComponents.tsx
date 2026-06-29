@@ -100,7 +100,7 @@ function ReviewsOverviewCard({ icon, iconBgColor, title, number }: ReviewsOvervi
 // StarRating
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
+export function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
         const sizeClass = size === "md" ? "size-4" : "size-3";
         return (
                 <div className="flex items-center gap-0.5">
