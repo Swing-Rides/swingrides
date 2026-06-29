@@ -18,7 +18,7 @@ type HowItWorksProps = {
         }
 }
 
-type TrustContentProps = {
+export type TrustContentProps = {
         content: {
                 icon: ReactNode;
                 title: string;
