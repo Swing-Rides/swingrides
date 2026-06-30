@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'motion/react'
 import Logo from './logo'
 import { navLinks } from '@/constants/header'
+import { Menu, X } from 'lucide-react'
 
 export default function Mobile() {
 
@@ -15,70 +16,76 @@ export default function Mobile() {
         }
 
         return (
-                <div className='flex items-center justify-between md:hidden gap-20'>
-                        <Link href={'/'} title='Swing Rides Logo'>
+                <div className='relative z-50 flex items-center justify-between lg:hidden gap-20'>
+                        <Link
+                                href={'/'} title='Swing Rides Logo'
+                                onClick={() => setIsMenuOpen(false)}
+                        >
                                 <Logo />
                         </Link>
 
-                        <div className='cursor-pointer' onClick={handleMenuToggle}>
-                                {isMenuOpen ? <CloseMenuIcon /> : <HamburgerMenuIcon />}
+                        <div
+                                className='cursor-pointer'
+                                onClick={handleMenuToggle}
+                        >
+                                {isMenuOpen ? <X /> : <Menu />}
                         </div>
 
                         <AnimatePresence>
                                 {isMenuOpen && (
-                                        <motion.div
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-                                                transition={{ duration: 0.5 }}
-                                                className='fixed top-20 right-4 max-w-[70vw] w-full'
-                                        >
-                                                <MobileNav />
-                                        </motion.div>
+                                        <>
+                                                {/* Overlay */}
+                                                <motion.div
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        exit={{ opacity: 0 }}
+                                                        transition={{ duration: 0.3 }}
+                                                        className='fixed inset-0 z-40 bg-black/30 backdrop-blur-sm'
+                                                        onClick={() => setIsMenuOpen(false)}
+                                                />
+
+                                                {/* Sliding menu panel */}
+                                                <motion.div
+                                                        initial={{ x: '-100%' }}
+                                                        animate={{ x: 0 }}
+                                                        exit={{ x: '-100%' }}
+                                                        transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+                                                        className='fixed top-0 left-0 z-50 h-screen w-[300px] max-w-[80vw]'
+                                                >
+                                                        <MobileNav setIsMenuOpen={setIsMenuOpen} />
+                                                </motion.div>
+                                        </>
                                 )}
                         </AnimatePresence>
                 </div>
         )
 }
 
-const HamburgerMenuIcon = () => {
-        return (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M4.3335 6.25H19.6668" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M4.3335 12H19.6668" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M4.3335 17.75H19.6668" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-
-        )
+type MobileNavProps = {
+        setIsMenuOpen: (open: boolean) => void
 }
 
-const CloseMenuIcon = () => {
+const MobileNav = ({ setIsMenuOpen }: MobileNavProps) => {
         return (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 12H13" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M7 7L17.8423 17.8423" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M7 18L17.8423 7.1577" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <div className='flex flex-col h-full w-full bg-white border-r border-solid border-[#DFE3E6] shadow-xl'>
+                        <div className='flex flex-col gap-2.5 pt-24 px-2'>
+                                {navLinks.map((link) => (
+                                        <Link
+                                                key={link.id}
+                                                href={link.href}
+                                                onClick={() => setIsMenuOpen(false)}
+                                                className='py-2.5 px-4 text-base text-[#333333] font-medium rounded-md hover:bg-gray-50'
+                                        >
+                                                {link.label}
+                                        </Link>
+                                ))}
+                        </div>
 
-        )
-}
-
-const MobileNav = () => {
-        return (
-                <div className='flex flex-col gap-2.5 w-full md:hidden py-5 border border-solid border-[#DFE3E6] bg-white backdrop-blur-[50%] rounded-sm'>
-                        {navLinks.map(( link ) => (
-                                <Link
-                                        key={link.id}
-                                        href={link.href}
-                                        className='py-2.5 px-4 text-base text-[#333333] font-medium'
-                                >
-                                        {link.label}
-                                </Link>
-                        ))}
-                        <div className='flex py-2.5 px-4'>
+                        <div className='mt-auto flex p-4'>
                                 <Link
                                         href={'/list-your-car'}
-                                        className='bg-[#1A56DB] py-2 px-6 w-full text-white rounded-xs text-center'>
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className='bg-blue-700 py-2 px-6 w-full text-white rounded-xs text-center'>
                                         List Your Car
                                 </Link>
                         </div>
