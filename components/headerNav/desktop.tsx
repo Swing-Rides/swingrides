@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Logo from './logo'
 import { navLinks } from '@/constants/header'
 import { PriBtn } from '../buttons'
+import { HOST_DASHBOARD_PATH } from '@/constants/constant'
 
 type NavLinksProps = {
         navLinks: {
@@ -49,7 +50,7 @@ const NavButtons = () => {
                 <div>
                         <PriBtn 
                                 btn={{
-                                        link: '/list-your-car',
+                                        link: HOST_DASHBOARD_PATH,
                                         label: 'List Your Car'
                                 }}                        
                         />
