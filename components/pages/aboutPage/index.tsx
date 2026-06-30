@@ -4,6 +4,7 @@ import FAQsSection from '@/components/faqs';
 import { Building, Car, Compass, Globe, Handshake, Lightbulb, ShieldCheck, Star, Target, Users } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
+import { DISCORD_COMMUNITY_LINK } from "@/constants/constant";
 
 const NumberContent = [
         {
@@ -217,16 +218,16 @@ const OurStorySection = () => {
                                                         Built from real experiences. Driven by a simple idea.
                                                 </h3>
                                                 <p className="text-gray-500 text-base font-normal font-text leading-6">
-                                                        SwingRides was founded by people who believe renting a car should be easy, fair, and trustworthy. We saw the challenges renters face — and the hard work independent operators put in every day. SwingRides is our way of making things better for both.
+                                                        SwingRides was founded to solve the challenges renters and car rental businesses face every day. From long lines and hidden fees to lack of transparency and poor customer support, we knew there had to be a better way to rent and manage vehicles for everyone.
                                                 </p>
                                         </div>
                                         <div>
                                                 <Image 
-                                                        src={'/images/driven-by-a-simple-idea.png'}
+                                                        src={'/images/SwingRides-our_story.png'}
                                                         alt={`Built from real experiences. Driven by a simple idea.`}
                                                         title={`Built from real experiences. Driven by a simple idea.`}
-                                                        width={411}
-                                                        height={395}
+                                                        width={1536}
+                                                        height={1024}
                                                         className="aspect-411/395 object-cover w-full rounded-[14px]"
                                                 />
                                         </div>
@@ -244,7 +245,10 @@ const OurStorySection = () => {
                                                 </div>
                                                 <div className="w-full">
                                                         <Link 
-                                                                href={'/'} 
+                                                                href={DISCORD_COMMUNITY_LINK} 
+                                                                target="_blank"
+                                                                rel="noopener"
+                                                                title="join our community"
                                                                 className="flex justify-center text-white text-base font-semibold font-text leading-6 w-full px-8 py-3.5 rounded-xs border border-white"
                                                         >
                                                                 Join the Journey
