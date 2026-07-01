@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import Logo from './logo'
 import { navLinks } from '@/constants/header'
 import { Menu, X } from 'lucide-react'
+import { HOST_DASHBOARD_PATH } from '@/constants/constant'
 
 export default function Mobile() {
 
@@ -40,16 +41,16 @@ export default function Mobile() {
                                                         animate={{ opacity: 1 }}
                                                         exit={{ opacity: 0 }}
                                                         transition={{ duration: 0.3 }}
-                                                        className='fixed inset-0 z-99 bg-black/50 backdrop-blur-sm'
+                                                        className='fixed w-screen h-screen inset-0 z-99 bg-black/95 backdrop-blur-sm'
                                                         onClick={() => setIsMenuOpen(false)}
                                                 />
 
                                                 {/* Sliding menu panel */}
                                                 <motion.div
-                                                        initial={{ x: '-100%' }}
+                                                        initial={{ x: '100%' }}
                                                         animate={{ x: 0 }}
-                                                        exit={{ x: '-100%' }}
-                                                        transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+                                                        exit={{ x: '100%' }}
+                                                        transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
                                                         className='fixed top-0 right-0 z-99 h-screen w-75 max-w-[80vw]'
                                                 >
                                                         <MobileNav setIsMenuOpen={setIsMenuOpen} />
@@ -68,6 +69,10 @@ type MobileNavProps = {
 const MobileNav = ({ setIsMenuOpen }: MobileNavProps) => {
         return (
                 <div className='flex flex-col h-full w-full bg-white border-r border-solid border-[#DFE3E6] shadow-xl'>
+                        <button className='flex justify-end p-4 cursor-pointer' onClick={() => setIsMenuOpen(false)}>
+                                <X /> 
+                        </button>
+
                         <div className='flex flex-col gap-2.5 pt-24 px-2'>
                                 {navLinks.map((link) => (
                                         <Link
@@ -83,7 +88,7 @@ const MobileNav = ({ setIsMenuOpen }: MobileNavProps) => {
 
                         <div className='mt-auto flex p-4'>
                                 <Link
-                                        href={'/list-your-car'}
+                                        href={HOST_DASHBOARD_PATH}
                                         onClick={() => setIsMenuOpen(false)}
                                         className='bg-blue-700 py-2 px-6 w-full text-white rounded-xs text-center'>
                                         List Your Car
