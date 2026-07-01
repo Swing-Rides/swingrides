@@ -40,7 +40,7 @@ export default function Mobile() {
                                                         animate={{ opacity: 1 }}
                                                         exit={{ opacity: 0 }}
                                                         transition={{ duration: 0.3 }}
-                                                        className='fixed inset-0 z-40 bg-black/30 backdrop-blur-sm'
+                                                        className='fixed inset-0 z-99 bg-black/50 backdrop-blur-sm'
                                                         onClick={() => setIsMenuOpen(false)}
                                                 />
 
@@ -50,7 +50,7 @@ export default function Mobile() {
                                                         animate={{ x: 0 }}
                                                         exit={{ x: '-100%' }}
                                                         transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                                                        className='fixed top-0 left-0 z-50 h-screen w-[300px] max-w-[80vw]'
+                                                        className='fixed top-0 right-0 z-99 h-screen w-75 max-w-[80vw]'
                                                 >
                                                         <MobileNav setIsMenuOpen={setIsMenuOpen} />
                                                 </motion.div>
