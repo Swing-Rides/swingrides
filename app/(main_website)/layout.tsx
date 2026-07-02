@@ -17,7 +17,7 @@ export default function WebsiteLayout({
   return (
     <>
         <HeaderNav/>
-        <main className="mt-17.75 overflow-x-clip">
+        <main className="pt-17.5 overflow-x-clip">
           {children}
         </main>
         <Footer/>
