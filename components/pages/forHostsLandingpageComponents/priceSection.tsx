@@ -6,6 +6,8 @@ import { Pill } from "."
 import Link from "next/link"
 import { Switch } from '@/components/ui/switch'
 import { PriceCardProps } from "./types"
+import { Check } from "lucide-react"
+import { HOST_REGISTRATION_PATH } from "@/constants/constant"
 
 const PERCENT_DISCOUNT = 17
 
@@ -40,6 +42,7 @@ export default function PriceSection(
                                                         checked={isYearly}
                                                         onCheckedChange={setIsYearly}
                                                         aria-label="Toggle yearly billing"
+                                                        className="cursor-pointer"
                                                 />
                                                 <span className="text-[#6B7280] text-sm font-semibold font-text leading-5">
                                                         Yearly{" "}<span className="text-[#10B981]"> {`(Save ${PERCENT_DISCOUNT}%)`}</span>
@@ -47,7 +50,7 @@ export default function PriceSection(
                                         </div>
                                 </div>
 
-                                <div className='grid grid-cols-1 md:grid-cols-3 items-start gap-8 md:gap-4 max-w-300 mx-auto'>
+                                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-8 md:gap-4 max-w-300 mx-auto'>
                                         {pricingContents.map((item) => (
                                                 <Fragment key={item.cardTitle}>
                                                         <PriceCard
@@ -72,11 +75,12 @@ const PriceCard = ({
         cardTitle,
         price,
         vechileQuantity,
+        description,
         features,
         isYearly,
 }: PriceCardDisplayProps) => {
 
-        const mainButton = cardTitle === 'Professional'
+        const mainButton = cardTitle === 'Flex'
 
         const buttonStyle = `py-3 px-5.25 w-full rounded-xs text-sm font-semibold font-text border border-[#1A56DB] cursor-pointer transition-color duration-300 
                                 ${mainButton ? 'bg-[#1A56DB] text-white hover:bg-blue-900' :
@@ -94,7 +98,7 @@ const PriceCard = ({
         return (
                 <div className="relative flex flex-col gap-10 p-8 bg-white rounded-xs">
                         {badge && (
-                                <div className="absolute top-0 left-1/2 -translate-1/2 px-3.5 py-1.5 bg-[#1A56DB] rounded-full w-fit">
+                                <div className="absolute top-0 left-1/2 -translate-1/2 px-3.5 py-1.5 bg-blue-700 rounded-full w-fit">
                                         <span className="text-white text-sm font-semibold font-text">
                                                 {badge}
                                         </span>
@@ -146,6 +150,9 @@ const PriceCard = ({
                                 <span className="text-[#0B0B0B] text-lg font-normal font-text">
                                         {vechileQuantity}
                                 </span>
+                                <p className="text-[#0B0B0B] text-lg font-normal font-text">
+                                        {description}
+                                </p>
                         </div>
 
                         <div className="flex flex-col gap-6">
@@ -154,9 +161,11 @@ const PriceCard = ({
                                                 key={index}
                                                 className="flex items-center gap-3"
                                         >
-                                                <CheckIcon />
+                                                <div className="size-6 aspect-square flex items-center justify-center rounded-full bg-blue-700">
+                                                        <Check className="size-4 text-white" />
+                                                </div>                                                
                                                 <div>
-                                                        <span className="text-[#333333] text-base font-medium font-text">
+                                                        <span className="text-gray-700 text-base font-medium font-text">
                                                                 {item}
                                                         </span>
                                                 </div>
@@ -164,28 +173,16 @@ const PriceCard = ({
                                 ))}
                         </div>
                         <div>
-                                <Link href={'/'} target="_blank">
+                                {isCustom ? (<Link href={'/contact-support#contactForm'}>
+                                        <button className={buttonStyle}>
+                                                Contact Sales
+                                        </button>
+                                </Link>) : (<Link href={HOST_REGISTRATION_PATH} target="_blank">
                                         <button className={buttonStyle}>
                                                 Get Started
                                         </button>
-                                </Link>
+                                </Link>)}
                         </div>
                 </div>
-        )
-}
-
-const CheckIcon = () => {
-        return (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g clipPath="url(#clip0_1229_9756)">
-                                <rect width="24" height="24" rx="12" fill="#1A56DB" />
-                                <path d="M9.70457 15.2734L7.21934 12.7899C6.94002 12.5107 6.48881 12.5107 6.20949 12.7899C5.93017 13.069 5.93017 13.5199 6.20949 13.799L9.20322 16.7907C9.48254 17.0698 9.93375 17.0698 10.2131 16.7907L17.7905 9.21849C18.0698 8.93936 18.0698 8.48847 17.7905 8.20934C17.5112 7.93022 17.06 7.93022 16.7807 8.20934L9.70457 15.2734Z" fill="white" />
-                        </g>
-                        <defs>
-                                <clipPath id="clip0_1229_9756">
-                                        <rect width="24" height="24" rx="12" fill="white" />
-                                </clipPath>
-                        </defs>
-                </svg>
         )
 }

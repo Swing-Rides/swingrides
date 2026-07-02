@@ -1,5 +1,4 @@
-import SingleBookingPageComponent from '@/components/hostComponents/pages/bookingsPageComponents/singleBookingPageComponent';
-import React from 'react'
+import SingleBookingPageComponent from '@/components/hostComponents/pages/bookingsPageComponents/singleBookingPageComponents';
 
 export default async function BookingPage({
         params,
