@@ -7,6 +7,9 @@ const backendUrl =
     : "http://localhost:3000");
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     remotePatterns: [
       {

@@ -237,7 +237,7 @@ export default function FleetForm({ formId, defaultValues, onSubmit }: FleetForm
                                                                         type='text'
                                                                         placeholder='e.g. Progressive'
                                                                         className={inputCn(!!errors.insuranceCarrier)}
-                                                                        {...register('insuranceCarrier', { required: 'Carrier is required' })}
+                                                                        {...register('insuranceCarrier')}
                                                                 />
                                                         </FormRow>
                                                         <FormRow label='Policy Number' htmlFor='insurancePolicyNumber' error={errors.insurancePolicyNumber?.message}>
@@ -246,7 +246,7 @@ export default function FleetForm({ formId, defaultValues, onSubmit }: FleetForm
                                                                         type='text'
                                                                         placeholder='e.g. PLY-209384'
                                                                         className={inputCn(!!errors.insurancePolicyNumber)}
-                                                                        {...register('insurancePolicyNumber', { required: 'Policy number is required' })}
+                                                                        {...register('insurancePolicyNumber')}
                                                                 />
                                                         </FormRow>
                                                 </div>
@@ -257,7 +257,6 @@ export default function FleetForm({ formId, defaultValues, onSubmit }: FleetForm
                                                                 control={control}
                                                                 placeholder='Pick expiration date'
                                                                 error={errors.insuranceExpiration?.message}
-                                                                rules={{ required: 'Expiration date is required' }}
                                                         />
                                                 </FormRow>
                                         </Cell>
@@ -496,7 +495,7 @@ export default function FleetForm({ formId, defaultValues, onSubmit }: FleetForm
                                                                 ? 'border-[#EF4444] focus-visible:ring-[#EF4444]'
                                                                 : 'border-[#E5E7EB] focus-visible:ring-blue-700 rounded-xs'
                                                 )}
-                                                {...register('pickupInstructions', { required: 'Pickup instructions are required' })}
+                                                {...register('pickupInstructions')}
                                         />
                                 </FormRow>
                         </Cell>

@@ -18,6 +18,10 @@ export type CreateVehicle = {
   city: string;
   images: string[];
   description: string;
+  insuranceCarrier?: string;
+  insurancePolicyNumber?: string;
+  insuranceExpiration?: string;
+  pickupInstructions?: string;
 };
 
 export type CreateVehicleResponse = {
@@ -57,6 +61,16 @@ export interface IListVehiclesDatum {
   vin: string;
   weeklyPrice: number;
   year: number;
+  snoozeStart?: string;
+  snoozeEnd?: string;
+  insuranceCarrier?: string;
+  insurancePolicyNumber?: string;
+  insuranceExpiration?: string;
+  pickupInstructions?: string;
+  totalTrips?: number;
+  totalRevenue?: number;
+  totalExpenses?: number;
+  netEarnings?: number;
 }
 
 export interface Pagination {

@@ -11,6 +11,7 @@ import {
   CreateVehicle,
   CreateVehicleResponse,
   IListVehiclesResponse,
+  IListVehiclesDatum,
   IVehicleDataFilters,
 } from "@/types/vehicle.type";
 import {
@@ -84,10 +85,52 @@ const toQueryString = <T extends object>(filters?: T) => {
   return params.toString();
 };
 
+type GetVehicleResponse = {
+  success: boolean;
+  data: IListVehiclesDatum;
+};
+
+type UpdateVehiclePayload = Partial<CreateVehicle> & {
+  status?: string;
+};
+
+type CreateBookingPayload = {
+  vehicleId: string;
+  renterName: string;
+  renterEmail: string;
+  renterPhone: string;
+  pickupDate: string;
+  returnDate: string;
+  location: string;
+  addOns: string[];
+};
+
+type CreateBookingResponse = {
+  success: boolean;
+  message: string;
+  data: unknown;
+};
+
+type RelistVehiclePayload = {
+  vehicleId: string;
+  reason: string;
+  supportingDocuments?: string[];
+};
+
+type SnoozeVehiclePayload = {
+  vehicleId: string;
+  snoozeStart: string;
+  snoozeEnd: string;
+};
+
+type EndSnoozeEarlyPayload = {
+  vehicleId: string;
+};
+
 export const hostApi = createApi({
   reducerPath: "hostApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["Host", "Fleet", "Maintainance"],
+  tagTypes: ["Host", "Fleet", "Maintainance", "Reviews"],
   endpoints: (builder) => ({
     hostLogin: builder.mutation<HostSignInResponse, HostSignInPayload>({
       query: (payload) => ({
@@ -133,7 +176,7 @@ export const hostApi = createApi({
       providesTags: [{ type: "Fleet", id: "LIST" }],
     }),
 
-    getVehicle: builder.query({
+    getVehicle: builder.query<GetVehicleResponse, string>({
       query: (vehicleId) => ({
         url: `/api/host/vehicles/${vehicleId}`,
         method: "GET",
@@ -167,12 +210,24 @@ export const hostApi = createApi({
       ],
     }),
 
-    snoozeVehicle: builder.mutation<void, string>({
-      query: (vehicleId) => ({
+    snoozeVehicle: builder.mutation<void, SnoozeVehiclePayload>({
+      query: ({ vehicleId, snoozeStart, snoozeEnd }) => ({
         url: `/api/host/vehicles/${vehicleId}/snooze`,
         method: "PUT",
+        body: { snoozeStart, snoozeEnd },
       }),
-      invalidatesTags: (result, error, vehicleId) => [
+      invalidatesTags: (result, error, { vehicleId }) => [
+        { type: "Fleet", id: vehicleId },
+        { type: "Fleet", id: "LIST" },
+      ],
+    }),
+
+    endSnoozeEarly: builder.mutation<void, EndSnoozeEarlyPayload>({
+      query: ({ vehicleId }) => ({
+        url: `/api/host/vehicles/${vehicleId}/snooze/end-early`,
+        method: "PUT",
+      }),
+      invalidatesTags: (result, error, { vehicleId }) => [
         { type: "Fleet", id: vehicleId },
         { type: "Fleet", id: "LIST" },
       ],
@@ -189,12 +244,13 @@ export const hostApi = createApi({
       ],
     }),
 
-    relistVehicle: builder.mutation<void, string>({
-      query: (vehicleId) => ({
+    relistVehicle: builder.mutation<void, RelistVehiclePayload>({
+      query: ({ vehicleId, reason, supportingDocuments }) => ({
         url: `/api/host/vehicles/${vehicleId}/relist`,
         method: "PUT",
+        body: { reason, supportingDocuments },
       }),
-      invalidatesTags: (result, error, vehicleId) => [
+      invalidatesTags: (result, error, { vehicleId }) => [
         { type: "Fleet", id: vehicleId },
         { type: "Fleet", id: "LIST" },
       ],
@@ -202,7 +258,7 @@ export const hostApi = createApi({
 
     updateVehicle: builder.mutation<
       void,
-      { vehicleId: string; data: Partial<CreateVehicle> }
+      { vehicleId: string; data: UpdateVehiclePayload }
     >({
       query: ({ vehicleId, data }) => ({
         url: `/api/host/vehicles/${vehicleId}`,
@@ -216,6 +272,18 @@ export const hostApi = createApi({
       query: (vehicleId) => ({
         url: `/api/host/vehicles/${vehicleId}`,
         method: "DELETE",
+      }),
+      invalidatesTags: [{ type: "Fleet", id: "LIST" }],
+    }),
+
+    createBooking: builder.mutation<
+      CreateBookingResponse,
+      CreateBookingPayload
+    >({
+      query: (payload) => ({
+        url: "/api/host/vehicles/bookings",
+        method: "POST",
+        body: payload,
       }),
       invalidatesTags: [{ type: "Fleet", id: "LIST" }],
     }),
@@ -258,6 +326,35 @@ export const hostApi = createApi({
       invalidatesTags: [{ type: "Maintainance", id: "LIST" }],
     }),
     // maintenance endpoints
+
+    // review endpoints
+    getReviewsSummary: builder.query({
+      query: () => ({
+        url: "/api/host/reviews/summary",
+        method: "GET",
+      }),
+    }),
+
+    getReviewFilters: builder.query({
+      query: () => ({
+        url: "/api/host/reviews/filters",
+        method: "GET",
+      }),
+    }),
+
+    getVehicleReviews: builder.query({
+      query: (filters) => ({
+        url: `/api/host/reviews/vehicles?${toQueryString(filters)}`,
+        method: "GET",
+      }),
+    }),
+
+    getVehicleReviewDetails: builder.query({
+      query: (vehicleId) => ({
+        url: `/api/host/reviews/vehicles/${vehicleId}`,
+        method: "GET",
+      }),
+    }),
   }),
 });
 
@@ -266,10 +363,12 @@ export const {
   useHostRegisterMutation,
   useAddVehicleMutation,
   useDeleteVehicleMutation,
+  useCreateBookingMutation,
   useForgotPasswordMutation,
   useGetVehicleQuery,
   useMarkUnavailableMutation,
   useRelistVehicleMutation,
+  useEndSnoozeEarlyMutation,
   useSnoozeVehicleMutation,
   useUpdateVehicleMutation,
   useLazyGetVehicleQuery,
