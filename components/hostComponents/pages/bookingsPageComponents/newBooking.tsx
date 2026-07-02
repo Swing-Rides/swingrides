@@ -1,83 +1,219 @@
-'use client'
+"use client";
 
-import { useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import PageWrapper from '../../dashboard/pageWrapper'
-import NewBookingForm, { NewBookingFormValues } from '../../forms/newBookingForm'
+import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import PageWrapper from "../../dashboard/pageWrapper";
+import { HOST_DASHBOARD_PATH } from "@/constants/constant";
+import NewBookingForm, {
+  NewBookingFormValues,
+} from "../../forms/newBookingForm";
+import { useListVehcleQuery } from "@/app/store/services/hostApi";
+import {
+  useCreateBookingMutation,
+  useListBookingsQuery,
+} from "@/app/store/services/bookingApi";
 
-const FORM_ID = 'new-booking-form'
+const FORM_ID = "new-booking-form";
+
+const dateRangesOverlap = (
+  startA: Date,
+  endA: Date,
+  startB: Date,
+  endB: Date,
+) => startA <= endB && endA >= startB;
+
+const getNextReferenceCode = (references: string[]) => {
+  const currentYear = new Date().getFullYear();
+  const maxSequence = references.reduce((max, reference) => {
+    const match = reference.match(/^SR-\d{4}-(\d{4})$/);
+    if (!match) return max;
+    const value = Number(match[1]);
+    if (Number.isNaN(value)) return max;
+    return Math.max(max, value);
+  }, 0);
+
+  return `SR-${currentYear}-${String(maxSequence + 1).padStart(4, "0")}`;
+};
 
 export default function NewBookingPageComponent() {
+  const router = useRouter();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const {
+    data: vehiclesResponse,
+    isLoading: isVehiclesLoading,
+    isError: isVehiclesError,
+  } = useListVehcleQuery({ limit: 100 });
+  const {
+    data: bookingsResponse,
+    isLoading: isBookingsLoading,
+    isError: isBookingsError,
+  } = useListBookingsQuery();
+  const [createBooking, { isLoading: isCreatingBooking }] =
+    useCreateBookingMutation();
 
-        const bookingId = "SR-2026-0043"
-        const router = useRouter()
+  const availableVehicles = useMemo(() => {
+    return (vehiclesResponse?.data ?? []).filter(
+      (vehicle) => vehicle.status === "active" && vehicle.instantlyAvailable,
+    );
+  }, [vehiclesResponse]);
 
-        // Stable references — required so NewBookingForm's use()-backed promises
-        // don't get recreated (and re-suspended) on every render
-        const fetchVehicles = useCallback(async () => {
-                // TODO: replace with real API call
-                return [
-                        { id: 'veh_001', name: 'Toyota Camry 2024', imageUrl: '/images/toyota-camry-2024.webp', dailyPrice: 65, weeklyPrice: 380, monthlyPrice: 1400 },
-                        { id: 'veh_002', name: 'Tesla Model S', imageUrl: '/images/test-cars/2026_tesla_model-s_sedan_base_fqn_izmo_1_1600x1067.webp', dailyPrice: 120, weeklyPrice: 700, monthlyPrice: 2600 },
-                        { id: 'veh_003', name: 'Porsche-911 Carrera 2024', imageUrl: '/images/test-cars/Porsche-911-Carrera-2024.webp', dailyPrice: 155, weeklyPrice: 930, monthlyPrice: 4340 },
-                ]
-        }, [])
+  const bookingRows = bookingsResponse?.data ?? [];
+  const bookingId = useMemo(
+    () =>
+      getNextReferenceCode(bookingRows.map((booking) => booking.referenceCode)),
+    [bookingRows],
+  );
 
-        const fetchAddons = useCallback(async () => {
-                // TODO: replace with real API call
-                return [
-                        { id: 'addon_insurance', label: 'Insurance', price: 15 },
-                        { id: 'addon_gps', label: 'GPS Navigation', price: 5 },
-                        { id: 'addon_childseat', label: 'Driver', price: 280 },
-                ]
-        }, [])
+  // Stable references — required so NewBookingForm's use()-backed promises
+  // don't get recreated (and re-suspended) on every render
+  const fetchVehicles = useCallback(async () => {
+    return availableVehicles.map((vehicle) => ({
+      id: vehicle._id,
+      name: vehicle.name,
+      imageUrl: vehicle.images[0] || "/images/placeholder-car.png",
+      dailyPrice: vehicle.dailyPrice,
+      weeklyPrice: vehicle.weeklyPrice,
+      monthlyPrice: vehicle.monthlyPrice,
+    }));
+  }, [availableVehicles]);
 
-        const checkAvailability = useCallback(async (vehicleId: string, startDate: Date, endDate: Date) => {
-                // TODO: replace with real API call checking existing bookings against this range
-                console.log('checking availability for', vehicleId, startDate, endDate)
-                return true
-        }, [])
+  const checkAvailability = useCallback(
+    async (vehicleId: string, startDate: Date, endDate: Date) => {
+      const selectedVehicle = availableVehicles.find(
+        (vehicle) => vehicle._id === vehicleId,
+      );
 
-        // Returns both the tax amount and the rate so the UI can display "Tax (8%)"
-        const fetchTax = useCallback(async (subtotal: number) => {
-                // TODO: replace with real tax calculation from server
-                // const res = await fetch(`/api/tax?subtotal=${subtotal}`)
-                // return res.json() // { amount, rate }
-                const rate = 0.08
-                return { amount: subtotal * rate, rate }
-        }, [])
+      if (!selectedVehicle) return false;
+      if (
+        selectedVehicle.status !== "active" ||
+        !selectedVehicle.instantlyAvailable
+      ) {
+        return false;
+      }
 
-        const handleSubmit = useCallback(async (values: NewBookingFormValues) => {
-                // TODO: replace with real API call
-                console.log('creating booking:', { ...values, bookingId })
-                router.push('/bookings')
-        }, [bookingId, router])
+      return !bookingRows.some((booking) => {
+        if (booking.vehicleId !== vehicleId) return false;
+        if (["cancelled", "completed"].includes(booking.status)) return false;
 
-        return (
-                <PageWrapper
-                        pageTitle='New Booking'
-                        pageDescription={`Auto-generated ref: ${bookingId}`}
-                        pageButton={
-                                <button
-                                        type='submit'
-                                        form={FORM_ID}
-                                        className='px-6 py-2 bg-blue-700 rounded-xs text-center text-white text-sm font-semibold font-text capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none'
-                                >
-                                        Create Booking
-                                </button>
-                        }
-                >
-                        <div className='mt-4 md:mt-6'>
-                                <NewBookingForm
-                                        formId={FORM_ID}
-                                        bookingId={bookingId}
-                                        fetchVehicles={fetchVehicles}
-                                        fetchAddons={fetchAddons}
-                                        checkAvailability={checkAvailability}
-                                        fetchTax={fetchTax}
-                                        onSubmit={handleSubmit}
-                                />
-                        </div>
-                </PageWrapper>
-        )
+        return dateRangesOverlap(
+          startDate,
+          endDate,
+          new Date(booking.pickupDate),
+          new Date(booking.returnDate),
+        );
+      });
+    },
+    [availableVehicles, bookingRows],
+  );
+
+  // Returns both the tax amount and the rate so the UI can display "Tax (8%)"
+  const fetchTax = useCallback(async (subtotal: number) => {
+    const rate = 0.08;
+    return { amount: subtotal * rate, rate };
+  }, []);
+
+  const handleSubmit = useCallback(
+    async (values: NewBookingFormValues) => {
+      setSubmitError(null);
+
+      const renterName = `${values.firstName} ${values.lastName}`.trim();
+      const location = [
+        values.pickupLocation,
+        values.pickupCity,
+        values.pickupState,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      try {
+        const isAvailable = await checkAvailability(
+          values.vehicleId,
+          new Date(values.pickupDate),
+          new Date(values.returnDate),
+        );
+
+        if (!isAvailable) {
+          setSubmitError(
+            "The selected vehicle is not available for the chosen dates.",
+          );
+          return;
+        }
+
+        await createBooking({
+          vehicleId: values.vehicleId,
+          renterName,
+          renterEmail: values.email,
+          renterPhone: values.phoneNumber,
+          pickupDate: values.pickupDate,
+          returnDate: values.returnDate,
+          location,
+        }).unwrap();
+
+        router.push(`${HOST_DASHBOARD_PATH}bookings`);
+      } catch (error) {
+        const fallbackMessage = "Unable to create booking. Please try again.";
+        const errorMessage =
+          typeof error === "object" &&
+          error !== null &&
+          "data" in error &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "message" in error.data &&
+          typeof error.data.message === "string"
+            ? error.data.message
+            : fallbackMessage;
+
+        setSubmitError(errorMessage);
+      }
+    },
+    [checkAvailability, createBooking, router],
+  );
+
+  const isPageLoading = isVehiclesLoading || isBookingsLoading;
+  const hasPageError = isVehiclesError || isBookingsError;
+
+  return (
+    <PageWrapper
+      pageTitle="New Booking"
+      pageDescription={`Auto-generated ref: ${bookingId}`}
+      pageButton={
+        <button
+          type="submit"
+          form={FORM_ID}
+          disabled={isCreatingBooking}
+          className="px-6 py-2 bg-blue-700 rounded-xs text-center text-white text-sm font-semibold font-text capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+        >
+          Create Booking
+        </button>
+      }
+    >
+      <div className="mt-4 md:mt-6">
+        {hasPageError ? (
+          <p className="text-sm font-medium text-red-600">
+            Unable to load booking setup data. Please refresh and try again.
+          </p>
+        ) : isPageLoading ? (
+          <p className="text-sm font-medium text-gray-500">
+            Loading available vehicles...
+          </p>
+        ) : (
+          <>
+            {submitError ? (
+              <p className="mb-4 text-sm font-medium text-red-600">
+                {submitError}
+              </p>
+            ) : null}
+            <NewBookingForm
+              formId={FORM_ID}
+              bookingId={bookingId}
+              fetchVehicles={fetchVehicles}
+              checkAvailability={checkAvailability}
+              fetchTax={fetchTax}
+              onSubmit={handleSubmit}
+            />
+          </>
+        )}
+      </div>
+    </PageWrapper>
+  );
 }
