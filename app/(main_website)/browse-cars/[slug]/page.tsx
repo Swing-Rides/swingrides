@@ -24,7 +24,22 @@ export default async function CarPage({
         return (
                 <>
                         {/* id: {slug} */}
-                        <CarPageComponent content={content}/>
+                        <CarPageComponent 
+                                carName={content.carName}
+                                featuredImage={content.featuredImage} 
+                                gallery={content.gallery} 
+                                reviewsAndRatings={content.reviewsAndRatings} 
+                                status={content.status} 
+                                specifications={content.specifications} 
+                                overview={content.overview} 
+                                host={content.host} 
+                                price={{
+                                        daily: 195,
+                                        weekly: 1250,
+                                        monthly: 4500,
+                                }} 
+                                pickupLocation={"2100 Epic Pl, Grand Prairie, TX 75052, United States"}
+                        />
                 </>
         )
 }

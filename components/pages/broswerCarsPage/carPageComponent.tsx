@@ -1,10 +1,11 @@
+"use client"
+
 import { memo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { 
         HostInfoType, 
-        PricingTierType, 
 } from "@/constants/carsTestData"
 import { 
         Tabs, 
@@ -22,31 +23,33 @@ import {
         SpecificationsTabProps, 
         SpecificationsContentProps 
 } from "./types"
+import { PaymentFormValues, PaymentSection } from "@/components/forms/browseCarPaymentSection"
 
-export default function CarPageComponent({ content }: CarPageComponentProp) {
+export default function CarPageComponent({ carName, featuredImage, gallery, reviewsAndRatings, status, specifications, overview, host, price, pickupLocation }: CarPageComponentProp) {
         return (
                 <>
                         <NotificationBar 
-                                carName={content.carName}
+                                carName={carName}
                         />
                         <section className="py-5 px-2.5 md:py-10 md:px-20">
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
                                         <LeftContent
-                                                carName={content.carName}
-                                                featuredImage={content.featuredImage}
-                                                gallery={content.gallery}
-                                                reviewsAndRatings={content.reviewsAndRatings}
-                                                status={content.status}
-                                                specifications={content.specifications}
-                                                overview={content.overview}
-                                                hostName={content.host.hostName}
-                                                memberSince={content.host.memberSince}
-                                                tripsCompleted={content.host.tripsCompleted}
-                                                contactNumber={content.host.contactNumber}
-                                                rating={content.host.rating}
+                                                carName={carName}
+                                                featuredImage={featuredImage}
+                                                gallery={gallery}
+                                                reviewsAndRatings={reviewsAndRatings}
+                                                status={status}
+                                                specifications={specifications}
+                                                overview={overview}
+                                                hostName={host.hostName}
+                                                memberSince={host.memberSince}
+                                                tripsCompleted={host.tripsCompleted}
+                                                contactNumber={host.contactNumber}
+                                                rating={host.rating}
                                         />
                                         <RightContent
-                                                price={content.price}
+                                                price={price}
+                                                defaultPickupLocation={pickupLocation}
                                         />
                                 </div>
                         </section>
@@ -125,11 +128,15 @@ const LeftContent = memo((
 })
 LeftContent.displayName = "LeftContent"
 
-const RightContent = memo(({ price }: PaymentSectionProps) => {
+const RightContent = memo(({ price, defaultPickupLocation }: PaymentSectionProps) => {
         return (
                 <div className="col-span-1 md:col-span-5 w-full">
                         <PaymentSection
                                 price={price}
+                                defaultPickupLocation={defaultPickupLocation}
+                                onSubmit={async (values: PaymentFormValues) => {
+                                        console.log("booking car...", values)
+                                }}
                         />
                 </div>
         )
@@ -371,125 +378,116 @@ const HostCard = memo(({ hostName, memberSince, tripsCompleted, contactNumber, r
 HostCard.displayName = "HostCard"
 
 type PaymentSectionProps = {
-        price: PricingTierType;
+        price: {
+                daily: number,
+                weekly: number,
+                monthly: number,
+        };
+        defaultPickupLocation: string;
 }
 
-const PaymentSection = memo(({ price }: PaymentSectionProps) => {
+// const PaymentSection = memo(({ price }: PaymentSectionProps) => {
         
-        const displayPrice = price.daily
-        const displayPriceTier = "day"
+//         const displayPrice = price.daily
+//         const displayPriceTier = "day"
 
-        const totalDays = 3
+//         const totalDays = 3
 
-        const enteredPickUpDate = "Mar 14"
-        const enteredReturnDate = "Mar 17"
-        const totalPrice = 585
+//         const enteredPickUpDate = "Mar 14"
+//         const enteredReturnDate = "Mar 17"
+//         const totalPrice = '$585'
 
-        return (           
-                <div className="p-4 md:p-6 rounded-[10px] border border-gray-200">
-                        <div>
-                                <div className="flex flex-col gap-4">
-                                        <div className="flex flex-col gap-2">
-                                                <div>
-                                                        <span className="text-blue-700 text-3xl font-medium font-text leading-12">
-                                                                {"$"}{displayPrice}
-                                                        </span>
-                                                        <span className="text-gray-500 text-base font-normal font-text leading-6">
-                                                                /{displayPriceTier}
-                                                        </span>
-                                                </div>
-                                                <div>
-                                                        <span className="text-neutral-950 text-sm font-semibold font-text leading-5">
-                                                                Total: ${totalPrice} for {totalDays} {totalDays > 1 ? "days" : "day"}
-                                                        </span>
-                                                </div>
-                                        </div>
-                                        <div>
-                                                FORM GOES HERE
-                                        </div>
-                                        <div className="bg-[#EBF0FB] rounded-[10px] p-2.5 md:p-3">
-                                                <span className="text-blue-700 text-sm font-medium font-text leading-5">
-                                                        {totalDays} {totalDays > 1 ? "days" : "day"}
-                                                </span>
-                                                {" "}
-                                                <span className="text-blue-700 text-sm font-medium font-text leading-5">
-                                                        · {enteredPickUpDate} - {enteredReturnDate}
-                                                </span>
-                                        </div>
-                                        <div className="flex flex-col gap-3 pb-6.25 border-b border-b-[#E5E7EB]">
-                                                <div className="flex justify-between gap-4">
-                                                        <div>
-                                                                <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
-                                                                        {"$"}{displayPrice} x {totalDays} days
-                                                                </span>
-                                                        </div>
-                                                        <div>
-                                                                <span>
-                                                                        {"$"}{totalPrice}
-                                                                </span>
-                                                        </div>
-                                                </div>
-                                                <div className="flex justify-between gap-4">
-                                                        <div>
-                                                                <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
-                                                                        Insurance
-                                                                </span>
-                                                        </div>
-                                                        <div>
-                                                                <span className="text-[#F59E0B] text-sm font-normal font-text text-right leading-5">
-                                                                        Charged separately
-                                                                </span>
-                                                        </div>
-                                                </div>
-                                                <div className="flex justify-between gap-4">
-                                                        <div>
-                                                                <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
-                                                                        Fuel & Extras
-                                                                </span>
-                                                        </div>
-                                                        <div>
-                                                                <span className="text-[#F59E0B] text-sm font-normal font-text text-right leading-5">
-                                                                        Charged separately
-                                                                </span>
-                                                        </div>
-                                                </div>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                                <div>
-                                                        <span className="text-[#0B0B0B] text-base font-bold font-text leading-6">
-                                                                Total Estimate
-                                                        </span>
-                                                </div>
-                                                <div>
-                                                        <span className="text-[#1A56DB] text-xl font-medium font-text leading-7">
-                                                                {"$"}{totalPrice}
-                                                        </span>
-                                                </div>
-                                        </div>
-                                        <div>
-                                                <span className="text-gray-800 text-xs font-medium font-text leading-5">
-                                                        I agree to the <Link href={'/'} className="text-[#1A56DB] hover:text-blue-900 duration-300 transition-colors underline" target="_blank" title="terms and conditions link">terms and conditions</Link>
-                                                </span>
-                                        </div>
-                                        <div>
-                                                <button className="w-full font-text text-white px-10 py-3 bg-[#1A56DB] rounded-xs cursor-pointer hover:bg-blue-900 duration-300 transition-colors">
-                                                        Proceed to Payment
-                                                </button>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                                <ShieldIcon/>
-                                                <div>
-                                                        <span className="text-[#6B7280] text-xs font-normal font-test leading-4">
-                                                                Your booking is secure. Documents verified before confirmation.
-                                                        </span>
-                                                </div>
-                                        </div>
-                                </div>
-                        </div>
-                </div >
-        )
-})
-PaymentSection.displayName = "PaymentSection"
+//         return (           
+//                 <div className="space-y-6">
+//                         <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
+//                                 <div className="flex flex-col gap-2">
+//                                         <div>
+//                                                 <span className="text-blue-700 text-3xl font-medium font-text leading-12">
+//                                                         {displayPrice}
+//                                                 </span>
+//                                                 <span className="text-gray-500 text-base font-normal font-text leading-6">
+//                                                         /{displayPriceTier}
+//                                                 </span>
+//                                         </div>
+//                                         <div>
+//                                                 <span className="text-neutral-950 text-sm font-semibold font-text leading-5">
+//                                                         Total: {totalPrice} for {totalDays} {totalDays > 1 ? "days" : "day"}
+//                                                 </span>
+//                                         </div>
+//                                 </div>
+//                                 <div>
+//                                         FORM GOES HERE
+//                                 </div>
+//                                 <div className="bg-[#EBF0FB] rounded-[10px] p-2.5 md:p-3">
+//                                         <span className="text-blue-700 text-sm font-medium font-text leading-5">
+//                                                 {totalDays} {totalDays > 1 ? "days" : "day"}
+//                                         </span>
+//                                         {" "}
+//                                         <span className="text-blue-700 text-sm font-medium font-text leading-5">
+//                                                 · {enteredPickUpDate} - {enteredReturnDate}
+//                                         </span>
+//                                 </div>
+//                                 <div className="flex flex-col gap-3 pb-6.25 border-b border-b-[#E5E7EB]">
+//                                         <div className="flex justify-between gap-4">
+//                                                 <div>
+//                                                         <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
+//                                                                 {displayPrice} x {totalDays} days
+//                                                         </span>
+//                                                 </div>
+//                                                 <div>
+//                                                         <span>
+//                                                                 {totalPrice}
+//                                                         </span>
+//                                                 </div>
+//                                         </div>
+//                                 </div>
+//                                 <div className="flex justify-between items-center">
+//                                         <div>
+//                                                 <span className="text-[#0B0B0B] text-base font-bold font-text leading-6">
+//                                                         Total Estimate
+//                                                 </span>
+//                                         </div>
+//                                         <div>
+//                                                 <span className="text-[#1A56DB] text-xl font-medium font-text leading-7">
+//                                                         {totalPrice}
+//                                                 </span>
+//                                         </div>
+//                                 </div>
+//                                 <div>
+//                                         <span className="text-gray-800 text-xs font-medium font-text leading-5">
+//                                                 I agree to the <Link href={'/'} className="text-[#1A56DB] hover:text-blue-900 duration-300 transition-colors underline" target="_blank" title="terms and conditions link">terms and conditions</Link>
+//                                         </span>
+//                                 </div>
+                                
+//                                 <div className="flex items-center gap-2">
+//                                         <Shield className="size-6 text-gray-500" />
+//                                         <div>
+//                                                 <span className="text-[#6B7280] text-xs font-normal font-test leading-4">
+//                                                         Your booking is secure. Documents verified before confirmation.
+//                                                 </span>
+//                                         </div>
+//                                 </div>
+//                         </div>
+//                         <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
+//                                 <div className="flex items-center justify-between gap-3">
+//                                         <h4 className="text-neutral-950 text-base font-semibold font-text leading-6">
+//                                                 Insurance Details
+//                                         </h4>
+//                                         <span className="block py-0.5 px-3 rounded-full bg-amber-100 text-amber-500">
+//                                                 OPTIONAL
+//                                         </span>
+//                                 </div>
+//                                 INSURANCE FORM HERE                                
+//                         </div>
+//                         <div>
+//                                 <button className="w-full font-text text-white px-10 py-3 bg-[#1A56DB] rounded-xs cursor-pointer hover:bg-blue-900 duration-300 transition-colors">
+//                                         Proceed to Payment
+//                                 </button>
+//                         </div>
+//                 </div >
+//         )
+// })
+// PaymentSection.displayName = "PaymentSection"
 
 const GreaterThanIcon = memo(() => (
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
