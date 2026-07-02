@@ -30,6 +30,12 @@ import {
         TableHeader,
         TableRow,
 } from "@/components/ui/table";
+import {
+        Sheet,
+        SheetContent,
+        SheetHeader,
+        SheetTitle,
+} from "@/components/ui/sheet";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -56,6 +62,13 @@ export interface SelectFilterItem {
 export interface FilterDef<TRow> {
         paramKey: string;
         field: keyof TRow;
+        /**
+         * How to compare the filter value against the row field value.
+         * - "exact" (default) — full string equality: "active" === "active"
+         * - "floor" — Math.floor the row value then compare: Math.floor(4.8) === 4
+         *             Use this for numeric ratings stored as decimal strings ("4.8").
+         */
+        matchMode?: "exact" | "floor";
 }
 
 /**
@@ -86,19 +99,41 @@ export interface FilterDef<TRow> {
  */
 export type ViewAction<TRow> =
         | { type: "link"; href: (row: TRow) => string }
-        | { type: "popup"; onClick: (row: TRow) => void };
+        | { type: "popup"; onClick: (row: TRow) => void }
+        | {
+                type: "sheet";
+                /** Sheet header title. Defaults to "Details" if omitted. */
+                title?: (row: TRow) => ReactNode;
+                /** Sheet body content. */
+                content: (row: TRow) => ReactNode;
+        };
 
 /**
- * Pencil icon — always opens the built-in Edit dialog.
+ * Pencil icon.
+ * - "dialog" (default) → opens the built-in Edit dialog; parent owns body + onConfirm.
+ * - "link"              → renders a Next.js <Link> instead, no dialog at all.
+ *                          Use when editing happens on its own page/route.
+ */
+
+export type EditAction<TRow> =
+        | {
+                type?: "dialog";
+                /** Body rendered inside the dialog. ReactNode so the parent decides layout. */
+                dialogContent: (row: TRow) => ReactNode;
+                onConfirm: (row: TRow) => void;
+                /** Confirm button label. Defaults to "Save changes". */
+                confirmLabel?: string;
+        }
+        | {
+                type: "link";
+                href: (row: TRow) => string;
+        };
+
+/**
+ * Trash icon — always opens the built-in Delete dialog.
+ * Header is auto-generated: "Delete <dataType>?"
  * Parent owns the body copy and the confirm handler.
  */
-export interface EditAction<TRow> {
-        /** Body rendered inside the dialog. ReactNode so the parent decides layout. */
-        dialogContent: (row: TRow) => ReactNode;
-        onConfirm: (row: TRow) => void;
-        /** Confirm button label. Defaults to "Save changes". */
-        confirmLabel?: string;
-}
 
 /**
  * Trash icon — always opens the built-in Delete dialog.
@@ -765,27 +800,30 @@ export function DataTable<TRow extends { id: string }>({
         const paginationLabel =
                 total === 0
                         ? "0 results"
-                        : `${(page - 1) * rowsPerPage + 1}–${Math.min(page * rowsPerPage, total)} of ${total}`;
+                        : `${(page - 1) * rowsPerPage + 1}-${Math.min(page * rowsPerPage, total)} of ${total}`;
 
         // ── Dialog state ────────────────────────────────────────────────────────
-        type DialogKind = "edit" | "delete" | null;
+        type PanelKind = "edit" | "delete" | "sheet" | null;
         const [activeRow, setActiveRow] = useState<TRow | null>(null);
-        const [dialogKind, setDialogKind] = useState<DialogKind>(null);
+        const [panelKind, setPanelKind] = useState<PanelKind>(null);
 
-        const openDialog = (kind: "edit" | "delete", row: TRow) => {
+        const openPanel = (kind: Exclude<PanelKind, null>, row: TRow) => {
                 setActiveRow(row);
-                setDialogKind(kind);
+                setPanelKind(kind);
         };
-        const closeDialog = () => {
-                setDialogKind(null);
+        const closePanel = () => {
+                setPanelKind(null);
                 setActiveRow(null);
         };
 
         const handleEditConfirm = () => {
-                if (activeRow && editAction) { editAction.onConfirm(activeRow); closeDialog(); }
+                if (activeRow && editAction && editAction.type !== "link") {
+                        editAction.onConfirm(activeRow);
+                        closePanel();
+                }
         };
         const handleDeleteConfirm = () => {
-                if (activeRow && deleteAction) { deleteAction.onConfirm(activeRow); closeDialog(); }
+                if (activeRow && deleteAction) { deleteAction.onConfirm(activeRow); closePanel(); }
         };
 
         const hasActions = Boolean(viewAction || editAction || deleteAction || linkAction);
@@ -833,7 +871,7 @@ export function DataTable<TRow extends { id: string }>({
                                                                                 <TableCell>
                                                                                         <div className="flex items-center gap-1">
 
-                                                                                                {/* Eye — link or popup, parent decides */}
+                                                                                                {/* Eye — link, popup, or sheet — parent decides */}
                                                                                                 {viewAction && (
                                                                                                         viewAction.type === "link" ? (
                                                                                                                 <Link
@@ -843,6 +881,14 @@ export function DataTable<TRow extends { id: string }>({
                                                                                                                 >
                                                                                                                         <Eye className="size-4 text-gray-500" />
                                                                                                                 </Link>
+                                                                                                        ) : viewAction.type === "sheet" ? (
+                                                                                                                <button
+                                                                                                                        onClick={() => openPanel("sheet", row)}
+                                                                                                                        className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                                                                                                                        title="View"
+                                                                                                                >
+                                                                                                                        <Eye className="size-4 text-gray-500" />
+                                                                                                                </button>
                                                                                                         ) : (
                                                                                                                 <button
                                                                                                                         onClick={() => viewAction.onClick(row)}
@@ -854,21 +900,31 @@ export function DataTable<TRow extends { id: string }>({
                                                                                                         )
                                                                                                 )}
 
-                                                                                                {/* Pencil — opens Edit dialog */}
+                                                                                                {/* Pencil — opens Edit dialog, or navigates if type is "link" */}
                                                                                                 {editAction && (
-                                                                                                        <button
-                                                                                                                onClick={() => openDialog("edit", row)}
-                                                                                                                className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
-                                                                                                                title="Edit"
-                                                                                                        >
-                                                                                                                <Pencil className="size-4 text-gray-500" />
-                                                                                                        </button>
+                                                                                                        editAction.type === "link" ? (
+                                                                                                                <Link
+                                                                                                                        href={editAction.href(row)}
+                                                                                                                        className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                                                                                                                        title="Edit"
+                                                                                                                >
+                                                                                                                        <Pencil className="size-4 text-gray-500" />
+                                                                                                                </Link>
+                                                                                                        ) : (
+                                                                                                                <button
+                                                                                                                        onClick={() => openPanel("edit", row)}
+                                                                                                                        className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                                                                                                                        title="Edit"
+                                                                                                                >
+                                                                                                                        <Pencil className="size-4 text-gray-500" />
+                                                                                                                </button>
+                                                                                                        )
                                                                                                 )}
 
                                                                                                 {/* Trash — opens Delete dialog */}
                                                                                                 {deleteAction && (
                                                                                                         <button
-                                                                                                                onClick={() => openDialog("delete", row)}
+                                                                                                                onClick={() => openPanel("delete", row)}
                                                                                                                 className="p-1.5 rounded-md hover:bg-red-50 transition-colors"
                                                                                                                 title="Delete"
                                                                                                         >
@@ -903,25 +959,26 @@ export function DataTable<TRow extends { id: string }>({
                                                 <button
                                                         onClick={() => goToPage(page - 1)}
                                                         disabled={page <= 1}
-                                                        className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                                        className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                                 >
                                                         <ChevronLeft className="size-4 text-gray-600" />
                                                 </button>
                                                 <button
                                                         onClick={() => goToPage(page + 1)}
                                                         disabled={page >= totalPages}
-                                                        className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                                        className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                                 >
                                                         <ChevronRight className="size-4 text-gray-600" />
                                                 </button>
                                         </div>
                                 </div>
                         </div>
-                        {/* Edit dialog — rendered outside the table so it sits above everything */}
-                        {editAction && (
+
+                        {/* Edit dialog — only rendered when editAction is the dialog variant */}
+                        {editAction && editAction.type !== "link" && (
                                 <TableDialog
-                                        open={dialogKind === "edit"}
-                                        onClose={closeDialog}
+                                        open={panelKind === "edit"}
+                                        onClose={closePanel}
                                         onConfirm={handleEditConfirm}
                                         variant="edit"
                                         title="Edit details"
@@ -934,8 +991,8 @@ export function DataTable<TRow extends { id: string }>({
                         {/* Delete dialog */}
                         {deleteAction && (
                                 <TableDialog
-                                        open={dialogKind === "delete"}
-                                        onClose={closeDialog}
+                                        open={panelKind === "delete"}
+                                        onClose={closePanel}
                                         onConfirm={handleDeleteConfirm}
                                         variant="delete"
                                         title={`Delete ${deleteAction.dataType}?`}
@@ -943,6 +1000,25 @@ export function DataTable<TRow extends { id: string }>({
                                 >
                                         {activeRow ? deleteAction.dialogContent(activeRow) : null}
                                 </TableDialog>
+                        )}
+
+                        {/* View sheet — shadcn Sheet sliding in from the right */}
+                        {viewAction && viewAction.type === "sheet" && (
+                                <Sheet 
+                                        open={panelKind === "sheet"} 
+                                        onOpenChange={(open) => { if (!open) closePanel(); }}
+                                >
+                                        <SheetContent side="right" className="md:min-w-xl overflow-y-auto">
+                                                <SheetHeader className="sticky top-0 bg-white">
+                                                        <SheetTitle className="text-neutral-950 text-base font-bold font-text">
+                                                                {activeRow ? (viewAction.title?.(activeRow) ?? "Details") : "Details"}
+                                                        </SheetTitle>
+                                                </SheetHeader>
+                                                <div className="px-4 pb-6">
+                                                        {activeRow ? viewAction.content(activeRow) : null}
+                                                </div>
+                                        </SheetContent>
+                                </Sheet>
                         )}
                 </TableIdContext.Provider>
         );
