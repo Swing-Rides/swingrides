@@ -235,9 +235,10 @@ export const reportsContent: TabContentProps = {
 
 export const pricingContents: PriceCardProps[] = [
         {
-                cardTitle: 'Starter',
-                price: 29,
-                vechileQuantity: 'Up to 5 vehicles',
+                cardTitle: 'Solo',
+                price: 79,
+                vechileQuantity: '1 Vehicle',
+                description: 'Everything you need to list and manage a single rental vehicle.',
                 features: [
                         'Booking management',
                         'Mileage tracking',
@@ -249,11 +250,12 @@ export const pricingContents: PriceCardProps[] = [
         },
         {
                 badge: 'Most Popular',
-                cardTitle: 'Professional',
-                price: 79,
-                vechileQuantity: 'Up to 25 vehicles',
+                cardTitle: 'Flex',
+                price: 199,
+                vechileQuantity: '2 - 5 Vehicles',
+                description: 'Scale your rental business with advanced financial tools and a branded customer experience.',
                 features: [
-                        'Everything in Starter',
+                        'Everything in Solo',
                         'Expense capture + invoicing',
                         'Toll record history',
                         '10 custom fields',
@@ -263,16 +265,36 @@ export const pricingContents: PriceCardProps[] = [
                 ]
         },
         {
+                cardTitle: 'Fleet',
+                price: 349,
+                vechileQuantity: '6 - 15 Vehicles',
+                description: 'Full operational control for serious fleet hosts with audit-ready exports and priority support.',
+                features: [
+                        'Everything in Flex',
+                        'Maintenance scheduling + vendor tracking',
+                        'MRR dashboard & revenue analytics',
+                        'Unlimited custom fields',
+                        'Full CSV export (all data for audit & tax)',
+                        'P/L statements & advanced reports',
+                        'Odometer history per vehicle',
+                        'Priority escalation support'
+                ]
+        },
+        {
                 cardTitle: 'Enterprise',
                 price: 'Custom',
-                vechileQuantity: 'Unlimited vehicles',
+                vechileQuantity: '16+ Vehicles',
+                description: 'Custom-built for large operations needing dedicated support and platform-level integrations.',
                 features: [
-                        'Everything in Professional',
-                        'White label branding',
-                        'API access',
-                        'Multi-location support',
-                        'Dedicated support',
-                        'Custom integrations',
+                        'Everything in Fleet',
+                        'Unlimited vehicles',
+                        'Custom API integrations',
+                        'Multi-location fleet support',
+                        'Dedicated account manager',
+                        'SLA-backed escalation support',
+                        'White-label platform (your domain)',
+                        'Team accounts & role permissions',
+                        'Custom reporting & compliance tools',
                 ]
         },
 ]

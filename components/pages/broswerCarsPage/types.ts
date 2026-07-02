@@ -1,14 +1,35 @@
-import { 
-        CarDataType, 
+import {  
         ReviewsAndRatingsType, 
         CarSpecificationsType, 
         ReviewType, 
-        RatingsBreakdownType 
+        RatingsBreakdownType, 
+        HostInfoType
 } from "@/constants/carsTestData";
 import { CarsFilterParams } from "./util";
+import { FleetStatus } from "@/types/subscribers.type";
 
 export type CarPageComponentProp = {
-        content: CarDataType
+        carName: string;
+        featuredImage: {
+                src: string;
+                alt: string;
+        };
+        gallery: {
+                id: string;
+                src: string;
+                alt: string;
+        }[];
+        reviewsAndRatings: ReviewsAndRatingsType;
+        status: FleetStatus;
+        specifications: CarSpecificationsType;
+        overview: string;
+        host: HostInfoType;
+        price: {
+                daily: number,
+                weekly: number,
+                monthly: number,
+        }
+        pickupLocation: string;
 }
 
 export type ImagesSectionProps = {

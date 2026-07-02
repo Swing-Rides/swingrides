@@ -16,5 +16,6 @@ export type PriceCardProps = {
                 cardTitle: string;
                 price: number | string;
                 vechileQuantity: string;
+                description: string;
                 features: string[];
         }
