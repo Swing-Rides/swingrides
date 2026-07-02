@@ -1,6 +1,14 @@
+import { fetchAllFAQs } from "@/lib/sanity/queries/faq";
+import { fetchAllFaqCategories } from "@/lib/sanity/queries/faqCategory";
 import Faq from './faq'
 
-export default function FAQsSection() {
+export default async function FAQsSection() {
+
+        const [faqs, categories] = await Promise.all([
+                fetchAllFAQs(),
+                fetchAllFaqCategories(),
+        ]);
+
         return (
                 <section className='py-12 px-4 md:px-20 md:py-24 section-bg-gradient' >
                         <div className='flex flex-col gap-6 md:gap-8'>
@@ -27,7 +35,7 @@ export default function FAQsSection() {
                                         </div>
                                 </div>
                                 <div className='flex flex-wrap justify-center gap-6'>
-                                        <Faq />
+                                        <Faq faqs={faqs} categories={categories} />
                                 </div>
                         </div>
                 </section>
