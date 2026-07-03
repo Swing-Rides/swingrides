@@ -82,14 +82,35 @@ type BookingResponse = {
   totalAmount: number;
   status: BookingStatus;
   checkIn?: {
+    id?: string;
+    bookingId?: string;
+    checkInTime?: string;
+    driverLicenseNumber?: string;
+    driverLicenseExpiry?: string;
+    driverName?: string;
+    additionalDrivers?: string[];
+    fuelLevel?: number;
+    odometerReading?: number;
     vehicleCondition?: {
       exterior?: string[];
       interior?: string[];
       damages?: string[];
     };
+    paymentMethod?: "card" | "cash" | "bank_transfer";
+    securityDeposit?: number;
+    notes?: string;
+    createdAt?: string;
   };
   checkInCompletion?: {
     completedAt?: string;
+    checklist?: {
+      identityVerified?: boolean;
+      insuranceConfirmed?: boolean;
+      vehicleInspected?: boolean;
+      agreementSigned?: boolean;
+      keysHandedOver?: boolean;
+    };
+    totalAmount?: number;
   };
   createdAt: string;
   updatedAt: string;
