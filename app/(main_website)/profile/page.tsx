@@ -1,22 +1,18 @@
-import { redirect } from 'next/navigation'
 import GuestProfilePage from "@/components/pages/profilePages/guestProfilePage";
 import { testGuestUserProfile } from '@/constants/profile';
-// import { carsTestData } from '@/constants/carsTestData';
+import GuestSignInComponent from '@/components/signIn/guestSignInComponent';
 
 export default function ProfilePage() {
 
         const user = testGuestUserProfile.id || null
 
         if (!user) {
-                redirect('/sign-in')
+                return (
+                        <div className="w-full min-h-screen flex justify-center items-center py-10">
+                                <GuestSignInComponent />
+                        </div>
+                )
         }
-
-        // const userRentedCars = carsTestData.filter((item) =>
-        //         testGuestUserProfile.rentals?.some((rental) => rental.car.carId === item.id)
-        // )
-
-        // console.log(userRentedCars)
-        // console.log(userRentedCars.length)
 
         return (
                 <main>
