@@ -523,8 +523,9 @@ function NewBookingFormInner({
                                                                                 <Image
                                                                                         src={selectedVehicle.imageUrl}
                                                                                         alt={selectedVehicle.name}
-                                                                                        fill
-                                                                                        className='object-cover object-center'
+                                                                                        width={240}
+                                                                                        height={160}
+                                                                                        className='aspect-48/32 w-full object-cover object-center'
                                                                                 />
                                                                         </div>
                                                                         <div className='flex flex-col gap-0.5'>

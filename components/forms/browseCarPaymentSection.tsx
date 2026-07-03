@@ -2,7 +2,6 @@
 
 import { memo, useMemo } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { format, addDays, differenceInCalendarDays } from 'date-fns'
 import { Shield, CalendarIcon, AlertTriangle, Loader2 } from 'lucide-react'
 import { useForm, Controller, useWatch } from 'react-hook-form'
@@ -52,10 +51,70 @@ const formatCurrency = (amount: number) =>
 
 const pluralize = (n: number, word: string) => `${n} ${word}${n !== 1 ? 's' : ''}`
 
-const getPricingTier = (days: number): { unit: 'day' | 'week' | 'month'; unitPrice: number; units: number } => {
-        if (days < 7) return { unit: 'day', unitPrice: 0, units: days }
-        if (days < 30) return { unit: 'week', unitPrice: 0, units: Math.ceil(days / 7) }
-        return { unit: 'month', unitPrice: 0, units: Math.ceil(days / 30) }
+type PricingLineItem = { label: string; total: number }
+
+type ComputedPricing = {
+        displayPrice: number        // headline price shown at top (monthly > weekly > daily)
+        displayPriceTier: string    // label for headline price
+        lineItems: PricingLineItem[]
+        total: number
+}
+
+/**
+ * Mixed-unit billing — full periods at the dominant tier rate,
+ * remaining days at the daily rate.
+ *
+ * Examples:
+ *   8 days  → 1 week ($X/wk) + 1 day ($Y/day)
+ *   16 days → 2 weeks + 2 days
+ *   45 days → 1 month + 2 weeks + 1 day
+ */
+const computePricing = (price: PriceConfig, days: number): ComputedPricing => {
+        const lineItems: PricingLineItem[] = []
+        let remaining = days
+        let total = 0
+
+        // Months
+        const months = Math.floor(remaining / 30)
+        if (months > 0) {
+                const monthTotal = months * price.monthly
+                total += monthTotal
+                remaining -= months * 30
+                lineItems.push({
+                        label: `${pluralize(months, 'month')} @ ${formatCurrency(price.monthly)}/mo`,
+                        total: monthTotal,
+                })
+        }
+
+        // Weeks (from the remainder)
+        const weeks = Math.floor(remaining / 7)
+        if (weeks > 0) {
+                const weekTotal = weeks * price.weekly
+                total += weekTotal
+                remaining -= weeks * 7
+                lineItems.push({
+                        label: `${pluralize(weeks, 'week')} @ ${formatCurrency(price.weekly)}/wk`,
+                        total: weekTotal,
+                })
+        }
+
+        // Days (final remainder)
+        if (remaining > 0) {
+                const dayTotal = remaining * price.daily
+                total += dayTotal
+                lineItems.push({
+                        label: `${pluralize(remaining, 'day')} @ ${formatCurrency(price.daily)}/day`,
+                        total: dayTotal,
+                })
+        }
+
+        // Headline: show the dominant tier's unit price
+        let displayPrice = price.daily
+        let displayPriceTier = 'day'
+        if (days >= 30) { displayPrice = price.monthly; displayPriceTier = 'month' }
+        else if (days >= 7) { displayPrice = price.weekly; displayPriceTier = 'week' }
+
+        return { displayPrice, displayPriceTier, lineItems, total }
 }
 
 const THIRTY_DAYS_FROM_NOW = addDays(new Date(), 30)
@@ -118,25 +177,7 @@ export const PaymentSection = memo(({
                 ? Math.max(differenceInCalendarDays(new Date(returnDate), new Date(pickupDate)), 0)
                 : 0
 
-        const tier = getPricingTier(days)
-        let displayPrice: number
-        let displayPriceTier: string
-
-        if (days === 0) {
-                displayPrice = price.daily
-                displayPriceTier = 'day'
-        } else if (tier.unit === 'day') {
-                displayPrice = price.daily
-                displayPriceTier = 'day'
-        } else if (tier.unit === 'week') {
-                displayPrice = price.weekly
-                displayPriceTier = 'week'
-        } else {
-                displayPrice = price.monthly
-                displayPriceTier = 'month'
-        }
-
-        const totalPrice = days > 0 ? displayPrice * tier.units : null
+        const pricing = days > 0 ? computePricing(price, days) : null
 
         const enteredPickUpDate = pickupDate ? format(new Date(pickupDate), 'MMM d') : null
         const enteredReturnDate = returnDate ? format(new Date(returnDate), 'MMM d') : null
@@ -156,15 +197,15 @@ export const PaymentSection = memo(({
                                 <div className='flex flex-col gap-2'>
                                         <div>
                                                 <span className='text-blue-700 text-3xl font-medium font-text leading-12'>
-                                                        {formatCurrency(displayPrice)}
+                                                        {formatCurrency(pricing?.displayPrice ?? price.daily)}
                                                 </span>
                                                 <span className='text-gray-500 text-base font-normal font-text leading-6'>
-                                                        /{displayPriceTier}
+                                                        /{pricing?.displayPriceTier ?? 'day'}
                                                 </span>
                                         </div>
-                                        {totalPrice !== null && (
+                                        {pricing && (
                                                 <span className='text-neutral-950 text-sm font-semibold font-text leading-5'>
-                                                        Total: {formatCurrency(totalPrice)} for {pluralize(days, 'day')}
+                                                        Total: {formatCurrency(pricing.total)} for {pluralize(days, 'day')}
                                                 </span>
                                         )}
                                 </div>
@@ -241,17 +282,19 @@ export const PaymentSection = memo(({
                                         </div>
                                 )}
 
-                                {/* Price breakdown */}
-                                {totalPrice !== null && (
-                                        <div className='flex flex-col gap-3 pb-6.25 border-b border-b-[#E5E7EB]'>
-                                                <div className='flex justify-between gap-4'>
-                                                        <span className='text-[#6B7280] text-sm font-normal font-text leading-5'>
-                                                                {formatCurrency(displayPrice)} x {pluralize(days, 'day')}
-                                                        </span>
-                                                        <span className='text-[#1F2937] text-sm font-medium font-text'>
-                                                                {formatCurrency(totalPrice)}
-                                                        </span>
-                                                </div>
+                                {/* Price breakdown — one row per billing unit */}
+                                {pricing && (
+                                        <div className='flex flex-col gap-2 pb-6.25 border-b border-b-[#E5E7EB]'>
+                                                {pricing.lineItems.map((item, i) => (
+                                                        <div key={i} className='flex justify-between gap-4'>
+                                                                <span className='text-[#6B7280] text-sm font-normal font-text leading-5'>
+                                                                        {item.label}
+                                                                </span>
+                                                                <span className='text-[#1F2937] text-sm font-medium font-text'>
+                                                                        {formatCurrency(item.total)}
+                                                                </span>
+                                                        </div>
+                                                ))}
                                         </div>
                                 )}
 
@@ -261,7 +304,7 @@ export const PaymentSection = memo(({
                                                 Total Estimate
                                         </span>
                                         <span className='text-[#1A56DB] text-xl font-medium font-text leading-7'>
-                                                {totalPrice !== null ? formatCurrency(totalPrice) : '—'}
+                                                {pricing ? formatCurrency(pricing.total) : '—'}
                                         </span>
                                 </div>
 
@@ -291,7 +334,7 @@ export const PaymentSection = memo(({
                                                                 >
                                                                         I agree to the{' '}
                                                                         <Link
-                                                                                href='/'
+                                                                                href='/terms-of-service'
                                                                                 className='text-[#1A56DB] hover:text-blue-900 duration-300 transition-colors underline'
                                                                                 target='_blank'
                                                                                 title='terms and conditions link'
@@ -309,7 +352,7 @@ export const PaymentSection = memo(({
 
                                 {/* Security notice */}
                                 <div className='flex items-center gap-2'>
-                                        <Shield className='size-6 text-gray-500' />
+                                        <Shield className='size-4 text-gray-500' />
                                         <span className='text-[#6B7280] text-xs font-normal font-text leading-4'>
                                                 Your booking is secure. Documents verified before confirmation.
                                         </span>
