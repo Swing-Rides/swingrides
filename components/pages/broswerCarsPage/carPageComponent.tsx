@@ -24,6 +24,7 @@ import {
         SpecificationsContentProps 
 } from "./types"
 import { PaymentFormValues, PaymentSection } from "@/components/forms/browseCarPaymentSection"
+import { Calendar, Star } from "lucide-react"
 
 export default function CarPageComponent({ carName, featuredImage, gallery, reviewsAndRatings, status, specifications, overview, host, price, pickupLocation }: CarPageComponentProp) {
         return (
@@ -183,14 +184,14 @@ const CarDetailCard = memo(({ carName, status, reviewsAndRatings, specifications
                                         <h3 className="text-[#0B0B0B] text-2xl font-bold font-text leading-8">
                                                 {carName}
                                         </h3>
-                                        <div className="px-3 py-1 bg-[#DCFCE7] text-green-700 text-sm font-medium font-text leading-5 rounded-full">
+                                        <div className="px-3 py-1 bg-[#DCFCE7] text-green-700 capitalize text-sm font-medium font-text leading-5 rounded-full">
                                                 <span>{status}</span>
                                         </div>
                                 </div>
 
                                 <div className="flex gap-2 items-center">
                                         <div className="flex gap-2 items-center">
-                                                <StarIcon />
+                                                <Star className="size-4 text-gray-500" />
                                                 <span className="text-neutral-950 text-sm font-semibold font-text leading-5">
                                                         {reviewsAndRatings.averageRating}
                                                 </span>
@@ -224,7 +225,7 @@ const CarDetailCard = memo(({ carName, status, reviewsAndRatings, specifications
                                         </span>
                                 </Badge>
                                 <Badge className="py-4 px-2 bg-[#F3F4F6] rounded-[10px]">
-                                        <CalendarIcon />
+                                        <Calendar className="size-4 text-gray-500" />
                                         <span className="text-[#1F2937]">
                                                 {specifications.year}
                                         </span>
@@ -357,7 +358,7 @@ const HostCard = memo(({ hostName, memberSince, tripsCompleted, contactNumber, r
                                                 Member since {memberSince} · {tripsCompleted} trips completed
                                         </span>
                                         <div className="flex items-center gap-1">
-                                                <StarIcon />
+                                                <Star className='size-4 text-gray-500' />
                                                 <span className="text-[#0B0B0B] text-xs font-medium font-text leading-4">
                                                         {rating} Host Rating
                                                 </span>
@@ -385,109 +386,6 @@ type PaymentSectionProps = {
         };
         defaultPickupLocation: string;
 }
-
-// const PaymentSection = memo(({ price }: PaymentSectionProps) => {
-        
-//         const displayPrice = price.daily
-//         const displayPriceTier = "day"
-
-//         const totalDays = 3
-
-//         const enteredPickUpDate = "Mar 14"
-//         const enteredReturnDate = "Mar 17"
-//         const totalPrice = '$585'
-
-//         return (           
-//                 <div className="space-y-6">
-//                         <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
-//                                 <div className="flex flex-col gap-2">
-//                                         <div>
-//                                                 <span className="text-blue-700 text-3xl font-medium font-text leading-12">
-//                                                         {displayPrice}
-//                                                 </span>
-//                                                 <span className="text-gray-500 text-base font-normal font-text leading-6">
-//                                                         /{displayPriceTier}
-//                                                 </span>
-//                                         </div>
-//                                         <div>
-//                                                 <span className="text-neutral-950 text-sm font-semibold font-text leading-5">
-//                                                         Total: {totalPrice} for {totalDays} {totalDays > 1 ? "days" : "day"}
-//                                                 </span>
-//                                         </div>
-//                                 </div>
-//                                 <div>
-//                                         FORM GOES HERE
-//                                 </div>
-//                                 <div className="bg-[#EBF0FB] rounded-[10px] p-2.5 md:p-3">
-//                                         <span className="text-blue-700 text-sm font-medium font-text leading-5">
-//                                                 {totalDays} {totalDays > 1 ? "days" : "day"}
-//                                         </span>
-//                                         {" "}
-//                                         <span className="text-blue-700 text-sm font-medium font-text leading-5">
-//                                                 · {enteredPickUpDate} - {enteredReturnDate}
-//                                         </span>
-//                                 </div>
-//                                 <div className="flex flex-col gap-3 pb-6.25 border-b border-b-[#E5E7EB]">
-//                                         <div className="flex justify-between gap-4">
-//                                                 <div>
-//                                                         <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
-//                                                                 {displayPrice} x {totalDays} days
-//                                                         </span>
-//                                                 </div>
-//                                                 <div>
-//                                                         <span>
-//                                                                 {totalPrice}
-//                                                         </span>
-//                                                 </div>
-//                                         </div>
-//                                 </div>
-//                                 <div className="flex justify-between items-center">
-//                                         <div>
-//                                                 <span className="text-[#0B0B0B] text-base font-bold font-text leading-6">
-//                                                         Total Estimate
-//                                                 </span>
-//                                         </div>
-//                                         <div>
-//                                                 <span className="text-[#1A56DB] text-xl font-medium font-text leading-7">
-//                                                         {totalPrice}
-//                                                 </span>
-//                                         </div>
-//                                 </div>
-//                                 <div>
-//                                         <span className="text-gray-800 text-xs font-medium font-text leading-5">
-//                                                 I agree to the <Link href={'/'} className="text-[#1A56DB] hover:text-blue-900 duration-300 transition-colors underline" target="_blank" title="terms and conditions link">terms and conditions</Link>
-//                                         </span>
-//                                 </div>
-                                
-//                                 <div className="flex items-center gap-2">
-//                                         <Shield className="size-6 text-gray-500" />
-//                                         <div>
-//                                                 <span className="text-[#6B7280] text-xs font-normal font-test leading-4">
-//                                                         Your booking is secure. Documents verified before confirmation.
-//                                                 </span>
-//                                         </div>
-//                                 </div>
-//                         </div>
-//                         <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
-//                                 <div className="flex items-center justify-between gap-3">
-//                                         <h4 className="text-neutral-950 text-base font-semibold font-text leading-6">
-//                                                 Insurance Details
-//                                         </h4>
-//                                         <span className="block py-0.5 px-3 rounded-full bg-amber-100 text-amber-500">
-//                                                 OPTIONAL
-//                                         </span>
-//                                 </div>
-//                                 INSURANCE FORM HERE                                
-//                         </div>
-//                         <div>
-//                                 <button className="w-full font-text text-white px-10 py-3 bg-[#1A56DB] rounded-xs cursor-pointer hover:bg-blue-900 duration-300 transition-colors">
-//                                         Proceed to Payment
-//                                 </button>
-//                         </div>
-//                 </div >
-//         )
-// })
-// PaymentSection.displayName = "PaymentSection"
 
 const GreaterThanIcon = memo(() => (
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -533,19 +431,6 @@ const PassengerIcon = memo(() => (
 ))
 PassengerIcon.displayName = "PassengerIcon"
 
-const CalendarIcon = memo(() => (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g clipPath="url(#clip0_123_815)">
-                        <path d="M5.33105 1.33276V3.99852" stroke="#6B7280" strokeWidth="1.33288" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M10.6631 1.33276V3.99852" stroke="#6B7280" strokeWidth="1.33288" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M12.662 2.66577H3.3319C2.59577 2.66577 1.99902 3.26252 1.99902 3.99865V13.3288C1.99902 14.0649 2.59577 14.6617 3.3319 14.6617H12.662C13.3982 14.6617 13.9949 14.0649 13.9949 13.3288V3.99865C13.9949 3.26252 13.3982 2.66577 12.662 2.66577Z" stroke="#6B7280" strokeWidth="1.33288" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M1.99902 6.66431H13.9949" stroke="#6B7280" strokeWidth="1.33288" strokeLinecap="round" strokeLinejoin="round" />
-                </g>
-                <defs><clipPath id="clip0_123_815"><rect width="15.9945" height="15.9945" fill="white" /></clipPath></defs>
-        </svg>
-))
-CalendarIcon.displayName = "CalendarIcon"
-
 const FeaturesCheckIcon = memo(() => (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Fixed: fill-opacity → fillOpacity (JSX requires camelCase) */}
@@ -554,27 +439,3 @@ const FeaturesCheckIcon = memo(() => (
         </svg>
 ))
 FeaturesCheckIcon.displayName = "FeaturesCheckIcon"
-
-const StarIcon = memo(() => (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g clipPath="url(#clip0_123_884)">
-                        <path d="M5.75706 1.14633C5.77895 1.10211 5.81277 1.06488 5.85469 1.03885C5.89662 1.01282 5.94499 0.999023 5.99434 0.999023C6.04369 0.999023 6.09206 1.01282 6.13398 1.03885C6.17591 1.06488 6.20973 1.10211 6.23162 1.14633L7.38556 3.48368C7.46157 3.63752 7.57379 3.77062 7.71257 3.87155C7.85134 3.97248 8.01254 4.03822 8.18232 4.06314L10.7629 4.4408C10.8118 4.44788 10.8578 4.46851 10.8956 4.50034C10.9333 4.53217 10.9615 4.57395 10.9768 4.62093C10.992 4.66792 10.9939 4.71824 10.982 4.76621C10.9702 4.81418 10.9452 4.85789 10.9098 4.89238L9.04353 6.7097C8.92045 6.82964 8.82836 6.9777 8.77519 7.14112C8.72202 7.30454 8.70936 7.47844 8.73831 7.64784L9.1789 10.2155C9.18753 10.2643 9.18225 10.3147 9.16366 10.3607C9.14508 10.4067 9.11393 10.4466 9.07377 10.4757C9.03362 10.5049 8.98607 10.5222 8.93656 10.5256C8.88705 10.5291 8.83756 10.5185 8.79376 10.4952L6.48688 9.28233C6.33488 9.20252 6.16577 9.16082 5.99409 9.16082C5.82241 9.16082 5.65329 9.20252 5.50129 9.28233L3.19492 10.4952C3.15113 10.5184 3.10171 10.5288 3.05228 10.5253C3.00285 10.5218 2.9554 10.5045 2.91533 10.4753C2.87525 10.4462 2.84416 10.4064 2.82559 10.3604C2.80702 10.3145 2.80171 10.2643 2.81028 10.2155L3.25037 7.64834C3.27944 7.47886 3.26685 7.30485 3.21367 7.14133C3.1605 6.9778 3.06834 6.82967 2.94515 6.7097L1.07887 4.89288C1.0432 4.85843 1.01792 4.81465 1.00592 4.76653C0.993916 4.71842 0.995667 4.6679 1.01097 4.62073C1.02628 4.57356 1.05453 4.53163 1.0925 4.49973C1.13047 4.46783 1.17663 4.44724 1.22574 4.4403L3.80586 4.06314C3.97583 4.03842 4.13725 3.97276 4.27622 3.87181C4.41518 3.77087 4.52754 3.63767 4.60362 3.48368L5.75706 1.14633Z" fill="#FDC700" stroke="#FDC700" strokeWidth="0.999079" strokeLinecap="round" strokeLinejoin="round" />
-                </g>
-                <defs><clipPath id="clip0_123_884"><rect width="11.9889" height="11.9889" fill="white" /></clipPath></defs>
-        </svg>
-))
-StarIcon.displayName = "StarIcon"
-
-const ShieldIcon = memo(() => (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g clipPath="url(#clip0_123_1079)">
-                        <path d="M13.329 8.66365C13.329 11.9958 10.9965 13.6619 8.22411 14.6283C8.07894 14.6775 7.92124 14.6751 7.7776 14.6216C4.99855 13.6619 2.66602 11.9958 2.66602 8.66365V3.99857C2.66602 3.82182 2.73623 3.65231 2.86121 3.52733C2.98619 3.40235 3.1557 3.33214 3.33245 3.33214C4.66533 3.33214 6.33143 2.53241 7.49103 1.51942C7.63222 1.3988 7.81182 1.33252 7.99753 1.33252C8.18323 1.33252 8.36283 1.3988 8.50402 1.51942C9.67029 2.53907 11.3297 3.33214 12.6626 3.33214C12.8393 3.33214 13.0089 3.40235 13.1338 3.52733C13.2588 3.65231 13.329 3.82182 13.329 3.99857V8.66365Z" stroke="#6B7280" strokeWidth="1.33288" strokeLinecap="round" strokeLinejoin="round" />
-                </g>
-                <defs>
-                        <clipPath id="clip0_123_1079">
-                                <rect width="15.9945" height="15.9945" fill="white" />
-                        </clipPath>
-                </defs>
-        </svg>
-))
-ShieldIcon.displayName = "StarIcon"
