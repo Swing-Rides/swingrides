@@ -35,7 +35,7 @@ const ModalComponent = () => {
 
         return (
                 <ModelBackdrop>
-                        <div className="max-w-120 p-6 bg-white rounded-sm border border-gray-200 flex flex-col justify-start items-center gap-5">
+                        <div className="max-w-120 max-h-[80vh] overflow-y-auto p-6 bg-white rounded-sm border border-gray-200 flex flex-col justify-start items-center gap-5">
                                 <div className="w-full flex gap-5 justify-between">
                                         <h3 className="text-[#1F2937] text-xl font-bold font-text">
                                                 Create Your Account

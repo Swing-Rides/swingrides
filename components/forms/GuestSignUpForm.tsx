@@ -7,20 +7,38 @@ import { Mail, User } from 'lucide-react'
 
 const fields: FormFieldConfig[] = [
         {
-                name: 'fullName',
+                name: 'firstName',
                 type: 'text',
-                label: 'Full Name',
-                placeholder: 'John Smith',
-                icon: <User className='w-4 h-4' />,
-                validation: validators.name('Full name'),
+                label: 'First Name',
+                placeholder: 'John',
+                icon: <User className='size-4' />,
+                validation: validators.name('First name'),
+                className: 'w-full',
+        },
+        {
+                name: 'lastName',
+                type: 'text',
+                label: 'Last Name',
+                placeholder: 'Doe',
+                icon: <User className='size-4' />,
+                validation: validators.name('Last name'),
+                className: 'w-full',
         },
         {
                 name: 'email',
                 type: 'email',
                 label: 'Email Address',
                 placeholder: 'john@email.com',
-                icon: <Mail className='w-4 h-4' />,
+                icon: <Mail className='size-4' />,
                 validation: validators.email(),
+        },
+        {
+                name: 'phoneNumber',
+                type: 'tel',
+                label: 'Phone Number',
+                placeholder: '+1 555-123-4567',
+                icon: <Mail className='size-4' />,
+                validation: validators.phone(),
         },
         {
                 name: 'password',
@@ -37,13 +55,14 @@ const fields: FormFieldConfig[] = [
         },
 ]
 
-export default function GuestSignUpForm() {
+export default function GuestSignUpForm({}) {
         return (
                 <MainForm
                         fields={fields}
                         onSubmit={(values) => console.log(values)}
-                        submitLabel='Proceed to Payment'
+                        submitLabel='Create Account'
                         className='w-full'
+                        rowPairs={[['firstName', 'lastName']]}
                 />
         )
 }
