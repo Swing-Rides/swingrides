@@ -75,7 +75,7 @@ export default function ReportPageComponents() {
           trendPositive: true,
           trendPercentage: "+12.5%",
           label: "Total Revenue",
-          number: "$18.4M",
+          number: "$0",
         },
         {
           icon: <TrendingUp className="size-4 md:size-6 text-blue-700" />,
@@ -83,7 +83,7 @@ export default function ReportPageComponents() {
           trendPositive: true,
           trendPercentage: "+8.3%",
           label: "Net Profit",
-          number: "$12,580,000",
+          number: "$0",
         },
         {
           icon: <FileText className="size-4 md:size-6 text-cyan-600" />,
@@ -91,7 +91,7 @@ export default function ReportPageComponents() {
           trendPositive: true,
           trendPercentage: "+15.2%",
           label: "Total Bookings",
-          number: "224",
+          number: "0",
         },
         {
           icon: (
@@ -101,7 +101,7 @@ export default function ReportPageComponents() {
           trendPositive: true,
           trendPercentage: "+0.2",
           label: "Average Star Rating",
-          number: "4.8",
+          number: "0",
         },
       ];
     }
