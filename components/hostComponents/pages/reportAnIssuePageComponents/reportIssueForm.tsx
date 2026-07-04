@@ -53,19 +53,31 @@ type HostReportFormValues = {
         isUrgent: boolean
 }
 
-const submitReport = async (values: HostReportFormValues) => {
+export type HostIssueReportSubmitPayload = {
+        bookingReference: string
+        issueType: string
+        description: string
+        isUrgent: boolean
+        photoUrls: string[]
+}
+
+type HostReportAnIssueFormProps = {
+        onSubmit?: (payload: HostIssueReportSubmitPayload) => void | Promise<void>
+}
+
+const submitReport = async (payload: HostIssueReportSubmitPayload) => {
         // TODO: replace with real API call
         // await fetch('/api/reports', {
         //         method: 'POST',
         //         headers: { 'Content-Type': 'application/json' },
         //         body: JSON.stringify(values),
         // })
-        console.log('submitting report:', values)
+        console.log('submitting report:', payload)
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function HostReportAnIssueForm() {
+export default function HostReportAnIssueForm({ onSubmit: onSubmitProp }: HostReportAnIssueFormProps) {
         const [previews, setPreviews] = useState<{ name: string; url: string }[]>([])
         const [charCount, setCharCount] = useState(0)
         const photoInputRef = useRef<HTMLInputElement | null>(null)
@@ -81,7 +93,21 @@ export default function HostReportAnIssueForm() {
         })
 
         const onSubmit = async (values: HostReportFormValues) => {
-                await submitReport(values)
+                const photoUrls = values.photos ? Array.from(values.photos).map((file) => file.name) : []
+                const payload: HostIssueReportSubmitPayload = {
+                        bookingReference: values.bookingReference,
+                        issueType: values.issueType,
+                        description: values.description,
+                        isUrgent: values.isUrgent,
+                        photoUrls,
+                }
+
+                if (onSubmitProp) {
+                        await onSubmitProp(payload)
+                        return
+                }
+
+                await submitReport(payload)
         }
 
         // Photo register
