@@ -9,6 +9,7 @@ import { reviewsApi } from "./services/reviewsApi";
 import { settingsApi } from "./services/settingsApi";
 import { reportApi } from "./services/reportApi";
 import { dashboardApi } from "./services/dashboardApi";
+import { notificationApi } from "./services/notificationApi";
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     [settingsApi.reducerPath]: settingsApi.reducer,
     [reportApi.reducerPath]: reportApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
+    [notificationApi.reducerPath]: notificationApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -35,6 +37,7 @@ export const store = configureStore({
       settingsApi.middleware,
       reportApi.middleware,
       dashboardApi.middleware,
+      notificationApi.middleware,
     ),
 });
 
