@@ -3,7 +3,7 @@
 import { getInitials } from "@/components/pages/profilePages/utils";
 import { Bell, ChevronDown, LogOut, Search, X, Menu } from "lucide-react";
 import Image from "next/image";
-import { userContent } from "@/constants/hostSidebar";
+import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 import {
   Popover,
   PopoverContent,
@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import {
-  HeaderAvatarProps,
   HostNotificationType,
   NotificationCardProps,
 } from "../types/navbar.type";
@@ -127,7 +126,7 @@ export function DashboardHeader() {
           earlier={earlierNotifications}
           onMarkAllAsRead={() => markAllAsRead()}
         />
-        <HeaderAvatar user={userContent} />
+        <HeaderAvatar />
       </div>
     </header>
   );
@@ -387,8 +386,12 @@ const NotificationCard = ({
 // Header avatar
 // ---------------------------------------------------------------------------
 
-const HeaderAvatar = ({ user }: HeaderAvatarProps) => {
-  const userInitials = getInitials(user.fullname);
+const HeaderAvatar = () => {
+  const { data } = useGetHostProfileQuery();
+  const fullName = data?.data.fullName ?? "";
+  const avatar = data?.data.profilePictureUrl;
+  const displayName = data?.data.companyName || fullName;
+  const userInitials = getInitials(displayName);
 
   const handleLogout = () => {
     console.log("user logout");
@@ -397,11 +400,11 @@ const HeaderAvatar = ({ user }: HeaderAvatarProps) => {
   return (
     <div className="flex gap-2 items-center justify-start">
       <div className="rounded-full aspect-square size-10 overflow-clip bg-blue-700 text-white flex items-center justify-center text-sm font-semibold font-text shrink-0">
-        {user.avatar ? (
+        {avatar ? (
           <Image
-            src={user.avatar}
-            alt={user.fullname}
-            title={user.fullname}
+            src={avatar}
+            alt={displayName}
+            title={displayName}
             width={40}
             height={40}
             className="w-full aspect-square object-cover"

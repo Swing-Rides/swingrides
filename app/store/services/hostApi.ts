@@ -355,6 +355,24 @@ export const hostApi = createApi({
         method: "GET",
       }),
     }),
+
+    // profile
+    getHostProfile: builder.query<
+      {
+        success: boolean;
+        data: {
+          fullName: string;
+          email: string;
+          companyName?: string;
+          profilePictureUrl?: string;
+          phoneNumber?: string;
+        };
+      },
+      void
+    >({
+      query: () => ({ url: "/api/host/settings/profile-company", method: "GET" }),
+      providesTags: [{ type: "Host", id: "PROFILE" }],
+    }),
   }),
 });
 
@@ -383,4 +401,6 @@ export const {
   useLogMaintenanceServiceMutation,
   useLogServiceModalMutation,
   // maintenance endpoints
+
+  useGetHostProfileQuery,
 } = hostApi;
