@@ -24,11 +24,7 @@ import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import LogMaintenanceServiceForm from "./logMaintenanceServiceForm";
 import { useLazyGetVehicleMaintenanceDashboardQuery } from "@/app/store/services/hostApi";
 import { useSearchParams } from "next/navigation";
-import {
-  PaginatedServiceHistory,
-  ServiceAlertItem,
-  ServiceHistoryItem,
-} from "@/types/logservice.type";
+import { ServiceHistoryItem } from "@/types/logservice.type";
 
 export default function MaintenancePageComponents() {
   const searchParams = useSearchParams();
@@ -70,27 +66,41 @@ export default function MaintenancePageComponents() {
             icon={<Wrench className="size-6 text-blue-700" />}
             iconBgColor="bg-indigo-50"
             title="Total Services"
-            number={String(data?.data.summary.totalServices) || "0"}
+            number={
+              data?.data.summary.totalServices != null
+                ? String(data.data.summary.totalServices)
+                : "0"
+            }
           />
           <MaintenanceOverviewCard
             icon={<DollarSign className="size-6 text-red-500" />}
             iconBgColor="bg-rose-100"
             title="Total Maintenance Cost"
             number={
-              `$${String(data?.data.summary.totalMaintenanceCost)}` || "$0"
+              data?.data.summary.totalMaintenanceCost != null
+                ? `$${data.data.summary.totalMaintenanceCost}`
+                : "$0"
             }
           />
           <MaintenanceOverviewCard
             icon={<Clock className="size-6 text-amber-500" />}
             iconBgColor="bg-orange-50"
             title="Vehicles Due Soon"
-            number={String(data?.data.summary.vehiclesDueSoon) || "0"}
+            number={
+              data?.data.summary.vehiclesDueSoon != null
+                ? String(data.data.summary.vehiclesDueSoon)
+                : "0"
+            }
           />
           <MaintenanceOverviewCard
             icon={<TriangleAlert className="size-6 text-red-500" />}
             iconBgColor="bg-red-100"
             title="Past-due Vehicles"
-            number={String(data?.data.summary.overdueVehicles) || "0"}
+            number={
+              data?.data.summary.overdueVehicles != null
+                ? String(data.data.summary.overdueVehicles)
+                : "0"
+            }
           />
         </div>
         <div className="mt-4 md:mt-10 space-y-4">
@@ -104,21 +114,33 @@ export default function MaintenancePageComponents() {
               icon={<CheckCircle className="size-6 text-emerald-500" />}
               iconBgColor="bg-green-100"
               title="Healthy"
-              number={String(data?.data.vehicleHealthOverview.healthy) || "0"}
+              number={
+                data?.data.vehicleHealthOverview.healthy != null
+                  ? String(data.data.vehicleHealthOverview.healthy)
+                  : "0"
+              }
               label="No service due within 30 days"
             />
             <HealthOverviewCard
               icon={<Clock className="size-6 text-amber-500" />}
               iconBgColor="bg-orange-50"
               title="Due Soon"
-              number={String(data?.data.vehicleHealthOverview.dueSoon) || "0"}
+              number={
+                data?.data.vehicleHealthOverview.dueSoon != null
+                  ? String(data.data.vehicleHealthOverview.dueSoon)
+                  : "0"
+              }
               label="Service due within 30 days"
             />
             <HealthOverviewCard
               icon={<XCircle className="size-6 text-red-500" />}
               iconBgColor="bg-rose-100"
               title="Past-due"
-              number={String(data?.data.vehicleHealthOverview.overdue) || "0"}
+              number={
+                data?.data.vehicleHealthOverview.overdue != null
+                  ? String(data.data.vehicleHealthOverview.overdue)
+                  : "0"
+              }
               label="Service past due date"
             />
           </div>
@@ -223,6 +245,7 @@ export default function MaintenancePageComponents() {
           <div>
             <ServiceHistoryTableSection
               tableData={data?.data.serviceHistory.items}
+              isLoading={isLoading}
             />
           </div>
         </div>
@@ -458,179 +481,6 @@ interface ServiceHistoryRow {
   nextDue: string;
 }
 
-const MOCK_HISTORY_DATA: ServiceHistoryRow[] = [
-  {
-    id: "SH-001",
-    vehicleName: "Tesla Model 3",
-    serviceType: "Tire Rotation",
-    date: "2026-05-15",
-    mileage: "15,000 km",
-    cost: "$80.00",
-    workshop: "Tesla Service Center",
-    nextDue: "2026-11-15",
-  },
-  {
-    id: "SH-002",
-    vehicleName: "BMW X5",
-    serviceType: "Oil Change",
-    date: "2026-05-10",
-    mileage: "30,500 km",
-    cost: "$150.00",
-    workshop: "EuroFix Motors",
-    nextDue: "2026-11-10",
-  },
-  {
-    id: "SH-003",
-    vehicleName: "Honda Accord",
-    serviceType: "Brake Pad Replacement",
-    date: "2026-04-25",
-    mileage: "42,000 km",
-    cost: "$320.00",
-    workshop: "City Auto Repair",
-    nextDue: "2027-04-25",
-  },
-  {
-    id: "SH-004",
-    vehicleName: "Toyota RAV4",
-    serviceType: "Battery Replacement",
-    date: "2026-04-18",
-    mileage: "22,100 km",
-    cost: "$210.00",
-    workshop: "Toyota Express",
-    nextDue: "2028-04-18",
-  },
-  {
-    id: "SH-005",
-    vehicleName: "Ford F-150",
-    serviceType: "Transmission Service",
-    date: "2026-04-05",
-    mileage: "55,000 km",
-    cost: "$450.00",
-    workshop: "Ford Fleet Services",
-    nextDue: "2027-04-05",
-  },
-  {
-    id: "SH-006",
-    vehicleName: "Audi A4",
-    serviceType: "Air Filter",
-    date: "2026-03-20",
-    mileage: "28,000 km",
-    cost: "$65.00",
-    workshop: "EuroFix Motors",
-    nextDue: "2026-09-20",
-  },
-  {
-    id: "SH-007",
-    vehicleName: "Porsche 911",
-    serviceType: "Full Inspection",
-    date: "2026-03-12",
-    mileage: "10,200 km",
-    cost: "$800.00",
-    workshop: "Porsche Specialists",
-    nextDue: "2026-09-12",
-  },
-  {
-    id: "SH-008",
-    vehicleName: "Nissan Rogue",
-    serviceType: "Wheel Alignment",
-    date: "2026-03-05",
-    mileage: "35,400 km",
-    cost: "$120.00",
-    workshop: "Precision Align",
-    nextDue: "2026-09-05",
-  },
-  {
-    id: "SH-009",
-    vehicleName: "Chevrolet Tahoe",
-    serviceType: "Oil Change",
-    date: "2026-02-28",
-    mileage: "62,000 km",
-    cost: "$110.00",
-    workshop: "Quick Lube Pro",
-    nextDue: "2026-08-28",
-  },
-  {
-    id: "SH-010",
-    vehicleName: "Mercedes E-Class",
-    serviceType: "Coolant Flush",
-    date: "2026-02-15",
-    mileage: "40,000 km",
-    cost: "$190.00",
-    workshop: "EuroFix Motors",
-    nextDue: "2027-02-15",
-  },
-  {
-    id: "SH-011",
-    vehicleName: "Mazda Miata",
-    serviceType: "Tire Rotation",
-    date: "2026-02-01",
-    mileage: "18,500 km",
-    cost: "$75.00",
-    workshop: "Zoom Zoom Auto",
-    nextDue: "2026-08-01",
-  },
-  {
-    id: "SH-012",
-    vehicleName: "Jeep Wrangler",
-    serviceType: "Suspension Repair",
-    date: "2026-01-20",
-    mileage: "50,000 km",
-    cost: "$600.00",
-    workshop: "Off-Road Garage",
-    nextDue: "2027-01-20",
-  },
-  {
-    id: "SH-013",
-    vehicleName: "Subaru Outback",
-    serviceType: "Oil Change",
-    date: "2026-01-10",
-    mileage: "25,000 km",
-    cost: "$95.00",
-    workshop: "Subie Clinic",
-    nextDue: "2026-07-10",
-  },
-  {
-    id: "SH-014",
-    vehicleName: "Ford Mustang",
-    serviceType: "Brake Fluid Flush",
-    date: "2026-01-05",
-    mileage: "32,000 km",
-    cost: "$140.00",
-    workshop: "Muscle Car Masters",
-    nextDue: "2027-01-05",
-  },
-  {
-    id: "SH-015",
-    vehicleName: "Tesla Model S",
-    serviceType: "Software Update/Check",
-    date: "2025-12-20",
-    mileage: "45,000 km",
-    cost: "$0.00",
-    workshop: "Tesla Service Center",
-    nextDue: "2026-06-20",
-  },
-  {
-    id: "SH-016",
-    vehicleName: "Mini Cooper",
-    serviceType: "Oil Change",
-    date: "2025-12-15",
-    mileage: "21,000 km",
-    cost: "$130.00",
-    workshop: "Mini Haven",
-    nextDue: "2026-06-15",
-  },
-  {
-    id: "SH-017",
-    vehicleName: "Volkswagen Golf",
-    serviceType: "Wiper Blade Replacement",
-    date: "2025-12-05",
-    mileage: "27,500 km",
-    cost: "$40.00",
-    workshop: "Auto Parts Depot",
-    nextDue: "2026-06-05",
-  },
-];
-
 const serviceHistoryColumns: ColumnDef<ServiceHistoryItem>[] = [
   {
     key: "vehicleName",
@@ -688,7 +538,7 @@ const serviceHistoryColumns: ColumnDef<ServiceHistoryItem>[] = [
   },
 ];
 
-function getFilterOptions(rows: ServiceHistoryRow[]) {
+function getFilterOptions(rows: ServiceHistoryItem[]) {
   const types = [...new Set(rows.map((r) => r.serviceType))];
   const vehicleNames = [...new Set(rows.map((r) => r.vehicleName))];
   const workshops = [...new Set(rows.map((r) => r.workshop))];
@@ -698,10 +548,12 @@ function getFilterOptions(rows: ServiceHistoryRow[]) {
 
 export function ServiceHistoryTableSection({
   tableData,
+  isLoading,
 }: {
   tableData?: ServiceHistoryItem[];
+  isLoading?: boolean;
 }) {
-  const data = MOCK_HISTORY_DATA;
+  const data = tableData ?? [];
 
   const { types, vehicleNames, workshops } = getFilterOptions(data);
 
@@ -722,27 +574,28 @@ export function ServiceHistoryTableSection({
     <DataTable
       tableId="ServiceHistory"
       columns={serviceHistoryColumns}
-      rows={tableData ?? []}
+      rows={rows}
       pagination={pagination}
+      loading={isLoading}
       toolbar={
         <TableToolbar
           search={{ placeholder: "Search by vehicle or service type..." }}
           filters={[
-            {
+            ...(types.length > 0 ? [{
               title: "All Types",
               paramKey: "serviceType",
               items: types.map((t) => ({ label: t, value: t })),
-            },
-            {
+            }] : []),
+            ...(vehicleNames.length > 0 ? [{
               title: "All Vehicles",
               paramKey: "vehicleName",
               items: vehicleNames.map((v) => ({ label: v, value: v })),
-            },
-            {
+            }] : []),
+            ...(workshops.length > 0 ? [{
               title: "All Workshops",
               paramKey: "workshop",
               items: workshops.map((w) => ({ label: w, value: w })),
-            },
+            }] : []),
           ]}
           dateSort
           actions={

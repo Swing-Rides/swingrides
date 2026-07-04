@@ -180,7 +180,7 @@ export default function LogMaintenanceServiceForm({
                   />
                 </SelectTrigger>
 
-                <SelectContent>
+                <SelectContent className="z-[9999]">
                   {data?.data?.map((vehicle: IListVehiclesDatum) => (
                     <SelectItem
                       key={vehicle._id || vehicle._id}
