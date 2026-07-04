@@ -39,6 +39,7 @@ export default async function SingleTripPage({
                                 returnDate={content.returnDate}
                                 pickUpLocation={content.pickupLocation}
                                 price={content.price}
+                                totalPrice={"$9999999"}
                                 features={content.car.features}
                                 featuredImage={carContent?.featuredImage}
                                 carName={carContent?.carName}
