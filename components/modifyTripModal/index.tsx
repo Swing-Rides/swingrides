@@ -1,24 +1,15 @@
 'use client'
 
+import { DEFAULT_IMAGE_SRC } from '@/constants/constant'
+import { Separator } from '@/components/ui/separator'
+import Image from 'next/image'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useCallback } from 'react'
-
-
-type ModifyTripModalProps = {
-        rentals?: {
-                rentId: string
-                pickUpDate: string
-                returnDate: string
-                price: number
-                car: {
-                        carName: string
-                        plateNumber: string
-                }
-        }[]
-}
+import ModifyBookingForm from '../forms/modifyBookingForm'
+import { ModifyTripModalProps } from './types'
+import { X } from 'lucide-react'
 
 export default function ModifyTripModal({ rentals }: ModifyTripModalProps) {
-
         const searchParams = useSearchParams()
         const router = useRouter()
         const pathname = usePathname()
@@ -37,92 +28,67 @@ export default function ModifyTripModal({ rentals }: ModifyTripModalProps) {
 
         return (
                 <div
-                        className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'
+                        className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'
                         onClick={handleClose}
                 >
                         <div
-                                className='relative bg-white rounded-[10px] shadow-xl w-full max-w-md mx-4 p-6 flex flex-col gap-5'
+                                className='relative bg-white rounded-[10px] shadow-xl w-full max-w-md mx-4 p-6 flex flex-col gap-5 max-h-[90vh] overflow-y-auto'
                                 onClick={(e) => e.stopPropagation()}
                         >
                                 {/* Header */}
-                                <div className='flex items-center justify-between'>
-                                        <h2 className='text-[#1F2937] text-lg font-bold font-text leading-6'>
-                                                Modify Trip
-                                        </h2>
+                                <div className='flex items-center justify-between gap-5'>
+                                        <div className='flex justify-start items-center gap-3'>
+                                                <h2 className='text-neutral-950 text-lg font-bold font-text leading-6'>
+                                                        Modify Trip
+                                                </h2>
+                                                <span className="text-cyan-600 text-sm font-normal font-['DM_Mono'] leading-5">
+                                                        {rental.rentId}
+                                                </span>
+                                        </div>
                                         <button
                                                 onClick={handleClose}
-                                                className='text-[#6B7280] hover:text-[#1F2937] transition-colors duration-200 cursor-pointer'
+                                                className='text-gray-500 hover:text-neutral-950 transition-colors duration-200 cursor-pointer'
                                                 aria-label='Close modal'
                                         >
-                                                <CloseIcon />
+                                                <X className='size-4' />
                                         </button>
                                 </div>
+
+                                <Separator />
+
+                                <span className='text-gray-500 text-xs font-normal font-text leading-5'>
+                                        You can modify your pickup date, return date, and pickup location. Changes are subject to availability.
+                                </span>
 
                                 {/* Trip summary */}
-                                <div className='flex flex-col gap-2 p-4 bg-[#F9FAFB] rounded-lg'>
-                                        <div className='flex justify-between items-center'>
-                                                <span className='text-[#6B7280] text-xs font-normal font-text'>
-                                                        Vehicle
-                                                </span>
-                                                <span className='text-[#1F2937] text-sm font-semibold font-text'>
+                                <div className='p-4 bg-gray-100 rounded-[10px] flex justify-start items-center gap-3'>
+                                        <div className='w-14 h-10 rounded-lg flex flex-col justify-start items-start overflow-hidden'>
+                                                <Image
+                                                        src={rental.car.imageUrl || DEFAULT_IMAGE_SRC}
+                                                        alt={rental.car.carName}
+                                                        title={rental.car.carName}
+                                                        width={120}
+                                                        height={80}
+                                                        className='aspect-15/10 w-full max-w-15 object-cover'
+                                                />
+                                        </div>
+                                        <div className='flex flex-col justify-start items-start'>
+                                                <span className='block text-gray-800 text-sm font-semibold font-text leading-5'>
                                                         {rental.car.carName}
                                                 </span>
-                                        </div>
-                                        <div className='flex justify-between items-center'>
-                                                <span className='text-[#6B7280] text-xs font-normal font-text'>
-                                                        Plate
-                                                </span>
-                                                <span className='text-[#1F2937] text-sm font-semibold font-text'>
-                                                        {rental.car.plateNumber}
-                                                </span>
-                                        </div>
-                                        <div className='flex justify-between items-center'>
-                                                <span className='text-[#6B7280] text-xs font-normal font-text'>
-                                                        Pickup
-                                                </span>
-                                                <span className='text-[#1F2937] text-sm font-semibold font-text'>
-                                                        {rental.pickUpDate}
-                                                </span>
-                                        </div>
-                                        <div className='flex justify-between items-center'>
-                                                <span className='text-[#6B7280] text-xs font-normal font-text'>
-                                                        Return
-                                                </span>
-                                                <span className='text-[#1F2937] text-sm font-semibold font-text'>
-                                                        {rental.returnDate}
-                                                </span>
-                                        </div>
-                                        <div className='flex justify-between items-center'>
-                                                <span className='text-[#6B7280] text-xs font-normal font-text'>
-                                                        Daily rate
-                                                </span>
-                                                <span className='text-[#1F2937] text-sm font-semibold font-text'>
-                                                        {rental.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                                <span className='flex text-gray-500 text-xs font-normal font-text leading-5'>
+                                                        {rental.pickUpDate} - {rental.returnDate} · {rental.tripDurationDays} · {rental.price}
                                                 </span>
                                         </div>
                                 </div>
 
-                                {/* Actions */}
-                                <div className='flex gap-3 justify-end'>
-                                        <button
-                                                onClick={handleClose}
-                                                className='text-sm font-medium font-text leading-5 border border-[#E5E7EB] text-[#6B7280] rounded-xs py-2 px-4 bg-transparent hover:bg-[#F3F4F6] transition-colors duration-200 cursor-pointer'
-                                        >
-                                                Discard
-                                        </button>
-                                        <button
-                                                className='text-sm font-medium font-text leading-5 border border-[#1A56DB] text-white rounded-xs py-2 px-4 bg-[#1A56DB] hover:bg-[#1E429F] transition-colors duration-200 cursor-pointer'
-                                        >
-                                                Save changes
-                                        </button>
-                                </div>
+                                {/* ── Modify form ──────────────────────────── */}
+                                <ModifyBookingForm
+                                        rental={rental}
+                                        onClose={handleClose}
+                                />
                         </div>
                 </div>
         )
 }
 
-const CloseIcon = () => (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-)
