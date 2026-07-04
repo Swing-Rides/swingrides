@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { cn } from '@/lib/utils'
 
@@ -49,7 +49,6 @@ type HostReportFormValues = {
         bookingReference: string
         issueType: string
         description: string
-        photos?: FileList
         isUrgent: boolean
 }
 
@@ -67,20 +66,14 @@ type HostReportAnIssueFormProps = {
 
 const submitReport = async (payload: HostIssueReportSubmitPayload) => {
         // TODO: replace with real API call
-        // await fetch('/api/reports', {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify(values),
-        // })
         console.log('submitting report:', payload)
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function HostReportAnIssueForm({ onSubmit: onSubmitProp }: HostReportAnIssueFormProps) {
-        const [previews, setPreviews] = useState<{ name: string; url: string }[]>([])
+        const [photoUrls, setPhotoUrls] = useState<string[]>([])
         const [charCount, setCharCount] = useState(0)
-        const photoInputRef = useRef<HTMLInputElement | null>(null)
 
         const {
                 register,
@@ -93,7 +86,6 @@ export default function HostReportAnIssueForm({ onSubmit: onSubmitProp }: HostRe
         })
 
         const onSubmit = async (values: HostReportFormValues) => {
-                const photoUrls = values.photos ? Array.from(values.photos).map((file) => file.name) : []
                 const payload: HostIssueReportSubmitPayload = {
                         bookingReference: values.bookingReference,
                         issueType: values.issueType,
@@ -108,46 +100,6 @@ export default function HostReportAnIssueForm({ onSubmit: onSubmitProp }: HostRe
                 }
 
                 await submitReport(payload)
-        }
-
-        // Photo register
-        const { ref: photoRef, ...photoRest } = register('photos', {
-                validate: {
-                        maxFiles: (files: FileList | undefined) => {
-                                if (!files?.length) return true
-                                return files.length <= MAX_PHOTOS
-                                        || `Maximum ${MAX_PHOTOS} photos allowed`
-                        },
-                        maxSize: (files: FileList | undefined) => {
-                                if (!files?.length) return true
-                                const oversized = Array.from(files).filter(
-                                        f => f.size / (1024 * 1024) > MAX_PHOTO_SIZE_MB
-                                )
-                                return oversized.length === 0
-                                        || `Each photo must be under ${MAX_PHOTO_SIZE_MB}MB`
-                        },
-                        fileType: (files: FileList | undefined) => {
-                                if (!files?.length) return true
-                                const invalid = Array.from(files).filter(
-                                        f => !['image/jpeg', 'image/png'].includes(f.type)
-                                )
-                                return invalid.length === 0
-                                        || 'Only JPG and PNG files are allowed'
-                        },
-                },
-        })
-
-        const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                photoRest.onChange(e)
-                const files = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS)
-                setPreviews(files.map(file => ({
-                        name: file.name,
-                        url: URL.createObjectURL(file),
-                })))
-        }
-
-        const removePreview = (index: number) => {
-                setPreviews(prev => prev.filter((_, i) => i !== index))
         }
 
         return (
@@ -200,8 +152,8 @@ export default function HostReportAnIssueForm({ onSubmit: onSubmitProp }: HostRe
                                         defaultValue=''
                                         rules={{ required: 'Please select an issue type' }}
                                         render={({ field }) => (
-                                                <Select 
-                                                        onValueChange={field.onChange} 
+                                                <Select
+                                                        onValueChange={field.onChange}
                                                         value={field.value}
                                                 >
                                                         <SelectTrigger
@@ -263,7 +215,6 @@ export default function HostReportAnIssueForm({ onSubmit: onSubmitProp }: HostRe
                                                         onChange: (e) => setCharCount(e.target.value.length),
                                                 })}
                                         />
-                                        {/* Char counter */}
                                         <span className={cn(
                                                 'text-xs font-normal font-text self-end',
                                                 charCount >= MAX_DESCRIPTION_CHARS
@@ -281,75 +232,8 @@ export default function HostReportAnIssueForm({ onSubmit: onSubmitProp }: HostRe
                                 htmlFor='photos'
                                 optional
                                 description='Attach up to 4 photos that support your report. JPG, PNG · Max 5MB each.'
-                                error={errors.photos?.message as string}
                         >
-                                <div className='flex flex-col gap-3'>
-                                        <label
-                                                htmlFor='photos'
-                                                className={cn(
-                                                        'flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xs p-5 cursor-pointer transition-colors duration-200 group',
-                                                        errors.photos
-                                                                ? 'border-[#EF4444] bg-[#FFF5F5]'
-                                                                : 'border-[#E5E7EB] hover:border-[#1A56DB]'
-                                                )}
-                                        >
-                                                <Upload className={cn('w-6 h-6', errors.photos ? 'text-[#EF4444]' : 'text-[#9CA3AF]')} />
-                                                <div className='text-center'>
-                                                        <span className={cn(
-                                                                'text-sm font-medium font-text',
-                                                                errors.photos
-                                                                        ? 'text-[#EF4444]'
-                                                                        : 'text-[#1A56DB] group-hover:underline'
-                                                        )}>
-                                                                Click to upload
-                                                        </span>
-                                                        <span className='text-[#6B7280] text-sm font-text'>
-                                                                {' '}or drag and drop
-                                                        </span>
-                                                </div>
-                                                <input
-                                                        id='photos'
-                                                        type='file'
-                                                        accept='image/jpeg, image/png'
-                                                        multiple
-                                                        className='hidden'
-                                                        {...photoRest}
-                                                        ref={(e) => {
-                                                                photoRef(e)
-                                                                photoInputRef.current = e
-                                                        }}
-                                                        onChange={handlePhotoChange}
-                                                />
-                                        </label>
-
-                                        {/* Photo previews */}
-                                        {previews.length > 0 && (
-                                                <div className='grid grid-cols-2 md:grid-cols-4 gap-2'>
-                                                        {previews.map((preview, index) => (
-                                                                <div
-                                                                        key={index}
-                                                                        className='relative rounded-md overflow-clip border border-[#E5E7EB]'
-                                                                >
-                                                                        <Image
-                                                                                src={preview.url}
-                                                                                alt={preview.name}
-                                                                                width={250}
-                                                                                height={250}
-                                                                                className='object-cover object-center aspect-square rounded-sm'
-                                                                        />
-                                                                        <button
-                                                                                type='button'
-                                                                                onClick={() => removePreview(index)}
-                                                                                aria-label={`Remove ${preview.name}`}
-                                                                                className='absolute top-1 right-1 bg-black/60 hover:bg-[#EF4444] text-white rounded-full p-0.5 transition-colors duration-300 cursor-pointer'
-                                                                        >
-                                                                                <X className='size-3'/>
-                                                                        </button>
-                                                                </div>
-                                                        ))}
-                                                </div>
-                                        )}
-                                </div>
+                                <PhotoUpload onUpload={setPhotoUrls} />
                         </FormRow>
 
                         <Separator />
@@ -413,6 +297,130 @@ export default function HostReportAnIssueForm({ onSubmit: onSubmitProp }: HostRe
                                 </span>
                         </div>
                 </form>
+        )
+}
+
+// ─── Photo Upload ─────────────────────────────────────────────────────────────
+
+type PhotoUploadProps = {
+        onUpload: (urls: string[]) => void
+}
+
+const PhotoUpload = ({ onUpload }: PhotoUploadProps) => {
+        const [previews, setPreviews] = useState<{ name: string; url: string }[]>([])
+        const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
+        const [uploading, setUploading] = useState(false)
+        const [error, setError] = useState<string | undefined>()
+
+        const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+                const files = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS)
+                if (!files.length) return
+
+                const oversized = files.filter(f => f.size / (1024 * 1024) > MAX_PHOTO_SIZE_MB)
+                if (oversized.length) { setError(`Each photo must be under ${MAX_PHOTO_SIZE_MB}MB`); return }
+                const invalid = files.filter(f => !['image/jpeg', 'image/png'].includes(f.type))
+                if (invalid.length) { setError('Only JPG and PNG files are allowed'); return }
+
+                setError(undefined)
+                setPreviews(files.map(file => ({ name: file.name, url: URL.createObjectURL(file) })))
+                setUploading(true)
+
+                try {
+                        const urls = await Promise.all(files.map(async (file) => {
+                                const fd = new FormData()
+                                fd.append('file', file)
+                                const res = await fetch('/api/upload', { method: 'POST', body: fd })
+                                const data = await res.json()
+                                return data.secure_url as string
+                        }))
+                        setUploadedUrls(urls)
+                        onUpload(urls)
+                } catch {
+                        setError('Upload failed. Please try again.')
+                } finally {
+                        setUploading(false)
+                }
+        }
+
+        const removePreview = (index: number) => {
+                const nextUrls = uploadedUrls.filter((_, i) => i !== index)
+                setPreviews(prev => prev.filter((_, i) => i !== index))
+                setUploadedUrls(nextUrls)
+                onUpload(nextUrls)
+        }
+
+        return (
+                <div className='flex flex-col gap-3'>
+                        <label
+                                htmlFor='photos'
+                                className={cn(
+                                        'flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xs p-5 cursor-pointer transition-colors duration-200 group',
+                                        error
+                                                ? 'border-[#EF4444] bg-[#FFF5F5]'
+                                                : 'border-[#E5E7EB] hover:border-[#1A56DB]'
+                                )}
+                        >
+                                <Upload className={cn('w-6 h-6', error ? 'text-[#EF4444]' : 'text-[#9CA3AF]')} />
+                                <div className='text-center'>
+                                        <span className={cn(
+                                                'text-sm font-medium font-text',
+                                                error ? 'text-[#EF4444]' : 'text-[#1A56DB] group-hover:underline'
+                                        )}>
+                                                {uploading ? 'Uploading...' : 'Click to upload or drag and drop'}
+                                        </span>
+                                </div>
+                                <input
+                                        id='photos'
+                                        type='file'
+                                        accept='image/jpeg, image/png'
+                                        multiple
+                                        className='hidden'
+                                        onChange={handleChange}
+                                        disabled={uploading}
+                                />
+                        </label>
+
+                        {error && (
+                                <span className='text-[#EF4444] text-xs font-normal font-text flex items-center gap-1'>
+                                        <AlertTriangle className='w-3 h-3 shrink-0' />
+                                        {error}
+                                </span>
+                        )}
+
+                        {previews.length > 0 && (
+                                <div className='grid grid-cols-2 md:grid-cols-4 gap-2'>
+                                        {previews.map((preview, index) => (
+                                                <div
+                                                        key={index}
+                                                        className='relative rounded-md overflow-clip border border-[#E5E7EB]'
+                                                >
+                                                        <Image
+                                                                src={preview.url}
+                                                                alt={preview.name}
+                                                                width={250}
+                                                                height={250}
+                                                                className='object-cover object-center aspect-square rounded-sm'
+                                                        />
+                                                        {uploading && (
+                                                                <div className='absolute inset-0 bg-black/40 flex items-center justify-center'>
+                                                                        <Loader2 className='animate-spin w-5 h-5 text-white' />
+                                                                </div>
+                                                        )}
+                                                        {!uploading && (
+                                                                <button
+                                                                        type='button'
+                                                                        onClick={() => removePreview(index)}
+                                                                        aria-label={`Remove ${preview.name}`}
+                                                                        className='absolute top-1 right-1 bg-black/60 hover:bg-[#EF4444] text-white rounded-full p-0.5 transition-colors duration-300 cursor-pointer'
+                                                                >
+                                                                        <X className='size-3' />
+                                                                </button>
+                                                        )}
+                                                </div>
+                                        ))}
+                                </div>
+                        )}
+                </div>
         )
 }
 

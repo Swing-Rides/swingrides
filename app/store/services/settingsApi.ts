@@ -1,6 +1,7 @@
 import { BaseQueryFn, createApi } from "@reduxjs/toolkit/query/react";
 import { AxiosError, Method } from "axios";
 import apiClient from "@/lib";
+import { hostApi } from "./hostApi";
 
 type AxiosBaseQueryArgs =
   | string
@@ -187,6 +188,10 @@ export const settingsApi = createApi({
         { type: "HostSettings", id: "DASHBOARD" },
         { type: "HostSettings", id: "PROFILE_COMPANY" },
       ],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        dispatch(hostApi.util.invalidateTags([{ type: "Host", id: "PROFILE" }]));
+      },
     }),
 
     getBillingSettings: builder.query<ApiEnvelope<HostBillingSettings>, void>({

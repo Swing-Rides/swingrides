@@ -18,7 +18,7 @@ export default function AddFleetPage() {
       colour: values.color,
       dailyPrice: Number(values.priceDaily),
       description: values.description,
-      images: [],
+      images: values.vehicleImageUrls ?? [],
       instantlyAvailable: values.instantlyAvailable,
       licensePlate: values.licensePlate,
       make: values.make,
