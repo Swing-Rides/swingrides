@@ -70,7 +70,7 @@ export default function ConnectToHostPageComponent() {
 
 export const PageIntro = ({ imageSrc, pageTitle, description }: PageIntroProps ) => {
         return (
-                <div className='max-w-146 mx-auto'>
+                <div className='max-w-146 mx-auto space-y-4'>
                         <div>
                                 <Image
                                         src={imageSrc}
