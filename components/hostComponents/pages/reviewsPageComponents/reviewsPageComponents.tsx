@@ -82,7 +82,7 @@ function ReviewsOverviewCard({
 // StarRating
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StarRating({
+export function StarRating({
   rating,
   size = "sm",
 }: {
