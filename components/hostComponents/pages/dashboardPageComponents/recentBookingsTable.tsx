@@ -71,8 +71,8 @@ export default function RecentBookingsTable({
         bookings: RecentBooking[];
         isLoading?: boolean;
 }) {
-        const data: BookingRow[] = bookings.map((b) => ({
-                id: b.bookingId,
+        const data: BookingRow[] = bookings.map((b, i) => ({
+                id: b.bookingId || String(i),
                 vehicle: b.vehicle,
                 customer: b.customer,
                 status: b.status,
