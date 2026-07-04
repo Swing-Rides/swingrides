@@ -10,21 +10,61 @@ import {
   Wrench,
 } from "lucide-react";
 import PageWrapper from "../../dashboard/pageWrapper";
-import { ReactNode } from "react";
-import RevenueChart, { FilterType } from "../../charts/revenueChart";
-import {
-  sampleBookingDonutData,
-  sampleRevenueGraphData,
-} from "@/constants/saleschartdata";
+import { ReactNode, useMemo, useState } from "react";
+import RevenueChart, { FilterType, GraphDataType } from "../../charts/revenueChart";
 import { BookingsDonutChart } from "../../dashboard/dynamicImport";
 import { Separator } from "@/components/ui/separator";
 import RecentBookingsTable from "./recentBookingsTable";
+import {
+  useGetHostDashboardQuery,
+  DashboardDuration,
+  RecentBooking,
+} from "@/app/store/services/dashboardApi";
+
+const DURATION_MAP: Record<FilterType, DashboardDuration> = {
+  "7D": "7d",
+  "30D": "30d",
+  "90D": "90d",
+};
+
+const DONUT_COLORS: Record<string, string> = {
+  active: "#1A56DB",
+  pending: "#F59E0B",
+  completed: "#10B981",
+  cancelled: "#EF4444",
+};
 
 export default function DashboardPageComponent() {
-  const handleFilterChange = (filter: FilterType) => {
-    // swap sampleMrrData for a real fetch/SWR call keyed by filter
-    console.log("Fetch data for window:", filter);
-  };
+  const [duration, setDuration] = useState<DashboardDuration>("30d");
+  const { data, isLoading } = useGetHostDashboardQuery(duration);
+
+  const summary = data?.data.summary;
+  const fleetStatus = data?.data.fleetStatus;
+  const bookingStatus = data?.data.bookingStatus;
+  const revenueOverview = data?.data.revenueOverview;
+  const recentBookings = data?.data.recentBookings ?? [];
+
+  const graphData = useMemo<GraphDataType>(() => {
+    const points = revenueOverview?.points ?? [];
+    const mapped = points.map((p) => ({ label: p.label, sales: p.revenue }));
+    return {
+      "7D": mapped,
+      "30D": mapped,
+      "90D": mapped,
+      series: [{ name: "Revenue", color: "#1A56DB" }],
+    };
+  }, [revenueOverview]);
+
+  const donutData = useMemo(() => {
+    if (!bookingStatus) return [];
+    return (["active", "pending", "completed", "cancelled"] as const).map((key) => ({
+      bookingStatus: key.charAt(0).toUpperCase() + key.slice(1),
+      bookingCount: bookingStatus[key],
+      color: DONUT_COLORS[key],
+    }));
+  }, [bookingStatus]);
+
+  const handleFilterChange = (filter: FilterType) => setDuration(DURATION_MAP[filter]);
 
   return (
     <PageWrapper
@@ -37,7 +77,7 @@ export default function DashboardPageComponent() {
             icon={<Car className="size-6 text-blue-700" />}
             iconBgColor="bg-indigo-50"
             title="Total Vehicles"
-            number={59}
+            number={summary?.totalVehicles ?? "—"}
             trend={true}
             trendText="+12% from last month"
           />
@@ -45,23 +85,23 @@ export default function DashboardPageComponent() {
             icon={<Calendar className="size-6 text-blue-700" />}
             iconBgColor="bg-indigo-50"
             title="Active Rentals"
-            number={42}
+            number={summary?.activeRentals ?? "—"}
             trend={false}
-            trendText="71% utilization rate"
+            trendText={`${summary?.utilizationRate ?? 0}% utilization rate`}
           />
           <DashboardOverviewCard
             icon={<DollarSign className="size-6 text-emerald-500" />}
             iconBgColor="bg-emerald-100"
             title="Monthly Revenue"
-            number={"$24,500"}
-            trend={true}
-            trendText="+24% from last month"
+            number={summary?.monthlyRevenueFormatted ?? "—"}
+            trend={(summary?.revenueGrowthPercent ?? 0) >= 0}
+            trendText={`${(summary?.revenueGrowthPercent ?? 0) >= 0 ? "+" : ""}${summary?.revenueGrowthPercent ?? 0}% from last month`}
           />
           <DashboardOverviewCard
             icon={<Clock className="size-6 text-amber-500" />}
             iconBgColor="bg-amber-100"
             title="Pending Bookings"
-            number={18}
+            number={summary?.pendingBookings ?? "—"}
             trend={false}
             trendText="Requires approval"
           />
@@ -69,19 +109,20 @@ export default function DashboardPageComponent() {
         <div className="grid md:grid-cols-3 gap-4">
           <div className="md:col-span-2 p-4 md:p-6 bg-white rounded-md border border-gray-200">
             <RevenueChart
-              graphData={sampleRevenueGraphData}
+              graphData={graphData}
               onFilterChange={handleFilterChange}
+              isLoading={isLoading}
             />
           </div>
           <div className="col-span-1">
-            <BookingsDonutChart chartData={sampleBookingDonutData} />
+            <BookingsDonutChart chartData={donutData} />
           </div>
         </div>
         <div className="grid md:grid-cols-3 gap-4 items-start">
           <div className="md:col-span-2 p-4 md:p-6 space-y-4 bg-white rounded-md border border-gray-200 overflow-hidden">
-            <RecentBookingsTable />
+            <RecentBookingsTable bookings={recentBookings} isLoading={isLoading} />
           </div>
-          <div className="md:col-span-1 p-4 md:p-6 bg-white rounded-md border border-gray-200 items">
+          <div className="md:col-span-1 p-4 md:p-6 bg-white rounded-md border border-gray-200">
             <div className="flex flex-col gap-4">
               <h3 className="text-neutral-950 text-base font-semibold font-text">
                 Fleet Status
@@ -89,27 +130,27 @@ export default function DashboardPageComponent() {
               <div className="flex flex-col gap-3">
                 <FleetDataList
                   icon={<Car className="size-4 text-emerald-500" />}
-                  iconBg={"bg-green-100"}
-                  label={"Available"}
-                  number={12}
+                  iconBg="bg-green-100"
+                  label="Available"
+                  number={fleetStatus?.available ?? 0}
                 />
                 <FleetDataList
                   icon={<Calendar className="size-4 text-blue-700" />}
-                  iconBg={"bg-indigo-50"}
-                  label={"Available"}
-                  number={42}
+                  iconBg="bg-indigo-50"
+                  label="Rented"
+                  number={fleetStatus?.rented ?? 0}
                 />
                 <FleetDataList
                   icon={<Wrench className="size-4 text-amber-500" />}
-                  iconBg={"bg-amber-100"}
-                  label={"Available"}
-                  number={3}
+                  iconBg="bg-amber-100"
+                  label="Maintenance"
+                  number={fleetStatus?.maintenance ?? 0}
                 />
                 <FleetDataList
                   icon={<Clock className="size-4 text-gray-500" />}
-                  iconBg={"bg-gray-100"}
-                  label={"Inactive"}
-                  number={2}
+                  iconBg="bg-gray-100"
+                  label="Inactive"
+                  number={fleetStatus?.inactive ?? 0}
                 />
               </div>
               <Separator />
@@ -119,7 +160,7 @@ export default function DashboardPageComponent() {
                     Total Fleet
                   </span>
                   <span className="text-neutral-950 text-xs font-medium font-text">
-                    {"59"} vehicles
+                    {fleetStatus?.totalFleet ?? 0} vehicles
                   </span>
                 </div>
               </div>

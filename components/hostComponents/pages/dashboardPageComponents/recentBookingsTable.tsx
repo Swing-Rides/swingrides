@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DataTable, useTableRows, ColumnDef } from "@/components/hostComponents/dashboard/customTable";
+import { RecentBooking } from "@/app/store/services/dashboardApi";
 
 interface BookingRow {
         id: string;
@@ -63,29 +64,27 @@ const bookingColumns: ColumnDef<BookingRow>[] = [
         },
 ];
 
-const MOCK_DATA: BookingRow[] = [
-        { id: "BK-1001", vehicle: "Tesla Model 3", customer: "Alexander Pierce", status: "pending", amount: "$450.00", date: "2026-06-15" },
-        { id: "BK-2001", vehicle: "Ford F-150", customer: "Sarah Jenkins", status: "cancelled", amount: "$320.00", date: "2026-05-20" },
-        { id: "BK-3001", vehicle: "Porsche 911", customer: "Michael Chen", status: "pending", amount: "$1,200.00", date: "2026-06-01" },
-        { id: "BK-3002", vehicle: "Tesla Model S", customer: "Michael Chen", status: "active", amount: "$900.00", date: "2026-05-11" },
-        { id: "BK-5001", vehicle: "Toyota RAV4", customer: "David Smith", status: "pending", amount: "$240.00", date: "2026-05-12" },
-        { id: "BK-6001", vehicle: "Honda Civic", customer: "Jordan Taylor", status: "active", amount: "$180.00", date: "2026-05-25" },
-        { id: "BK-7001", vehicle: "Subaru Outback", customer: "Samantha Reed", status: "active", amount: "$310.00", date: "2026-05-11" },
-        { id: "BK-9001", vehicle: "Mini Cooper", customer: "Olivia Martinez", status: "pending", amount: "$110.00", date: "2026-05-28" },
-        { id: "BK-1301", vehicle: "Aston Martin DB5", customer: "James Bond", status: "completed", amount: "$5,000.00", date: "2026-05-07" },
-        { id: "BK-1401", vehicle: "Audi A4", customer: "Isabella Garcia", status: "cancelled", amount: "$420.00", date: "2026-05-22" },
-        { id: "BK-1501", vehicle: "BMW M4", customer: "Thomas Müller", status: "pending", amount: "$850.00", date: "2026-06-15" },
-        { id: "BK-1601", vehicle: "Volvo XC90", customer: "Grace Hopper", status: "active", amount: "$360.00", date: "2026-05-11" },
-        { id: "BK-1201", vehicle: "Volkswagen Golf", customer: "Sophia Lee", status: "completed", amount: "$220.00", date: "2026-05-01" }
-];
-
-export default function RecentBookingsTable() {
+export default function RecentBookingsTable({
+        bookings,
+        isLoading,
+}: {
+        bookings: RecentBooking[];
+        isLoading?: boolean;
+}) {
+        const data: BookingRow[] = bookings.map((b) => ({
+                id: b.bookingId,
+                vehicle: b.vehicle,
+                customer: b.customer,
+                status: b.status,
+                amount: b.amountFormatted,
+                date: b.date,
+        }));
 
         const { rows, pagination } = useTableRows({
-                        tableId: "recentBookings",
-                        data: MOCK_DATA,
-                        rowsPerPage: 10,
-                });
+                tableId: "recentBookings",
+                data,
+                rowsPerPage: 10,
+        });
         
         return (
                 <>
