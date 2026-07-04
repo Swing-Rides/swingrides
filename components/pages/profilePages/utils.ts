@@ -36,30 +36,12 @@ export const getAverageRating = (rentals?: User['rentals']) => {
         return totalRating / completedRentals.length
 }
 
-export const getTotalSpent = (rentals?: User['rentals']) => {
-        if (!rentals) return 0
-
-        const activeAndCompletedRentals = rentals.filter(
-                rental => rental.status === 'Active' || rental.status === 'Completed'
-        )
-
-        if (activeAndCompletedRentals.length === 0) return 0
-
-        return activeAndCompletedRentals.reduce((total, rental) => {
-                const pickUp = new Date(rental.pickUpDate)
-                const returnD = new Date(rental.returnDate)
-                const days = Math.ceil((returnD.getTime() - pickUp.getTime()) / (1000 * 60 * 60 * 24))
-                return total + days * rental.price
-        }, 0)
-}
-
 export const getTripButtons = (
         status: TripStatus,
         rentId: string,
         currentParams: string,
         contactNumber: string
 ): ButtonConfig[] => {
-        // const params = new URLSearchParams(currentParams)
 
         const modifyParams = new URLSearchParams(currentParams)
         modifyParams.set('modify', rentId)
