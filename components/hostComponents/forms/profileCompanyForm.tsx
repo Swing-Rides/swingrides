@@ -15,6 +15,7 @@ import { RegisterOptions } from 'react-hook-form'
 
 export type ProfileCompanyFormValues = {
         profilePhoto?: FileList
+        profilePhotoUrl?: string
         firstName: string
         lastName: string
         phoneNumber: string
@@ -49,6 +50,8 @@ export default function ProfileCompanyForm({
         onSubmit,
 }: ProfileCompanyFormProps) {
         const [photoPreview, setPhotoPreview] = useState<string | null>(currentPhotoUrl ?? null)
+        const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | undefined>(currentPhotoUrl)
+        const [photoUploading, setPhotoUploading] = useState(false)
         const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
         const photoInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -65,14 +68,24 @@ export default function ProfileCompanyForm({
         const firstName = useWatch({ control, name: 'firstName' })
         const lastName = useWatch({ control, name: 'lastName' })
 
-        const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 const file = e.target.files?.[0]
                 if (!file) return
                 setPhotoPreview(URL.createObjectURL(file))
+                setPhotoUploading(true)
+                try {
+                        const formData = new FormData()
+                        formData.append('file', file)
+                        const res = await fetch('/api/upload', { method: 'POST', body: formData })
+                        const data = await res.json()
+                        setUploadedPhotoUrl(data.secure_url)
+                } finally {
+                        setPhotoUploading(false)
+                }
         }
 
         const onFormSubmit = async (values: ProfileCompanyFormValues) => {
-                await onSubmit(values)
+                await onSubmit({ ...values, profilePhotoUrl: uploadedPhotoUrl })
         }
 
         return (
@@ -104,8 +117,8 @@ export default function ProfileCompanyForm({
                                                         htmlFor='profilePhoto'
                                                         className='flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-xs text-[#1F2937] text-sm font-medium font-text cursor-pointer hover:bg-[#F3F4F6] transition-colors duration-200'
                                                 >
-                                                        <Upload className='w-4 h-4' />
-                                                        Upload Photo
+                                                        {photoUploading ? <Loader2 className='w-4 h-4 animate-spin' /> : <Upload className='w-4 h-4' />}
+                                                        {photoUploading ? 'Uploading...' : 'Upload Photo'}
                                                         <input
                                                                 id='profilePhoto'
                                                                 type='file'

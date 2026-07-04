@@ -19,6 +19,7 @@ import {
   useGetHostSettingsDashboardQuery,
   useUpdateProfileCompanySettingsMutation,
 } from "@/app/store/services/settingsApi";
+import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 
 // ─── Tab nav config ─────────────────────────────────────────────────────────
 
@@ -68,7 +69,9 @@ const SettingsPagePageContent = () => {
 
   const { data: settingsResponse, isLoading: settingsLoading } =
     useGetHostSettingsDashboardQuery();
-  const [updateProfileCompanySettings] = useUpdateProfileCompanySettingsMutation();
+  const [updateProfileCompanySettings] =
+    useUpdateProfileCompanySettingsMutation();
+  const { refetch } = useGetHostProfileQuery();
 
   const settingsData = settingsResponse?.data;
 
@@ -200,8 +203,9 @@ const SettingsPagePageContent = () => {
       email: values.email,
       companyName: values.companyName,
       address: values.address,
-      profilePictureUrl: profilePhotoUrl,
+      profilePictureUrl: values.profilePhotoUrl ?? profilePhotoUrl,
     }).unwrap();
+    refetch();
   };
 
   const handleManageBilling = () => {
