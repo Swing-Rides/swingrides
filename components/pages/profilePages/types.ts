@@ -16,6 +16,8 @@ export type Rentals = {
         pickupStreet?: string
         pickupCity?: string
         rentalRate?: RentalRate
+        tripCost: string
+        totalPaid: string
         car: {
                 carId: string;
                 imageUrl: string;
@@ -42,6 +44,7 @@ export type User = {
         email?: string;
         phoneNumber?: string;
         memberSince?: string;
+        totalSpentByUser: string;
         rentals?: Rentals[]
 }
 

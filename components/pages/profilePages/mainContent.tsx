@@ -30,7 +30,6 @@ import {
 } from './types'
 import {
         getTripButtons,
-        getTripDuration,
         statusBadgeClass
 } from './utils'
 
@@ -155,16 +154,6 @@ const  TripCard = ({ rentals }: TripCardProps) => {
                 rentals.host.contactNumber
         )
 
-        const tripDuration = getTripDuration(
-                rentals.pickUpDate, 
-                rentals.returnDate
-        )
-
-        const cost = (tripDuration * rentals.price).toLocaleString('en-US', { 
-                style: 'currency', 
-                currency: 'USD' 
-        })
-
         return (
                 <div className='p-2.5 md:p-6 flex flex-col md:flex-row gap-6 bg-white rounded-[10px] shadow-[0px_1px_3px_1px_rgba(0,0,0,0.30)] overflow-clip'>
                         <div className='aspect-3/2 min-w-30 max-w-60 size-full object-center object-cover overflow-clip rounded-[10px]'>
@@ -204,8 +193,8 @@ const  TripCard = ({ rentals }: TripCardProps) => {
                                 <div className='flex flex-wrap gap-3'>
                                         <Badge variant="outline">Pickup: {rentals.pickUpDate}</Badge>
                                         <Badge variant="outline">Return: {rentals.returnDate}</Badge>
-                                        <Badge variant="outline">{tripDuration} days</Badge>
-                                        <Badge variant="outline">{cost}</Badge>
+                                        <Badge variant="outline">{rentals.tripDurationDays} days</Badge>
+                                        <Badge variant="outline">{rentals.tripCost}</Badge>
                                 </div>
                                 <div>
                                         <span className='text-cyan-600 text-xs font-normal font-text leading-4'>

@@ -9,6 +9,7 @@ export const testGuestUserProfile: User = {
         email: 'john@email.com',
         memberSince: 'Mar 2026',
         phoneNumber: '+1 (555) 000-1111',
+        totalSpentByUser: "$51,890",
         rentals: [
                 {
                         rentId: 'SR-2026-0043',
@@ -18,7 +19,9 @@ export const testGuestUserProfile: User = {
                         returnDate: 'Mar 17, 2026',
                         pickupLocation: 'Downtown Office',
                         price: '$255',
-                        tripDurationDays: '7 days',
+                        tripDurationDays: '3 days',
+                        tripCost: '$1,785',
+                        totalPaid: '$1,900',
                         pickupStreet: '123 Main Street',   
                         pickupCity: 'Austin',              
                         rentalRate: {                        
@@ -56,6 +59,9 @@ export const testGuestUserProfile: User = {
                         returnDate: 'Mar 17, 2026',
                         pickupLocation: 'Downtown Office',
                         price: '$112.50',
+                        tripDurationDays: '7 days',
+                        tripCost: '$787.5',
+                        totalPaid: '$1,900',
                         car: {
                                 carId: 'metroCarRentals-toyotaCamry-012024',
                                 imageUrl: '/images/porsche-macan-2019.webp',
@@ -89,6 +95,9 @@ export const testGuestUserProfile: User = {
                         returnDate: 'Feb 24, 2026',
                         pickupLocation: 'Downtown Office',
                         price: '$180.00',
+                        tripDurationDays: '4 days',
+                        tripCost: '$720',
+                        totalPaid: '$900',
                         car: {
                                 carId: 'coastalCarSharing-toyotaCamry-012024',
                                 imageUrl: '/images/lexus-lx-570-2021.webp',
@@ -122,6 +131,9 @@ export const testGuestUserProfile: User = {
                         returnDate: 'Jan 10, 2026',
                         pickupLocation: 'Downtown Office',
                         price: '$190.00',
+                        tripDurationDays: '2 days',
+                        tripCost: '$380',
+                        totalPaid: '$500',
                         car: {
                                 carId: 'nordicVentures-toyotaCamry-012024',
                                 imageUrl: '/images/mercedes-s500-2025.webp',
@@ -155,7 +167,9 @@ export const testGuestUserProfile: User = {
                         returnDate: 'Mar 17, 2026',
                         pickupLocation: 'Downtown Office',
                         price: '$255.00',
-                        tripDurationDays: '7 days',
+                        tripDurationDays: '3 days',
+                        tripCost: '$1,785',
+                        totalPaid: '$1,900',
                         pickupStreet: '123 Main Street',
                         pickupCity: 'Austin',
                         rentalRate: {
@@ -196,6 +210,9 @@ export const testGuestUserProfile: User = {
                         returnDate: 'Mar 17, 2026',
                         pickupLocation: 'Downtown Office',
                         price: '$112.50',
+                        tripDurationDays: '7 days',
+                        tripCost: '$787.5',
+                        totalPaid: '$900',
                         car: {
                                 carId: 'metroCarRentals-toyotaCamry-012024',
                                 imageUrl: '/images/porsche-macan-2019.webp',
@@ -229,6 +246,9 @@ export const testGuestUserProfile: User = {
                         returnDate: 'Feb 24, 2026',
                         pickupLocation: 'Downtown Office',
                         price: '$180.00',
+                        tripDurationDays: '4 days',
+                        tripCost: '$1,785',
+                        totalPaid: '$1,900',
                         car: {
                                 carId: 'coastalCarSharing-toyotaCamry-012024',
                                 imageUrl: '/images/lexus-lx-570-2021.webp',
@@ -262,6 +282,9 @@ export const testGuestUserProfile: User = {
                         returnDate: 'Jan 10, 2026',
                         pickupLocation: 'Downtown Office',
                         price: '$190.00',
+                        tripDurationDays: '2 days',
+                        tripCost: '$1,785',
+                        totalPaid: '$1,900',
                         car: {
                                 carId: 'nordicVentures-toyotaCamry-012024',
                                 imageUrl: '/images/mercedes-s500-2025.webp',

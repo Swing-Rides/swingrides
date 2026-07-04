@@ -18,9 +18,6 @@ export default async function SingleTripPage({
                 car => car.id === content?.car.carId
         )
 
-        // console.log(carContent)
-        // console.log(content?.car.carId)
-
         if (!content) {
                 return (
                         <div>
@@ -39,7 +36,8 @@ export default async function SingleTripPage({
                                 returnDate={content.returnDate}
                                 pickUpLocation={content.pickupLocation}
                                 price={content.price}
-                                totalPrice={"$9999999"}
+                                totalPaid={content.totalPaid}
+                                tripCost={content.tripCost}
                                 features={content.car.features}
                                 featuredImage={carContent?.featuredImage}
                                 carName={carContent?.carName}
