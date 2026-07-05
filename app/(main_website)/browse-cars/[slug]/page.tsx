@@ -1,45 +1,85 @@
-import CarPageComponent from "@/components/pages/broswerCarsPage/carPageComponent"
-import { carsTestData } from "@/constants/carsTestData"
+"use client";
 
-export default async function CarPage({
-                params,
-        }: {
-                params: Promise<{ slug: string }>
-        }) {
+import CarPageComponent from "@/components/pages/broswerCarsPage/carPageComponent";
+import {
+  useGetPublicBrowseVehiclesQuery,
+  useGetPublicVehicleByIdQuery,
+} from "@/app/store/services/publicApi";
+import { use } from "react";
 
-        const { slug } = await params
+export default function CarPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
 
-        const content = carsTestData.find(
-                item => item.slug?.toLowerCase() === slug.toLowerCase()
-        );
+  const { data, isLoading, isError } = useGetPublicVehicleByIdQuery({
+    id: slug,
+  });
 
-        if (!content) {
-                return (
-                        <div>
-                                This page can not be found
-                        </div>
-                )
-        }
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-        return (
-                <>
-                        {/* id: {slug} */}
-                        <CarPageComponent 
-                                carName={content.carName}
-                                featuredImage={content.featuredImage} 
-                                gallery={content.gallery} 
-                                reviewsAndRatings={content.reviewsAndRatings} 
-                                status={content.status} 
-                                specifications={content.specifications} 
-                                overview={content.overview} 
-                                host={content.host} 
-                                price={{
-                                        daily: 195,
-                                        weekly: 1250,
-                                        monthly: 4500,
-                                }} 
-                                pickupLocation={"2100 Epic Pl, Grand Prairie, TX 75052, United States"}
-                        />
-                </>
-        )
+  if (isError || !data) {
+    return <div>This page can not be found</div>;
+  }
+
+  return (
+    <CarPageComponent
+      carName={data?.data.carName}
+      featuredImage={{
+        alt: data?.data.featuredImage?.alt,
+        src: data?.data.featuredImage?.src,
+      }}
+      gallery={
+        data?.data.images?.map((d, index) => {
+          return {
+            id: `${data?.data.id}-${index}`,
+            alt: data?.data.carName,
+            src: d,
+          };
+        }) || []
+      }
+      reviewsAndRatings={{
+        averageRating: data?.data.reviewsAndRatings?.averageRating || 0,
+        totalRatings: data?.data.reviewsAndRatings?.totalRatings || 0,
+        totalReviews: 0,
+        starRatingBreakdown: [],
+        reviews: [],
+      }}
+      status={data?.data.status === "available" ? "available" : "unlisted"}
+      specifications={{
+        make: data.data.make,
+        model: data.data.vehicleModel,
+        year: data.data.year,
+        bodyType: data.data.vehicleType,
+        engine: "",
+        horsepower: 0,
+        transmission: data?.data.specifications?.transmission,
+        driveType: "",
+        fuelType: data?.data.specifications?.fuelType,
+        fuelEfficiency: "",
+        seats: data?.data.specifications?.seats,
+        doors: 0,
+        color: data.data.color,
+        mileage: String(data.data.mileage),
+      }}
+      overview={""}
+      host={{
+        hostName: "",
+        memberSince: "",
+        tripsCompleted: 0,
+        rating: 0,
+        contactNumber: "",
+      }}
+      price={{
+        daily: data?.data.price?.daily,
+        weekly: data?.data.price?.weekly,
+        monthly: data?.data.price?.monthly,
+      }}
+      pickupLocation={data?.data.location}
+    />
+  );
 }

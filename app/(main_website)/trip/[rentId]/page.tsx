@@ -1,5 +1,4 @@
 import RentalDetailPage from '@/components/pages/rentalDetailPage';
-import { carsTestData } from '@/constants/carsTestData';
 import { testGuestUserProfile } from '@/constants/profile';
 
 export default async function SingleTripPage({
@@ -14,13 +13,6 @@ export default async function SingleTripPage({
                 item => item.rentId.trim().toLowerCase() === rentId.trim().toLowerCase()
         );
 
-        const carContent = carsTestData.find(
-                car => car.id === content?.car.carId
-        )
-
-        // console.log(carContent)
-        // console.log(content?.car.carId)
-
         if (!content) {
                 return (
                         <div>
@@ -31,7 +23,6 @@ export default async function SingleTripPage({
 
         return (
                 <div>
-                        {/* This is the page {rentId} */}
                         <RentalDetailPage
                                 rentId={content.rentId}
                                 status={content.status}
@@ -40,15 +31,15 @@ export default async function SingleTripPage({
                                 pickUpLocation={content.pickupLocation}
                                 price={content.price}
                                 features={content.car.features}
-                                featuredImage={carContent?.featuredImage}
-                                carName={carContent?.carName}
-                                carType={carContent?.specifications.bodyType}
-                                transmission={carContent?.specifications.transmission}
-                                seats={carContent?.specifications.seats}
-                                year={carContent?.specifications.year}
-                                plateNumber={carContent?.plateNumber}
-                                averageRating={carContent?.reviewsAndRatings.averageRating}
-                                reviews={carContent?.reviewsAndRatings.reviews}
+                                featuredImage={{ src: content.car.imageUrl, alt: content.car.carName }}
+                                carName={content.car.carName}
+                                carType={content.car.carType}
+                                transmission={undefined}
+                                seats={undefined}
+                                year={content.car.manufactureYear}
+                                plateNumber={content.car.plateNumber}
+                                averageRating={undefined}
+                                reviews={undefined}
                                 rentals={content}
                         />
                 </div>

@@ -1,5 +1,3 @@
-import { CarDataType } from "@/constants/carsTestData";
-
 export function getStarPercentage(
   starRated: number,
   totalRatings: number,
@@ -29,83 +27,6 @@ export type CarsFilterParams = {
   sort: SortOption;
 };
 
-export const getPriceForRentalType = (
-  car: CarDataType,
-  rentalType: RentalType,
-): number => {
-  switch (rentalType) {
-    case "per hour":
-      return car.price.hourly;
-    case "per week":
-      return car.price.weekly;
-    case "per day":
-    default:
-      return car.price.daily;
-  }
-};
-
-/** Derives the min/max price boundaries from the dataset for a given rental type */
-export const getPriceRange = (
-  cars: CarDataType[],
-  rentalType: RentalType,
-): { min: number; max: number } => {
-  if (cars.length === 0) return { min: 0, max: 500 };
-  const prices = cars.map((car) => getPriceForRentalType(car, rentalType));
-  return {
-    min: Math.floor(Math.min(...prices)),
-    max: Math.ceil(Math.max(...prices)),
-  };
-};
-
-// ─── Filter option derivers (built from the data itself) ──────────────────────
-export const getUniqueVehicleTypes = (cars: CarDataType[]) => {
-  const seen = new Set<string>();
-  return cars
-    .map((car) => car.specifications.bodyType)
-    .filter((type) => {
-      if (seen.has(type)) return false;
-      seen.add(type);
-      return true;
-    })
-    .map((type, i) => ({
-      id: `vt-${i}`,
-      title: type,
-    }));
-};
-
-export const getUniqueSeats = (cars: CarDataType[]) => {
-  const seen = new Set<number>();
-  return cars
-    .map((car) => car.specifications.seats)
-    .filter((s) => {
-      if (seen.has(s)) return false;
-      seen.add(s);
-      return true;
-    })
-    .sort((a, b) => a - b)
-    .map((seat, i) => ({
-      id: `st-${i}`,
-      title: `${seat} Seats`,
-    }));
-};
-
-export const getUniqueTransmissions = (cars: CarDataType[]) => {
-  const seen = new Set<string>();
-  return cars
-    .map((car) => car.specifications.transmission)
-    .filter((t) => {
-      if (seen.has(t)) return false;
-      seen.add(t);
-      return true;
-    })
-    .map((t, i) => ({
-      id: `tr-${i}`,
-      title: t,
-    }));
-};
-
-// ─── Main filter + sort function ──────────────────────────────────────────────
-// export const filterAndSortCars = (
 //         cars: CarDataType[],
 //         params: CarsFilterParams
 // ): CarDataType[] => {

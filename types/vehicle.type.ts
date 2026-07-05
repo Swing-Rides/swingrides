@@ -1,3 +1,51 @@
+export type ReviewType = {
+  id: string;
+  name: string;
+  date: string;
+  rating: number;
+  comment: string;
+};
+
+export type RatingsBreakdownType = {
+  starNumber: number;
+  starRated: number;
+};
+
+export type ReviewsAndRatingsType = {
+  averageRating: number;
+  totalReviews: number;
+  totalRatings?: number;
+  starRatingBreakdown: RatingsBreakdownType[];
+  reviews: ReviewType[];
+};
+
+export type CarSpecificationsType = {
+  make: string;
+  model: string;
+  year: number;
+  bodyType: string;
+  engine: string;
+  horsepower: number;
+  transmission: string;
+  driveType: string;
+  fuelType: string;
+  fuelEfficiency: string;
+  seats: number;
+  doors: number;
+  color: string;
+  mileage: string;
+  features?: string[];
+};
+
+export type HostInfoType = {
+  id?: string;
+  hostName: string;
+  memberSince: string;
+  tripsCompleted: number;
+  rating: number;
+  contactNumber: string;
+};
+
 export type CreateVehicle = {
   name: string;
   make: string;

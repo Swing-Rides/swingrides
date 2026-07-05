@@ -4,6 +4,7 @@ import apiClient from "@/lib";
 import {
   PublicBrowseVehiclesQuery,
   PublicBrowseVehiclesResponse,
+  VehicleDetails,
 } from "@/types/public-vehicles.type";
 
 type AxiosBaseQueryArgs =
@@ -93,7 +94,19 @@ export const publicApi = createApi({
       },
       providesTags: [{ type: "PublicVehicles", id: "LIST" }],
     }),
+
+    getPublicVehicleById: builder.query<
+      {
+        data: VehicleDetails;
+        success: boolean;
+      },
+      { id: string }
+    >({
+      query: ({ id }) => `/api/public/vehicles/${id}`,
+      providesTags: (result, error, { id }) => [{ type: "PublicVehicles", id }],
+    }),
   }),
 });
 
-export const { useGetPublicBrowseVehiclesQuery } = publicApi;
+export const { useGetPublicBrowseVehiclesQuery, useGetPublicVehicleByIdQuery } =
+  publicApi;

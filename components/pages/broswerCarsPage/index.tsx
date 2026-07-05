@@ -632,6 +632,7 @@ const PageMainContent = ({
               <Fragment key={item.id}>
                 <CarCard
                   slug={item.slug}
+                  id={item.id}
                   featuredImage={item.featuredImage}
                   carName={item.carName}
                   specifications={item.specifications}
