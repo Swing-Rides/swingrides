@@ -7,3 +7,5 @@ export const HOST_DASHBOARD_PATH = `/us/host/`
 export const DISCORD_COMMUNITY_LINK = `https://discord.gg/cFDZ2zdRw`
 
 export const HOST_REGISTRATION_PATH = `/host/register/`
+
+export const DEFAULT_IMAGE_SRC = `/images/swingrides-default-img.webp`

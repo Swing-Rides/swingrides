@@ -14,7 +14,9 @@ type TripSummaryCardProps = {
         pickUpDate: string;
         returnDate: string;
         pickUpLocation: string;
-        price: number;
+        totalPaid: string; 
+        tripCost: string;
+        price: string;
         features: string[];
 }
 
@@ -33,7 +35,7 @@ type VechicleCardProps = {
         reviews?: ReviewType[];
 }
 
-export default function RentalDetailPage({ rentId, status, pickUpDate, returnDate, pickUpLocation, price, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews, rentals }: PageTitleSectionProps & TripSummaryCardProps & VechicleCardProps & ManageBookingCardProps ) {
+export default function RentalDetailPage({ rentId, status, pickUpDate, returnDate, pickUpLocation, price, totalPaid, tripCost, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews, rentals }: PageTitleSectionProps & TripSummaryCardProps & VechicleCardProps & ManageBookingCardProps ) {
         return (
                 <>
                         <Breadcrumb 
@@ -53,6 +55,8 @@ export default function RentalDetailPage({ rentId, status, pickUpDate, returnDat
                                                 returnDate={returnDate}
                                                 pickUpLocation={pickUpLocation}
                                                 price={price}
+                                                totalPaid={totalPaid}
+                                                tripCost={tripCost}
                                                 features={features}
                                                 featuredImage={featuredImage}
                                                 carName={carName}
@@ -123,7 +127,7 @@ const PageTitleSection = memo(({ status, rentId }: PageTitleSectionProps) => {
 })
 PageTitleSection.displayName = "PageTitleSection"
 
-const LeftContent = memo(({ pickUpDate, returnDate, pickUpLocation, price, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews }: TripSummaryCardProps & VechicleCardProps) => {
+const LeftContent = memo(({ pickUpDate, returnDate, pickUpLocation, price, totalPaid, tripCost, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews }: TripSummaryCardProps & VechicleCardProps) => {
         return (
                 <div className="col-span-1 md:col-span-7 w-full">
                         <div className="flex flex-col gap-5">
@@ -132,6 +136,8 @@ const LeftContent = memo(({ pickUpDate, returnDate, pickUpLocation, price, featu
                                         returnDate={returnDate}
                                         pickUpLocation={pickUpLocation}
                                         price={price}
+                                        totalPaid={totalPaid}
+                                        tripCost={tripCost}
                                         features={features}
                                 />
                                 <VechicleCard 
@@ -153,14 +159,13 @@ const LeftContent = memo(({ pickUpDate, returnDate, pickUpLocation, price, featu
 })
 LeftContent.displayName = "LeftContent"
 
-const TripSummaryCard = memo(({ pickUpDate, returnDate, pickUpLocation, price, features }: TripSummaryCardProps) => {
+const TripSummaryCard = memo(({ pickUpDate, returnDate, pickUpLocation, price, features, totalPaid, tripCost }: TripSummaryCardProps) => {
 
         const tripDuration = getTripDuration(
                 pickUpDate, 
                 returnDate
         )
         const displayPrice = price
-        const totalPrice = (tripDuration * displayPrice)
 
         const tripDetails: { id: number; title: string; content: string | number }[] = [
                 {
@@ -213,12 +218,12 @@ const TripSummaryCard = memo(({ pickUpDate, returnDate, pickUpLocation, price, f
                                 <div className="flex justify-between gap-4">
                                         <div>
                                                 <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
-                                                        {"$"}{displayPrice} x {tripDuration} days
+                                                        {displayPrice} x {tripDuration} days
                                                 </span>
                                         </div>
                                         <div>
                                                 <span>
-                                                        {"$"}{totalPrice}
+                                                        {tripCost}
                                                 </span>
                                         </div>
                                 </div>
@@ -254,7 +259,7 @@ const TripSummaryCard = memo(({ pickUpDate, returnDate, pickUpLocation, price, f
                                 </h4>
 
                                 <span className="text-[#1A56DB] text-base font-medium font-text leading-6">
-                                        {"$"}{totalPrice}
+                                        {totalPaid}
                                 </span>
                         </div>
 

@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import { Fragment } from 'react'
 import { PageIntro } from '../connectToHostPage'
 import { happenNextList, pageIntro, WhatHappenNextListProps } from '@/constants/reportIssue'
 import { FieldSeparator } from '@/components/ui/field'

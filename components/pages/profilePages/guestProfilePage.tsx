@@ -14,7 +14,6 @@ import {
         getInitials, 
         getTotalTrips, 
         getAverageRating, 
-        getTotalSpent,
 } from './utils'
 import { FieldSeparator } from '@/components/ui/field'
 import ContentLoading from '@/components/loading/contentLoading'
@@ -27,7 +26,8 @@ export default function GuestProfilePage(
                 email, 
                 memberSince, 
                 rentals: initialRentals, 
-                phoneNumber 
+                phoneNumber,
+                totalSpentByUser
         }: User) {
         
         const [rentals, setRentals] = useState<Rentals[] | undefined>(initialRentals)
@@ -42,6 +42,7 @@ export default function GuestProfilePage(
                                                 email={email}
                                                 memberSince={memberSince}
                                                 rentals={rentals}
+                                                totalSpentByUser={totalSpentByUser}
                                         />
                                         <AccountDetail
                                                 fullName={fullName}
@@ -74,11 +75,11 @@ export default function GuestProfilePage(
 
 const handleSignOut = () => console.log('log out clicked')
 
-const UserCard = ({ userAvaterUrl, fullName, email, memberSince, rentals }: User) => {
+const UserCard = ({ userAvaterUrl, fullName, email, memberSince, rentals, totalSpentByUser }: User) => {
 
         const totalTrip = getTotalTrips(rentals)
         const averageRating = getAverageRating(rentals)
-        const totalCost = getTotalSpent(rentals).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+        // const totalCost = getTotalSpent(rentals).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 
         return (
                 <div className='p-2.5 md:p-6 flex flex-col gap-5 bg-white rounded-[10px] shadow-[0px_1px_3px_1px_rgba(0,0,0,0.30)] overflow-clip'>
@@ -142,7 +143,7 @@ const UserCard = ({ userAvaterUrl, fullName, email, memberSince, rentals }: User
 
                                 <div className="px-3.5 flex flex-col justify-start items-center gap-1 text-center">
                                         <h3 className="text-center text-[#1A56DB] text-xl font-medium font-text">
-                                                {totalCost}
+                                                {totalSpentByUser}
                                         </h3>
                                         <span className="text-center text-[#6B7280] text-xs font-normal uppercase">
                                                 Total Spent

@@ -1,3 +1,9 @@
+export type RentalRate = {
+        daily: number
+        weekly: number
+        monthly: number
+}
+
 export type Rentals = {
         rentId: string;
         status: TripStatus;
@@ -5,7 +11,13 @@ export type Rentals = {
         pickUpDate: string;
         returnDate: string;
         pickupLocation: string;
-        price: number;
+        price: string;
+        tripDurationDays?: string
+        pickupStreet?: string
+        pickupCity?: string
+        rentalRate?: RentalRate
+        tripCost: string
+        totalPaid: string
         car: {
                 carId: string;
                 imageUrl: string;
@@ -32,6 +44,7 @@ export type User = {
         email?: string;
         phoneNumber?: string;
         memberSince?: string;
+        totalSpentByUser: string;
         rentals?: Rentals[]
 }
 
