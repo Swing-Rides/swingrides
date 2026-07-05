@@ -1,10 +1,4 @@
-import {  
-        ReviewsAndRatingsType, 
-        CarSpecificationsType, 
-        ReviewType, 
-        RatingsBreakdownType, 
-        HostInfoType
-} from "@/constants/carsTestData";
+import { HostInfoType, ReviewsAndRatingsType, CarSpecificationsType, ReviewType, RatingsBreakdownType } from "@/types/vehicle.type";
 import { CarsFilterParams } from "./util";
 import { FleetStatus } from "@/types/subscribers.type";
 

@@ -69,3 +69,38 @@ export interface PublicBrowseVehiclesResponse {
     };
   };
 }
+
+export interface VehicleDetails {
+  id: string;
+  slug: string;
+  images: string[];
+  featuredImage: {
+    src: string;
+    alt: string;
+  };
+  carName: string;
+  mileage: number;
+  make: string;
+  vehicleModel: string;
+  vehicleType: string;
+  year: number;
+  color: string;
+  description: string;
+  status: "available" | "unavailable";
+  price: {
+    hourly: number;
+    daily: number;
+    weekly: number;
+    monthly: number;
+  };
+  specifications: {
+    seats: number;
+    fuelType: string;
+    transmission: string;
+  };
+  reviewsAndRatings: {
+    averageRating: number;
+    totalRatings: number;
+  };
+  location: string;
+}
