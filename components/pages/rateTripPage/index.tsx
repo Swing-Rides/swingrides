@@ -1,8 +1,11 @@
+"use client"
+
 import { PageIntroProps } from '@/constants/connectToHost'
 import Link from 'next/link'
 import { PageIntro } from '../connectToHostPage'
 import Image from 'next/image'
 import { DEFAULT_IMAGE_SRC } from '@/constants/constant'
+import RateTripForm, { RateTripFormValues } from '@/components/forms/rateTripForm'
 
 const pageIntro: PageIntroProps = {
         imageSrc: '/images/star-rating_svg.svg',
@@ -58,9 +61,11 @@ export default function RateTripPageComponent({ rentalId, imageUrl, carName, pic
                                         </div>
                                 </div>
 
-                                <div className='p-4 md:p-8 overflow-clip bg-white rounded-[10px] border border-gray-200'>
-                                        FORM HERE
-                                </div>
+                                <RateTripForm
+                                        onSubmit={async (values: RateTripFormValues) => {
+                                                console.log('submitting review:', { rentalId, ...values })
+                                        }}
+                                />
 
                                 <div className='flex flex-col gap-4'>
                                         <Link
