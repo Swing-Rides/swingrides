@@ -4,7 +4,6 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import { Rentals } from '../pages/profilePages/types'
 import { LucideMoveRight, X } from 'lucide-react'
-import { Separator } from '@chakra-ui/react'
 import ReturnVehicleForm, { ReturnVehicleFormValues } from '../forms/returnVehicleForm'
 
 type CompleteVehicleReturnModalProps = {
