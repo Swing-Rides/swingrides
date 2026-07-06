@@ -482,8 +482,9 @@ const DateTimeInput = ({ field, control, error }: ControllerProps) => {
 
 // File / Image upload
 const FileInput = ({ field, register, error }: InputProps) => {
-  const [fileNames, setFileNames] = useState<string[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
   const { ref, ...rest } = register(field.name, field.validation);
 
   const defaultIcon =
@@ -495,41 +496,72 @@ const FileInput = ({ field, register, error }: InputProps) => {
 
   const icon = field.uploadIcon ?? defaultIcon;
 
+  const removeFile = (index: number) => {
+    if (!inputRef.current) return;
+
+    const updated = files.filter((_, i) => i !== index);
+
+    setFiles(updated);
+
+    const dt = new DataTransfer();
+    updated.forEach((file) => dt.items.add(file));
+
+    inputRef.current.files = dt.files;
+
+    rest.onChange({
+      target: {
+        files: dt.files,
+        name: field.name,
+      },
+    });
+  };
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <label
         htmlFor={field.name}
         className={cn(
           "flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-5 cursor-pointer transition-colors duration-200 group",
           error
             ? "border-[#EF4444] bg-[#FFF5F5]"
-            : "border-[#E5E7EB] hover:border-[#1A56DB]",
+            : "border-[#E5E7EB] hover:border-[#1A56DB]"
         )}
       >
         {icon}
+
         <div className="text-center">
           <span
             className={cn(
               "text-sm font-medium font-text",
-              error ? "text-[#EF4444]" : "text-[#1A56DB] group-hover:underline",
+              error ? "text-[#EF4444]" : "text-[#1A56DB] group-hover:underline"
             )}
           >
             Click to upload
           </span>
+
           <span className="text-[#6B7280] text-sm font-text">
             {" "}
             or drag and drop
           </span>
         </div>
+
         {field.description && (
-          <span className="text-[#9CA3AF] text-xs font-text">
+          <span className="text-[#9CA3AF] text-xs font-text text-center">
             {field.description}
           </span>
         )}
+
+        {field.maxFiles && (
+          <span className="text-[#6B7280] text-xs font-text">
+            {files.length}/{field.maxFiles} selected
+          </span>
+        )}
+
         <input
           id={field.name}
           type="file"
           accept={field.accept}
+          capture={field.capture}
           multiple={field.multiple}
           disabled={field.disabled}
           className="hidden"
@@ -539,24 +571,74 @@ const FileInput = ({ field, register, error }: InputProps) => {
             inputRef.current = e;
           }}
           onChange={(e) => {
-            rest.onChange(e);
-            const files = Array.from(e.target.files ?? []);
-            setFileNames(files.map((f) => f.name));
+            const selected = Array.from(e.target.files ?? []);
+
+            const limited = field.maxFiles
+              ? selected.slice(0, field.maxFiles)
+              : selected;
+
+            setFiles(limited);
+
+            const dt = new DataTransfer();
+            limited.forEach((file) => dt.items.add(file));
+
+            if (inputRef.current) {
+              inputRef.current.files = dt.files;
+            }
+
+            rest.onChange({
+              target: {
+                files: dt.files,
+                name: field.name,
+              },
+            });
           }}
         />
       </label>
 
-      {fileNames.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {fileNames.map((name, i) => (
-            <span
-              key={i}
-              className="flex items-center gap-1.5 bg-[#F3F4F6] rounded-md px-2.5 py-1.5 text-[#1F2937] text-xs font-text max-w-48 truncate"
-            >
-              {icon}
-              {name}
-            </span>
-          ))}
+      {files.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {files.map((file, index) => {
+            const isImage = file.type.startsWith("image/");
+            const preview = isImage ? URL.createObjectURL(file) : null;
+
+            return (
+              <div
+                key={`${file.name}-${index}`}
+                className="relative rounded-lg border border-[#E5E7EB] overflow-hidden bg-white"
+              >
+                {isImage && field.showPreview !== false ? (
+                  <img
+                    src={preview!}
+                    alt={file.name}
+                    className="w-full aspect-square object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-28 bg-[#F9FAFB]">
+                    {icon}
+                  </div>
+                )}
+
+                <div className="p-2">
+                  <p className="text-xs font-text truncate text-[#1F2937]">
+                    {file.name}
+                  </p>
+
+                  <p className="text-[11px] text-[#9CA3AF]">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => removeFile(index)}
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white shadow flex items-center justify-center text-red-500 hover:bg-red-50"
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

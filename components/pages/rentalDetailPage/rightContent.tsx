@@ -52,6 +52,10 @@ export default function RightContent({ rentals: initialRentals }: ManageBookingC
                         <Suspense>
                                 <CompleteVehicleReturnModal
                                         rentals={rentalsAsArray}
+                                        carName={"Toyota"}
+                                        plateNumber={"ABC-123-NY"}
+                                        pickUpDate={"May 12, 2026"}
+                                        returnDate={"June 2, 2026"}
                                         onComplete={handleComplete}
                                 />
                         </Suspense>
