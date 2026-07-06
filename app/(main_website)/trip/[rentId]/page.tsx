@@ -12,10 +12,6 @@ export default async function SingleTripPage({
     (item) => item.rentId.trim().toLowerCase() === rentId.trim().toLowerCase(),
   );
 
-  // const carContent = carsTestData.find(
-  //         car => car.id === content?.car.carId
-  // )
-
   if (!content) {
     return <div>This page can not be found</div>;
   }
@@ -35,13 +31,16 @@ export default async function SingleTripPage({
         featuredImage={{ src: content.car.imageUrl, alt: content.car.carName }}
         carName={content.car.carName}
         carType={content.car.carType}
-        transmission={undefined}
-        seats={undefined}
+        transmission={'Automatic'}
+        seats={5}
         year={content.car.manufactureYear}
         plateNumber={content.car.plateNumber}
-        averageRating={undefined}
-        reviews={undefined}
+        averageRating={4.2}
+        reviews={[]}
         rentals={content}
+        verificationDriverLicenseImageSrc={''}
+        verificationSelfieImageSrc={`/images/swingrides-default-img.webp`}
+        vehicleConditionImages={[ ]}
       />
     </div>
   );

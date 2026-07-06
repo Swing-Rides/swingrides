@@ -5,7 +5,7 @@ import { statusBadgeClass } from "../profilePages/utils"
 import { Badge } from "@/components/ui/badge"
 import { ReviewType } from "@/types/vehicle.type"
 import { TripStatus } from "../profilePages/types"
-import { CircleCheck, CircleX } from "lucide-react"
+import { CircleCheck, CircleX, Clock } from "lucide-react"
 import RightContent from "./rightContent"
 import { ManageBookingCardProps } from "./types"
 import { getTripDuration } from "../profilePages/utils"
@@ -35,7 +35,18 @@ type VechicleCardProps = {
         reviews?: ReviewType[];
 }
 
-export default function RentalDetailPage({ rentId, status, pickUpDate, returnDate, pickUpLocation, price, totalPaid, tripCost, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews, rentals }: PageTitleSectionProps & TripSummaryCardProps & VechicleCardProps & ManageBookingCardProps ) {
+type DocumentVerificationCardProps = {
+        verificationDriverLicenseImageSrc?: string;
+        verificationSelfieImageSrc?: string;
+        rentId: string;
+}
+
+type VehicleConditionPhotosCardProps = {
+        vehicleConditionImages?: string[];
+        rentId: string;
+}
+
+export default function RentalDetailPage({ rentId, status, pickUpDate, returnDate, pickUpLocation, price, totalPaid, tripCost, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews, rentals, verificationDriverLicenseImageSrc, verificationSelfieImageSrc, vehicleConditionImages }: PageTitleSectionProps & TripSummaryCardProps & VechicleCardProps & ManageBookingCardProps & DocumentVerificationCardProps & VehicleConditionPhotosCardProps ) {
         return (
                 <>
                         <Breadcrumb 
@@ -67,6 +78,10 @@ export default function RentalDetailPage({ rentId, status, pickUpDate, returnDat
                                                 plateNumber={plateNumber}
                                                 averageRating={averageRating}
                                                 reviews={reviews}
+                                                verificationDriverLicenseImageSrc={verificationDriverLicenseImageSrc}
+                                                verificationSelfieImageSrc={verificationSelfieImageSrc}
+                                                rentId={rentId}
+                                                vehicleConditionImages={vehicleConditionImages}
                                         />
                                         <RightContent 
                                                 rentals={rentals}
@@ -127,7 +142,7 @@ const PageTitleSection = memo(({ status, rentId }: PageTitleSectionProps) => {
 })
 PageTitleSection.displayName = "PageTitleSection"
 
-const LeftContent = memo(({ pickUpDate, returnDate, pickUpLocation, price, totalPaid, tripCost, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews }: TripSummaryCardProps & VechicleCardProps) => {
+const LeftContent = memo(({ pickUpDate, returnDate, pickUpLocation, price, totalPaid, tripCost, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews, verificationDriverLicenseImageSrc, verificationSelfieImageSrc, rentId, vehicleConditionImages }: TripSummaryCardProps & VechicleCardProps & DocumentVerificationCardProps & VehicleConditionPhotosCardProps) => {
         return (
                 <div className="col-span-1 md:col-span-7 w-full">
                         <div className="flex flex-col gap-5">
@@ -151,8 +166,15 @@ const LeftContent = memo(({ pickUpDate, returnDate, pickUpLocation, price, total
                                         averageRating={averageRating}
                                         reviews={reviews}
                                 />
-                                <DocumentVerificationCard />
-                                <VehicleConditionPhotosCard />
+                                <DocumentVerificationCard 
+                                        verificationDriverLicenseImageSrc={verificationDriverLicenseImageSrc}
+                                        verificationSelfieImageSrc={verificationSelfieImageSrc}
+                                        rentId={rentId}
+                                />
+                                <VehicleConditionPhotosCard 
+                                        vehicleConditionImages={vehicleConditionImages}
+                                        rentId={rentId}
+                                />
                         </div>
                 </div>
         )
@@ -345,26 +367,24 @@ const VechicleCard = memo(({ featuredImage, carName, carType, transmission, seat
 })
 VechicleCard.displayName = "VechicleCard"
 
-const DocumentVerificationCard = memo(() => {
+const DocumentVerificationCard = memo(({ verificationDriverLicenseImageSrc, verificationSelfieImageSrc, rentId }: DocumentVerificationCardProps) => {
 
         const content: { 
                 key: number; 
                 title: string; 
-                link: string; 
-                check: boolean; 
+                link?: string; 
         }[] = [ {
                         key: 1,
                         title: `Driver's License`,
-                        link: `/`,
-                        check: true,
+                        link: verificationDriverLicenseImageSrc,
                 },
                 {
                         key: 2,
                         title: `Selfie with License`,
-                        link: `/`,
-                        check: true,
+                        link: verificationSelfieImageSrc,
                 },
         ]
+
         return(
                 <div className="p-4 md:p-6 bg-white rounded-[10px] border border-gray-200">
                         <h3 className="text-[#0B0B0B] text-base font-semibold font-text leading-6">
@@ -377,28 +397,28 @@ const DocumentVerificationCard = memo(() => {
                                                 className="flex justify-between items-center py-4.25"
                                         >
                                                 <div className="flex items-center gap-2.5">
-                                                        {item.check ? <CircleCheck className="text-[#10B981]" /> : <CircleX className="text-red-700" />}
+                                                        {item.link ? <CircleCheck className="text-[#10B981]" /> : <CircleX className="text-red-700" />}
                                                         <div>
                                                                 <h4 className="text-neutral-950 text-sm font-semibold font-text leading-5">
                                                                         {item.title}
                                                                 </h4>
                                                                 <div>
-                                                                        {item.check ? <span className="text-emerald-500 text-sm font-normal font-text leading-5">Uploaded & Verified</span> : <span className="text-red-700 text-sm font-normal font-text leading-5">Please upload documents</span>}
+                                                                        {item.link ? <span className="text-emerald-500 text-sm font-normal font-text leading-5">Uploaded & Verified</span> : <span className="text-red-700 text-sm font-normal font-text leading-5">Please upload documents</span>}
                                                                 </div>
                                                         </div>
                                                 </div>
                                                 <div>
-                                                        {item.check ? <Link
+                                                        {item.link ? <Link
                                                                 href={item.link}
                                                                 className="text-[#1A56DB] text-sm font-medium font-text leading-5"
                                                                 target="_blank"
                                                         >
                                                                 View Document
                                                         </Link>: <Link
-                                                                href={item.link}
-                                                                className="text-red-700 text-sm font-medium font-text leading-5"
+                                                                        href={`?checkIn=${rentId}`}
+                                                                        className="text-red-700 text-sm font-medium font-text leading-5"
                                                                 >
-                                                                        Upload Document
+                                                                        Start Check-In
                                                                 </Link>}
                                                 </div>
                                         </div>
@@ -409,13 +429,13 @@ const DocumentVerificationCard = memo(() => {
 })
 DocumentVerificationCard.displayName = "DocumentVerificationCard"
 
-const VehicleConditionPhotosCard = memo(() => {
+const VehicleConditionPhotosCard = memo(({ vehicleConditionImages, rentId }: VehicleConditionPhotosCardProps) => {
 
-        const contents: { id: number; title: string; content: string | number }[] = [
+        const contents: { id: number; title: string; content: string }[] = [
                 {
                         id: 1,
                         title: "Current Mileage",
-                        content: 42310
+                        content: '42,310km'
                 },
                 {
                         id: 2,
@@ -434,8 +454,34 @@ const VehicleConditionPhotosCard = memo(() => {
                                         Photos taken at pickup to confirm vehicle condition.
                                 </span>
                         </div>
-                        <div>
-                                FORM FOR IMAGES COME HERE
+                        <div className="flex flex-wrap gap-3 mt-3">
+                                {vehicleConditionImages?.length !== 0 ? vehicleConditionImages?.map((image, index ) => (
+                                        <div 
+                                                key={index}
+                                                className="overflow-hidden w-full border border-gray-200 rounded-[10px] aspect-164/96 min-w-25 basis-41 grow shrink group"
+                                        >
+                                                <Image 
+                                                        src={image}
+                                                        alt="Vehicle Condition Photos"
+                                                        width={164}
+                                                        height={96}
+                                                        className="aspect-164/96 object-cover w-full group-hover:scale-110 transition-transform duration-500 ease-in-out"
+                                                />
+                                        </div>
+                                )) : <div className="bg-gray-200 p-2.5 rounded-[10px] flex flex-col items-center gap-3 flex-1">
+                                        <div className="flex gap-2 items-center justify-center text-wrap">
+                                                <Clock className="size-4 text-gray-500"/>
+                                                <p className="text-gray-500 text-sm font-normal font-text leading-5">
+                                                        Please, complete your check in process
+                                                </p>
+                                        </div>
+                                        <Link
+                                                href={`?checkIn=${rentId}`}
+                                                className="text-red-700 text-sm font-medium font-text leading-5"
+                                        >
+                                                Start Check-In
+                                        </Link>
+                                </div>}
                         </div>
                         <div className="divide-y">
                                 {contents.map((item) => (
