@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Logo from '../headerNav/logo'
 import { footerLinksOne, footerLinksThree, footerLinksTwo } from '@/constants/footer'
 import SocialMediaIconLink from './socialMediaIconLink'
+import { HOST_DASHBOARD_PATH } from '@/constants/constant'
 
 type FootLinksProps = {
         footerLinks: {
@@ -37,7 +38,7 @@ export default function Footer() {
                                                 <TetBtn 
                                                         btn={{
                                                                 label: 'List Your Car',
-                                                                link: '/list-your-car'
+                                                                link: HOST_DASHBOARD_PATH
                                                         }}
                                                 />
                                         </div>
@@ -78,7 +79,7 @@ export default function Footer() {
                                                 </div>
                                         </div>
 
-                                        <div className='py-4 block md:flex justify-between items-center gap-4 border-t border-[#364153] text-[#333333]'>
+                                        <div className='py-4 block md:flex md:justify-between md:items-center gap-4 border-t border-[#364153] text-[#333333]'>
                                                 <div>
                                                         <span className='hover:text-black transition-colors duration-300'>
                                                                 © 2026 SwingRides. All rights reserved.
