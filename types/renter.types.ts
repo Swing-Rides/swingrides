@@ -56,6 +56,7 @@ export interface RenterProfileResponse {
   phoneNumber: string;
   totalSpentByUser: string;
   rentals: Array<{
+    id: string;
     rentId: string;
     status: "Upcoming" | "Active" | "Completed" | "Cancelled";
     hostRatingForGuest: number | string;

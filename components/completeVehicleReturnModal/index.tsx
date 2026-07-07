@@ -3,16 +3,26 @@
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import { Rentals } from '../pages/profilePages/types'
+import { normalizeRentalDetail, useCompleteVehicleReturnMutation } from '@/app/store/services/renterApi'
+
+const MAX_PHOTO_SIZE_MB = 10
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png']
 
 type CompleteVehicleReturnModalProps = {
         rentals?: Rentals[]
-        onComplete: (updatedRentals: Rentals[]) => void
+        onComplete: (updatedRental: Rentals) => void
+}
+
+type UploadedPhoto = {
+        name: string
+        previewUrl: string
+        uploadedUrl: string
 }
 
 type ReturnFormState = {
         mileage: string
         fuelLevel: string
-        photos: File[]
+        photos: UploadedPhoto[]
         notes: string
 }
 
@@ -22,9 +32,12 @@ export default function CompleteVehicleReturnModal({ rentals, onComplete }: Comp
         const searchParams = useSearchParams()
         const router = useRouter()
         const pathname = usePathname()
+        const [uploading, setUploading] = useState(false)
+        const [uploadError, setUploadError] = useState<string | null>(null)
+        const [completeVehicleReturn, { isLoading: isCompleting }] = useCompleteVehicleReturnMutation()
 
         const returnId = searchParams.get('return')
-        const rental = rentals?.find(r => r.rentId === returnId && r.status === 'Active')
+        const rental = rentals?.find(r => r.id === returnId && r.status === 'Active')
 
         const [form, setForm] = useState<ReturnFormState>({
                 mileage: '',
@@ -39,12 +52,66 @@ export default function CompleteVehicleReturnModal({ rentals, onComplete }: Comp
                 const query = params.toString()
                 router.push(query ? `${pathname}?${query}` : pathname)
                 setForm({ mileage: '', fuelLevel: '', photos: [], notes: '' })
+                setUploadError(null)
         }, [searchParams, router, pathname])
 
-        const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 if (!e.target.files) return
                 const selected = Array.from(e.target.files)
-                setForm(prev => ({ ...prev, photos: [...prev.photos, ...selected] }))
+
+                if (!selected.length) return
+
+                const oversized = selected.filter(file => file.size / (1024 * 1024) > MAX_PHOTO_SIZE_MB)
+                if (oversized.length) {
+                        setUploadError(`Each photo must be under ${MAX_PHOTO_SIZE_MB}MB`)
+                        return
+                }
+
+                const invalidFiles = selected.filter(file => !ACCEPTED_IMAGE_TYPES.includes(file.type))
+                if (invalidFiles.length) {
+                        setUploadError('Only JPG and PNG files are allowed')
+                        return
+                }
+
+                setUploadError(null)
+                setUploading(true)
+
+                try {
+                        const uploadedPhotos = await Promise.all(
+                                selected.map(async (file) => {
+                                        const formData = new FormData()
+                                        formData.append('file', file)
+
+                                        const response = await fetch('/api/upload', {
+                                                method: 'POST',
+                                                body: formData,
+                                        })
+
+                                        if (!response.ok) {
+                                                throw new Error('Upload failed')
+                                        }
+
+                                        const data = await response.json()
+
+                                        return {
+                                                name: file.name,
+                                                previewUrl: URL.createObjectURL(file),
+                                                uploadedUrl: data.secure_url as string,
+                                        }
+                                })
+                        )
+
+                        setForm(prev => ({
+                                ...prev,
+                                photos: [...prev.photos, ...uploadedPhotos],
+                        }))
+                } catch (error) {
+                        console.error('Failed to upload return photos:', error)
+                        setUploadError('Upload failed. Please try again.')
+                } finally {
+                        setUploading(false)
+                        e.target.value = ''
+                }
         }
 
         const removePhoto = (index: number) => {
@@ -54,18 +121,34 @@ export default function CompleteVehicleReturnModal({ rentals, onComplete }: Comp
                 }))
         }
 
-        const handleConfirm = useCallback(() => {
-                if (!returnId || !rentals) return
-                const updatedRentals = rentals.map(r =>
-                        r.rentId === returnId && r.status === 'Active'
-                                ? { ...r, status: 'Completed' as const }
-                                : r
-                )
-                onComplete(updatedRentals)
-                handleClose()
-        }, [returnId, rentals, onComplete, handleClose])
+        const handleConfirm = useCallback(async () => {
+                if (!returnId) return
+                const uploadedPhotoUrls = form.photos.map(photo => photo.uploadedUrl)
 
-        const isFormValid = form.mileage.trim() !== '' && form.fuelLevel !== '' && form.photos.length > 0
+                if (!uploadedPhotoUrls.length) return
+
+                try {
+                        const response = await completeVehicleReturn({
+                                id: returnId,
+                                mileage: Number(form.mileage),
+                                fuelLevel: form.fuelLevel,
+                                photoUrls: uploadedPhotoUrls,
+                                notes: form.notes,
+                        }).unwrap()
+
+                        onComplete(normalizeRentalDetail(response.data) as Rentals)
+                        handleClose()
+                } catch (error) {
+                        console.error('Failed to complete vehicle return:', error)
+                }
+        }, [returnId, completeVehicleReturn, onComplete, handleClose, form.photos, form.mileage, form.fuelLevel, form.notes])
+
+        const isFormValid =
+                form.mileage.trim() !== '' &&
+                form.fuelLevel !== '' &&
+                form.photos.length > 0 &&
+                !uploading &&
+                !isCompleting
 
         if (!returnId || !rental) return null
 
@@ -161,7 +244,7 @@ export default function CompleteVehicleReturnModal({ rentals, onComplete }: Comp
                                                 <UploadIcon />
                                                 <div className='text-center'>
                                                         <span className='text-[#1A56DB] text-sm font-medium font-text group-hover:underline'>
-                                                                Click to upload
+                                                                {uploading ? 'Uploading...' : 'Click to upload'}
                                                         </span>
                                                         <span className='text-[#6B7280] text-sm font-text'>
                                                                 {' '}or drag and drop
@@ -176,8 +259,15 @@ export default function CompleteVehicleReturnModal({ rentals, onComplete }: Comp
                                                         multiple
                                                         className='hidden'
                                                         onChange={handlePhotoUpload}
+                                                        disabled={uploading}
                                                 />
                                         </label>
+
+                                        {uploadError && (
+                                                <span className='text-[#EF4444] text-xs font-normal font-text'>
+                                                        {uploadError}
+                                                </span>
+                                        )}
 
                                         {form.photos.length > 0 && (
                                                 <div className='flex flex-wrap gap-2 mt-1'>
@@ -228,7 +318,7 @@ export default function CompleteVehicleReturnModal({ rentals, onComplete }: Comp
                                                 disabled={!isFormValid}
                                                 className='text-sm font-medium font-text leading-5 border border-[#1A56DB] text-white rounded-xs py-2 px-4 bg-[#1A56DB] hover:bg-[#1E429F] transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:pointer-events-none'
                                         >
-                                                Confirm Return
+                                                {uploading ? 'Uploading photos...' : isCompleting ? 'Completing return...' : 'Confirm Return'}
                                         </button>
                                 </div>
                         </div>

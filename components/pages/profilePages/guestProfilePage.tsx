@@ -58,7 +58,16 @@ export default function GuestProfilePage({
       </Suspense>
 
       <Suspense>
-        <CancelTripDialog rentals={rentals} onCancel={setRentals} />
+        <CancelTripDialog
+          rentals={rentals}
+          onCancel={(updatedRental) =>
+            setRentals((currentRentals) =>
+              currentRentals?.map((rental) =>
+                rental.id === updatedRental.id ? updatedRental : rental,
+              ),
+            )
+          }
+        />
       </Suspense>
     </>
   );

@@ -103,4 +103,18 @@ export interface VehicleDetails {
     totalRatings: number;
   };
   location: string;
+  host: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    rating: number;
+    createdAt: Date;
+    totalReviews: number;
+  };
+
+  policyNumber: string;
+  insuranceProvider: string;
+  insuranceExpiration: Date;
 }

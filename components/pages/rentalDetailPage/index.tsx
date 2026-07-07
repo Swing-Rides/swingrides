@@ -14,7 +14,7 @@ type TripSummaryCardProps = {
         pickUpDate: string;
         returnDate: string;
         pickUpLocation: string;
-        totalPaid: string; 
+        totalPaid: string;
         tripCost: string;
         price: string;
         features: string[];
@@ -35,22 +35,22 @@ type VechicleCardProps = {
         reviews?: ReviewType[];
 }
 
-export default function RentalDetailPage({ rentId, status, pickUpDate, returnDate, pickUpLocation, price, totalPaid, tripCost, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews, rentals }: PageTitleSectionProps & TripSummaryCardProps & VechicleCardProps & ManageBookingCardProps ) {
+export default function RentalDetailPage({ rentId, status, pickUpDate, returnDate, pickUpLocation, price, totalPaid, tripCost, features, featuredImage, carName, carType, transmission, seats, year, plateNumber, averageRating, reviews, rentals }: PageTitleSectionProps & TripSummaryCardProps & VechicleCardProps & ManageBookingCardProps) {
         return (
                 <>
-                        <Breadcrumb 
+                        <Breadcrumb
                                 rentId={rentId}
-                        />  
+                        />
                         <section className="py-5 px-2.5 md:py-10 md:px-20">
                                 <div>
-                                        <PageTitleSection 
+                                        <PageTitleSection
                                                 rentId={rentId}
                                                 status={status}
 
                                         />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                                        <LeftContent 
+                                        <LeftContent
                                                 pickUpDate={pickUpDate}
                                                 returnDate={returnDate}
                                                 pickUpLocation={pickUpLocation}
@@ -68,10 +68,10 @@ export default function RentalDetailPage({ rentId, status, pickUpDate, returnDat
                                                 averageRating={averageRating}
                                                 reviews={reviews}
                                         />
-                                        <RightContent 
+                                        <RightContent
                                                 rentals={rentals}
                                         />
-                                </div>  
+                                </div>
                         </section>
                 </>
         )
@@ -111,7 +111,7 @@ const PageTitleSection = memo(({ status, rentId }: PageTitleSectionProps) => {
                                 <h2 className="text-[#0B0B0B] text-2xl font-bold font-text leading-8">
                                         Rental Details
                                 </h2>
-                                <Badge  className={statusBadgeClass[status]}>
+                                <Badge className={statusBadgeClass[status]}>
                                         {status}
                                 </Badge>
                         </div>
@@ -131,7 +131,7 @@ const LeftContent = memo(({ pickUpDate, returnDate, pickUpLocation, price, total
         return (
                 <div className="col-span-1 md:col-span-7 w-full">
                         <div className="flex flex-col gap-5">
-                                <TripSummaryCard 
+                                <TripSummaryCard
                                         pickUpDate={pickUpDate}
                                         returnDate={returnDate}
                                         pickUpLocation={pickUpLocation}
@@ -140,8 +140,8 @@ const LeftContent = memo(({ pickUpDate, returnDate, pickUpLocation, price, total
                                         tripCost={tripCost}
                                         features={features}
                                 />
-                                <VechicleCard 
-                                        featuredImage={featuredImage} 
+                                <VechicleCard
+                                        featuredImage={featuredImage}
                                         carName={carName}
                                         carType={carType}
                                         transmission={transmission}
@@ -162,7 +162,7 @@ LeftContent.displayName = "LeftContent"
 const TripSummaryCard = memo(({ pickUpDate, returnDate, pickUpLocation, price, features, totalPaid, tripCost }: TripSummaryCardProps) => {
 
         const tripDuration = getTripDuration(
-                pickUpDate, 
+                pickUpDate,
                 returnDate
         )
         const displayPrice = price
@@ -200,7 +200,7 @@ const TripSummaryCard = memo(({ pickUpDate, returnDate, pickUpLocation, price, f
 
                         <div className="grid grid-cols-2 gap-3 pb-6.25 border-b border-b-[#E5E7EB]">
                                 {tripDetails.map((item) => (
-                                        <div 
+                                        <div
                                                 key={item.id}
                                                 className="flex flex-col gap-2 p-4 bg-[#F8F9FB]"
                                         >
@@ -264,8 +264,8 @@ const TripSummaryCard = memo(({ pickUpDate, returnDate, pickUpLocation, price, f
                         </div>
 
                         <div className="flex gap-2 items-center flex-wrap">
-                                {features.map(( item, index ) => (
-                                        <Badge 
+                                {features.map((item, index) => (
+                                        <Badge
                                                 key={index}
                                                 className="bg-[#F8F9FB] text-[#0B0B0B] py-px px-3 text-xs font-medium leading-4"
                                         >
@@ -288,7 +288,7 @@ const VechicleCard = memo(({ featuredImage, carName, carType, transmission, seat
                                 </h3>
                                 <div className="flex gap-4 items-start group">
                                         <div className="aspect-160/109 rounded-[10px] overflow-clip">
-                                                <Image 
+                                                <Image
                                                         src={featuredImage?.src || ""}
                                                         alt={featuredImage?.alt || "image not found"}
                                                         title={featuredImage?.alt || "image not found"}
@@ -347,32 +347,32 @@ VechicleCard.displayName = "VechicleCard"
 
 const DocumentVerificationCard = memo(() => {
 
-        const content: { 
-                key: number; 
-                title: string; 
-                link: string; 
-                check: boolean; 
-        }[] = [ {
-                        key: 1,
-                        title: `Driver's License`,
-                        link: `/`,
-                        check: true,
-                },
-                {
-                        key: 2,
-                        title: `Selfie with License`,
-                        link: `/`,
-                        check: true,
-                },
-        ]
-        return(
+        const content: {
+                key: number;
+                title: string;
+                link: string;
+                check: boolean;
+        }[] = [{
+                key: 1,
+                title: `Driver's License`,
+                link: `/`,
+                check: true,
+        },
+        {
+                key: 2,
+                title: `Selfie with License`,
+                link: `/`,
+                check: true,
+        },
+                ]
+        return (
                 <div className="p-4 md:p-6 bg-white rounded-[10px] border border-gray-200">
                         <h3 className="text-[#0B0B0B] text-base font-semibold font-text leading-6">
                                 Document Verification
                         </h3>
                         <div className="divide-y divide-[#E5E7EB]">
                                 {content.map((item) => (
-                                        <div 
+                                        <div
                                                 key={item.key}
                                                 className="flex justify-between items-center py-4.25"
                                         >
@@ -394,12 +394,12 @@ const DocumentVerificationCard = memo(() => {
                                                                 target="_blank"
                                                         >
                                                                 View Document
-                                                        </Link>: <Link
+                                                        </Link> : <Link
                                                                 href={item.link}
                                                                 className="text-red-700 text-sm font-medium font-text leading-5"
-                                                                >
-                                                                        Upload Document
-                                                                </Link>}
+                                                        >
+                                                                Upload Document
+                                                        </Link>}
                                                 </div>
                                         </div>
                                 ))}
@@ -439,7 +439,7 @@ const VehicleConditionPhotosCard = memo(() => {
                         </div>
                         <div className="divide-y">
                                 {contents.map((item) => (
-                                        <div 
+                                        <div
                                                 className="flex items-center justify-between gap-4 py-3"
                                                 key={item.id}
                                         >

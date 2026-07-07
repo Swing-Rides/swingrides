@@ -13,11 +13,11 @@ import {
         AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Rentals } from '../pages/profilePages/types'
-import { cancelRental } from '../pages/profilePages/utils'
+import { normalizeRentalDetail, useCancelBookingMutation } from '@/app/store/services/renterApi'
 
 type CancelTripDialogProps = {
         rentals?: Rentals[]
-        onCancel: (updatedRentals: Rentals[]) => void
+        onCancel: (updatedRental: Rentals) => void
 }
 
 export default function CancelTripDialog({ rentals, onCancel }: CancelTripDialogProps) {
@@ -25,9 +25,10 @@ export default function CancelTripDialog({ rentals, onCancel }: CancelTripDialog
         const searchParams = useSearchParams()
         const router = useRouter()
         const pathname = usePathname()
+        const [cancelBooking, { isLoading }] = useCancelBookingMutation()
 
         const cancelId = searchParams.get('cancel')
-        const rental = rentals?.find(r => r.rentId === cancelId && r.status === 'Upcoming')
+        const rental = rentals?.find(r => r.id === cancelId && r.status === 'Upcoming')
 
         const handleClose = useCallback(() => {
                 const params = new URLSearchParams(searchParams.toString())
@@ -36,12 +37,17 @@ export default function CancelTripDialog({ rentals, onCancel }: CancelTripDialog
                 router.push(query ? `${pathname}?${query}` : pathname)
         }, [searchParams, router, pathname])
 
-        const handleConfirm = useCallback(() => {
-                if (!cancelId || !rentals) return
-                const updatedRentals = cancelRental(rentals, cancelId)
-                onCancel(updatedRentals)
-                handleClose()
-        }, [cancelId, rentals, onCancel, handleClose])
+        const handleConfirm = useCallback(async () => {
+                if (!cancelId) return
+
+                try {
+                        const response = await cancelBooking({ id: cancelId }).unwrap()
+                        onCancel(normalizeRentalDetail(response.data) as Rentals)
+                        handleClose()
+                } catch (error) {
+                        console.error('Failed to cancel booking:', error)
+                }
+        }, [cancelId, cancelBooking, onCancel, handleClose])
 
         // Only Upcoming rentals can be cancelled — if rental not found or not Upcoming, silently dismiss
         if (!cancelId || !rental) return null
@@ -101,9 +107,10 @@ export default function CancelTripDialog({ rentals, onCancel }: CancelTripDialog
                                         </AlertDialogCancel>
                                         <AlertDialogAction
                                                 onClick={handleConfirm}
+                                                disabled={isLoading}
                                                 className='bg-[#EF4444] text-white hover:bg-[#DC2626] border-transparent'
                                         >
-                                                Yes, cancel trip
+                                                {isLoading ? 'Cancelling...' : 'Yes, cancel trip'}
                                         </AlertDialogAction>
                                 </AlertDialogFooter>
                         </AlertDialogContent>

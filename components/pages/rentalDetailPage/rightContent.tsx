@@ -18,15 +18,13 @@ export default function RightContent({ rentals: initialRentals }: ManageBookingC
 
         const rentalsAsArray = rental ? [rental] : undefined
 
-        const handleCancel = useCallback((updatedRentals: Rentals[]) => {
-                const updated = updatedRentals.find(r => r.rentId === rental?.rentId)
-                if (updated) setRental(updated)
-        }, [rental?.rentId])
+        const handleCancel = useCallback((updatedRental: Rentals) => {
+                setRental(updatedRental)
+        }, [])
 
-        const handleComplete = useCallback((updatedRentals: Rentals[]) => {
-                const updated = updatedRentals.find(r => r.rentId === rental?.rentId)
-                if (updated) setRental(updated)
-        }, [rental?.rentId])
+        const handleComplete = useCallback((updatedRental: Rentals) => {
+                setRental(updatedRental)
+        }, [])
 
         return (
                 <>
@@ -163,7 +161,7 @@ const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
 
         const buttons = getManageBookingButtons(
                 rentals.status,
-                rentals.rentId,
+                rentals.id,
                 searchParams.toString(),
                 rentals.host.contactNumber
         )

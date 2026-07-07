@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import GuestProfilePage from "@/components/pages/profilePages/guestProfilePage";
 import GuestSignInComponent from "@/components/signIn/guestSignInComponent";

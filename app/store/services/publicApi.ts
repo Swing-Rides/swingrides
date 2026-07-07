@@ -10,12 +10,12 @@ import {
 type AxiosBaseQueryArgs =
   | string
   | {
-      url: string;
-      method?: Method;
-      body?: unknown;
-      data?: unknown;
-      params?: Record<string, string | number | boolean | undefined>;
-    };
+    url: string;
+    method?: Method;
+    body?: unknown;
+    data?: unknown;
+    params?: Record<string, string | number | boolean | undefined>;
+  };
 
 type AxiosBaseQueryError = {
   status?: number;
@@ -32,11 +32,11 @@ const axiosBaseQuery = (): BaseQueryFn<
       typeof args === "string"
         ? { url: args, method: "GET" as Method }
         : {
-            url: args.url,
-            method: args.method ?? "GET",
-            data: args.data ?? args.body,
-            params: args.params,
-          };
+          url: args.url,
+          method: args.method ?? "GET",
+          data: args.data ?? args.body,
+          params: args.params,
+        };
 
     try {
       const result = await apiClient({
@@ -82,7 +82,7 @@ const toQueryString = (filters?: PublicBrowseVehiclesQuery) => {
 export const publicApi = createApi({
   reducerPath: "publicApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["PublicVehicles"],
+  tagTypes: ["PublicVehicles", "PublicBookings"],
   endpoints: (builder) => ({
     getPublicBrowseVehicles: builder.query<
       PublicBrowseVehiclesResponse,
@@ -103,10 +103,83 @@ export const publicApi = createApi({
       { id: string }
     >({
       query: ({ id }) => `/api/public/vehicles/${id}`,
-      providesTags: (result, error, { id }) => [{ type: "PublicVehicles", id }],
+      providesTags: (_result, _error, { id }) => [{ type: "PublicVehicles", id }],
+    }),
+
+    createPublicBooking: builder.mutation<
+      {
+        success: boolean;
+        data: any;
+      },
+      {
+        vehicleId: string;
+        paymentIntentId: string;
+        pickupDate: string;
+        returnDate: string;
+        pickupLocation: string;
+        insuranceProvider?: string;
+        policyNumber?: string;
+        insuranceExpiry?: string;
+        hostProvidingCoverage?: boolean;
+      }
+    >({
+      query: (bookingData) => ({
+        url: "/api/auth/renter/bookings",
+        method: "POST",
+        body: bookingData,
+      }),
+      invalidatesTags: [{ type: "PublicBookings", id: "LIST" }],
+    }),
+
+    createCheckoutPaymentIntent: builder.mutation<
+      {
+        success: boolean;
+        message: string;
+        data: {
+          id: string;
+          amount: number;
+          currency: string;
+          clientSecret: string;
+          status: string;
+          subtotal: number;
+          tax: number;
+          taxRate: number;
+          totalAmount: number;
+          metadata?: Record<string, string>;
+        };
+      },
+      {
+        vehicleId: string;
+        pickupDate: string;
+        returnDate: string;
+        currency?: string;
+        metadata?: Record<string, string>;
+      }
+    >({
+      query: (payload) => ({
+        url: "/api/payments/create-payment-intent",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
+    getPublicBookingById: builder.query<
+      {
+        success: boolean;
+        data: any;
+      },
+      { id: string }
+    >({
+      query: ({ id }) => `/api/auth/renter/bookings/${id}`,
+      providesTags: (_result, _error, { id }) => [{ type: "PublicBookings", id }],
     }),
   }),
 });
 
-export const { useGetPublicBrowseVehiclesQuery, useGetPublicVehicleByIdQuery } =
-  publicApi;
+export const {
+  useGetPublicBrowseVehiclesQuery,
+  useGetPublicVehicleByIdQuery,
+  useCreatePublicBookingMutation,
+  useCreateCheckoutPaymentIntentMutation,
+  useGetPublicBookingByIdQuery,
+} = publicApi;

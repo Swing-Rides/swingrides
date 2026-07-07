@@ -12,6 +12,7 @@ export const testGuestUserProfile: User = {
   totalSpentByUser: "$51,890",
   rentals: [
     {
+      id: "SR-2026-0043",
       rentId: "SR-2026-0043",
       status: "Upcoming",
       hostRatingForGuest: "",
@@ -52,6 +53,7 @@ export const testGuestUserProfile: User = {
       },
     },
     {
+      id: "SR-2026-0040",
       rentId: "SR-2026-0040",
       status: "Active",
       hostRatingForGuest: "",
@@ -88,6 +90,7 @@ export const testGuestUserProfile: User = {
       },
     },
     {
+      id: "SR-2026-0032",
       rentId: "SR-2026-0032",
       status: "Completed",
       hostRatingForGuest: 4,
@@ -124,6 +127,7 @@ export const testGuestUserProfile: User = {
       },
     },
     {
+      id: "SR-2026-0039",
       rentId: "SR-2026-0039",
       status: "Cancelled",
       hostRatingForGuest: "",
@@ -160,6 +164,7 @@ export const testGuestUserProfile: User = {
       },
     },
     {
+      id: "SR-2026-0042",
       rentId: "SR-2026-0042",
       status: "Upcoming",
       hostRatingForGuest: "",
@@ -203,6 +208,7 @@ export const testGuestUserProfile: User = {
       },
     },
     {
+      id: "SR-2026-0069",
       rentId: "SR-2026-0069",
       status: "Active",
       hostRatingForGuest: "",
@@ -239,6 +245,7 @@ export const testGuestUserProfile: User = {
       },
     },
     {
+      id: "SR-2026-0031",
       rentId: "SR-2026-0031",
       status: "Completed",
       hostRatingForGuest: 4,
@@ -275,6 +282,7 @@ export const testGuestUserProfile: User = {
       },
     },
     {
+      id: "SR-2026-0038",
       rentId: "SR-2026-0038",
       status: "Cancelled",
       hostRatingForGuest: "",
