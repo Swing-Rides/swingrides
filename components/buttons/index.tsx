@@ -29,7 +29,7 @@ const SecBtn = ({ btn }: BtnProps) => {
                         title={btn.label}
                 >
                         <button 
-                                className="py-2 px-6 rounded-xs bg-white text-[#0B0B0B] font-semibold capitalize hover:bg-white/80 transition-colors duration-300 cursor-pointer"
+                                className="py-2 px-6 rounded-xs bg-white text-neutral-950 font-semibold capitalize hover:bg-white/80 transition-colors duration-300 cursor-pointer"
                         >
                                 {btn.label}
                         </button>
