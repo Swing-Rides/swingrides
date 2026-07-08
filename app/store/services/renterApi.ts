@@ -159,7 +159,10 @@ export const renterApi = createApi({
         url: `/api/auth/renter/bookings/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: "Bookings", id }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Bookings", id },
+        { type: "Renter", id: "PROFILE" },
+      ],
     }),
 
     completeVehicleReturn: builder.mutation<
@@ -180,7 +183,36 @@ export const renterApi = createApi({
         method: "PUT",
         body,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: "Bookings", id }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Bookings", id },
+        { type: "Renter", id: "PROFILE" },
+      ],
+    }),
+
+    startVehicleCheckIn: builder.mutation<
+      {
+        success: boolean;
+        data: SingleRent["data"];
+      },
+      {
+        id: string;
+        mileage: number;
+        fuelLevel: string;
+        vehicleConditionPhotoUrls: string[];
+        driverLicensePhotoUrl: string;
+        selfiePhotoUrl: string;
+        notes?: string;
+      }
+    >({
+      query: ({ id, ...body }) => ({
+        url: `/api/auth/renter/bookings/${id}/start-checkin`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Bookings", id },
+        { type: "Renter", id: "PROFILE" },
+      ],
     }),
 
     submitTripReview: builder.mutation<
@@ -224,6 +256,7 @@ export const {
   useUpdateBookingMutation,
   useCancelBookingMutation,
   useCompleteVehicleReturnMutation,
+  useStartVehicleCheckInMutation,
   useSubmitTripReviewMutation,
 } = renterApi;
 
