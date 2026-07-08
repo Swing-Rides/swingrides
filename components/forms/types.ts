@@ -43,6 +43,9 @@ export type FormFieldConfig = {
         defaultValue?: string | number | boolean
         className?: string
         disabled?: boolean
+        capture?: "user" | "environment"
+        maxFiles?: number
+        showPreview?: boolean
 }
 
 export type MainFormProps = {

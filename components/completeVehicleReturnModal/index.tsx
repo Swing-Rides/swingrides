@@ -7,6 +7,8 @@ import { normalizeRentalDetail, useCompleteVehicleReturnMutation } from '@/app/s
 
 const MAX_PHOTO_SIZE_MB = 10
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png']
+import { LucideMoveRight, X } from 'lucide-react'
+import ReturnVehicleForm, { ReturnVehicleFormValues } from '../forms/returnVehicleForm'
 
 type CompleteVehicleReturnModalProps = {
         rentals?: Rentals[]
@@ -154,7 +156,7 @@ export default function CompleteVehicleReturnModal({ rentals, onComplete }: Comp
 
         return (
                 <div
-                        className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'
+                        className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'
                         onClick={handleClose}
                 >
                         <div
@@ -162,34 +164,38 @@ export default function CompleteVehicleReturnModal({ rentals, onComplete }: Comp
                                 onClick={(e) => e.stopPropagation()}
                         >
                                 {/* Header */}
-                                <div className='flex items-center justify-between'>
+                                <div className='sticky top-0 left-0 border-b pb-3 md:pb-5 bg-white flex items-center justify-between'>
                                         <div className='flex flex-col gap-0.5'>
                                                 <h2 className='text-[#1F2937] text-lg font-bold font-text leading-6'>
                                                         Complete Vehicle Return
                                                 </h2>
-                                                <span className='text-[#6B7280] text-xs font-normal font-text'>
-                                                        {rental.car.carName} · {rental.car.plateNumber}
+                                                <span className='text-gray-500 text-xs font-normal font-text'>
+                                                        {carName} · {plateNumber}
                                                 </span>
                                         </div>
                                         <button
                                                 onClick={handleClose}
-                                                className='text-[#6B7280] hover:text-[#1F2937] transition-colors duration-200 cursor-pointer'
+                                                className='text-gray-500 hover:text-neutral-950 transition-colors duration-300 cursor-pointer'
                                                 aria-label='Close modal'
                                         >
-                                                <CloseIcon />
+                                                <X className='size-4' />
                                         </button>
                                 </div>
+
+                                <p className="text-gray-500 text-xs font-normal font-text leading-5">
+                                        Upload return condition photos and confirm mileage and fuel level. This protects both you and the host.
+                                </p>
 
                                 {/* Trip summary */}
                                 <div className='flex justify-between p-3 bg-[#F9FAFB] rounded-lg'>
                                         <div className='flex flex-col gap-0.5'>
-                                                <span className='text-[#6B7280] text-xs font-normal font-text'>Pickup</span>
-                                                <span className='text-[#1F2937] text-sm font-semibold font-text'>{rental.pickUpDate}</span>
+                                                <span className='text-gray-500 text-xs font-normal font-text'>Pickup</span>
+                                                <span className='text-neutral-950 text-sm font-semibold font-text'>{pickUpDate}</span>
                                         </div>
-                                        <ReturnArrowIcon />
+                                        <LucideMoveRight className='size-4 text-gray-500'/>
                                         <div className='flex flex-col gap-0.5 items-end'>
-                                                <span className='text-[#6B7280] text-xs font-normal font-text'>Return</span>
-                                                <span className='text-[#1F2937] text-sm font-semibold font-text'>{rental.returnDate}</span>
+                                                <span className='text-gray-500 text-xs font-normal font-text'>Return</span>
+                                                <span className='text-neutral-950 text-sm font-semibold font-text'>{returnDate}</span>
                                         </div>
                                 </div>
 

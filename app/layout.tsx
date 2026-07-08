@@ -1,19 +1,8 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, DM_Sans } from "next/font/google";
-// import localFont from "next/font/local";
 import "./globals.css";
 import { ChakraUIProvider } from "@/components/providers/chakraProvider";
 import ReduxProvider from "@/components/providers/reduxProvider";
-
-// const bebasNeue = localFont({
-//   src: [
-//     {
-//       path: "../public/fonts/bebas-neue.woff2",
-//       weight: "400",
-//     },
-//   ],
-//   variable: "--font-bebas-neue",
-// });
 
 const bebasNeueGoogle = Bebas_Neue({
   subsets: ["latin"],
@@ -40,7 +29,6 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      // className={`${bebasNeue.variable} ${bebasNeueGoogle.variable} ${dmSans.variable} h-full antialiased bg-slate-100`}
       className={`${bebasNeueGoogle.variable} ${dmSans.variable} h-full antialiased bg-slate-100`}
     >
       <body className="flex flex-col bg-slate-100">

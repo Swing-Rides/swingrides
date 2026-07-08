@@ -52,6 +52,9 @@ export default function SingleTripPage() {
         averageRating={rentalDetails.averageRating}
         reviews={rentalDetails.reviews}
         rentals={rentalDetails}
+        verificationDriverLicenseImageSrc={""}
+        verificationSelfieImageSrc={`/images/swingrides-default-img.webp`}
+        vehicleConditionImages={[]}
       />
     </div>
   );

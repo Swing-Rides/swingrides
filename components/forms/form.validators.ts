@@ -78,18 +78,76 @@ export const validators = {
                 },
         }),
 
-        file: (maxSizeMB = 5, accept?: string[]): RegisterOptions => ({
-                required: 'Please upload a file',
+        file: ({
+                required = true,
+                maxSizeMB = 5,
+                maxTotalSizeMB,
+                maxFiles,
+                accept,
+        }: {
+                required?: boolean
+                maxSizeMB?: number
+                maxTotalSizeMB?: number
+                maxFiles?: number
+                accept?: string[]
+        } = {}): RegisterOptions => ({
+                ...(required && {
+                        required: "Please upload a file",
+                }),
+
                 validate: {
-                        fileSize: (files: FileList) => {
-                                if (!files?.[0]) return true
-                                const sizeInMB = files[0].size / (1024 * 1024)
-                                return sizeInMB <= maxSizeMB || `File must be smaller than ${maxSizeMB}MB`
+                        requiredFile: (files: FileList | File[]) => {
+                                if (!required) return true;
+
+                                return files?.length > 0 || "Please upload at least one file";
                         },
-                        fileType: (files: FileList) => {
-                                if (!files?.[0] || !accept?.length) return true
-                                const fileType = files[0].type
-                                return accept.includes(fileType) || `File must be one of: ${accept.join(', ')}`
+
+                        maxFiles: (files: FileList | File[]) => {
+                                if (!files || !maxFiles) return true;
+
+                                return (
+                                        files.length <= maxFiles ||
+                                        `You can upload a maximum of ${maxFiles} files`
+                                );
+                        },
+
+                        fileSize: (files: FileList | File[]) => {
+                                if (!files?.length) return true;
+
+                                const oversized = Array.from(files).find(
+                                        (file) => file.size / (1024 * 1024) > maxSizeMB
+                                );
+
+                                return (
+                                        !oversized ||
+                                        `${oversized.name} exceeds the ${maxSizeMB}MB limit`
+                                );
+                        },
+
+                        totalSize: (files: FileList | File[]) => {
+                                if (!files?.length || !maxTotalSizeMB) return true;
+
+                                const total =
+                                        Array.from(files).reduce((sum, file) => sum + file.size, 0) /
+                                        (1024 * 1024);
+
+                                return (
+                                        total <= maxTotalSizeMB ||
+                                        `Total upload size must not exceed ${maxTotalSizeMB}MB`
+                                );
+                        },
+
+                        fileType: (files: FileList | File[]) => {
+                                if (!files?.length || !accept?.length) return true;
+
+                                const invalid = Array.from(files).find(
+                                        (file) => !accept.includes(file.type)
+                                );
+
+                                return (
+                                        !invalid ||
+                                        `${invalid.name} is not a supported file type`
+                                );
                         },
                 },
         }),

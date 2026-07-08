@@ -10,6 +10,7 @@ import ModifyTripModal from "@/components/modifyTripModal"
 import CancelTripDialog from "@/components/cancelTripDialog"
 import CompleteVehicleReturnModal from "@/components/completeVehicleReturnModal"
 import { Rentals } from "../profilePages/types"
+import StartVehicleCheckIn from "@/components/startVehicleCheckInModal"
 
 
 export default function RightContent({ rentals: initialRentals }: ManageBookingCardProps) {
@@ -25,6 +26,11 @@ export default function RightContent({ rentals: initialRentals }: ManageBookingC
         const handleComplete = useCallback((updatedRental: Rentals) => {
                 setRental(updatedRental)
         }, [])
+
+        const handleCheckIn = useCallback((updatedRentals: Rentals[]) => {
+                const updated = updatedRentals.find(r => r.rentId === rental?.rentId)
+                if (updated) setRental(updated)
+        }, [rental?.rentId])
 
         return (
                 <>
@@ -48,8 +54,21 @@ export default function RightContent({ rentals: initialRentals }: ManageBookingC
                         </Suspense>
 
                         <Suspense>
+                                <StartVehicleCheckIn 
+                                        rentals={rentalsAsArray}
+                                        carName={"Toyota"}
+                                        plateNumber={"ABC-123-NY"}
+                                        onComplete={handleCheckIn}
+                                />
+                        </Suspense>
+
+                        <Suspense>
                                 <CompleteVehicleReturnModal
                                         rentals={rentalsAsArray}
+                                        carName={"Toyota"}
+                                        plateNumber={"ABC-123-NY"}
+                                        pickUpDate={"May 12, 2026"}
+                                        returnDate={"June 2, 2026"}
                                         onComplete={handleComplete}
                                 />
                         </Suspense>
@@ -64,6 +83,9 @@ export const getManageBookingButtons = (
         contactNumber: string
 ): ManageBookingButtonConfig[] => {
 
+        const checkInParams = new URLSearchParams(currentParams)
+        checkInParams.set('checkIn', rentId)
+
         const modifyParams = new URLSearchParams(currentParams)
         modifyParams.set('modify', rentId)
 
@@ -71,6 +93,7 @@ export const getManageBookingButtons = (
         returnParams.set('return', rentId)
 
         const completedStyle = "bg-[#1A56DB] text-white border-[#1A56DB] hover:bg-transparent hover:text-[#1A56DB]"
+        const checkInStyle = "bg-blue-700 text-white border-blue-700 hover:bg-blue-950"
         const modifyStyle = "bg-transparent text-[#1A56DB] border-[#1A56DB] hover:bg-[#1A56DB] hover:text-white"
         const cancelStyle = "bg-transparent text-[#EF4444] border-[#EF4444] hover:bg-[#EF4444] hover:text-white"
         const contactStyle = "bg-transparent text-[#333333] border-[#333333] hover:bg-[#333333] hover:text-white"
@@ -79,6 +102,12 @@ export const getManageBookingButtons = (
         switch (status) {
                 case 'Upcoming':
                         return [
+                                {
+                                        icon: <Car className="w-4" />,
+                                        label: 'Start Check-In',
+                                        href: `?${checkInParams.toString()}`,
+                                        className: checkInStyle,
+                                },
                                 {
                                         icon: <PenLine className="w-4" />,
                                         label: 'Modify',
