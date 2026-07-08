@@ -1,10 +1,7 @@
 "use client";
 
 import CarPageComponent from "@/components/pages/broswerCarsPage/carPageComponent";
-import {
-  useGetPublicBrowseVehiclesQuery,
-  useGetPublicVehicleByIdQuery,
-} from "@/app/store/services/publicApi";
+import { useGetPublicVehicleByIdQuery } from "@/app/store/services/publicApi";
 import { use } from "react";
 
 export default function CarPage({
@@ -29,6 +26,7 @@ export default function CarPage({
   return (
     <CarPageComponent
       carName={data?.data.carName}
+      vehicleId={data?.data.id as string}
       featuredImage={{
         alt: data?.data.featuredImage?.alt,
         src: data?.data.featuredImage?.src,
@@ -45,7 +43,7 @@ export default function CarPage({
       reviewsAndRatings={{
         averageRating: data?.data.reviewsAndRatings?.averageRating || 0,
         totalRatings: data?.data.reviewsAndRatings?.totalRatings || 0,
-        totalReviews: 0,
+        totalReviews: data.data.host.totalReviews,
         starRatingBreakdown: [],
         reviews: [],
       }}
@@ -65,14 +63,15 @@ export default function CarPage({
         doors: 0,
         color: data.data.color,
         mileage: String(data.data.mileage),
+        // features: data.data.features || [],
       }}
-      overview={""}
+      overview={data.data.description}
       host={{
-        hostName: "",
-        memberSince: "",
+        hostName: `${data.data.host.firstName} ${data.data.host.lastName}`,
+        memberSince: new Date(data.data.host.createdAt).toLocaleString(),
         tripsCompleted: 0,
-        rating: 0,
-        contactNumber: "",
+        rating: data.data.host.rating as number,
+        contactNumber: data.data.host.phoneNumber,
       }}
       price={{
         daily: data?.data.price?.daily,
@@ -80,6 +79,9 @@ export default function CarPage({
         monthly: data?.data.price?.monthly,
       }}
       pickupLocation={data?.data.location}
+      insuranceExpiration={data.data.insuranceExpiration}
+      insuranceProvider={data.data.insuranceProvider}
+      policyNumber={data.data.policyNumber}
     />
   );
 }

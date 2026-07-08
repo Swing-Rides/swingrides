@@ -1,46 +1,60 @@
+"use client";
+
+import { useGetBookingByIdQuery } from "@/app/store/services/renterApi";
 import RentalDetailPage from "@/components/pages/rentalDetailPage";
-import { testGuestUserProfile } from "@/constants/profile";
+import { useParams } from "next/navigation";
 
-export default async function SingleTripPage({
-  params,
-}: {
-  params: Promise<{ rentId: string }>;
-}) {
-  const { rentId } = await params;
+export default function SingleTripPage() {
+  const params = useParams();
+  const rentId = params.rentId as string;
+  const { data, isLoading, isError } = useGetBookingByIdQuery({ id: rentId });
 
-  const content = testGuestUserProfile.rentals?.find(
-    (item) => item.rentId.trim().toLowerCase() === rentId.trim().toLowerCase(),
-  );
+  if (isLoading) {
+    return <div>Loading rental details...</div>;
+  }
 
-  if (!content) {
+  if (isError) {
     return <div>This page can not be found</div>;
   }
+
+  if (!data?.data) {
+    return <div>This page can not be found</div>;
+  }
+
+  const rental = data.data;
+  const rentalDetails = {
+    ...rental,
+    pickUpDate: rental.pickupDate,
+  };
 
   return (
     <div>
       <RentalDetailPage
-        rentId={content.rentId}
-        status={content.status}
-        pickUpDate={content.pickUpDate}
-        returnDate={content.returnDate}
-        pickUpLocation={content.pickupLocation}
-        price={content.price}
-        totalPaid={content.totalPaid}
-        tripCost={content.tripCost}
-        features={content.car.features}
-        featuredImage={{ src: content.car.imageUrl, alt: content.car.carName }}
-        carName={content.car.carName}
-        carType={content.car.carType}
-        transmission={'Automatic'}
-        seats={5}
-        year={content.car.manufactureYear}
-        plateNumber={content.car.plateNumber}
-        averageRating={4.2}
-        reviews={[]}
-        rentals={content}
-        verificationDriverLicenseImageSrc={''}
+        rentId={rentalDetails.rentId}
+        status={rentalDetails.status}
+        pickUpDate={rentalDetails.pickUpDate}
+        returnDate={rentalDetails.returnDate}
+        pickUpLocation={rentalDetails.pickupLocation}
+        price={rentalDetails.price}
+        totalPaid={rentalDetails.totalPaid}
+        tripCost={rentalDetails.tripCost}
+        features={rentalDetails.car.features}
+        featuredImage={{
+          src: rentalDetails.car.imageUrl,
+          alt: rentalDetails.car.carName,
+        }}
+        carName={rentalDetails.car.carName}
+        carType={rentalDetails.car.carType}
+        transmission={rentalDetails.transmission}
+        seats={rentalDetails.seats}
+        year={rentalDetails.car.manufactureYear}
+        plateNumber={rentalDetails.car.plateNumber}
+        averageRating={rentalDetails.averageRating}
+        reviews={rentalDetails.reviews}
+        rentals={rentalDetails}
+        verificationDriverLicenseImageSrc={""}
         verificationSelfieImageSrc={`/images/swingrides-default-img.webp`}
-        vehicleConditionImages={[ ]}
+        vehicleConditionImages={[]}
       />
     </div>
   );

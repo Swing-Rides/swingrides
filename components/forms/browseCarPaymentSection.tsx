@@ -30,6 +30,11 @@ export type PaymentFormValues = {
   hostProvidingCoverage: boolean;
   // Terms
   agreedToTerms: boolean;
+  subtotal?: number;
+  tax?: number;
+  taxRate?: number;
+  totalAmount?: number;
+  totalDays?: number;
 };
 
 type PriceConfig = {
@@ -41,6 +46,7 @@ type PriceConfig = {
 type PaymentSectionProps = {
   price: PriceConfig;
   defaultPickupLocation?: string;
+  vehicleId?: string;
   onSubmit: (values: PaymentFormValues) => void | Promise<void>;
 };
 
@@ -217,10 +223,20 @@ export const PaymentSection = memo(
       : null;
 
     const onFormSubmit = async (values: PaymentFormValues) => {
+      const subtotal = pricing?.total ?? 0;
+      const taxRate = 0.08;
+      const tax = subtotal * taxRate;
+      const totalAmount = subtotal + tax;
+
       // Sync effectiveHostCoverage back into the payload before sending
       await onSubmit({
         ...values,
         hostProvidingCoverage: effectiveHostCoverage,
+        subtotal,
+        tax,
+        taxRate,
+        totalAmount,
+        totalDays: days,
       });
     };
 
@@ -619,7 +635,6 @@ const DatePickerField = ({
                 }
                 return false;
               }}
-              initialFocus
             />
           </PopoverContent>
         </Popover>

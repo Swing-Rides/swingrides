@@ -3,6 +3,7 @@
 import { memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { HostInfoType } from "@/types/vehicle.type";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -22,6 +23,9 @@ import {
 } from "@/components/forms/browseCarPaymentSection";
 import { Calendar, Star } from "lucide-react";
 
+const getPendingCheckoutStorageKey = (vehicleId: string) =>
+  `swingrides:pending-checkout:${vehicleId}`;
+
 export default function CarPageComponent({
   carName,
   featuredImage,
@@ -33,6 +37,7 @@ export default function CarPageComponent({
   host,
   price,
   pickupLocation,
+  vehicleId,
 }: CarPageComponentProp) {
   return (
     <>
@@ -53,7 +58,11 @@ export default function CarPageComponent({
             contactNumber={host.contactNumber}
             rating={host.rating}
           />
-          <RightContent price={price} defaultPickupLocation={pickupLocation} />
+          <RightContent
+            price={price}
+            defaultPickupLocation={pickupLocation}
+            vehicleId={vehicleId}
+          />
         </div>
       </section>
     </>
@@ -128,15 +137,57 @@ const LeftContent = memo(
 LeftContent.displayName = "LeftContent";
 
 const RightContent = memo(
-  ({ price, defaultPickupLocation }: PaymentSectionProps) => {
+  ({
+    price,
+    defaultPickupLocation,
+    vehicleId,
+  }: {
+    price: CarPageComponentProp["price"];
+    defaultPickupLocation: string;
+    vehicleId: string;
+  }) => {
+    const router = useRouter();
+
+    const handleSubmit = async (values: PaymentFormValues) => {
+      if (!vehicleId) {
+        console.error("Vehicle ID is required");
+        return;
+      }
+
+      try {
+        const pendingCheckout = {
+          vehicleId,
+          pickupDate: values.pickupDate,
+          returnDate: values.returnDate,
+          pickupLocation: values.pickupLocation,
+          insuranceProvider: values.insuranceProvider,
+          policyNumber: values.policyNumber,
+          insuranceExpiry: values.insuranceExpiry,
+          hostProvidingCoverage: values.hostProvidingCoverage,
+          subtotal: values.subtotal ?? 0,
+          tax: values.tax ?? 0,
+          taxRate: values.taxRate ?? 0.08,
+          totalAmount: values.totalAmount ?? 0,
+          totalDays: values.totalDays ?? 0,
+        };
+
+        window.sessionStorage.setItem(
+          getPendingCheckoutStorageKey(vehicleId),
+          JSON.stringify(pendingCheckout),
+        );
+        router.push(`/checkout/${vehicleId}`);
+      } catch (error) {
+        console.error("Failed to start checkout:", error);
+      }
+    };
+
     return (
       <div className="col-span-1 md:col-span-5 w-full">
         <PaymentSection
           price={price}
           defaultPickupLocation={defaultPickupLocation}
-          onSubmit={async (values: PaymentFormValues) => {
-            console.log("booking car...", values);
-          }}
+          vehicleId={vehicleId}
+          onSubmit={handleSubmit}
         />
       </div>
     );
@@ -393,15 +444,6 @@ const HostCard = memo(
   },
 );
 HostCard.displayName = "HostCard";
-
-type PaymentSectionProps = {
-  price: {
-    daily: number;
-    weekly: number;
-    monthly: number;
-  };
-  defaultPickupLocation: string;
-};
 
 const GreaterThanIcon = memo(() => (
   <svg

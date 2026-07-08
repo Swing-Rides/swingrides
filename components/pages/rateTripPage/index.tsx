@@ -1,11 +1,13 @@
 "use client"
 
+import { useSubmitTripReviewMutation } from '@/app/store/services/renterApi'
 import { PageIntroProps } from '@/constants/connectToHost'
 import Link from 'next/link'
 import { PageIntro } from '../connectToHostPage'
 import Image from 'next/image'
 import { DEFAULT_IMAGE_SRC } from '@/constants/constant'
 import RateTripForm, { RateTripFormValues } from '@/components/forms/rateTripForm'
+import { useRouter } from 'next/navigation'
 
 const pageIntro: PageIntroProps = {
         imageSrc: '/images/star-rating_svg.svg',
@@ -14,6 +16,7 @@ const pageIntro: PageIntroProps = {
 }
 
 type RateTripPageComponentProps = {
+        bookingId: string;
         rentalId: string;
         imageUrl: string;
         carName: string;
@@ -22,7 +25,10 @@ type RateTripPageComponentProps = {
         tripDurationDays: string;
 }
 
-export default function RateTripPageComponent({ rentalId, imageUrl, carName, pickUpDate, returnDate, tripDurationDays }: RateTripPageComponentProps) {
+export default function RateTripPageComponent({ bookingId, rentalId, imageUrl, carName, pickUpDate, returnDate, tripDurationDays }: RateTripPageComponentProps) {
+        const router = useRouter()
+        const [submitTripReview] = useSubmitTripReviewMutation()
+
         return (
                 <div className='w-full mx-auto py-12.5 px-4 overflow-clip section-bg-gradient space-y-10'>
                         <PageIntro
@@ -63,7 +69,13 @@ export default function RateTripPageComponent({ rentalId, imageUrl, carName, pic
 
                                 <RateTripForm
                                         onSubmit={async (values: RateTripFormValues) => {
-                                                console.log('submitting review:', { rentalId, ...values })
+                                                await submitTripReview({
+                                                        id: bookingId,
+                                                        categoryRatings: values.categoryRatings,
+                                                        review: values.review,
+                                                        recommend: values.recommend as 'yes' | 'no',
+                                                }).unwrap()
+                                                router.push(`/trip/${bookingId}`)
                                         }}
                                 />
 
@@ -80,5 +92,5 @@ export default function RateTripPageComponent({ rentalId, imageUrl, carName, pic
                                 </div>
                         </div>
                 </div>
-                )
+        )
 }

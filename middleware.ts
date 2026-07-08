@@ -1,8 +1,7 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const session = request.cookies.get("session")?.value;
   const { pathname } = request.nextUrl;
 
   const isLoginPage = pathname === "/admin/login";
@@ -11,19 +10,23 @@ export function middleware(request: NextRequest) {
   const isAdminRoute = pathname.startsWith("/admin");
   const isHostRoute = pathname.startsWith("/us/host");
 
-  if (isAdminRoute && !isLoginPage && !session) {
+  // Check for appropriate session cookie based on route
+  const adminSession = request.cookies.get("admin_session")?.value;
+  const hostSession = request.cookies.get("host_session")?.value;
+
+  if (isAdminRoute && !isLoginPage && !adminSession) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
-  if (isLoginPage && session) {
+  if (isLoginPage && adminSession) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 
-  if (isHostRoute && !isHostLoginPage && !session) {
+  if (isHostRoute && !isHostLoginPage && !hostSession) {
     return NextResponse.redirect(new URL("/host/login", request.url));
   }
 
-  if (isHostLoginPage && session) {
+  if (isHostLoginPage && hostSession) {
     return NextResponse.redirect(new URL("/host", request.url));
   }
 
