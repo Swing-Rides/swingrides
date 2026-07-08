@@ -354,8 +354,8 @@ const RentalType = ({
   const content = [
     { label: "Any", value: "any" },
     { label: "Per day", value: "per day" },
-    { label: "Per hour", value: "per hour" },
     { label: "Per week", value: "per week" },
+    { label: "Per month", value: "per month" },
   ];
 
   return (
