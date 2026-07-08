@@ -28,7 +28,7 @@ export default function Footer() {
                                         <p className='mt-4 mb-6 md:mt-6 text-[#D1D5DC] font-medium text-base md:text-lg '>
                                                 Join thousands of renters and hosts already on SwingRides.
                                         </p>
-                                        <div className='flex gap-6'>
+                                        <div className='flex flex-wrap gap-4 md:gap-6'>
                                                 <SecBtn 
                                                         btn={{
                                                                 label: 'Browse Cars',
@@ -79,9 +79,9 @@ export default function Footer() {
                                                 </div>
                                         </div>
 
-                                        <div className='py-4 block md:flex md:justify-between md:items-center gap-4 border-t border-[#364153] text-[#333333]'>
-                                                <div>
-                                                        <span className='hover:text-black transition-colors duration-300'>
+                                        <div className='py-4 block space-y-2.5 md:flex md:justify-between md:items-center gap-4 border-t border-[#364153] text-[#333333]'>
+                                                <div className='flex justify-center md:justify-start'>
+                                                        <span className='text-center md:text-left hover:text-black transition-colors duration-300'>
                                                                 © 2026 SwingRides. All rights reserved.
                                                         </span>
                                                 </div>
