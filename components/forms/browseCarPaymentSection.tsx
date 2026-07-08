@@ -3,7 +3,7 @@
 import { memo, useMemo } from "react";
 import Link from "next/link";
 import { format, addDays, differenceInCalendarDays } from "date-fns";
-import { Shield, CalendarIcon, AlertTriangle, Loader2 } from "lucide-react";
+import { Shield, CalendarIcon, Clock, AlertTriangle, Loader2 } from "lucide-react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -205,21 +205,21 @@ export const PaymentSection = memo(
     const days =
       pickupDate && returnDate
         ? Math.max(
-            differenceInCalendarDays(
-              new Date(returnDate),
-              new Date(pickupDate),
-            ),
-            0,
-          )
+          differenceInCalendarDays(
+            new Date(returnDate),
+            new Date(pickupDate),
+          ),
+          0,
+        )
         : 0;
 
     const pricing = days > 0 ? computePricing(price, days) : null;
 
     const enteredPickUpDate = pickupDate
-      ? format(new Date(pickupDate), "MMM d")
+      ? format(new Date(pickupDate), "MMM d, h:mm a")
       : null;
     const enteredReturnDate = returnDate
-      ? format(new Date(returnDate), "MMM d")
+      ? format(new Date(returnDate), "MMM d, h:mm a")
       : null;
 
     const onFormSubmit = async (values: PaymentFormValues) => {
@@ -271,14 +271,14 @@ export const PaymentSection = memo(
             {/* Row 1: Pickup + Return dates */}
             <div className="grid grid-cols-2 gap-3">
               <FormRow
-                label="Pick-up Date"
+                label="Pick-up Date & Time"
                 htmlFor="pickupDate"
                 error={errors.pickupDate?.message}
               >
-                <DatePickerField
+                <DateTimePickerField
                   name="pickupDate"
                   control={control}
-                  placeholder="Pick a date"
+                  placeholder="Pick a date & time"
                   error={errors.pickupDate?.message}
                   rules={{ required: "Pick-up date is required" }}
                   minDate={today}
@@ -286,14 +286,14 @@ export const PaymentSection = memo(
               </FormRow>
 
               <FormRow
-                label="Return Date"
+                label="Return Date & Time"
                 htmlFor="returnDate"
                 error={errors.returnDate?.message}
               >
-                <DatePickerField
+                <DateTimePickerField
                   name="returnDate"
                   control={control}
-                  placeholder="Pick a date"
+                  placeholder="Pick a date & time"
                   error={errors.returnDate?.message}
                   minDate={
                     pickupDate ? addDays(new Date(pickupDate), 1) : today
@@ -476,17 +476,18 @@ export const PaymentSection = memo(
               />
             </FormRow>
 
-            {/* Expiry Date */}
+            {/* Expiry Date — date only, time isn't relevant here */}
             <FormRow
               label="Expiry Date"
               htmlFor="insuranceExpiry"
               error={errors.insuranceExpiry?.message}
             >
-              <DatePickerField
+              <DateTimePickerField
                 name="insuranceExpiry"
                 control={control}
                 placeholder="Pick expiry date"
                 error={errors.insuranceExpiry?.message}
+                showTime={false}
                 // Only dates more than 30 days from now are valid
                 minDate={THIRTY_DAYS_FROM_NOW}
                 rules={{
@@ -576,31 +577,79 @@ export const PaymentSection = memo(
 );
 PaymentSection.displayName = "PaymentSection";
 
-// ─── Date picker field ────────────────────────────────────────────────────────
+// ─── Date + time picker field ──────────────────────────────────────────────────
 
-type DatePickerFieldProps = {
+type DateTimePickerFieldProps = {
   name: keyof PaymentFormValues;
   control: ReturnType<typeof useForm<PaymentFormValues>>["control"];
   placeholder?: string;
   error?: string;
   minDate?: Date;
   rules?: object;
+  /** Show the hour/minute/AM-PM row below the calendar. Defaults to true. */
+  showTime?: boolean;
 };
 
-const DatePickerField = ({
+const HOURS_12 = Array.from({ length: 12 }, (_, i) => i + 1); // 1‑12
+const MINUTE_OPTIONS = ["00", "15", "30", "45"];
+
+/** Combine a calendar date with a 12h clock time, returns a new Date. */
+const applyTime = (
+  date: Date,
+  hour12: number,
+  minute: number,
+  period: "AM" | "PM",
+) => {
+  const hour24 =
+    period === "PM" ? (hour12 % 12) + 12 : hour12 % 12;
+  const merged = new Date(date);
+  merged.setHours(hour24, minute, 0, 0);
+  return merged;
+};
+
+const DateTimePickerField = ({
   name,
   control,
   placeholder,
   error,
   minDate,
   rules,
-}: DatePickerFieldProps) => (
+  showTime = true,
+}: DateTimePickerFieldProps) => (
   <Controller
     name={name}
     control={control}
     rules={rules}
     render={({ field }) => {
       const parsed = field.value ? new Date(field.value as string) : undefined;
+
+      // Current time components, derived from the stored value (default noon)
+      const hour24 = parsed ? parsed.getHours() : 12;
+      const currentHour12 = ((hour24 + 11) % 12) + 1;
+      const currentMinute = parsed ? parsed.getMinutes() : 0;
+      const currentPeriod: "AM" | "PM" = hour24 >= 12 ? "PM" : "AM";
+
+      const handleDateSelect = (date: Date | undefined) => {
+        if (!date) {
+          field.onChange("");
+          return;
+        }
+        // Preserve whatever time was already set (or default to noon)
+        const merged = showTime
+          ? applyTime(date, currentHour12, currentMinute, currentPeriod)
+          : date;
+        field.onChange(merged.toISOString());
+      };
+
+      const handleTimeChange = (
+        newHour12: number,
+        newMinute: number,
+        newPeriod: "AM" | "PM",
+      ) => {
+        if (!parsed) return;
+        const merged = applyTime(parsed, newHour12, newMinute, newPeriod);
+        field.onChange(merged.toISOString());
+      };
 
       return (
         <Popover>
@@ -618,7 +667,7 @@ const DatePickerField = ({
             >
               <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF] shrink-0" />
               {parsed
-                ? format(parsed, "MMM d, yyyy")
+                ? format(parsed, showTime ? "MMM d, yyyy · h:mm a" : "MMM d, yyyy")
                 : (placeholder ?? "Pick a date")}
             </Button>
           </PopoverTrigger>
@@ -626,7 +675,7 @@ const DatePickerField = ({
             <Calendar
               mode="single"
               selected={parsed}
-              onSelect={(date) => field.onChange(date?.toISOString() ?? "")}
+              onSelect={handleDateSelect}
               disabled={(date) => {
                 if (minDate) {
                   return (
@@ -636,6 +685,67 @@ const DatePickerField = ({
                 return false;
               }}
             />
+
+            {showTime && (
+              <div className="flex items-center gap-2 p-3 border-t border-[#E5E7EB]">
+                <Clock className="w-4 h-4 text-[#9CA3AF] shrink-0" />
+                <select
+                  aria-label="Hour"
+                  disabled={!parsed}
+                  value={currentHour12}
+                  onChange={(e) =>
+                    handleTimeChange(
+                      Number(e.target.value),
+                      currentMinute,
+                      currentPeriod,
+                    )
+                  }
+                  className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
+                >
+                  {HOURS_12.map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-sm text-[#9CA3AF]">:</span>
+                <select
+                  aria-label="Minute"
+                  disabled={!parsed}
+                  value={currentMinute.toString().padStart(2, "0")}
+                  onChange={(e) =>
+                    handleTimeChange(
+                      currentHour12,
+                      Number(e.target.value),
+                      currentPeriod,
+                    )
+                  }
+                  className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
+                >
+                  {MINUTE_OPTIONS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  aria-label="AM or PM"
+                  disabled={!parsed}
+                  value={currentPeriod}
+                  onChange={(e) =>
+                    handleTimeChange(
+                      currentHour12,
+                      currentMinute,
+                      e.target.value as "AM" | "PM",
+                    )
+                  }
+                  className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
+                >
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+            )}
           </PopoverContent>
         </Popover>
       );

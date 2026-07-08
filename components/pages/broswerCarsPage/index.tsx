@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
-import { SearchIcon } from "lucide-react";
+import { Link2, SearchIcon, X } from "lucide-react";
 import {
   Field,
   FieldSeparator,
@@ -59,6 +59,7 @@ import { CarCardSkeletonGrid } from "@/components/loading/carCardSkeleton";
 import NotificationConnectHostForm from "./notificationConnectHostForm";
 import { useGetPublicBrowseVehiclesQuery } from "@/app/store/services/publicApi";
 import { PublicBrowseVehicleRow } from "@/types/public-vehicles.type";
+import { motion, AnimatePresence } from 'motion/react'
 
 const CARS_PER_PAGE = 5;
 
@@ -199,96 +200,46 @@ export default function BrowseCarsComponentPage() {
 }
 
 const NotificationBar = () => {
+
+  const [ isNotificationOpen, setIsNotificationOpen ] = useState<boolean>(true)
+
   return (
-    <div className="bg-[#EBF0FB] py-2.5 px-2.5 md:px-8">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center">
-        <div className="flex flex-wrap items-center gap-2 md:text-nowrap">
-          <LinkIcon />
-          <span className="font-semibold text-base text-[#0B0B0B]">
-            Want to see your favourite host
-          </span>
-          <span className="font-normal text-base text-[#333]">
-            Connect your phone number and see their fleet first.
-          </span>
-        </div>
-        <div className="flex justify-start items-center gap-3">
-          <NotificationConnectHostForm />
-          <div>
-            <CloseIcon />
+    <AnimatePresence initial={false}>
+      {isNotificationOpen && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="overflow-hidden bg-[#EBF0FB]"
+        >
+          <div className="py-2.5 px-2.5 md:px-8 flex flex-col md:flex-row md:justify-between md:items-center">
+            <div className="flex flex-wrap items-center gap-2 md:text-nowrap">
+              <Link2 className="text-blue-700 size-6 shrink-0" />
+              <span className="font-semibold text-base text-[#0B0B0B]">
+                Want to see your favourite host
+              </span>
+              <span className="font-normal text-base text-[#333]">
+                Connect your phone number and see their fleet first.
+              </span>
+            </div>
+            <div className="flex justify-start items-center gap-3 mt-2 md:mt-0">
+              <NotificationConnectHostForm />
+              <button
+                type="button"
+                aria-label="Dismiss notification"
+                onClick={() => setIsNotificationOpen(false)}
+                className="p-1 -m-1"
+              >
+                <X className="size-4 text-neutral-950 hover:text-gray-500 transition-colors duration-300 cursor-pointer" />
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
-};
-
-const LinkIcon = () => {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 18 18"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <g clipPath="url(#clip0_157_8848)">
-        <path
-          d="M6.74922 12.7482H5.24944C4.25503 12.7482 3.30134 12.3531 2.59819 11.65C1.89503 10.9468 1.5 9.99312 1.5 8.99871C1.5 8.0043 1.89503 7.05061 2.59819 6.34745C3.30134 5.6443 4.25503 5.24927 5.24944 5.24927H6.74922"
-          stroke="#1A56DB"
-          strokeWidth="1.49978"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M11.248 5.24927H12.7478C13.7422 5.24927 14.6959 5.6443 15.3991 6.34745C16.1022 7.05061 16.4973 8.0043 16.4973 8.99871C16.4973 9.99312 16.1022 10.9468 15.3991 11.65C14.6959 12.3531 13.7422 12.7482 12.7478 12.7482H11.248"
-          stroke="#1A56DB"
-          strokeWidth="1.49978"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M5.99902 8.99866H11.9981"
-          stroke="#1A56DB"
-          strokeWidth="1.49978"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </g>
-      <defs>
-        <clipPath id="clip0_157_8848">
-          <rect width="17.9973" height="17.9973" fill="white" />
-        </clipPath>
-      </defs>
-    </svg>
-  );
-};
-
-const CloseIcon = () => {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M11.9963 3.99866L3.99902 11.9959"
-        stroke="#0B0B0B"
-        strokeWidth="1.33288"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3.99902 3.99866L11.9963 11.9959"
-        stroke="#0B0B0B"
-        strokeWidth="1.33288"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-};
+}
 
 const SideBar = ({
   filterParams,

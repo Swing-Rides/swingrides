@@ -3,6 +3,7 @@
 import CarPageComponent from "@/components/pages/broswerCarsPage/carPageComponent";
 import { useGetPublicVehicleByIdQuery } from "@/app/store/services/publicApi";
 import { use } from "react";
+import VehicleNotFound from "@/components/pages/broswerCarsPage/vehicleNotFound";
 
 export default function CarPage({
   params,
@@ -20,7 +21,9 @@ export default function CarPage({
   }
 
   if (isError || !data) {
-    return <div>This page can not be found</div>;
+    return (
+      <VehicleNotFound/>
+    );
   }
 
   return (
