@@ -508,12 +508,7 @@ const FileInput = ({ field, register, error }: InputProps) => {
 
     inputRef.current.files = dt.files;
 
-    rest.onChange({
-      target: {
-        files: dt.files,
-        name: field.name,
-      },
-    });
+    rest.onChange({ target: inputRef.current } as unknown as Event);
   };
 
   return (
@@ -586,12 +581,11 @@ const FileInput = ({ field, register, error }: InputProps) => {
               inputRef.current.files = dt.files;
             }
 
-            rest.onChange({
-              target: {
-                files: dt.files,
-                name: field.name,
-              },
-            });
+            if (inputRef.current) {
+              rest.onChange({ target: inputRef.current } as unknown as Event);
+            } else {
+              rest.onChange(e);
+            }
           }}
         />
       </label>

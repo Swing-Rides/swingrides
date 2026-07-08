@@ -89,5 +89,14 @@ export interface RenterProfileResponse {
       hostSlug: string;
       contactNumber: string;
     };
+    checkIn?: {
+      driverLicensePhotoUrl?: string;
+      selfiePhotoUrl?: string;
+      vehicleConditionPhotoUrls: string[];
+      mileage?: number;
+      fuelLevel?: string;
+      notes?: string;
+      checkedInAt?: string;
+    };
   }>;
 }

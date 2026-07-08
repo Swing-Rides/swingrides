@@ -34,6 +34,15 @@ export type Rentals = {
     hostSlug: string;
     contactNumber: string;
   };
+  checkIn?: {
+    driverLicensePhotoUrl?: string;
+    selfiePhotoUrl?: string;
+    vehicleConditionPhotoUrls: string[];
+    mileage?: number;
+    fuelLevel?: string;
+    notes?: string;
+    checkedInAt?: string;
+  };
 };
 
 export type SingleRent = {
@@ -58,6 +67,7 @@ export type SingleRent = {
     seats?: number;
     averageRating?: number;
     reviews?: [];
+    checkIn?: Rentals["checkIn"];
   };
 };
 

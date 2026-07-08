@@ -35,13 +35,9 @@ export default function RightContent({
     setRental(updatedRental);
   }, []);
 
-  const handleCheckIn = useCallback(
-    (updatedRentals: Rentals[]) => {
-      const updated = updatedRentals.find((r) => r.rentId === rental?.rentId);
-      if (updated) setRental(updated);
-    },
-    [rental?.rentId],
-  );
+  const handleCheckIn = useCallback((updatedRental: Rentals) => {
+    setRental(updatedRental);
+  }, []);
 
   return (
     <>
@@ -62,8 +58,6 @@ export default function RightContent({
       <Suspense>
         <StartVehicleCheckIn
           rentals={rentalsAsArray}
-          carName={"Toyota"}
-          plateNumber={"ABC-123-NY"}
           onComplete={handleCheckIn}
         />
       </Suspense>

@@ -26,6 +26,7 @@ export default function SingleTripPage() {
     ...rental,
     pickUpDate: rental.pickupDate,
   };
+  const checkIn = rentalDetails.checkIn;
 
   return (
     <div>
@@ -52,9 +53,11 @@ export default function SingleTripPage() {
         averageRating={rentalDetails.averageRating}
         reviews={rentalDetails.reviews}
         rentals={rentalDetails}
-        verificationDriverLicenseImageSrc={""}
-        verificationSelfieImageSrc={`/images/swingrides-default-img.webp`}
-        vehicleConditionImages={[]}
+        verificationDriverLicenseImageSrc={checkIn?.driverLicensePhotoUrl}
+        verificationSelfieImageSrc={checkIn?.selfiePhotoUrl}
+        vehicleConditionImages={checkIn?.vehicleConditionPhotoUrls ?? []}
+        currentMileage={checkIn?.mileage}
+        fuelLevelAtPickup={checkIn?.fuelLevel}
       />
     </div>
   );
