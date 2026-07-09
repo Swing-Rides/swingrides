@@ -13,6 +13,10 @@ import {
         AlertTriangle,
         Loader2,
         LogIn,
+        MapPin,
+        Building2,
+        Map as MapIcon,
+        Hash,
 } from 'lucide-react'
 import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import { Input } from '@/components/ui/input'
@@ -30,6 +34,10 @@ export type CheckoutContact = {
         lastName: string
         email: string
         phoneNumber: string
+        streetAddress: string
+        city: string
+        state: string
+        postalCode: string
 }
 
 export type CheckoutItem = {
@@ -69,6 +77,8 @@ type CheckoutFormProps = {
         subTotalFee: string
         taxPercentageRate: string
         taxFee: string
+        /** Insurance fee shown in the order summary. Defaults to "$0.00" when not provided. */
+        insuranceFee?: string
         /** Checkout session length. Defaults to 20 minutes. */
         durationSeconds?: number
         /** Called once, when the countdown reaches zero. */
@@ -117,8 +127,9 @@ function CheckoutFormInner({
         totalPrice,
         subTotalFee,
         taxPercentageRate,
-        taxFee
-}: CheckoutFormProps ) {
+        taxFee,
+        insuranceFee = '$0.00',
+}: CheckoutFormProps) {
         const isLoggedIn = !!user
 
         // const [guestDetails, setGuestDetails] = useState<CheckoutContact | null>(null)
@@ -129,7 +140,16 @@ function CheckoutFormInner({
         const stripe = useStripe()
         const elements = useElements()
 
-        const emptyContact: CheckoutContact = { firstName: '', lastName: '', email: '', phoneNumber: '' }
+        const emptyContact: CheckoutContact = {
+                firstName: '',
+                lastName: '',
+                email: '',
+                phoneNumber: '',
+                streetAddress: '',
+                city: '',
+                state: '',
+                postalCode: '',
+        }
 
         const {
                 register,
@@ -148,14 +168,6 @@ function CheckoutFormInner({
         }, [user, reset])
 
         const hasContactInfo = isLoggedIn
-
-        // const handleGuestDetails = (guest: CheckoutContact) => {
-        //         setGuestDetails(guest)
-        //         setValue('firstName', guest.firstName, { shouldValidate: true })
-        //         setValue('lastName', guest.lastName, { shouldValidate: true })
-        //         setValue('email', guest.email, { shouldValidate: true })
-        //         setValue('phoneNumber', guest.phoneNumber, { shouldValidate: true })
-        // }
 
         const handleCancel = () => {
                 reset(user ?? emptyContact)
@@ -178,6 +190,12 @@ function CheckoutFormInner({
                                                         name: `${values.firstName} ${values.lastName}`.trim(),
                                                         email: values.email,
                                                         phone: values.phoneNumber,
+                                                        address: {
+                                                                line1: values.streetAddress,
+                                                                city: values.city,
+                                                                state: values.state,
+                                                                postal_code: values.postalCode,
+                                                        },
                                                 },
                                         },
                                 },
@@ -225,7 +243,7 @@ function CheckoutFormInner({
                                                                 Contact Information
                                                         </span>
                                                         {isLoggedIn ? (
-                                                                <span className='text-emerald-700 bg-emerald-50 text-xs font-medium font-text px-2 py-1 rounded-full'>
+                                                                <span className='text-emerald-500 bg-emerald-50 text-xs font-medium font-text px-2 py-1 rounded-full'>
                                                                         Signed in as {user!.email}
                                                                 </span>
                                                         ) : (
@@ -283,6 +301,44 @@ function CheckoutFormInner({
                                                                                         icon={<Phone className='w-4 h-4' />}
                                                                                         hasError={!!errors.phoneNumber}
                                                                                         {...register('phoneNumber', { required: 'Phone number is required' })}
+                                                                                />
+                                                                        </FormRow>
+                                                                </div>
+
+                                                                <FormRow label='Street Address' htmlFor='streetAddress' error={errors.streetAddress?.message}>
+                                                                        <IconInput
+                                                                                id='streetAddress'
+                                                                                icon={<MapPin className='w-4 h-4' />}
+                                                                                hasError={!!errors.streetAddress}
+                                                                                placeholder='123 Main St'
+                                                                                {...register('streetAddress', { required: 'Street address is required' })}
+                                                                        />
+                                                                </FormRow>
+
+                                                                <div className='grid grid-cols-3 gap-3'>
+                                                                        <FormRow label='City' htmlFor='city' error={errors.city?.message}>
+                                                                                <IconInput
+                                                                                        id='city'
+                                                                                        icon={<Building2 className='w-4 h-4' />}
+                                                                                        hasError={!!errors.city}
+                                                                                        {...register('city', { required: 'City is required' })}
+                                                                                />
+                                                                        </FormRow>
+                                                                        <FormRow label='State' htmlFor='state' error={errors.state?.message}>
+                                                                                <IconInput
+                                                                                        id='state'
+                                                                                        icon={<MapIcon className='w-4 h-4' />}
+                                                                                        hasError={!!errors.state}
+                                                                                        placeholder='e.g. CA'
+                                                                                        {...register('state', { required: 'State is required' })}
+                                                                                />
+                                                                        </FormRow>
+                                                                        <FormRow label='Postal Code' htmlFor='postalCode' error={errors.postalCode?.message}>
+                                                                                <IconInput
+                                                                                        id='postalCode'
+                                                                                        icon={<Hash className='w-4 h-4' />}
+                                                                                        hasError={!!errors.postalCode}
+                                                                                        {...register('postalCode', { required: 'Postal code is required' })}
                                                                                 />
                                                                         </FormRow>
                                                                 </div>
@@ -376,7 +432,7 @@ function CheckoutFormInner({
                                                                 <span className='text-[#1F2937] text-sm font-normal font-text truncate'>
                                                                         {vehicleType} - {vehicleGearType}
                                                                 </span>
-                                                                
+
                                                         </div>
                                                         <span className='text-[#1F2937] text-sm font-medium font-text shrink-0'>
                                                                 {duration} for {totalPrice}
@@ -392,6 +448,7 @@ function CheckoutFormInner({
                                                         label={`Tax (${taxPercentageRate})`}
                                                         value={taxFee}
                                                 />
+                                                <SummaryRow label='Insurance Fee' value={insuranceFee} />
                                         </div>
 
                                         <Separator />
