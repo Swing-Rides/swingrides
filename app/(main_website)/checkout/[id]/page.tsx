@@ -259,24 +259,24 @@ export default function CheckoutPage() {
   }, [draft, pricingSummary, vehicle]);
 
   if (!vehicleId) {
-    return <div>Invalid checkout session</div>;
+    return <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">Invalid checkout session</div>;
   }
 
   if (!isDraftLoaded || isVehicleLoading) {
-    return <div>Loading checkout details...</div>;
+    return <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">Loading checkout details...</div>;
   }
 
   if (!draft || !summary) {
-    return <div>Checkout details not found. Please start again.</div>;
+    return <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">Checkout details not found. Please start again.</div>;
   }
 
   if (redirectStatus === "succeeded" && finalizingPaymentIntentId) {
-    return <div>Finalizing booking...</div>;
+    return <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">Finalizing booking...</div>;
   }
 
   if (!clientSecret) {
     return (
-      <div>
+      <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
         {submitError || (isCreatingPaymentIntent ? "Preparing secure payment..." : "Unable to load payment details.")}
       </div>
     );
