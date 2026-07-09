@@ -230,6 +230,10 @@ export default function CheckoutPage() {
       lastName: rest.join(" "),
       email: renter.email,
       phoneNumber: renter.phoneNumber,
+      streetAddress: '2266 Nostrand Ave',
+      city: 'Brooklyn',
+      state: 'New York',
+      postalCode: '11210',
     };
   }, [renter]);
 
@@ -284,6 +288,7 @@ export default function CheckoutPage() {
         id={vehicleId}
         {...summary}
         user={user}
+        insuranceFee={'$120'}
         clientSecret={clientSecret}
         returnUrl={`${SITE_URL}/checkout/${vehicleId}`}
         submitError={submitError}
