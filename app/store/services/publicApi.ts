@@ -117,6 +117,12 @@ export const publicApi = createApi({
         pickupDate: string;
         returnDate: string;
         pickupLocation: string;
+        streetAddress: string;
+        city: string;
+        state: string;
+        postalCode: string;
+        pickupTime: string;
+        returnTime: string;
         insuranceProvider?: string;
         policyNumber?: string;
         insuranceExpiry?: string;

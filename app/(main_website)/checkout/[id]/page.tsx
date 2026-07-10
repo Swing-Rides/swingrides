@@ -13,6 +13,7 @@ import {
 import { useGetProfileQuery } from "@/app/store/services/renterApi";
 import { SITE_URL, DEFAULT_IMAGE_SRC } from "@/constants/constant";
 import { stripePromise } from "@/lib/stripe";
+import { CheckoutContact, CheckoutFormValues } from "@/components/forms/checkoutForm";
 
 type PendingCheckoutDraft = {
   vehicleId: string;
@@ -28,6 +29,12 @@ type PendingCheckoutDraft = {
   taxRate?: number;
   totalAmount?: number;
   totalDays?: number;
+  pickupTime: string;
+  returnTime: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
 };
 
 const getPendingCheckoutStorageKey = (vehicleId: string) =>
@@ -113,67 +120,99 @@ export default function CheckoutPage() {
         setDraft(JSON.parse(storedDraft) as PendingCheckoutDraft);
       } catch (error) {
         console.error("Failed to parse pending checkout draft:", error);
-        setSubmitError("Unable to load your checkout details. Please start again.");
+        setSubmitError(
+          "Unable to load your checkout details. Please start again.",
+        );
       }
     }
 
     setIsDraftLoaded(true);
   }, [vehicleId]);
 
-  const finalizeBooking = useCallback(async (paymentIntentId?: string | null) => {
-    if (!draft) {
-      setSubmitError("Checkout details are missing. Please start again.");
-      return;
-    }
-
-    if (!paymentIntentId) {
-      setSubmitError("Payment confirmation is missing. Please try again.");
-      return;
-    }
-
-    if (finalizingPaymentIntentId === paymentIntentId) {
-      return;
-    }
-
-    try {
-      setSubmitError(null);
-      setFinalizingPaymentIntentId(paymentIntentId);
-      const result = await createBooking({
-        vehicleId: draft.vehicleId,
-        paymentIntentId,
-        pickupDate: draft.pickupDate,
-        returnDate: draft.returnDate,
-        pickupLocation: draft.pickupLocation,
-        insuranceProvider: draft.insuranceProvider,
-        policyNumber: draft.policyNumber,
-        insuranceExpiry: draft.insuranceExpiry,
-        hostProvidingCoverage: draft.hostProvidingCoverage,
-      }).unwrap();
-
-      if (!result.success || !result.data?.id) {
-        throw new Error("Booking was not created after payment.");
+  const finalizeBooking = useCallback(
+    async (checkoutValues?: Partial<CheckoutFormValues>) => {
+      if (!draft) {
+        setSubmitError("Checkout details are missing. Please start again.");
+        return;
       }
 
-      window.sessionStorage.removeItem(getPendingCheckoutStorageKey(vehicleId));
-      router.push(`/trip/${result.data.id}`);
-    } catch (error) {
-      setFinalizingPaymentIntentId(null);
-      setSubmitError(
-        getErrorMessage(error, "Payment succeeded, but booking creation failed."),
-      );
-    }
-  }, [createBooking, draft, finalizingPaymentIntentId, router, vehicleId]);
+      const paymentIntentId = checkoutValues?.paymentIntentId;
+      if (!paymentIntentId) {
+        setSubmitError("Payment confirmation is missing. Please try again.");
+        return;
+      }
+
+      if (finalizingPaymentIntentId === paymentIntentId) {
+        return;
+      }
+
+      try {
+        setSubmitError(null);
+        setFinalizingPaymentIntentId(paymentIntentId);
+        const result = await createBooking({
+          vehicleId: draft.vehicleId,
+          paymentIntentId,
+          pickupDate: draft.pickupDate,
+          returnDate: draft.returnDate,
+          pickupLocation: draft.pickupLocation,
+          streetAddress: checkoutValues?.streetAddress || draft.streetAddress || "",
+          city: checkoutValues?.city || draft.city || "",
+          state: checkoutValues?.state || draft.state || "",
+          postalCode: checkoutValues?.postalCode || draft.postalCode || "",
+          pickupTime: draft.pickupTime,
+          returnTime: draft.returnTime,
+          insuranceProvider: draft.insuranceProvider,
+          policyNumber: draft.policyNumber,
+          insuranceExpiry: draft.insuranceExpiry,
+          hostProvidingCoverage: draft.hostProvidingCoverage,
+        }).unwrap();
+
+        if (!result.success || !result.data?.id) {
+          throw new Error("Booking was not created after payment.");
+        }
+
+        window.sessionStorage.removeItem(
+          getPendingCheckoutStorageKey(vehicleId),
+        );
+        router.push(`/trip/${result.data.id}`);
+      } catch (error) {
+        setFinalizingPaymentIntentId(null);
+        setSubmitError(
+          getErrorMessage(
+            error,
+            "Payment succeeded, but booking creation failed.",
+          ),
+        );
+      }
+    },
+    [createBooking, draft, finalizingPaymentIntentId, router, vehicleId],
+  );
 
   useEffect(() => {
-    if (!draft || redirectStatus !== "succeeded" || !redirectedPaymentIntentId) {
+    if (
+      !draft ||
+      redirectStatus !== "succeeded" ||
+      !redirectedPaymentIntentId
+    ) {
       return;
     }
 
-    void finalizeBooking(redirectedPaymentIntentId);
+    void finalizeBooking({
+      paymentIntentId: redirectedPaymentIntentId,
+      streetAddress: draft.streetAddress,
+      city: draft.city,
+      state: draft.state,
+      postalCode: draft.postalCode,
+    });
   }, [draft, finalizeBooking, redirectStatus, redirectedPaymentIntentId]);
 
   useEffect(() => {
-    if (!draft || !vehicleId || clientSecret || redirectStatus === "succeeded") {
+    if (
+      !draft ||
+      !vehicleId ||
+      clientSecret ||
+      redirectStatus === "succeeded"
+    ) {
       return;
     }
 
@@ -230,10 +269,10 @@ export default function CheckoutPage() {
       lastName: rest.join(" "),
       email: renter.email,
       phoneNumber: renter.phoneNumber,
-      streetAddress: '2266 Nostrand Ave',
-      city: 'Brooklyn',
-      state: 'New York',
-      postalCode: '11210',
+      streetAddress: "2266 Nostrand Ave",
+      city: "Brooklyn",
+      state: "New York",
+      postalCode: "11210",
     };
   }, [renter]);
 
@@ -259,25 +298,44 @@ export default function CheckoutPage() {
   }, [draft, pricingSummary, vehicle]);
 
   if (!vehicleId) {
-    return <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">Invalid checkout session</div>;
+    return (
+      <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
+        Invalid checkout session
+      </div>
+    );
   }
 
   if (!isDraftLoaded || isVehicleLoading) {
-    return <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">Loading checkout details...</div>;
+    return (
+      <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
+        Loading checkout details...
+      </div>
+    );
   }
 
   if (!draft || !summary) {
-    return <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">Checkout details not found. Please start again.</div>;
+    return (
+      <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
+        Checkout details not found. Please start again.
+      </div>
+    );
   }
 
   if (redirectStatus === "succeeded" && finalizingPaymentIntentId) {
-    return <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">Finalizing booking...</div>;
+    return (
+      <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
+        Finalizing booking...
+      </div>
+    );
   }
 
   if (!clientSecret) {
     return (
       <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
-        {submitError || (isCreatingPaymentIntent ? "Preparing secure payment..." : "Unable to load payment details.")}
+        {submitError ||
+          (isCreatingPaymentIntent
+            ? "Preparing secure payment..."
+            : "Unable to load payment details.")}
       </div>
     );
   }
@@ -288,16 +346,26 @@ export default function CheckoutPage() {
         id={vehicleId}
         {...summary}
         user={user}
-        insuranceFee={'$120'}
+        insuranceFee={"$120"}
         clientSecret={clientSecret}
         returnUrl={`${SITE_URL}/checkout/${vehicleId}`}
         submitError={submitError}
         onLogin={() => router.push(`/sign-in?next=/checkout/${vehicleId}`)}
+        onBeforeConfirm={async (values: CheckoutContact) => {
+          const nextDraft = { ...draft, ...values };
+          setDraft(nextDraft);
+          window.sessionStorage.setItem(
+            getPendingCheckoutStorageKey(vehicleId),
+            JSON.stringify(nextDraft),
+          );
+        }}
         onSubmit={async (values) => {
-          await finalizeBooking(values.paymentIntentId);
+          await finalizeBooking(values);
         }}
         onCancel={() => {
-          window.sessionStorage.removeItem(getPendingCheckoutStorageKey(vehicleId));
+          window.sessionStorage.removeItem(
+            getPendingCheckoutStorageKey(vehicleId),
+          );
           router.back();
         }}
       />
