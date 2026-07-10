@@ -2,18 +2,18 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { differenceInCalendarDays } from "date-fns";
 import PageWrapper from "../../dashboard/pageWrapper";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import NewBookingForm, {
   NewBookingFormValues,
 } from "../../forms/newBookingForm";
 import { useListVehcleQuery } from "@/app/store/services/hostApi";
-import {
-  useCreateBookingMutation,
-  useListBookingsQuery,
-} from "@/app/store/services/bookingApi";
+import { useListBookingsQuery } from "@/app/store/services/bookingApi";
 
 const FORM_ID = "new-booking-form";
+const getPendingHostCheckoutStorageKey = (vehicleId: string) =>
+  `swingrides:host-booking-checkout:${vehicleId}`;
 
 const dateRangesOverlap = (
   startA: Date,
@@ -35,6 +35,46 @@ const getNextReferenceCode = (references: string[]) => {
   return `SR-${currentYear}-${String(maxSequence + 1).padStart(4, "0")}`;
 };
 
+const calculateBookingAmounts = (
+  vehicle: {
+    dailyPrice: number;
+    weeklyPrice: number;
+    monthlyPrice: number;
+  },
+  pickupDate: string,
+  returnDate: string,
+) => {
+  const totalDays = Math.max(
+    differenceInCalendarDays(new Date(returnDate), new Date(pickupDate)),
+    0,
+  );
+
+  let subtotal = 0;
+  if (totalDays >= 30) {
+    const months = Math.floor(totalDays / 30);
+    const remainingDays = totalDays % 30;
+    subtotal = months * vehicle.monthlyPrice + remainingDays * vehicle.dailyPrice;
+  } else if (totalDays >= 7) {
+    const weeks = Math.floor(totalDays / 7);
+    const remainingDays = totalDays % 7;
+    subtotal = weeks * vehicle.weeklyPrice + remainingDays * vehicle.dailyPrice;
+  } else {
+    subtotal = totalDays * vehicle.dailyPrice;
+  }
+
+  const taxRate = 0.08;
+  const tax = subtotal * taxRate;
+  const totalAmount = subtotal + tax;
+
+  return {
+    totalDays,
+    subtotal,
+    taxRate,
+    tax,
+    totalAmount,
+  };
+};
+
 export default function NewBookingPageComponent() {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -48,8 +88,6 @@ export default function NewBookingPageComponent() {
     isLoading: isBookingsLoading,
     isError: isBookingsError,
   } = useListBookingsQuery();
-  const [createBooking, { isLoading: isCreatingBooking }] =
-    useCreateBookingMutation();
 
   const availableVehicles = useMemo(() => {
     return (vehiclesResponse?.data ?? []).filter(
@@ -119,8 +157,10 @@ export default function NewBookingPageComponent() {
       const renterName = `${values.firstName} ${values.lastName}`.trim();
       const location = [
         values.pickupLocation,
+        values.streetAddress,
         values.pickupCity,
         values.pickupState,
+        values.postalCode,
       ]
         .filter(Boolean)
         .join(", ");
@@ -139,7 +179,31 @@ export default function NewBookingPageComponent() {
           return;
         }
 
-        await createBooking({
+        const vehicle = availableVehicles.find(
+          (item) => item._id === values.vehicleId,
+        );
+
+        if (!vehicle) {
+          setSubmitError("The selected vehicle could not be found.");
+          return;
+        }
+
+        const pricing = calculateBookingAmounts(
+          {
+            dailyPrice: vehicle.dailyPrice,
+            weeklyPrice: vehicle.weeklyPrice,
+            monthlyPrice: vehicle.monthlyPrice,
+          },
+          values.pickupDate,
+          values.returnDate,
+        );
+
+        if (pricing.totalDays <= 0) {
+          setSubmitError("Return date must be after pickup date.");
+          return;
+        }
+
+        const pendingCheckout = {
           vehicleId: values.vehicleId,
           renterName,
           renterEmail: values.email,
@@ -147,9 +211,33 @@ export default function NewBookingPageComponent() {
           pickupDate: values.pickupDate,
           returnDate: values.returnDate,
           location,
-        }).unwrap();
+          pickupLocation: values.pickupLocation,
+          streetAddress: values.streetAddress,
+          city: values.pickupCity,
+          state: values.pickupState,
+          postalCode: values.postalCode,
+          pickupTime: values.pickupTime,
+          returnTime: values.returnTime,
+          subtotal: pricing.subtotal,
+          tax: pricing.tax,
+          taxRate: pricing.taxRate,
+          totalAmount: pricing.totalAmount,
+          totalDays: pricing.totalDays,
+          vehicleName: vehicle.name,
+          vehicleImageUrl: vehicle.images?.[0] || "/images/placeholder-car.png",
+          vehicleDailyPrice: vehicle.dailyPrice,
+          vehicleWeeklyPrice: vehicle.weeklyPrice,
+          vehicleMonthlyPrice: vehicle.monthlyPrice,
+        };
 
-        router.push(`${HOST_DASHBOARD_PATH}bookings`);
+        window.sessionStorage.setItem(
+          getPendingHostCheckoutStorageKey(values.vehicleId),
+          JSON.stringify(pendingCheckout),
+        );
+
+        router.push(
+          `${HOST_DASHBOARD_PATH}bookings/new-booking/checkout/${values.vehicleId}`,
+        );
       } catch (error) {
         const fallbackMessage = "Unable to create booking. Please try again.";
         const errorMessage =
@@ -166,7 +254,7 @@ export default function NewBookingPageComponent() {
         setSubmitError(errorMessage);
       }
     },
-    [checkAvailability, createBooking, router],
+    [availableVehicles, checkAvailability, router],
   );
 
   const isPageLoading = isVehiclesLoading || isBookingsLoading;
@@ -180,10 +268,9 @@ export default function NewBookingPageComponent() {
         <button
           type="submit"
           form={FORM_ID}
-          disabled={isCreatingBooking}
           className="px-6 py-2 bg-blue-700 rounded-xs text-center text-white text-sm font-semibold font-text capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
         >
-          Create Booking
+          Continue to Checkout
         </button>
       }
     >

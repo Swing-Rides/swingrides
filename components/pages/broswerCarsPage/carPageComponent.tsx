@@ -154,6 +154,13 @@ const RightContent = memo(
         return;
       }
 
+      const pickupTime = new Date(values.pickupDate)
+        .toISOString()
+        .split("T")[1];
+      const returnTime = new Date(values.returnDate)
+        .toISOString()
+        .split("T")[1];
+
       try {
         const pendingCheckout = {
           vehicleId,
@@ -169,6 +176,8 @@ const RightContent = memo(
           taxRate: values.taxRate ?? 0.08,
           totalAmount: values.totalAmount ?? 0,
           totalDays: values.totalDays ?? 0,
+          pickupTime,
+          returnTime,
         };
 
         window.sessionStorage.setItem(

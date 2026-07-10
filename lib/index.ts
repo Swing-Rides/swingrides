@@ -5,7 +5,8 @@ import axios, {
 } from "axios";
 
 const API_BASE_URL = "/backend";
-// const API_BASE_URL = "http://localhost:3000";
+// const isProducntion = process.env.NODE_ENV === "production";
+// const USEAPI = isProducntion ? "http://147.93.190.15:3000" : API_BASE_URL;
 
 class ApiClient {
   private instance: AxiosInstance;

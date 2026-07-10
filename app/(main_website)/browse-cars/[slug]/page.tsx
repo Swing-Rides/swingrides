@@ -21,9 +21,7 @@ export default function CarPage({
   }
 
   if (isError || !data) {
-    return (
-      <VehicleNotFound/>
-    );
+    return <VehicleNotFound />;
   }
 
   return (

@@ -64,6 +64,7 @@ type BookingStatus =
 type BookingResponse = {
   id: string;
   referenceCode: string;
+  paymentIntentId?: string;
   renterName: string;
   renterEmail: string;
   renterPhone: string;
@@ -73,6 +74,12 @@ type BookingResponse = {
   pickupDate: string;
   returnDate: string;
   location: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  pickupTime?: string;
+  returnTime?: string;
   addOns: Array<{ id: string; name: string; pricePerDay: number }>;
   baseRate: number;
   addOnsTotal: number;
@@ -172,13 +179,45 @@ type ListBookingsResponse = {
 
 type CreateBookingPayload = {
   vehicleId: string;
+  paymentIntentId: string;
   renterName: string;
   renterEmail: string;
   renterPhone: string;
   pickupDate: string;
   returnDate: string;
   location: string;
+  streetAddress: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  pickupTime: string;
+  returnTime: string;
   addOns?: string[];
+};
+
+type CreateBookingPaymentIntentPayload = {
+  vehicleId: string;
+  pickupDate: string;
+  returnDate: string;
+  currency?: string;
+  metadata?: Record<string, string>;
+};
+
+type CreateBookingPaymentIntentResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    id: string;
+    amount: number;
+    currency: string;
+    clientSecret: string;
+    status: string;
+    subtotal: number;
+    tax: number;
+    taxRate: number;
+    totalAmount: number;
+    metadata?: Record<string, string>;
+  };
 };
 
 type StartCheckInPayload = {
@@ -279,6 +318,17 @@ export const bookingApi = createApi({
       invalidatesTags: [{ type: "Bookings", id: "LIST" }],
     }),
 
+    createBookingPaymentIntent: builder.mutation<
+      CreateBookingPaymentIntentResponse,
+      CreateBookingPaymentIntentPayload
+    >({
+      query: (payload) => ({
+        url: "/api/host/bookings/create-payment-intent",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
     cancelBooking: builder.mutation<BookingEnvelope<BookingResponse>, string>({
       query: (bookingId) => ({
         url: `/api/host/bookings/${bookingId}/cancel`,
@@ -354,6 +404,7 @@ export const {
   useGetBookingByReferenceQuery,
   useLazyGetBookingByReferenceQuery,
   useCreateBookingMutation,
+  useCreateBookingPaymentIntentMutation,
   useCancelBookingMutation,
   useConfirmBookingMutation,
   useCompleteBookingMutation,

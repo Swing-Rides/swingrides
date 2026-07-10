@@ -89,6 +89,8 @@ type CheckoutFormProps = {
         clientSecret: string
         /** Where Stripe redirects for payment methods that require it. */
         returnUrl: string
+        /** Gives the parent a chance to persist contact data before Stripe redirects. */
+        onBeforeConfirm?: (values: CheckoutContact) => void | Promise<void>
         /** Fires after Stripe confirms the payment client-side. The parent owns everything after this — creating the order record, redirecting, etc. */
         onSubmit: (values: CheckoutFormValues) => void | Promise<void>
         onCancel?: () => void
@@ -116,6 +118,7 @@ function CheckoutFormInner({
         onLogin,
         // clientSecret,
         returnUrl,
+        onBeforeConfirm,
         onSubmit,
         onCancel,
         submitError,
@@ -181,6 +184,8 @@ function CheckoutFormInner({
                 setIsProcessing(true)
 
                 try {
+                        await onBeforeConfirm?.(values)
+
                         const { error, paymentIntent } = await stripe.confirmPayment({
                                 elements,
                                 confirmParams: {
