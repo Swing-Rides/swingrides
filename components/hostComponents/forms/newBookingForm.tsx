@@ -3,6 +3,7 @@
 import { useMemo, useState, use, Suspense } from "react";
 import Image from "next/image";
 import { useForm, Controller, useWatch } from "react-hook-form";
+import type { FieldPath } from "react-hook-form";
 import { format, differenceInCalendarDays } from "date-fns";
 import {
   Car,
@@ -11,6 +12,7 @@ import {
   Phone,
   MapPin,
   CalendarIcon,
+  Clock,
   Bell,
   Hash,
   AlertTriangle,
@@ -57,8 +59,12 @@ export type NewBookingFormValues = {
   pickupDate: string;
   returnDate: string;
   pickupLocation: string;
+  streetAddress: string;
   pickupCity: string;
   pickupState: string;
+  postalCode: string;
+  pickupTime: string;
+  returnTime: string;
 };
 
 type TaxResult = {
@@ -195,6 +201,21 @@ const formatCurrency = (amount: number) =>
 const formatPercent = (rate: number) =>
   `${(rate * 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}%`;
 
+const formatDateValue = (date: Date) => format(date, "yyyy-MM-dd");
+
+const parseDateValue = (value?: string) => {
+  if (!value) return undefined;
+
+  const normalized = value.trim();
+  if (!normalized) return undefined;
+
+  const dateOnly = normalized.slice(0, 10);
+  const [year, month, day] = dateOnly.split("-").map(Number);
+  if (!year || !month || !day) return undefined;
+
+  return new Date(year, month - 1, day, 12, 0, 0, 0);
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function NewBookingForm(props: NewBookingFormProps) {
@@ -236,8 +257,12 @@ function NewBookingFormInner({
     pickupDate: "",
     returnDate: "",
     pickupLocation: "",
+    streetAddress: "",
     pickupCity: "",
     pickupState: "",
+    postalCode: "",
+    pickupTime: "",
+    returnTime: "",
   };
 
   const {
@@ -245,6 +270,8 @@ function NewBookingFormInner({
     handleSubmit,
     control,
     reset,
+    clearErrors,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<NewBookingFormValues>({
     mode: "onTouched",
@@ -466,7 +493,23 @@ function NewBookingFormInner({
                 />
               </FormRow>
 
-              <div className="grid grid-cols-2 gap-3">
+              <FormRow
+                label="Street Address"
+                htmlFor="streetAddress"
+                error={errors.streetAddress?.message}
+              >
+                <IconInput
+                  id="streetAddress"
+                  icon={<MapPin className="w-4 h-4" />}
+                  placeholder="e.g. 123 Main Street"
+                  hasError={!!errors.streetAddress}
+                  {...register("streetAddress", {
+                    required: "Street address is required",
+                  })}
+                />
+              </FormRow>
+
+              <div className="grid grid-cols-3 gap-3">
                 <FormRow
                   label="City"
                   htmlFor="pickupCity"
@@ -495,6 +538,54 @@ function NewBookingFormInner({
                     {...register("pickupState", {
                       required: "State is required",
                     })}
+                  />
+                </FormRow>
+                <FormRow
+                  label="Postal Code"
+                  htmlFor="postalCode"
+                  error={errors.postalCode?.message}
+                >
+                  <Input
+                    id="postalCode"
+                    type="text"
+                    placeholder="e.g. 73301"
+                    className={inputCn(!!errors.postalCode)}
+                    {...register("postalCode", {
+                      required: "Postal code is required",
+                    })}
+                  />
+                </FormRow>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <FormRow
+                  label="Pickup Time"
+                  htmlFor="pickupTime"
+                  error={errors.pickupTime?.message}
+                >
+                  <TimePickerField
+                    name="pickupTime"
+                    control={control}
+                    clearErrors={clearErrors}
+                    trigger={trigger}
+                    placeholder="Select pickup time"
+                    error={errors.pickupTime?.message}
+                    rules={{ required: "Pickup time is required" }}
+                  />
+                </FormRow>
+                <FormRow
+                  label="Return Time"
+                  htmlFor="returnTime"
+                  error={errors.returnTime?.message}
+                >
+                  <TimePickerField
+                    name="returnTime"
+                    control={control}
+                    clearErrors={clearErrors}
+                    trigger={trigger}
+                    placeholder="Select return time"
+                    error={errors.returnTime?.message}
+                    rules={{ required: "Return time is required" }}
                   />
                 </FormRow>
               </div>
@@ -617,6 +708,12 @@ function NewBookingFormInner({
                       Host notification will be sent to your account.
                     </span>
                   </div>
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="w-4 h-4 text-[#6B7280] shrink-0" />
+            <span className="text-[#6B7280] text-xs font-normal font-text">
+              You will continue to checkout before the booking is created.
+            </span>
+          </div>
                 </div>
               </>
             )}
@@ -643,10 +740,10 @@ function NewBookingFormInner({
           {isSubmitting ? (
             <span className="flex items-center gap-2">
               <Loader2 className="animate-spin w-4 h-4" />
-              Creating...
+              Preparing...
             </span>
           ) : (
-            "Create Booking"
+            "Continue to Checkout"
           )}
         </Button>
       </div>
@@ -854,6 +951,73 @@ type DatePickerFieldProps = {
   rules?: object;
 };
 
+type TimePickerFieldProps = {
+  name: keyof NewBookingFormValues;
+  control: ReturnType<typeof useForm<NewBookingFormValues>>["control"];
+  clearErrors: ReturnType<typeof useForm<NewBookingFormValues>>["clearErrors"];
+  trigger: ReturnType<typeof useForm<NewBookingFormValues>>["trigger"];
+  placeholder?: string;
+  error?: string;
+  rules?: object;
+};
+
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, index) => {
+  const hour = Math.floor(index / 2);
+  const minute = index % 2 === 0 ? 0 : 30;
+  const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  const date = new Date();
+  date.setHours(hour, minute, 0, 0);
+
+  return {
+    value,
+    label: format(date, "h:mm a"),
+  };
+});
+
+const TimePickerField = ({
+  name,
+  control,
+  clearErrors,
+  trigger,
+  placeholder,
+  error,
+  rules,
+}: TimePickerFieldProps) => (
+  <Controller
+    name={name}
+    control={control}
+    rules={rules}
+    render={({ field }) => (
+      <Select
+        onValueChange={async (value) => {
+          field.onChange(value);
+          clearErrors(name as FieldPath<NewBookingFormValues>);
+          await trigger(name as FieldPath<NewBookingFormValues>);
+        }}
+        value={field.value}
+      >
+        <SelectTrigger id={name} className={inputCn(!!error)}>
+          <div className="flex items-center gap-2 truncate">
+            <Clock className="w-4 h-4 text-[#9CA3AF] shrink-0" />
+            <SelectValue placeholder={placeholder ?? "Select time"} />
+          </div>
+        </SelectTrigger>
+        <SelectContent className="max-h-72">
+          {TIME_OPTIONS.map((option) => (
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              className="font-text text-sm"
+            >
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    )}
+  />
+);
+
 const DatePickerField = ({
   name,
   control,
@@ -867,7 +1031,7 @@ const DatePickerField = ({
     control={control}
     rules={rules}
     render={({ field }) => {
-      const parsed = field.value ? new Date(field.value as string) : undefined;
+      const parsed = parseDateValue(field.value as string | undefined);
 
       return (
         <Popover>
@@ -893,7 +1057,7 @@ const DatePickerField = ({
             <Calendar
               mode="single"
               selected={parsed}
-              onSelect={(date) => field.onChange(date?.toISOString() ?? "")}
+              onSelect={(date) => field.onChange(date ? formatDateValue(date) : "")}
               disabled={(date) => {
                 const today = new Date(new Date().setHours(0, 0, 0, 0));
                 if (minDate) {
