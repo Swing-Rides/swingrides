@@ -27,7 +27,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (isHostLoginPage && hostSession) {
-    return NextResponse.redirect(new URL("/host", request.url));
+    return NextResponse.redirect(new URL("/us/host", request.url));
   }
 
   return NextResponse.next();
