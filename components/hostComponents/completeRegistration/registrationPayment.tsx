@@ -10,6 +10,8 @@ import {
         useStripe,
 } from "@stripe/react-stripe-js"
 import { ChevronDown, ShieldCheck, CreditCard, Loader2, Check, Tag, X } from "lucide-react"
+import Link from "next/link"
+import { HOST_DASHBOARD_PATH } from "@/constants/constant"
 
 type BillingCycle = "monthly" | "yearly"
 
@@ -238,7 +240,13 @@ export default function RegistrationPayment({
                                                 <Check className="size-8" />
                                         </div>
                                         <span className="text-xl font-semibold text-gray-900">Payment successful</span>
-                                        <span className="text-sm text-gray-500">Setting up your dashboard...</span>
+                                        <span className="text-sm text-gray-500">Upload your business license to complete your host verification.</span>
+                                        <Link 
+                                                className="py-2.5 px-6 rounded-xs border border-blue-700 text-white bg-blue-700 hover:bg-blue-950 transition-colors duration-300"
+                                                href={`${HOST_DASHBOARD_PATH}host-complete-registration/`}
+                                        >
+                                                Verify Now
+                                        </Link>
                                 </div>
                         </div>
                 )

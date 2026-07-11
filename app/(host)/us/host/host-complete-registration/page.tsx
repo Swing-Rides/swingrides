@@ -1,8 +1,15 @@
+import HostVerifyAccount from "@/components/hostComponents/completeRegistration/hostVerifyAccount";
+
 
 export default function page() {
   return (
     <div>
-      upload document to complete registration
+      <HostVerifyAccount 
+        activePlan='flex'
+        planFee='$99/month'
+        fleetSize='1 vehicle'
+        userIsVerified={false}
+      />
     </div>
   );
 }
