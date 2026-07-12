@@ -7,7 +7,7 @@ import { FormFieldConfig } from "./types";
 import { RegisterOptions } from "react-hook-form";
 import { useHostRegisterMutation } from "@/app/store/services/hostApi";
 import { CreateHostRequest } from "@/app/services/signIn";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 const fields: FormFieldConfig[] = [
@@ -74,6 +74,8 @@ const fields: FormFieldConfig[] = [
 
 export default function HostRegisterForm() {
   const [hostRegister, { isLoading }] = useHostRegisterMutation();
+  const searchParams = useSearchParams();
+  const plan = searchParams.get("plan");
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -83,7 +85,7 @@ export default function HostRegisterForm() {
       password: values.password as string,
       firstName: values.firstName as string,
       lastName: values.lastName as string,
-      plan: "starter",
+      plan: plan as string,
       companyName: values.companyName as string,
       phoneNumber: values.phoneNumber as string,
       termsAgreement: values.terms as boolean,

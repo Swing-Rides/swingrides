@@ -11,14 +11,16 @@ import {
 } from "lucide-react";
 import PageWrapper from "../../dashboard/pageWrapper";
 import { ReactNode, useMemo, useState } from "react";
-import RevenueChart, { FilterType, GraphDataType } from "../../charts/revenueChart";
+import RevenueChart, {
+  FilterType,
+  GraphDataType,
+} from "../../charts/revenueChart";
 import { BookingsDonutChart } from "../../dashboard/dynamicImport";
 import { Separator } from "@/components/ui/separator";
 import RecentBookingsTable from "./recentBookingsTable";
 import {
   useGetHostDashboardQuery,
   DashboardDuration,
-  RecentBooking,
 } from "@/app/store/services/dashboardApi";
 
 const DURATION_MAP: Record<FilterType, DashboardDuration> = {
@@ -57,14 +59,17 @@ export default function DashboardPageComponent() {
 
   const donutData = useMemo(() => {
     if (!bookingStatus) return [];
-    return (["active", "pending", "completed", "cancelled"] as const).map((key) => ({
-      bookingStatus: key.charAt(0).toUpperCase() + key.slice(1),
-      bookingCount: bookingStatus[key],
-      color: DONUT_COLORS[key],
-    }));
+    return (["active", "pending", "completed", "cancelled"] as const).map(
+      (key) => ({
+        bookingStatus: key.charAt(0).toUpperCase() + key.slice(1),
+        bookingCount: bookingStatus[key],
+        color: DONUT_COLORS[key],
+      }),
+    );
   }, [bookingStatus]);
 
-  const handleFilterChange = (filter: FilterType) => setDuration(DURATION_MAP[filter]);
+  const handleFilterChange = (filter: FilterType) =>
+    setDuration(DURATION_MAP[filter]);
 
   return (
     <PageWrapper
@@ -120,7 +125,10 @@ export default function DashboardPageComponent() {
         </div>
         <div className="grid md:grid-cols-3 gap-4 items-start">
           <div className="md:col-span-2 p-4 md:p-6 space-y-4 bg-white rounded-md border border-gray-200 overflow-hidden">
-            <RecentBookingsTable bookings={recentBookings} isLoading={isLoading} />
+            <RecentBookingsTable
+              bookings={recentBookings}
+              isLoading={isLoading}
+            />
           </div>
           <div className="md:col-span-1 p-4 md:p-6 bg-white rounded-md border border-gray-200">
             <div className="flex flex-col gap-4">
