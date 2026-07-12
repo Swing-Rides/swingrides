@@ -85,7 +85,7 @@ export default function HostRegisterForm() {
       password: values.password as string,
       firstName: values.firstName as string,
       lastName: values.lastName as string,
-      plan: plan as string,
+      plan: plan as string || "solo",
       companyName: values.companyName as string,
       phoneNumber: values.phoneNumber as string,
       termsAgreement: values.terms as boolean,
