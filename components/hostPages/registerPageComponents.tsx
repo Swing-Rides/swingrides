@@ -2,13 +2,16 @@ import Image from "next/image";
 import Logo from "../headerNav/logo";
 import Link from "next/link";
 import HostRegisterForm from "../forms/hostRegisterForm";
+import { Suspense } from "react";
 
 export default function RegisterPageComponents() {
   return (
-    <section className="grid lg:grid-cols-2 min-h-screen bg-white">
-      <HostRegisterPageLeftContent />
-      <HostRegisterPageRightContent />
-    </section>
+    <Suspense fallback={<div>Loading...</div>}>
+      <section className="grid lg:grid-cols-2 min-h-screen bg-white">
+        <HostRegisterPageLeftContent />
+        <HostRegisterPageRightContent />
+      </section>
+    </Suspense>
   );
 }
 
