@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'motion/react'
 import Logo from './logo'
 import { navLinks } from '@/constants/header'
 import { Menu, X } from 'lucide-react'
-import { HOST_DASHBOARD_PATH } from '@/constants/constant'
 
 export default function Mobile() {
 
@@ -88,7 +87,7 @@ const MobileNav = ({ setIsMenuOpen }: MobileNavProps) => {
 
                         <div className='mt-auto flex p-4'>
                                 <Link
-                                        href={HOST_DASHBOARD_PATH}
+                                        href='/for-hosts#price-list'
                                         onClick={() => setIsMenuOpen(false)}
                                         className='bg-blue-700 py-2 px-6 w-full text-white rounded-xs text-center'>
                                         List Your Car

@@ -1,9 +1,7 @@
-import React from 'react'
 import Link from 'next/link'
 import Logo from './logo'
 import { navLinks } from '@/constants/header'
 import { PriBtn } from '../buttons'
-import { HOST_DASHBOARD_PATH } from '@/constants/constant'
 
 type NavLinksProps = {
         navLinks: {
@@ -50,7 +48,7 @@ const NavButtons = () => {
                 <div>
                         <PriBtn 
                                 btn={{
-                                        link: HOST_DASHBOARD_PATH,
+                                        link: '/for-hosts#price-list',
                                         label: 'List Your Car'
                                 }}                        
                         />

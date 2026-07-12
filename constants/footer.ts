@@ -40,7 +40,7 @@ export const footerLinksTwo = {
                 {
                         id: 4,
                         label: 'Pricing Plans',
-                        href: '/pricing-plans',
+                        href: '/for-hosts#price-list',
                 },
         ]
 }

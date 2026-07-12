@@ -13,7 +13,6 @@ import {
 } from "@/constants/forHostPageContents";
 import { Skeleton } from "@/components/ui/skeleton";
 import PriceSection from "./priceSection";
-import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import { Building, CalendarCheck, Car, ChartColumn, Phone, Receipt, ThumbsUp, Wrench } from "lucide-react";
 import { StarRating } from "@/components/hostComponents/pages/reviewsPageComponents/reviewsPageComponents";
 import FAQsSection from "@/components/faqs";
@@ -51,7 +50,7 @@ const HeroSection = () => {
                     </p>
                     <div className="flex gap-3 items-center justify-center">
                         <Link
-                            href={HOST_DASHBOARD_PATH}
+                            href='#price-list'
                             className="py-2 px-6 rounded-xs bg-blue-700 text-white font-semibold capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
                         >
                             List Your Car

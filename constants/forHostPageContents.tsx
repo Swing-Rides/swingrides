@@ -236,7 +236,8 @@ export const reportsContent: TabContentProps = {
 export const pricingContents: PriceCardProps[] = [
         {
                 cardTitle: 'Solo',
-                price: 79,
+                planTier: 'solo',
+                price: 99,
                 vechileQuantity: '1 Vehicle',
                 description: 'Everything you need to list and manage a single rental vehicle.',
                 features: [
@@ -251,7 +252,8 @@ export const pricingContents: PriceCardProps[] = [
         {
                 badge: 'Most Popular',
                 cardTitle: 'Flex',
-                price: 199,
+                planTier: 'flex',
+                price: 249,
                 vechileQuantity: '2 - 5 Vehicles',
                 description: 'Scale your rental business with advanced financial tools and a branded customer experience.',
                 features: [
@@ -266,7 +268,8 @@ export const pricingContents: PriceCardProps[] = [
         },
         {
                 cardTitle: 'Fleet',
-                price: 349,
+                planTier: 'fleet',
+                price: 499,
                 vechileQuantity: '6 - 15 Vehicles',
                 description: 'Full operational control for serious fleet hosts with audit-ready exports and priority support.',
                 features: [
@@ -283,6 +286,7 @@ export const pricingContents: PriceCardProps[] = [
         {
                 cardTitle: 'Enterprise',
                 price: 'Custom',
+                planTier: 'custom',
                 vechileQuantity: '16+ Vehicles',
                 description: 'Custom-built for large operations needing dedicated support and platform-level integrations.',
                 features: [
