@@ -58,6 +58,11 @@ const axiosBaseQuery = (): BaseQueryFn<
 export type BillingPaymentStatus = "paid" | "pending" | "failed";
 export type CommunicationStatus = "delivered" | "pending" | "failed";
 export type AgreementType = "longTerm" | "commercialFleet";
+export type HostBusinessVerificationStatus =
+  | "not_submitted"
+  | "pending"
+  | "approved"
+  | "rejected";
 
 export type HostProfileCompanySettings = {
   profilePictureUrl?: string;
@@ -66,6 +71,24 @@ export type HostProfileCompanySettings = {
   email: string;
   companyName?: string;
   address?: string;
+  businessVerification: {
+    status: HostBusinessVerificationStatus;
+    businessLicenseUrl?: string;
+    submittedAt?: string;
+    reviewedAt?: string;
+    notes?: string;
+  };
+  payment: {
+    status: "pending" | "paid" | "quote_required";
+    hasPaid: boolean;
+    plan: "flex" | "solo" | "fleet";
+    isActive: boolean;
+    amountPerMonth?: number;
+    currency: string;
+    subscriptionDate?: string;
+    latestPaymentDate?: string;
+    latestPaymentStatus?: BillingPaymentStatus;
+  };
 };
 
 export type BillingPaymentHistoryItem = {
@@ -78,7 +101,7 @@ export type BillingPaymentHistoryItem = {
 
 export type HostBillingSettings = {
   currentPlan: {
-    plan: "starter" | "professional" | "enterprise";
+    plan: HostPlanType;
     isActive: boolean;
     amountPerMonth?: number;
     currency: string;
@@ -148,6 +171,56 @@ export type SendAgreementForSignatureRequest = {
   signatureRequestUrl?: string;
 };
 
+export type SubmitHostBusinessVerificationRequest = {
+  businessLicenseUrl: string;
+};
+
+export type HostBusinessVerificationResponse = {
+  status: HostBusinessVerificationStatus;
+  businessLicenseUrl?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  notes?: string;
+};
+
+export type HostPlanType = "flex" | "solo" | "fleet";
+export type HostBillingCycle = "monthly" | "yearly";
+
+export type CreateHostPlanPaymentIntentRequest = {
+  plan: HostPlanType;
+  billingCycle: HostBillingCycle;
+  couponCode?: string;
+};
+
+export type CreateHostPlanPaymentIntentResponse = {
+  id: string;
+  amount: number;
+  currency: string;
+  clientSecret: string;
+  status: string;
+  plan: HostPlanType;
+  billingCycle: HostBillingCycle;
+  subtotal: number;
+  discount: number;
+  totalAmount: number;
+  couponCode?: string;
+};
+
+export type CompleteHostPlanPaymentRequest = {
+  paymentIntentId: string;
+  plan: HostPlanType;
+  billingCycle: HostBillingCycle;
+};
+
+export type CompleteHostPlanPaymentResponse = {
+  paymentStatus: "paid";
+  subscriptionDate?: string;
+  plan: HostPlanType;
+  planPrice?: number;
+  currency: string;
+  paymentIntentId: string;
+};
+
 export const settingsApi = createApi({
   reducerPath: "settingsApi",
   baseQuery: axiosBaseQuery(),
@@ -200,6 +273,37 @@ export const settingsApi = createApi({
         method: "GET",
       }),
       providesTags: [{ type: "HostSettings", id: "BILLING" }],
+    }),
+
+    getHostBusinessVerification: builder.query<
+      ApiEnvelope<HostBusinessVerificationResponse>,
+      void
+    >({
+      query: () => ({
+        url: "/api/host/settings/business-verification",
+        method: "GET",
+      }),
+      providesTags: [{ type: "HostSettings", id: "BUSINESS_VERIFICATION" }],
+    }),
+
+    submitHostBusinessVerification: builder.mutation<
+      ApiEnvelope<HostBusinessVerificationResponse>,
+      SubmitHostBusinessVerificationRequest
+    >({
+      query: (payload) => ({
+        url: "/api/host/settings/business-verification",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [
+        { type: "HostSettings", id: "DASHBOARD" },
+        { type: "HostSettings", id: "PROFILE_COMPANY" },
+        { type: "HostSettings", id: "BUSINESS_VERIFICATION" },
+      ],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        dispatch(hostApi.util.invalidateTags([{ type: "Host", id: "PROFILE" }]));
+      },
     }),
 
     getCommunicateSettings: builder.query<
@@ -268,6 +372,42 @@ export const settingsApi = createApi({
         { type: "HostSettings", id: "AGREEMENTS" },
       ],
     }),
+
+    createHostPlanPaymentIntent: builder.mutation<
+      ApiEnvelope<CreateHostPlanPaymentIntentResponse>,
+      CreateHostPlanPaymentIntentRequest
+    >({
+      query: (payload) => ({
+        url: "/api/host/settings/plan/create-payment-intent",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [
+        { type: "HostSettings", id: "DASHBOARD" },
+        { type: "HostSettings", id: "PROFILE_COMPANY" },
+        { type: "HostSettings", id: "BILLING" },
+      ],
+    }),
+
+    completeHostPlanPayment: builder.mutation<
+      ApiEnvelope<CompleteHostPlanPaymentResponse>,
+      CompleteHostPlanPaymentRequest
+    >({
+      query: (payload) => ({
+        url: "/api/host/settings/plan/payment",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [
+        { type: "HostSettings", id: "DASHBOARD" },
+        { type: "HostSettings", id: "PROFILE_COMPANY" },
+        { type: "HostSettings", id: "BILLING" },
+      ],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        dispatch(hostApi.util.invalidateTags([{ type: "Host", id: "PROFILE" }]));
+      },
+    }),
   }),
 });
 
@@ -276,9 +416,13 @@ export const {
   useGetProfileCompanySettingsQuery,
   useUpdateProfileCompanySettingsMutation,
   useGetBillingSettingsQuery,
+  useGetHostBusinessVerificationQuery,
+  useSubmitHostBusinessVerificationMutation,
   useGetCommunicateSettingsQuery,
   useSendSettingsSmsMutation,
   useGetAgreementsSettingsQuery,
   useUpdateAgreementTemplateMutation,
   useSendAgreementForSignatureMutation,
+  useCreateHostPlanPaymentIntentMutation,
+  useCompleteHostPlanPaymentMutation,
 } = settingsApi;

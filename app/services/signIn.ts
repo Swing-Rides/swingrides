@@ -55,7 +55,7 @@ export interface CreateHostRequest {
   companyName?: string;
   phoneNumber?: string;
   password: string;
-  plan?: "starter" | "professional" | "enterprise";
+  plan?: "solo" | "flex" | "fleet" | string;
   termsAgreement: boolean;
 }
 

@@ -5,21 +5,28 @@ import {
   Car,
   Clock,
   DollarSign,
+  ShieldAlert,
   TrendingDown,
   TrendingUp,
   Wrench,
 } from "lucide-react";
 import PageWrapper from "../../dashboard/pageWrapper";
-import { ReactNode, useMemo, useState } from "react";
-import RevenueChart, { FilterType, GraphDataType } from "../../charts/revenueChart";
+import { ReactNode, useCallback, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import RevenueChart, {
+  FilterType,
+  GraphDataType,
+} from "../../charts/revenueChart";
 import { BookingsDonutChart } from "../../dashboard/dynamicImport";
 import { Separator } from "@/components/ui/separator";
 import RecentBookingsTable from "./recentBookingsTable";
 import {
   useGetHostDashboardQuery,
   DashboardDuration,
-  RecentBooking,
 } from "@/app/store/services/dashboardApi";
+import { useGetProfileCompanySettingsQuery } from "@/app/store/services/settingsApi";
+import HostPackageModal from "@/components/hostComponents/modals/hostPackageModal";
+import { Button } from "@/components/ui/button";
 
 const DURATION_MAP: Record<FilterType, DashboardDuration> = {
   "7D": "7d",
@@ -36,13 +43,22 @@ const DONUT_COLORS: Record<string, string> = {
 
 export default function DashboardPageComponent() {
   const [duration, setDuration] = useState<DashboardDuration>("30d");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data, isLoading } = useGetHostDashboardQuery(duration);
+  const { data: hostProfileResponse, isLoading: isHostProfileLoading } =
+    useGetProfileCompanySettingsQuery();
 
   const summary = data?.data.summary;
   const fleetStatus = data?.data.fleetStatus;
   const bookingStatus = data?.data.bookingStatus;
   const revenueOverview = data?.data.revenueOverview;
   const recentBookings = data?.data.recentBookings ?? [];
+  const hostProfile = hostProfileResponse?.data;
+  const hostPayment = hostProfile?.payment;
+  const shouldShowRegistrationCard =
+    !isHostProfileLoading && !!hostPayment && !hostPayment.hasPaid;
 
   const graphData = useMemo<GraphDataType>(() => {
     const points = revenueOverview?.points ?? [];
@@ -57,14 +73,24 @@ export default function DashboardPageComponent() {
 
   const donutData = useMemo(() => {
     if (!bookingStatus) return [];
-    return (["active", "pending", "completed", "cancelled"] as const).map((key) => ({
-      bookingStatus: key.charAt(0).toUpperCase() + key.slice(1),
-      bookingCount: bookingStatus[key],
-      color: DONUT_COLORS[key],
-    }));
+    return (["active", "pending", "completed", "cancelled"] as const).map(
+      (key) => ({
+        bookingStatus: key.charAt(0).toUpperCase() + key.slice(1),
+        bookingCount: bookingStatus[key],
+        color: DONUT_COLORS[key],
+      }),
+    );
   }, [bookingStatus]);
 
-  const handleFilterChange = (filter: FilterType) => setDuration(DURATION_MAP[filter]);
+  const handleFilterChange = (filter: FilterType) =>
+    setDuration(DURATION_MAP[filter]);
+
+  const handleOpenRegistrationModal = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("package", hostPayment?.plan ?? "flex");
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  }, [hostPayment?.plan, pathname, router, searchParams]);
 
   return (
     <PageWrapper
@@ -72,6 +98,32 @@ export default function DashboardPageComponent() {
       pageDescription="Here's what's happening with your fleet today."
     >
       <div className="space-y-4">
+        {shouldShowRegistrationCard ? (
+          <div className="mt-8 p-5 md:p-6 rounded-md border border-amber-200 bg-amber-50 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="size-12 rounded-[10px] bg-amber-100 flex items-center justify-center shrink-0">
+                <ShieldAlert className="size-6 text-amber-600" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-neutral-950 text-lg font-semibold font-text">
+                  Complete your host registration
+                </h3>
+                <p className="text-sm text-gray-600 font-text">
+                  Your {hostPayment.plan} plan payment is still{" "}
+                  {hostPayment.status}. Finish this step to unlock your host
+                  account setup and verification flow.
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              onClick={handleOpenRegistrationModal}
+              className="bg-blue-700 hover:bg-blue-800 text-white"
+            >
+              Complete Registration
+            </Button>
+          </div>
+        ) : null}
         <div className="flex flex-wrap gap-4 mt-8">
           <DashboardOverviewCard
             icon={<Car className="size-6 text-blue-700" />}
@@ -120,7 +172,10 @@ export default function DashboardPageComponent() {
         </div>
         <div className="grid md:grid-cols-3 gap-4 items-start">
           <div className="md:col-span-2 p-4 md:p-6 space-y-4 bg-white rounded-md border border-gray-200 overflow-hidden">
-            <RecentBookingsTable bookings={recentBookings} isLoading={isLoading} />
+            <RecentBookingsTable
+              bookings={recentBookings}
+              isLoading={isLoading}
+            />
           </div>
           <div className="md:col-span-1 p-4 md:p-6 bg-white rounded-md border border-gray-200">
             <div className="flex flex-col gap-4">
@@ -168,6 +223,7 @@ export default function DashboardPageComponent() {
           </div>
         </div>
       </div>
+      <HostPackageModal packageId={hostPayment?.plan} />
     </PageWrapper>
   );
 }
