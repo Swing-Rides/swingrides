@@ -1,10 +1,8 @@
-import React from 'react'
 import { SecBtn, TetBtn } from '../buttons'
 import Link from 'next/link'
 import Logo from '../headerNav/logo'
 import { footerLinksOne, footerLinksThree, footerLinksTwo } from '@/constants/footer'
 import SocialMediaIconLink from './socialMediaIconLink'
-import { HOST_DASHBOARD_PATH } from '@/constants/constant'
 
 type FootLinksProps = {
         footerLinks: {
@@ -38,7 +36,7 @@ export default function Footer() {
                                                 <TetBtn 
                                                         btn={{
                                                                 label: 'List Your Car',
-                                                                link: HOST_DASHBOARD_PATH
+                                                                link: '/for-hosts#price-list'
                                                         }}
                                                 />
                                         </div>

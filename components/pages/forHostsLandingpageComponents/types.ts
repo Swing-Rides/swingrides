@@ -14,6 +14,7 @@ export type TabContentProps = {
 export type PriceCardProps = {
                 badge?: string;
                 cardTitle: string;
+                planTier: string;
                 price: number | string;
                 vechileQuantity: string;
                 description: string;

@@ -7,7 +7,6 @@ import Link from "next/link"
 import { Switch } from '@/components/ui/switch'
 import { PriceCardProps } from "./types"
 import { Check } from "lucide-react"
-import { HOST_REGISTRATION_PATH } from "@/constants/constant"
 
 const PERCENT_DISCOUNT = 17
 
@@ -21,7 +20,7 @@ export default function PriceSection(
         const [isYearly, setIsYearly] = useState(false)
 
         return (
-                <section className='section-bg-gradient'>
+                <section className='section-bg-gradient' id="price-list">
                         <div className='px-4 py-12.5 md:px-20 md:py-20 space-y-10.5'>
                                 <div className='flex flex-col gap-5 items-center max-w-120 mx-auto'>
                                         <Pill
@@ -50,7 +49,7 @@ export default function PriceSection(
                                         </div>
                                 </div>
 
-                                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-8 md:gap-4 max-w-300 mx-auto'>
+                                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-8 md:gap-4 max-w-310 mx-auto'>
                                         {pricingContents.map((item) => (
                                                 <Fragment key={item.cardTitle}>
                                                         <PriceCard
@@ -73,6 +72,7 @@ interface PriceCardDisplayProps extends PriceCardProps {
 const PriceCard = ({
         badge,
         cardTitle,
+        planTier,
         price,
         vechileQuantity,
         description,
@@ -177,7 +177,7 @@ const PriceCard = ({
                                         <button className={buttonStyle}>
                                                 Contact Sales
                                         </button>
-                                </Link>) : (<Link href={HOST_REGISTRATION_PATH} target="_blank">
+                                </Link>) : (<Link href={`/host/register/?plan=${planTier}`} target="_blank">
                                         <button className={buttonStyle}>
                                                 Get Started
                                         </button>
