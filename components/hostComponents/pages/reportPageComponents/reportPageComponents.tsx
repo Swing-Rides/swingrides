@@ -16,11 +16,7 @@ import {
   ExpensesCategoryChart,
   RevenueBookingChart,
 } from "../../dashboard/dynamicImport";
-import {
-  sampleBookingDonutData,
-  sampleExpensesCategoryData,
-  sampleRevenueAndBookingData,
-} from "@/constants/saleschartdata";
+
 import {
   DateRange,
   useGetAnalyticsDashboardQuery,
@@ -149,7 +145,7 @@ export default function ReportPageComponents() {
   const revenueBookingData = useMemo(() => {
     const trends = dashboard?.data.revenueTrends;
     if (!trends?.length) {
-      return sampleRevenueAndBookingData;
+      return [];
     }
 
     return trends.map((item) => ({
@@ -162,7 +158,7 @@ export default function ReportPageComponents() {
   const bookingDonutData = useMemo(() => {
     const statusBreakdown = dashboard?.data.bookingStatus;
     if (!statusBreakdown?.length) {
-      return sampleBookingDonutData;
+      return [];
     }
 
     return statusBreakdown.map((item) => ({
@@ -175,7 +171,7 @@ export default function ReportPageComponents() {
   const expenseCategoryData = useMemo(() => {
     const categories = dashboard?.data.expenseBreakdown;
     if (!categories?.length) {
-      return sampleExpensesCategoryData;
+      return [];
     }
 
     return categories.map((item) => ({
