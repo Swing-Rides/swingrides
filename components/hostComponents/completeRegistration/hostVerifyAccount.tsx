@@ -5,7 +5,9 @@ import { FileCheck } from "lucide-react";
 import BusinessLicenseVerificationForm from "../forms/businessLicenseVerificationForm";
 import {
   HostBusinessVerificationStatus,
+  useCreateHostStripeConnectOnboardingLinkMutation,
   useGetHostBusinessVerificationQuery,
+  useGetProfileCompanySettingsQuery,
 } from "@/app/store/services/settingsApi";
 
 type PageInfo = {
@@ -27,13 +29,25 @@ export default function HostVerifyAccount({
   userIsVerified = false,
 }: HostVerifyAccountProps) {
   const { data: verificationResponse } = useGetHostBusinessVerificationQuery();
+  const { data: profileCompanyResponse } = useGetProfileCompanySettingsQuery();
   const verification = verificationResponse?.data;
+  const stripeConnect =
+    profileCompanyResponse?.data.payment.stripeConnect;
   const verificationStatus: HostBusinessVerificationStatus =
     verification?.status ??
     (userIsVerified ? "approved" : "not_submitted");
   const isVerified = verificationStatus === "approved";
   const isPending = verificationStatus === "pending";
   const isRejected = verificationStatus === "rejected";
+  const [createHostStripeConnectOnboardingLink, { isLoading: isCreatingOnboardingLink }] =
+    useCreateHostStripeConnectOnboardingLinkMutation();
+
+  const handleCompleteStripeOnboarding = async () => {
+    const response = await createHostStripeConnectOnboardingLink().unwrap();
+    if (response.data.url) {
+      window.location.href = response.data.url;
+    }
+  };
 
   const info: PageInfo[] = [
     {
@@ -59,6 +73,30 @@ export default function HostVerifyAccount({
             description={`You've successfully subscribed to the ${activePlan} plan. You can now start managing your fleet.`}
         />
       </div>
+      {stripeConnect && !stripeConnect.onboardingComplete ? (
+        <div className="p-4 md:p-8 max-w-112.5 mx-auto bg-white rounded-[10px] border border-amber-200 w-full flex flex-col justify-start items-start gap-4">
+          <div className="space-y-2">
+            <h3 className="text-neutral-950 text-base font-medium font-text">
+              Complete Stripe onboarding
+            </h3>
+            <span className="block text-gray-500 text-sm font-medium font-text leading-5">
+              Your host account has been created, but Stripe still needs your payout details before you can receive booking payments.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              void handleCompleteStripeOnboarding();
+            }}
+            disabled={isCreatingOnboardingLink}
+            className="py-2.5 px-6 rounded-xs border border-blue-700 text-white bg-blue-700 hover:bg-blue-950 transition-colors duration-300 disabled:opacity-60"
+          >
+            {isCreatingOnboardingLink
+              ? "Preparing Stripe onboarding..."
+              : "Complete Stripe onboarding"}
+          </button>
+        </div>
+      ) : null}
       <div className="p-4 md:p-8 max-w-112.5 mx-auto bg-white rounded-[10px] border border-gray-200 w-full flex flex-col justify-start items-start gap-5">
         {info.map((item) => (
           <div

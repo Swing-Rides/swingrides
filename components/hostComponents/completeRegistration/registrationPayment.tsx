@@ -25,6 +25,7 @@ import {
   HostPlanType,
   useCompleteHostPlanPaymentMutation,
   useCreateHostPlanPaymentIntentMutation,
+  useCreateHostStripeConnectOnboardingLinkMutation,
 } from "@/app/store/services/settingsApi";
 
 type BillingCycle = HostBillingCycle;
@@ -220,11 +221,16 @@ export default function RegistrationPayment({
 
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [onboardingUrl, setOnboardingUrl] = useState<string | null>(null);
+  const [isStripeOnboardingComplete, setIsStripeOnboardingComplete] =
+    useState(false);
   const [finalizedPaymentIntentId, setFinalizedPaymentIntentId] = useState<
     string | null
   >(null);
   const [createHostPlanPaymentIntent] = useCreateHostPlanPaymentIntentMutation();
   const [completeHostPlanPayment] = useCompleteHostPlanPaymentMutation();
+  const [createHostStripeConnectOnboardingLink, { isLoading: isCreatingOnboardingLink }] =
+    useCreateHostStripeConnectOnboardingLinkMutation();
 
   const { subtotal, discount, total } = computeTotals(
     selectedPackage,
@@ -314,9 +320,13 @@ export default function RegistrationPayment({
       billingCycle,
     })
       .unwrap()
-      .then(() => {
+      .then((response) => {
         if (cancelled) return;
         setFinalizedPaymentIntentId(redirectedPaymentIntentId);
+        setOnboardingUrl(response.data.onboardingUrl ?? null);
+        setIsStripeOnboardingComplete(
+          response.data.stripeConnect?.onboardingComplete ?? false,
+        );
         setIsSuccess(true);
       })
       .catch((paymentError) => {
@@ -381,6 +391,31 @@ export default function RegistrationPayment({
     setPaymentIntentAttempt((previous) => previous + 1);
   };
 
+  const handleCompleteStripeOnboarding = async () => {
+    if (onboardingUrl) {
+      window.location.href = onboardingUrl;
+      return;
+    }
+
+    try {
+      const response = await createHostStripeConnectOnboardingLink().unwrap();
+      if (response.data.url) {
+        window.location.href = response.data.url;
+        return;
+      }
+      setIsStripeOnboardingComplete(
+        response.data.stripeConnect.onboardingComplete,
+      );
+    } catch (onboardingError) {
+      setError(
+        getErrorMessage(
+          onboardingError,
+          "We couldn't start Stripe onboarding right now.",
+        ),
+      );
+    }
+  };
+
   if (isSuccess) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 px-4">
@@ -392,14 +427,29 @@ export default function RegistrationPayment({
             Payment successful
           </span>
           <span className="text-sm text-gray-500">
-            Upload your business license to complete your host verification.
+            {isStripeOnboardingComplete
+              ? "Upload your business license to complete your host verification."
+              : "Complete Stripe onboarding so you can receive booking payments."}
           </span>
-          <Link
-            className="py-2.5 px-6 rounded-xs border border-blue-700 text-white bg-blue-700 hover:bg-blue-950 transition-colors duration-300"
-            href={`${HOST_DASHBOARD_PATH}host-complete-registration/`}
-          >
-            Verify Now
-          </Link>
+          {isStripeOnboardingComplete ? (
+            <Link
+              className="py-2.5 px-6 rounded-xs border border-blue-700 text-white bg-blue-700 hover:bg-blue-950 transition-colors duration-300"
+              href={`${HOST_DASHBOARD_PATH}host-complete-registration/`}
+            >
+              Verify Now
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCompleteStripeOnboarding}
+              disabled={isCreatingOnboardingLink}
+              className="py-2.5 px-6 rounded-xs border border-blue-700 text-white bg-blue-700 hover:bg-blue-950 transition-colors duration-300 disabled:opacity-60"
+            >
+              {isCreatingOnboardingLink
+                ? "Preparing Stripe onboarding..."
+                : "Complete Stripe onboarding"}
+            </button>
+          )}
         </div>
       </div>
     );
