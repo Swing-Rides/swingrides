@@ -91,6 +91,8 @@ export type HostProfileCompanySettings = {
     amountPerMonth?: number;
     currency: string;
     subscriptionDate?: string;
+    subscriptionCurrentPeriodEnd?: string;
+    subscriptionStatus?: string;
     latestPaymentDate?: string;
     latestPaymentStatus?: BillingPaymentStatus;
     stripeConnect: {
@@ -207,6 +209,8 @@ export type CreateHostPlanPaymentIntentRequest = {
 
 export type CreateHostPlanPaymentIntentResponse = {
   id: string;
+  subscriptionId: string;
+  customerId: string;
   amount: number;
   currency: string;
   clientSecret: string;
@@ -228,10 +232,14 @@ export type CompleteHostPlanPaymentRequest = {
 export type CompleteHostPlanPaymentResponse = {
   paymentStatus: "paid";
   subscriptionDate?: string;
+  subscriptionCurrentPeriodEnd?: string;
+  subscriptionStatus?: string;
   plan: HostPlanType;
   planPrice?: number;
   currency: string;
   paymentIntentId: string;
+  subscriptionId?: string;
+  customerId?: string;
   stripeConnectAccountId?: string;
   stripeConnect?: {
     accountId?: string;
