@@ -21,10 +21,12 @@ import {
 import Link from "next/link";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import {
+  CreateHostPlanPaymentIntentResponse,
   HostBillingCycle,
   HostPlanType,
   useCompleteHostPlanPaymentMutation,
   useCreateHostPlanPaymentIntentMutation,
+  useCreateHostStripeConnectOnboardingLinkMutation,
 } from "@/app/store/services/settingsApi";
 
 type BillingCycle = HostBillingCycle;
@@ -59,7 +61,7 @@ export const hostSubscriptionPackages: Package[] = [
   {
     id: "solo",
     name: "Solo",
-    price: 79,
+    price: 99,
     description: "For hosts just getting started",
     features: [
       "List only 1 vehicle",
@@ -70,7 +72,7 @@ export const hostSubscriptionPackages: Package[] = [
   {
     id: "flex",
     name: "Flex",
-    price: 199,
+    price: 249,
     description: "For hosts scaling their fleet",
     features: [
       "List up to 5 vehicles",
@@ -82,7 +84,7 @@ export const hostSubscriptionPackages: Package[] = [
   {
     id: "fleet",
     name: "Fleet",
-    price: 349,
+    price: 499,
     description: "For established fleet operators",
     features: [
       "List up to 15 vehicles",
@@ -106,6 +108,11 @@ const VALID_COUPONS: Record<string, { label: string; percentOff: number }> = {
   SAVE10: { label: "10% off", percentOff: 10 },
   WELCOME20: { label: "20% off", percentOff: 20 },
 };
+
+const inFlightHostPlanPaymentIntentRequests = new Map<
+  string,
+  Promise<{ data: CreateHostPlanPaymentIntentResponse }>
+>();
 
 async function validateCoupon(
   code: string,
@@ -220,11 +227,16 @@ export default function RegistrationPayment({
 
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [onboardingUrl, setOnboardingUrl] = useState<string | null>(null);
+  const [isStripeOnboardingComplete, setIsStripeOnboardingComplete] =
+    useState(false);
   const [finalizedPaymentIntentId, setFinalizedPaymentIntentId] = useState<
     string | null
   >(null);
   const [createHostPlanPaymentIntent] = useCreateHostPlanPaymentIntentMutation();
   const [completeHostPlanPayment] = useCompleteHostPlanPaymentMutation();
+  const [createHostStripeConnectOnboardingLink, { isLoading: isCreatingOnboardingLink }] =
+    useCreateHostStripeConnectOnboardingLinkMutation();
 
   const { subtotal, discount, total } = computeTotals(
     selectedPackage,
@@ -245,6 +257,17 @@ export default function RegistrationPayment({
   const isPreparingPayment =
     selectedPackage !== null && preparedFor !== paymentRequestKey;
 
+  useEffect(() => {
+    // #region debug-point A:component-mount
+    fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"A",location:"registrationPayment.tsx:mount",msg:"[DEBUG] RegistrationPayment mounted",data:{packageParam,billingCycle,selectedPackageId:selectedPackage?.id ?? null,paymentRequestKey},ts:Date.now()})}).catch(()=>{});
+    // #endregion
+    return () => {
+      // #region debug-point A:component-unmount
+      fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"A",location:"registrationPayment.tsx:unmount",msg:"[DEBUG] RegistrationPayment unmounted",data:{packageParam,billingCycle,selectedPackageId:selectedPackage?.id ?? null,paymentRequestKey},ts:Date.now()})}).catch(()=>{});
+      // #endregion
+    };
+  }, [billingCycle, packageParam, paymentRequestKey, selectedPackage?.id]);
+
   // (Re)creates the PaymentIntent whenever the package, cycle, or coupon changes.
   // setState only ever happens inside the .then() callback below — never
   // synchronously in the effect body — which is the pattern React's
@@ -257,15 +280,30 @@ export default function RegistrationPayment({
 
     let cancelled = false;
     const key = paymentRequestKey;
+    const existingRequest = inFlightHostPlanPaymentIntentRequests.get(key);
 
-    void createHostPlanPaymentIntent({
-      plan: selectedPackage.id,
-      billingCycle,
-      couponCode: appliedCoupon?.code,
-    })
-      .unwrap()
+    // #region debug-point B:create-intent-start
+    fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:start",msg:"[DEBUG] createHostPlanPaymentIntent requested",data:{key,plan:selectedPackage.id,billingCycle,couponCode:appliedCoupon?.code ?? null,reusedInFlightRequest:Boolean(existingRequest)},ts:Date.now()})}).catch(()=>{});
+    // #endregion
+
+    const requestPromise: Promise<{ data: CreateHostPlanPaymentIntentResponse }> =
+      existingRequest ??
+      createHostPlanPaymentIntent({
+        plan: selectedPackage.id,
+        billingCycle,
+        couponCode: appliedCoupon?.code,
+      }).unwrap();
+
+    if (!existingRequest) {
+      inFlightHostPlanPaymentIntentRequests.set(key, requestPromise);
+    }
+
+    void requestPromise
       .then((res) => {
         if (cancelled) return;
+        // #region debug-point B:create-intent-success
+        fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:success",msg:"[DEBUG] createHostPlanPaymentIntent resolved",data:{key,paymentIntentId:res.data.id,subscriptionId:res.data.subscriptionId,clientSecretPresent:Boolean(res.data.clientSecret)},ts:Date.now()})}).catch(()=>{});
+        // #endregion
         setPreparedPayment({
           key,
           clientSecret: res.data.clientSecret,
@@ -275,6 +313,9 @@ export default function RegistrationPayment({
       })
       .catch((createIntentError) => {
         if (cancelled) return;
+        // #region debug-point B:create-intent-error
+        fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:error",msg:"[DEBUG] createHostPlanPaymentIntent failed",data:{key,errorMessage:getErrorMessage(createIntentError,"unknown error")},ts:Date.now()})}).catch(()=>{});
+        // #endregion
         setPreparedPayment(null);
         setPreparedFor(key);
         setError(
@@ -283,9 +324,17 @@ export default function RegistrationPayment({
             "Unable to prepare your host plan payment.",
           ),
         );
+      })
+      .finally(() => {
+        if (inFlightHostPlanPaymentIntentRequests.get(key) === requestPromise) {
+          inFlightHostPlanPaymentIntentRequests.delete(key);
+        }
       });
 
     return () => {
+      // #region debug-point B:create-intent-cleanup
+      fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:cleanup",msg:"[DEBUG] createHostPlanPaymentIntent effect cleaned up",data:{key},ts:Date.now()})}).catch(()=>{});
+      // #endregion
       cancelled = true;
     };
   }, [
@@ -314,9 +363,13 @@ export default function RegistrationPayment({
       billingCycle,
     })
       .unwrap()
-      .then(() => {
+      .then((response) => {
         if (cancelled) return;
         setFinalizedPaymentIntentId(redirectedPaymentIntentId);
+        setOnboardingUrl(response.data.onboardingUrl ?? null);
+        setIsStripeOnboardingComplete(
+          response.data.stripeConnect?.onboardingComplete ?? false,
+        );
         setIsSuccess(true);
       })
       .catch((paymentError) => {
@@ -381,6 +434,31 @@ export default function RegistrationPayment({
     setPaymentIntentAttempt((previous) => previous + 1);
   };
 
+  const handleCompleteStripeOnboarding = async () => {
+    if (onboardingUrl) {
+      window.location.href = onboardingUrl;
+      return;
+    }
+
+    try {
+      const response = await createHostStripeConnectOnboardingLink().unwrap();
+      if (response.data.url) {
+        window.location.href = response.data.url;
+        return;
+      }
+      setIsStripeOnboardingComplete(
+        response.data.stripeConnect.onboardingComplete,
+      );
+    } catch (onboardingError) {
+      setError(
+        getErrorMessage(
+          onboardingError,
+          "We couldn't start Stripe onboarding right now.",
+        ),
+      );
+    }
+  };
+
   if (isSuccess) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 px-4">
@@ -392,14 +470,29 @@ export default function RegistrationPayment({
             Payment successful
           </span>
           <span className="text-sm text-gray-500">
-            Upload your business license to complete your host verification.
+            {isStripeOnboardingComplete
+              ? "Upload your business license to complete your host verification."
+              : "Complete Stripe onboarding so you can receive booking payments."}
           </span>
-          <Link
-            className="py-2.5 px-6 rounded-xs border border-blue-700 text-white bg-blue-700 hover:bg-blue-950 transition-colors duration-300"
-            href={`${HOST_DASHBOARD_PATH}host-complete-registration/`}
-          >
-            Verify Now
-          </Link>
+          {isStripeOnboardingComplete ? (
+            <Link
+              className="py-2.5 px-6 rounded-xs border border-blue-700 text-white bg-blue-700 hover:bg-blue-950 transition-colors duration-300"
+              href={`${HOST_DASHBOARD_PATH}host-complete-registration/`}
+            >
+              Verify Now
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCompleteStripeOnboarding}
+              disabled={isCreatingOnboardingLink}
+              className="py-2.5 px-6 rounded-xs border border-blue-700 text-white bg-blue-700 hover:bg-blue-950 transition-colors duration-300 disabled:opacity-60"
+            >
+              {isCreatingOnboardingLink
+                ? "Preparing Stripe onboarding..."
+                : "Complete Stripe onboarding"}
+            </button>
+          )}
         </div>
       </div>
     );

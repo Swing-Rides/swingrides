@@ -63,6 +63,11 @@ export type HostBusinessVerificationStatus =
   | "pending"
   | "approved"
   | "rejected";
+export type StripeConnectCapabilityStatus =
+  | "active"
+  | "inactive"
+  | "pending"
+  | "unrequested";
 
 export type HostProfileCompanySettings = {
   profilePictureUrl?: string;
@@ -86,8 +91,18 @@ export type HostProfileCompanySettings = {
     amountPerMonth?: number;
     currency: string;
     subscriptionDate?: string;
+    subscriptionCurrentPeriodEnd?: string;
+    subscriptionStatus?: string;
     latestPaymentDate?: string;
     latestPaymentStatus?: BillingPaymentStatus;
+    stripeConnect: {
+      accountId?: string;
+      onboardingComplete: boolean;
+      detailsSubmitted: boolean;
+      chargesEnabled: boolean;
+      payoutsEnabled: boolean;
+      transfersCapability: StripeConnectCapabilityStatus;
+    };
   };
 };
 
@@ -194,6 +209,8 @@ export type CreateHostPlanPaymentIntentRequest = {
 
 export type CreateHostPlanPaymentIntentResponse = {
   id: string;
+  subscriptionId: string;
+  customerId: string;
   amount: number;
   currency: string;
   clientSecret: string;
@@ -215,10 +232,38 @@ export type CompleteHostPlanPaymentRequest = {
 export type CompleteHostPlanPaymentResponse = {
   paymentStatus: "paid";
   subscriptionDate?: string;
+  subscriptionCurrentPeriodEnd?: string;
+  subscriptionStatus?: string;
   plan: HostPlanType;
   planPrice?: number;
   currency: string;
   paymentIntentId: string;
+  subscriptionId?: string;
+  customerId?: string;
+  stripeConnectAccountId?: string;
+  stripeConnect?: {
+    accountId?: string;
+    onboardingComplete: boolean;
+    detailsSubmitted: boolean;
+    chargesEnabled: boolean;
+    payoutsEnabled: boolean;
+    transfersCapability: StripeConnectCapabilityStatus;
+  };
+  onboardingUrl?: string;
+};
+
+export type CreateHostStripeConnectOnboardingLinkResponse = {
+  accountId: string;
+  url: string;
+  expiresAt?: string;
+  stripeConnect: {
+    accountId?: string;
+    onboardingComplete: boolean;
+    detailsSubmitted: boolean;
+    chargesEnabled: boolean;
+    payoutsEnabled: boolean;
+    transfersCapability: StripeConnectCapabilityStatus;
+  };
 };
 
 export const settingsApi = createApi({
@@ -408,6 +453,21 @@ export const settingsApi = createApi({
         dispatch(hostApi.util.invalidateTags([{ type: "Host", id: "PROFILE" }]));
       },
     }),
+
+    createHostStripeConnectOnboardingLink: builder.mutation<
+      ApiEnvelope<CreateHostStripeConnectOnboardingLinkResponse>,
+      void
+    >({
+      query: () => ({
+        url: "/api/host/settings/plan/connect/onboarding-link",
+        method: "POST",
+      }),
+      invalidatesTags: [
+        { type: "HostSettings", id: "DASHBOARD" },
+        { type: "HostSettings", id: "PROFILE_COMPANY" },
+        { type: "HostSettings", id: "BILLING" },
+      ],
+    }),
   }),
 });
 
@@ -425,4 +485,5 @@ export const {
   useSendAgreementForSignatureMutation,
   useCreateHostPlanPaymentIntentMutation,
   useCompleteHostPlanPaymentMutation,
+  useCreateHostStripeConnectOnboardingLinkMutation,
 } = settingsApi;
