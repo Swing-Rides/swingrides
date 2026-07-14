@@ -76,6 +76,8 @@ export type HostProfileCompanySettings = {
   email: string;
   companyName?: string;
   address?: string;
+  city?: string;
+  postalCode?: string;
   businessVerification: {
     status: HostBusinessVerificationStatus;
     businessLicenseUrl?: string;
@@ -169,6 +171,8 @@ export type UpdateProfileCompanyRequest = {
   email?: string;
   companyName?: string;
   address?: string;
+  city?: string;
+  postalCode?: string;
 };
 
 export type SendSmsRequest = {

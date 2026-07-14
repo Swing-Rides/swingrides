@@ -96,8 +96,8 @@ const SettingsPagePageContent = () => {
       newPassword: "",
       companyName: profile.companyName ?? "",
       address: profile.address ?? "",
-      city: "",
-      postalCode: "",
+      city: profile.city ?? "",
+      postalCode: profile.postalCode ?? "",
     };
   }, [settingsData]);
 
@@ -203,6 +203,8 @@ const SettingsPagePageContent = () => {
       email: values.email,
       companyName: values.companyName,
       address: values.address,
+      city: values.city,
+      postalCode: values.postalCode,
       profilePictureUrl: values.profilePhotoUrl ?? profilePhotoUrl,
     }).unwrap();
     refetch();
