@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -109,6 +109,11 @@ const VALID_COUPONS: Record<string, { label: string; percentOff: number }> = {
   WELCOME20: { label: "20% off", percentOff: 20 },
 };
 
+const inFlightHostPlanPaymentIntentRequests = new Map<
+  string,
+  Promise<{ data: CreateHostPlanPaymentIntentResponse }>
+>();
+
 async function validateCoupon(
   code: string,
 ): Promise<{ valid: boolean; label?: string; percentOff?: number }> {
@@ -205,10 +210,6 @@ export default function RegistrationPayment({
   // "is a fetch in progress" can be derived by comparison instead of toggled
   // with an explicit setState call inside the effect (see effect below).
   const [preparedFor, setPreparedFor] = useState<string | null>(null);
-  const inFlightPaymentIntentRequestRef = useRef<{
-    key: string;
-    promise: Promise<{ data: CreateHostPlanPaymentIntentResponse }>;
-  } | null>(null);
 
   const [address, setAddress] = useState<BillingAddress>({
     streetAddress: "",
@@ -279,10 +280,7 @@ export default function RegistrationPayment({
 
     let cancelled = false;
     const key = paymentRequestKey;
-    const existingRequest =
-      inFlightPaymentIntentRequestRef.current?.key === key
-        ? inFlightPaymentIntentRequestRef.current.promise
-        : null;
+    const existingRequest = inFlightHostPlanPaymentIntentRequests.get(key);
 
     // #region debug-point B:create-intent-start
     fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:start",msg:"[DEBUG] createHostPlanPaymentIntent requested",data:{key,plan:selectedPackage.id,billingCycle,couponCode:appliedCoupon?.code ?? null,reusedInFlightRequest:Boolean(existingRequest)},ts:Date.now()})}).catch(()=>{});
@@ -297,10 +295,7 @@ export default function RegistrationPayment({
       }).unwrap();
 
     if (!existingRequest) {
-      inFlightPaymentIntentRequestRef.current = {
-        key,
-        promise: requestPromise,
-      };
+      inFlightHostPlanPaymentIntentRequests.set(key, requestPromise);
     }
 
     void requestPromise
@@ -331,8 +326,8 @@ export default function RegistrationPayment({
         );
       })
       .finally(() => {
-        if (inFlightPaymentIntentRequestRef.current?.key === key) {
-          inFlightPaymentIntentRequestRef.current = null;
+        if (inFlightHostPlanPaymentIntentRequests.get(key) === requestPromise) {
+          inFlightHostPlanPaymentIntentRequests.delete(key);
         }
       });
 
