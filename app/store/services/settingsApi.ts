@@ -219,6 +219,7 @@ export type CompleteHostPlanPaymentResponse = {
   planPrice?: number;
   currency: string;
   paymentIntentId: string;
+  stripeConnectAccountId?: string;
 };
 
 export const settingsApi = createApi({
