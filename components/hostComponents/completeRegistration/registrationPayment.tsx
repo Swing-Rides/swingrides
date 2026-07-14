@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import {
+  CreateHostPlanPaymentIntentResponse,
   HostBillingCycle,
   HostPlanType,
   useCompleteHostPlanPaymentMutation,
@@ -60,7 +61,7 @@ export const hostSubscriptionPackages: Package[] = [
   {
     id: "solo",
     name: "Solo",
-    price: 79,
+    price: 99,
     description: "For hosts just getting started",
     features: [
       "List only 1 vehicle",
@@ -71,7 +72,7 @@ export const hostSubscriptionPackages: Package[] = [
   {
     id: "flex",
     name: "Flex",
-    price: 199,
+    price: 249,
     description: "For hosts scaling their fleet",
     features: [
       "List up to 5 vehicles",
@@ -83,7 +84,7 @@ export const hostSubscriptionPackages: Package[] = [
   {
     id: "fleet",
     name: "Fleet",
-    price: 349,
+    price: 499,
     description: "For established fleet operators",
     features: [
       "List up to 15 vehicles",
@@ -204,6 +205,10 @@ export default function RegistrationPayment({
   // "is a fetch in progress" can be derived by comparison instead of toggled
   // with an explicit setState call inside the effect (see effect below).
   const [preparedFor, setPreparedFor] = useState<string | null>(null);
+  const inFlightPaymentIntentRequestRef = useRef<{
+    key: string;
+    promise: Promise<{ data: CreateHostPlanPaymentIntentResponse }>;
+  } | null>(null);
 
   const [address, setAddress] = useState<BillingAddress>({
     streetAddress: "",
@@ -251,6 +256,17 @@ export default function RegistrationPayment({
   const isPreparingPayment =
     selectedPackage !== null && preparedFor !== paymentRequestKey;
 
+  useEffect(() => {
+    // #region debug-point A:component-mount
+    fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"A",location:"registrationPayment.tsx:mount",msg:"[DEBUG] RegistrationPayment mounted",data:{packageParam,billingCycle,selectedPackageId:selectedPackage?.id ?? null,paymentRequestKey},ts:Date.now()})}).catch(()=>{});
+    // #endregion
+    return () => {
+      // #region debug-point A:component-unmount
+      fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"A",location:"registrationPayment.tsx:unmount",msg:"[DEBUG] RegistrationPayment unmounted",data:{packageParam,billingCycle,selectedPackageId:selectedPackage?.id ?? null,paymentRequestKey},ts:Date.now()})}).catch(()=>{});
+      // #endregion
+    };
+  }, [billingCycle, packageParam, paymentRequestKey, selectedPackage?.id]);
+
   // (Re)creates the PaymentIntent whenever the package, cycle, or coupon changes.
   // setState only ever happens inside the .then() callback below — never
   // synchronously in the effect body — which is the pattern React's
@@ -263,15 +279,36 @@ export default function RegistrationPayment({
 
     let cancelled = false;
     const key = paymentRequestKey;
+    const existingRequest =
+      inFlightPaymentIntentRequestRef.current?.key === key
+        ? inFlightPaymentIntentRequestRef.current.promise
+        : null;
 
-    void createHostPlanPaymentIntent({
-      plan: selectedPackage.id,
-      billingCycle,
-      couponCode: appliedCoupon?.code,
-    })
-      .unwrap()
+    // #region debug-point B:create-intent-start
+    fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:start",msg:"[DEBUG] createHostPlanPaymentIntent requested",data:{key,plan:selectedPackage.id,billingCycle,couponCode:appliedCoupon?.code ?? null,reusedInFlightRequest:Boolean(existingRequest)},ts:Date.now()})}).catch(()=>{});
+    // #endregion
+
+    const requestPromise: Promise<{ data: CreateHostPlanPaymentIntentResponse }> =
+      existingRequest ??
+      createHostPlanPaymentIntent({
+        plan: selectedPackage.id,
+        billingCycle,
+        couponCode: appliedCoupon?.code,
+      }).unwrap();
+
+    if (!existingRequest) {
+      inFlightPaymentIntentRequestRef.current = {
+        key,
+        promise: requestPromise,
+      };
+    }
+
+    void requestPromise
       .then((res) => {
         if (cancelled) return;
+        // #region debug-point B:create-intent-success
+        fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:success",msg:"[DEBUG] createHostPlanPaymentIntent resolved",data:{key,paymentIntentId:res.data.id,subscriptionId:res.data.subscriptionId,clientSecretPresent:Boolean(res.data.clientSecret)},ts:Date.now()})}).catch(()=>{});
+        // #endregion
         setPreparedPayment({
           key,
           clientSecret: res.data.clientSecret,
@@ -281,6 +318,9 @@ export default function RegistrationPayment({
       })
       .catch((createIntentError) => {
         if (cancelled) return;
+        // #region debug-point B:create-intent-error
+        fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:error",msg:"[DEBUG] createHostPlanPaymentIntent failed",data:{key,errorMessage:getErrorMessage(createIntentError,"unknown error")},ts:Date.now()})}).catch(()=>{});
+        // #endregion
         setPreparedPayment(null);
         setPreparedFor(key);
         setError(
@@ -289,9 +329,17 @@ export default function RegistrationPayment({
             "Unable to prepare your host plan payment.",
           ),
         );
+      })
+      .finally(() => {
+        if (inFlightPaymentIntentRequestRef.current?.key === key) {
+          inFlightPaymentIntentRequestRef.current = null;
+        }
       });
 
     return () => {
+      // #region debug-point B:create-intent-cleanup
+      fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:cleanup",msg:"[DEBUG] createHostPlanPaymentIntent effect cleaned up",data:{key},ts:Date.now()})}).catch(()=>{});
+      // #endregion
       cancelled = true;
     };
   }, [
