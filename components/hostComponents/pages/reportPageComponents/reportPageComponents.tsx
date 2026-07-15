@@ -1,66 +1,70 @@
 "use client";
 
-import { useMemo, useState, Dispatch, SetStateAction, ReactNode } from "react";
+import { useMemo, useState, Dispatch, SetStateAction } from "react";
 import PageWrapper from "../../dashboard/pageWrapper";
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  DollarSign,
-  Download,
-  FileText,
-  Star,
-  TrendingUp,
-} from "lucide-react";
+import { DollarSign, FileText, Star, TrendingUp } from "lucide-react";
 import {
   BookingsDonutChart,
   ExpensesCategoryChart,
   RevenueBookingChart,
 } from "../../dashboard/dynamicImport";
 
+import { useGetAnalyticsDashboardQuery } from "@/app/store/services/analyticsApi";
+import { OverviewCard } from "./reportOverviewCard";
 import {
-  DateRange,
-  useGetAnalyticsDashboardQuery,
-} from "@/app/store/services/analyticsApi";
+  VehiclePeformanceTable,
+  VehiclePeformanceRow,
+} from "./vehiclePerformanceTable";
 import {
-  ColumnDef,
-  DataTable,
-  exportToCSV,
-  TableToolbar,
-  useTableRows,
-} from "../../dashboard/customTable";
-
-const DATE_RANGE_BY_DURATION: Record<string, DateRange> = {
-  "3m": "3Months",
-  "6m": "6Months",
-  "1y": "1Year",
-};
-
-const formatNaira = (amount: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-
-const toTitleCase = (value: string) =>
-  value.length === 0 ? value : `${value[0].toUpperCase()}${value.slice(1)}`;
-
-const STATUS_COLORS: Record<string, string> = {
-  active: "#1A56DB",
-  pending: "#F59E0B",
-  completed: "#10B981",
-  cancelled: "#EF4444",
-};
+  DATE_RANGE_BY_DURATION,
+  STATUS_COLORS,
+  formatNaira,
+  toTitleCase,
+} from "./reportHelpers";
+import ReportLoading from "./reportLoading";
+import ReportErrorState from "./reportErrorState";
+import EmptyReportState from "./emptyReportState";
 
 export default function ReportPageComponents() {
+  // useGetAnalyticsDashboardQuery only exposes `data` (and the standard
+  // RTK Query `error` field) — no isLoading/isError/refetch. Loading and
+  // error are derived below from data/error directly, and retries are done
+  // by remounting the query-consuming subtree: bumping this key forces
+  // ReportPageContent (and its useGetAnalyticsDashboardQuery call) to
+  // re-run from scratch.
+  const [retryKey, setRetryKey] = useState(0);
   const [filterDuration, setFilterDuration] = useState("6m");
+
+  return (
+    <ReportPageContent
+      key={retryKey}
+      filterDuration={filterDuration}
+      setFilterDuration={setFilterDuration}
+      onRetry={() => setRetryKey((k) => k + 1)}
+    />
+  );
+}
+
+type ReportPageContentProps = {
+  filterDuration: string;
+  setFilterDuration: Dispatch<SetStateAction<string>>;
+  onRetry: () => void;
+};
+
+function ReportPageContent({
+  filterDuration,
+  setFilterDuration,
+  onRetry,
+}: ReportPageContentProps) {
   const dateRange = DATE_RANGE_BY_DURATION[filterDuration] ?? "6Months";
 
-  const { data: dashboard } = useGetAnalyticsDashboardQuery({
+  const { data: dashboard, error } = useGetAnalyticsDashboardQuery({
     dateRange,
     aggregationLevel: "monthly",
   });
+
+  const isLoading = dashboard === undefined && !error;
+  const isError = !!error;
 
   const overviewCards = useMemo(() => {
     if (!dashboard?.success) {
@@ -180,7 +184,7 @@ export default function ReportPageComponents() {
     }));
   }, [dashboard]);
 
-  const vehiclePerformanceData = useMemo(() => {
+  const vehiclePerformanceData: VehiclePeformanceRow[] = useMemo(() => {
     const vehicles = dashboard?.data.vehiclePerformance;
     if (!vehicles?.length) {
       return [];
@@ -197,17 +201,29 @@ export default function ReportPageComponents() {
     }));
   }, [dashboard]);
 
-  return (
-    <PageWrapper
-      pageTitle="Reports & Analytics"
-      pageDescription="Track financial performance, bookings, and vehicle insights"
-      pageButton={
-        <PageButtons
-          filterDuration={filterDuration}
-          setFilterDuration={setFilterDuration}
-        />
-      }
-    >
+  const isInitialLoading = isLoading;
+  const hasNoData: boolean =
+    !isInitialLoading &&
+    !isError &&
+    revenueBookingData.length === 0 &&
+    bookingDonutData.length === 0 &&
+    expenseCategoryData.length === 0 &&
+    vehiclePerformanceData.length === 0;
+
+  const renderBody = () => {
+    if (isInitialLoading) {
+      return <ReportLoading />;
+    }
+
+    if (isError) {
+      return <ReportErrorState onRetry={onRetry} />;
+    }
+
+    if (hasNoData) {
+      return <EmptyReportState />;
+    }
+
+    return (
       <div className="mt-4 md:mt-8 space-y-6">
         <div className="flex flex-wrap items-center gap-4">
           {overviewCards.map((card) => (
@@ -233,6 +249,21 @@ export default function ReportPageComponents() {
         <ExpensesCategoryChart data={expenseCategoryData} />
         <VehiclePeformanceTable tableData={vehiclePerformanceData} />
       </div>
+    );
+  };
+
+  return (
+    <PageWrapper
+      pageTitle="Reports & Analytics"
+      pageDescription="Track financial performance, bookings, and vehicle insights"
+      pageButton={
+        <PageButtons
+          filterDuration={filterDuration}
+          setFilterDuration={setFilterDuration}
+        />
+      }
+    >
+      {renderBody()}
     </PageWrapper>
   );
 }
@@ -284,195 +315,16 @@ const PageTabButtons = ({
           <button
             key={item.value}
             onClick={() => setFilterDuration(item.value)}
-            className={`py-2 px-4 rounded-xs transition-colors duration-300 cursor-pointer ${
-              isActive
+            className={`py-2 px-4 rounded-xs transition-colors duration-300 cursor-pointer ${isActive
                 ? "bg-blue-700 text-white hover:bg-blue-900"
                 : "bg-transparent text-gray-700 hover:bg-gray-200"
-            }`}
+              }`}
             aria-pressed={isActive}
           >
             {item.label}
           </button>
         );
       })}
-    </div>
-  );
-};
-
-type OverviewCardProps = {
-  iconBg: string;
-  icon: ReactNode;
-  trendPositive: boolean;
-  trendPercentage: string;
-  label: string;
-  number: string;
-};
-
-const OverviewCard = ({
-  iconBg,
-  icon,
-  trendPositive,
-  trendPercentage,
-  label,
-  number,
-}: OverviewCardProps) => {
-  return (
-    <div className="basis-62.5 shrink-0 grow p-4 md:p-6 bg-white rounded-md border border-gray-200 flex flex-col justify-start items-start gap-2 space-y-2">
-      <div className="flex justify-between items-center gap-2 w-full">
-        <div
-          className={`size-12 p-3 rounded-[10px] flex justify-center items-center ${iconBg}`}
-        >
-          {icon}
-        </div>
-        <div
-          className={`flex gap-1 items-center justify-start py-1 px-2 rounded-sm ${trendPositive ? "text-emerald-500 bg-green-100" : "text-red-500 bg-rose-100"}`}
-        >
-          {trendPositive ? (
-            <ArrowUpRight className="size-1 text-current" />
-          ) : (
-            <ArrowDownRight className="size-1 text-current" />
-          )}
-          <span className="text-xs text-current font-semibold font-text leading-4">
-            {trendPercentage}
-          </span>
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 justify-start items-start">
-        <h4 className="text-gray-500 text-xs font-semibold font-text uppercase">
-          {label}
-        </h4>
-        <span className="text-neutral-950 text-lg md:text-3xl font-medium font-text">
-          {number}
-        </span>
-      </div>
-    </div>
-  );
-};
-
-interface VehiclePeformanceRow {
-  id: string;
-  vehicleName: string;
-  trips: number;
-  revenue: string;
-  averageRentalDays: number;
-  lastRentalDate: string;
-  totalMilageDriven: string;
-}
-
-const vehiclePeformanceColumns: ColumnDef<VehiclePeformanceRow>[] = [
-  {
-    key: "vehicleName",
-    header: "Vehicle Name",
-    cell: (row) => (
-      <span className="text-neutral-950 text-sm font-semibold font-text leading-5">
-        {row.vehicleName}
-      </span>
-    ),
-  },
-  {
-    key: "trips",
-    header: "trips",
-    cell: (row) => (
-      <span className="text-neutral-950 text-sm font-normal font-text leading-5">
-        {row.trips}
-      </span>
-    ),
-  },
-  {
-    key: "revenue",
-    header: "revenue",
-    cell: (row) => (
-      <span className="text-emerald-500 text-sm font-medium font-text leading-5">
-        {row.revenue}
-      </span>
-    ),
-  },
-  {
-    key: "averageRentalDays",
-    header: "Avg Rental Days",
-    cell: (row) => (
-      <span className="text-neutral-950 text-sm font-semibold font-text leading-5">
-        {row.averageRentalDays}
-      </span>
-    ),
-  },
-  {
-    key: "lastRentalDate",
-    header: "Last Rental Date",
-    cell: (row) => (
-      <span className="text-neutral-950 text-sm font-normal font-text leading-5">
-        {row.lastRentalDate}
-      </span>
-    ),
-  },
-  {
-    key: "totalMilageDriven",
-    header: "Total Mileage Driven",
-    cell: (row) => (
-      <span className="text-neutral-950 text-sm font-normal font-text leading-5">
-        {row.totalMilageDriven}
-      </span>
-    ),
-  },
-];
-
-const VehiclePeformanceTable = ({
-  tableData,
-}: {
-  tableData: VehiclePeformanceRow[];
-}) => {
-  const data = tableData;
-
-  const { rows, pagination } = useTableRows({
-    tableId: "vehiclePeformance",
-    data,
-    rowsPerPage: 10,
-    searchFields: ["vehicleName", "id"],
-    sortField: "lastRentalDate",
-  });
-
-  return (
-    <div className="bg-white p-3 md:p-6 rounded-[10px]">
-      <h3 className="font-semibold text-base font-text mb-3">
-        Vehicle Peformance
-      </h3>
-      <DataTable
-        tableId="vehiclePeformance"
-        columns={vehiclePeformanceColumns}
-        rows={rows}
-        pagination={pagination}
-        emptyMessage="No patment history found."
-        toolbar={
-          <TableToolbar
-            search={{ placeholder: "Search by vechile name or ID..." }}
-            dateSort
-            actions={
-              <button
-                onClick={() =>
-                  exportToCSV(rows, {
-                    filename: "VehiclePeformanceReport",
-                    columns: [
-                      "id",
-                      "vehicleName",
-                      "trips",
-                      "revenue",
-                      "averageRentalDays",
-                      "lastRentalDate",
-                      "totalMilageDriven",
-                    ],
-                  })
-                }
-                className="flex items-center gap-2 px-3 py-2 rounded-xs border border-blue-700 hover:bg-blue-900 group duration-300 transition-colors cursor-pointer"
-              >
-                <span className="text-blue-700 text-sm font-medium font-text group-hover:text-blue-200 transition-colors">
-                  Export CSV
-                </span>
-                <Download className="size-4 text-blue-700 group-hover:text-blue-200 transition-colors" />
-              </button>
-            }
-          />
-        }
-      />
     </div>
   );
 };
