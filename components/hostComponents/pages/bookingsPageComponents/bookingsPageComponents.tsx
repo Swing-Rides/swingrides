@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageWrapper from "../../dashboard/pageWrapper";
@@ -13,6 +13,9 @@ import UpcomingBookingsRecordsTable, {
 } from "./upcomingRecordsTable";
 import LateReturnsTable, { LateReturnsTableRow } from "./lateReturnsTable";
 import DamageAlertTable, { DamageAlertTableRow } from "./damageAlertTable";
+import BookingsLoading from "./loadingBookingPage";
+import BookingsErrorState from "./bookingErrorState";
+import EmptyBookingsState from "./emptyBookingState";
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -22,6 +25,22 @@ const currency = new Intl.NumberFormat("en-US", {
 });
 
 export default function BookingsPageComponents() {
+
+  const [retryKey, setRetryKey] = useState(0);
+
+  return (
+    <BookingsPageContent
+      key={retryKey}
+      onRetry={() => setRetryKey((k) => k + 1)}
+    />
+  );
+}
+
+type BookingsPageContentProps = {
+  onRetry: () => void;
+};
+
+function BookingsPageContent({ onRetry }: BookingsPageContentProps) {
   const { data, isLoading, isError } = useListBookingsQuery();
 
   const bookings = data?.data ?? [];
@@ -47,6 +66,37 @@ export default function BookingsPageComponents() {
     })
     .reduce((sum, booking) => sum + (booking.totalAmount || 0), 0);
 
+  const isInitialLoading = isLoading && !data;
+  const hasNoBookings = !isInitialLoading && !isError && bookings.length === 0;
+
+  const renderBody = () => {
+    if (isInitialLoading) {
+      return <BookingsLoading />;
+    }
+
+    if (isError) {
+      return <BookingsErrorState onRetry={onRetry} />;
+    }
+
+    if (hasNoBookings) {
+      return <EmptyBookingsState />;
+    }
+
+    return (
+      <div>
+        <Suspense>
+          <BookingPageTab
+            allBookingsRows={allBookingsRows}
+            upcomingRows={upcomingRows}
+            lateReturnRows={lateReturnRows}
+            damageRows={damageRows}
+            isLoading={isLoading}
+          />
+        </Suspense>
+      </div>
+    );
+  };
+
   return (
     <PageWrapper
       pageTitle="Bookings"
@@ -54,54 +104,41 @@ export default function BookingsPageComponents() {
       pageButton={<PageButton />}
     >
       <div className="mt-4 md:mt-8 space-y-5">
-        <div className="flex flex-wrap items-center gap-4">
-          <OverviewCard
-            title="Total Bookings"
-            number={String(bookings.length)}
-            numberColor="text-neutral-950"
-            label="All time"
-          />
-          <OverviewCard
-            title="Active"
-            number={String(activeCount)}
-            numberColor="text-emerald-500"
-            label="Currently rented"
-          />
-          <OverviewCard
-            title="Pending"
-            number={String(pendingCount)}
-            numberColor="text-amber-500"
-            label="Awaiting confirmation"
-          />
-          <OverviewCard
-            title="Completed"
-            number={String(completedCount)}
-            numberColor="text-gray-500"
-            label="This month"
-          />
-          <OverviewCard
-            title="Revenue MTD"
-            number={currency.format(revenueMtd)}
-            numberColor="text-emerald-500"
-            label="This month"
-          />
-        </div>
-        {isError ? (
-          <p className="text-sm font-medium text-red-600">
-            Unable to load bookings. Please try again.
-          </p>
-        ) : null}
-        <div>
-          <Suspense>
-            <BookingPageTab
-              allBookingsRows={allBookingsRows}
-              upcomingRows={upcomingRows}
-              lateReturnRows={lateReturnRows}
-              damageRows={damageRows}
-              isLoading={isLoading}
+        {isInitialLoading ? null : (
+          <div className="flex flex-wrap items-center gap-4">
+            <OverviewCard
+              title="Total Bookings"
+              number={String(bookings.length)}
+              numberColor="text-neutral-950"
+              label="All time"
             />
-          </Suspense>
-        </div>
+            <OverviewCard
+              title="Active"
+              number={String(activeCount)}
+              numberColor="text-emerald-500"
+              label="Currently rented"
+            />
+            <OverviewCard
+              title="Pending"
+              number={String(pendingCount)}
+              numberColor="text-amber-500"
+              label="Awaiting confirmation"
+            />
+            <OverviewCard
+              title="Completed"
+              number={String(completedCount)}
+              numberColor="text-gray-500"
+              label="This month"
+            />
+            <OverviewCard
+              title="Revenue MTD"
+              number={currency.format(revenueMtd)}
+              numberColor="text-emerald-500"
+              label="This month"
+            />
+          </div>
+        )}
+        {renderBody()}
       </div>
     </PageWrapper>
   );
