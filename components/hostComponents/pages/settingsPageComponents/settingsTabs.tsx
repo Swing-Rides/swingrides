@@ -19,10 +19,11 @@ import SendSmsForm from "../../forms/sendSMSForm";
 import ProfileCompanyForm, {
   ProfileCompanyFormValues,
 } from "../../forms/profileCompanyForm";
+import ProfileCompanyErrorState from "./profileCompanyErrorState";
 
 // ─── Shared Types ───────────────────────────────────────────────────────────
 
-export type AgreementType = "long-term" | "commercial-fleet";
+export type AgreementType = "long-term" | "short-term" | "commercial-fleet";
 
 export type PaymentHistoryStatusTypes = "paid" | "pending" | "failed";
 
@@ -65,8 +66,12 @@ export const ProfileCompanyTab = ({
   photoUrl,
   onSubmit,
 }: ProfileCompanyTabProps) => {
-  if (loading || !defaults) {
+  if (loading) {
     return <ProfileCompanyFormSkeleton />;
+  }
+
+  if (!defaults) {
+    return <ProfileCompanyErrorState />;
   }
 
   return (

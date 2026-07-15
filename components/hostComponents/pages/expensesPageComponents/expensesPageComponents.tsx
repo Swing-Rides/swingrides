@@ -31,6 +31,7 @@ import {
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import { ExpenseBarSegment } from "../../dashboard/dynamicImport";
 import { ExpensesBarSegmentDataType } from "../../charts/expensesBarSegment";
+import { toast } from "sonner";
 
 // ─── Vehicle options — stable async fetcher ───────────────────────────────────
 
@@ -514,6 +515,9 @@ const ExpensesTab = ({
             onSubmit={async (values) => {
               await onAddExpense(values);
               closePopup();
+              toast.success("Expense Added", {
+                description: "You can refresh the page to see the updated data.",
+              });
             }}
           />
         )}
@@ -932,6 +936,9 @@ const TollTab = ({
             onCancel={closePopup}
             onSubmit={async (values) => {
               await onAddToll(values);
+              toast.success("Toll Record Added", {
+                description: "Your profile and company details have been saved.",
+              });
               closePopup();
             }}
           />

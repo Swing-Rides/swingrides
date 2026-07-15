@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import PageWrapper from "../../dashboard/pageWrapper";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,10 +16,13 @@ import {
   AgreementData,
 } from "./settingsTabs";
 import {
+  HostPlanType,
   useGetHostSettingsDashboardQuery,
   useUpdateProfileCompanySettingsMutation,
 } from "@/app/store/services/settingsApi";
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
+import { toast } from "sonner";
+import ManageBillingModal from "./manageBillingModal";
 
 // ─── Tab nav config ─────────────────────────────────────────────────────────
 
@@ -48,13 +51,18 @@ const settingsTabTitle = [
 
 export default function SettingsPageComponents() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <SettingsPagePageContent />
-    </Suspense>
+    <PageWrapper
+      pageTitle="Account Settings"
+      pageDescription="Manage your profile, billing, communication, and payment settings"
+    >
+      <Suspense fallback={<div>Loading...</div>}>
+        <SettingsPageContent />
+      </Suspense>
+    </PageWrapper>
   );
 }
 
-const SettingsPagePageContent = () => {
+const SettingsPageContent = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -187,83 +195,115 @@ const SettingsPagePageContent = () => {
     const templates = settingsData?.agreements.templates ?? [];
 
     return templates.map((item) => ({
-      title: item.type === "longTerm" ? "Long-Term" : "Commercial Fleet",
+      title:
+        item.type === "longTerm"
+          ? "Long-Term"
+          : item.type === "shortTerm"
+            ? "Short-Term"
+            : "Commercial Fleet and Custom Agreement",
       label: item.description,
       previewLink: item.pdfUrl,
       shareLink: item.signatureRequestUrl || "",
     }));
   }, [settingsData]);
 
+  const [showBillingModal, setShowBillingModal] = useState(false);
+
   const handleProfileSubmit = async (values: ProfileCompanyFormValues) => {
     const fullName = `${values.firstName} ${values.lastName}`.trim();
 
-    await updateProfileCompanySettings({
-      fullName,
-      phoneNumber: values.phoneNumber,
-      email: values.email,
-      companyName: values.companyName,
-      address: values.address,
-      city: values.city,
-      postalCode: values.postalCode,
-      profilePictureUrl: values.profilePhotoUrl ?? profilePhotoUrl,
-    }).unwrap();
-    refetch();
+    try {
+      await updateProfileCompanySettings({
+        fullName,
+        phoneNumber: values.phoneNumber,
+        email: values.email,
+        companyName: values.companyName,
+        address: values.address,
+        city: values.city,
+        postalCode: values.postalCode,
+        profilePictureUrl: values.profilePhotoUrl ?? profilePhotoUrl,
+      }).unwrap();
+
+      await refetch();
+
+      toast.success("Profile updated", {
+        description: "Your profile and company details have been saved.",
+      });
+    } catch (error) {
+      toast.error("Update failed", {
+        description:
+          (error as { data?: { message?: string } })?.data?.message ??
+          "Something went wrong while saving your changes. Please try again.",
+      });
+    }
   };
 
   const handleManageBilling = () => {
-    // TODO: replace with real navigation/API call
+    setShowBillingModal(true);
     console.log("manage billing clicked");
   };
 
+  const onSelectNewPlan = (plan: HostPlanType) => {
+    console.log("Selected plan:", plan);
+    setShowBillingModal(false);
+
+    // TODO:
+    // router.push(...)
+    // create stripe checkout session
+    // call update subscription API
+  }
+
   return (
-    <PageWrapper
-      pageTitle="Account Settings"
-      pageDescription="Manage your profile, billing, communication, and payment settings"
-    >
-      <div className="mt-4 md:mt-8">
-        <Tabs
-          value={activeTab}
-          onValueChange={handleTabChange}
-          className="w-full space-y-5 md:space-y-8"
-        >
-          <TabsList variant="line" className="gap-20 border-b-2">
-            {settingsTabTitle.map((item) => (
-              <TabsTrigger
-                key={item.value}
-                value={item.value}
-                className="flex gap-2 item-center justify-start data-[state=active]:text-blue-700 group-data-[variant=line]/tabs-list:data-active:after:bg-blue-700 cursor-pointer"
-              >
-                {item.icon}
-                {item.title}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value="profileCompany">
-            <ProfileCompanyTab
-              loading={settingsLoading}
-              defaults={profileDefaults}
-              photoUrl={profilePhotoUrl}
-              onSubmit={handleProfileSubmit}
-            />
-          </TabsContent>
-          <TabsContent value="billing">
-            <BillingTab
-              status={billingStatus}
-              planName={planName}
-              planPrice={planPrice}
-              renewalDate={renewalDate}
-              onManageBilling={handleManageBilling}
-              paymentHistory={paymentHistory}
-            />
-          </TabsContent>
-          <TabsContent value="communicate">
-            <CommunicateTab communicationLog={communicationLog} />
-          </TabsContent>
-          <TabsContent value="agreements">
-            <AgreementsTab agreements={agreements} />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </PageWrapper>
+    <div className="mt-4 md:mt-8">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full space-y-5 md:space-y-8"
+      >
+        <TabsList variant="line" className="gap-20 border-b-2">
+          {settingsTabTitle.map((item) => (
+            <TabsTrigger
+              key={item.value}
+              value={item.value}
+              className="flex gap-2 item-center justify-start data-[state=active]:text-blue-700 group-data-[variant=line]/tabs-list:data-active:after:bg-blue-700 cursor-pointer"
+            >
+              {item.icon}
+              {item.title}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="profileCompany">
+          <ProfileCompanyTab
+            loading={settingsLoading}
+            defaults={profileDefaults}
+            photoUrl={profilePhotoUrl}
+            onSubmit={handleProfileSubmit}
+          />
+        </TabsContent>
+        <TabsContent value="billing">
+          <BillingTab
+            status={billingStatus}
+            planName={planName}
+            planPrice={planPrice}
+            renewalDate={renewalDate}
+            onManageBilling={handleManageBilling}
+            paymentHistory={paymentHistory}
+          />
+        </TabsContent>
+        <TabsContent value="communicate">
+          <CommunicateTab communicationLog={communicationLog} />
+        </TabsContent>
+        <TabsContent value="agreements">
+          <AgreementsTab agreements={agreements} />
+        </TabsContent>
+      </Tabs>
+      {showBillingModal && (
+        <ManageBillingModal
+          currentPlan={settingsData?.billing.currentPlan.plan}
+          onClose={() => setShowBillingModal(false)}
+          onSelect={onSelectNewPlan}
+        />
+      )}
+    </div>
   );
 };

@@ -57,7 +57,7 @@ const axiosBaseQuery = (): BaseQueryFn<
 
 export type BillingPaymentStatus = "paid" | "pending" | "failed";
 export type CommunicationStatus = "delivered" | "pending" | "failed";
-export type AgreementType = "longTerm" | "commercialFleet";
+export type AgreementType = "longTerm" | "shortTerm" | "commercialFleet";
 export type HostBusinessVerificationStatus =
   | "not_submitted"
   | "pending"

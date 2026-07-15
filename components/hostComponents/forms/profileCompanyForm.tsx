@@ -22,7 +22,6 @@ import { validators } from "@/components/forms/form.validators";
 import { RegisterOptions } from "react-hook-form";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 export type ProfileCompanyFormValues = {
   profilePhoto?: FileList;
   profilePhotoUrl?: string;
@@ -45,7 +44,6 @@ type ProfileCompanyFormProps = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const getInitials = (firstName?: string, lastName?: string) => {
   const first = firstName?.trim()[0]?.toUpperCase() ?? "";
   const last = lastName?.trim()[0]?.toUpperCase() ?? "";
@@ -53,7 +51,6 @@ const getInitials = (firstName?: string, lastName?: string) => {
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
-
 export default function ProfileCompanyForm({
   defaultValues,
   currentPhotoUrl,
@@ -368,7 +365,6 @@ export default function ProfileCompanyForm({
 }
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
-
 const Section = ({
   title,
   children,
@@ -385,7 +381,6 @@ const Section = ({
 );
 
 // ─── Form row ─────────────────────────────────────────────────────────────────
-
 type FormRowProps = {
   label: string;
   htmlFor: string;
@@ -426,7 +421,6 @@ const FormRow = ({
 );
 
 // ─── Icon input ───────────────────────────────────────────────────────────────
-
 const IconInput = ({
   icon,
   hasError,
@@ -445,7 +439,6 @@ const IconInput = ({
 );
 
 // ─── Shared input class helper ────────────────────────────────────────────────
-
 const inputCn = (hasError: boolean) =>
   cn(
     "rounded-xs border-[#E5E7EB] focus-visible:ring-[#1A56DB] font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF] w-full",
@@ -453,7 +446,6 @@ const inputCn = (hasError: boolean) =>
   );
 
 // ─── Reset password dialog ────────────────────────────────────────────────────
-
 type ResetPasswordFormValues = {
   resetEmail: string;
 };
