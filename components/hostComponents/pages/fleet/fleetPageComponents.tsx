@@ -9,6 +9,9 @@ import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import PageWrapper from "../../dashboard/pageWrapper";
 import FleetTable from "./fleetTable";
 import PopupWrapper from "./popupWrapper";
+import FleetLoading from "./pageLoading";
+import FleetErrorState from "./pageErrorState";
+import EmptyFleetState from "./pageEmptyState";
 import RequestRelistVehicleForm from "../../forms/requestRelistVehicleForm";
 import type { RequestRelistFormValues } from "../../forms/requestRelistVehicleForm";
 import UnlistVehicleForm from "../../forms/unlistVehicleForm";
@@ -71,7 +74,7 @@ export default function FleetPageComponents() {
     return () => clearTimeout(debounceTimer);
   }, [search]);
 
-  useEffect(() => {
+  const loadVehicles = () => {
     fetchVehicles({
       page: Number.isFinite(page) && page > 0 ? page : 1,
       limit: 10,
@@ -79,6 +82,11 @@ export default function FleetPageComponents() {
       status,
       vehicleType,
     });
+  };
+
+  useEffect(() => {
+    loadVehicles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchVehicles, page, debouncedSearch, status, vehicleType]);
 
   const closePopup = () => {
@@ -148,21 +156,13 @@ export default function FleetPageComponents() {
 
     try {
       await endSnoozeEarly({ vehicleId: vehicle._id }).unwrap();
-      fetchVehicles({
-        page: Number.isFinite(page) && page > 0 ? page : 1,
-        limit: 10,
-        search: debouncedSearch,
-        status,
-        vehicleType,
-      });
+      loadVehicles();
       closePopup();
     } catch (error) {
       setVehicleActionError(getMutationErrorMessage(error));
     }
   };
 
-  // ── Form submit handlers — replace the console.log + local state update
-  // with real requests. selectedVehicle is in scope, so you have the id. ──
   const submitRelistRequest = async (values: RequestRelistFormValues) => {
     if (!selectedVehicle?._id) return;
 
@@ -176,13 +176,7 @@ export default function FleetPageComponents() {
       }).unwrap();
 
       closePopup();
-      fetchVehicles({
-        page: Number.isFinite(page) && page > 0 ? page : 1,
-        limit: 10,
-        search: debouncedSearch,
-        status,
-        vehicleType,
-      });
+      loadVehicles();
     } catch (error) {
       setVehicleActionError(getMutationErrorMessage(error));
     }
@@ -200,13 +194,7 @@ export default function FleetPageComponents() {
       }).unwrap();
 
       closePopup();
-      fetchVehicles({
-        page: Number.isFinite(page) && page > 0 ? page : 1,
-        limit: 10,
-        search: debouncedSearch,
-        status,
-        vehicleType,
-      });
+      loadVehicles();
     } catch (error) {
       setVehicleActionError(getMutationErrorMessage(error));
     }
@@ -225,13 +213,7 @@ export default function FleetPageComponents() {
       }).unwrap();
 
       closePopup();
-      fetchVehicles({
-        page: Number.isFinite(page) && page > 0 ? page : 1,
-        limit: 10,
-        search: debouncedSearch,
-        status,
-        vehicleType,
-      });
+      loadVehicles();
     } catch (error) {
       setVehicleActionError(getMutationErrorMessage(error));
     }
@@ -250,16 +232,102 @@ export default function FleetPageComponents() {
       }).unwrap();
 
       closePopup();
-      fetchVehicles({
-        page: Number.isFinite(page) && page > 0 ? page : 1,
-        limit: 10,
-        search: debouncedSearch,
-        status,
-        vehicleType,
-      });
+      loadVehicles();
     } catch (error) {
       setVehicleActionError(getMutationErrorMessage(error));
     }
+  };
+
+  // Only show the full-page skeleton on the very first load (no data yet).
+  // Subsequent refetches (search/filter/pagination) are handled by
+  // FleetTable's own isFetching-driven loading state so the table doesn't
+  // unmount on every keystroke.
+  const isInitialLoading = isLoading && !data;
+  const hasNoVehicles =
+    !isInitialLoading && !isError && (data?.summary.totalVehicles ?? 0) === 0;
+
+  const renderContent = () => {
+    if (isInitialLoading) {
+      return <FleetLoading />;
+    }
+
+    if (isError) {
+      return (
+        <FleetErrorState onRetry={loadVehicles} isRetrying={isFetching} />
+      );
+    }
+
+    if (hasNoVehicles) {
+      return <EmptyFleetState />;
+    }
+
+    return (
+      <div className="mt-4 md:mt-8">
+        <div className="flex flex-wrap items-center gap-4">
+          <OverviewCard
+            title="Total Vehicles"
+            number={data?.summary.totalVehicles.toString() || "0"}
+            numberColor="text-blue-700"
+          />
+          <OverviewCard
+            title="Available"
+            number={data?.summary.available.toString() || "0"}
+            numberColor="text-cyan-600"
+          />
+          <OverviewCard
+            title="Currently Rented"
+            number={data?.summary.currentlyRented.toString() || "0"}
+            numberColor="text-blue-500"
+          />
+          <OverviewCard
+            title="In Service"
+            number={data?.summary.inService.toString() || "0"}
+            numberColor="text-amber-500"
+          />
+          <OverviewCard
+            title="Fleet Value"
+            number={data?.summary.fleetValueFormatted || "$0"}
+            numberColor="text-emerald-500"
+          />
+        </div>
+        <FleetTable
+          data={data?.data}
+          pagination={data?.pagination}
+          isLoading={
+            isFetching ||
+            isDeleting ||
+            isCreatingBooking ||
+            isUnlisting ||
+            isRelisting ||
+            isSavingSnooze ||
+            isEndingSnoozeEarly
+          }
+          isError={isError}
+          onDeleteVehicle={handleDeleteVehicle}
+          onUnlistVehicle={handleUnlistVehicle}
+          onRelistVehicle={handleRelistVehicle}
+          onSnoozeVehicle={handleSnoozeVehicle}
+          onEditSnoozeVehicle={handleEditSnoozeVehicle}
+          onCreateBooking={handleCreateBooking}
+          onEndSnoozeEarly={handleEndSnoozeEarly}
+        />
+        {deleteError ? (
+          <p className="mt-3 text-sm font-medium text-red-600">
+            {deleteError}
+          </p>
+        ) : null}
+        {createBookingError ? (
+          <p className="mt-3 text-sm font-medium text-red-600">
+            {createBookingError}
+          </p>
+        ) : null}
+        {vehicleActionError ? (
+          <p className="mt-3 text-sm font-medium text-red-600">
+            {vehicleActionError}
+          </p>
+        ) : null}
+      </div>
+    );
   };
 
   return (
@@ -269,72 +337,7 @@ export default function FleetPageComponents() {
         pageDescription="Manage all your vehicles in one place"
         pageButton={<PageButton />}
       >
-        <div className="mt-4 md:mt-8">
-          <div className="flex flex-wrap items-center gap-4">
-            <OverviewCard
-              title="Total Vehicles"
-              number={data?.summary.totalVehicles.toString() || "0"}
-              numberColor="text-blue-700"
-            />
-            <OverviewCard
-              title="Available"
-              number={data?.summary.available.toString() || "0"}
-              numberColor="text-cyan-600"
-            />
-            <OverviewCard
-              title="Currently Rented"
-              number={data?.summary.currentlyRented.toString() || "0"}
-              numberColor="text-blue-500"
-            />
-            <OverviewCard
-              title="In Service"
-              number={data?.summary.inService.toString() || "0"}
-              numberColor="text-amber-500"
-            />
-            <OverviewCard
-              title="Fleet Value"
-              number={data?.summary.fleetValueFormatted || "$0"}
-              numberColor="text-emerald-500"
-            />
-          </div>
-          <FleetTable
-            data={data?.data}
-            pagination={data?.pagination}
-            isLoading={
-              isLoading ||
-              isFetching ||
-              isDeleting ||
-              isCreatingBooking ||
-              isUnlisting ||
-              isRelisting ||
-              isSavingSnooze ||
-              isEndingSnoozeEarly
-            }
-            isError={isError}
-            onDeleteVehicle={handleDeleteVehicle}
-            onUnlistVehicle={handleUnlistVehicle}
-            onRelistVehicle={handleRelistVehicle}
-            onSnoozeVehicle={handleSnoozeVehicle}
-            onEditSnoozeVehicle={handleEditSnoozeVehicle}
-            onCreateBooking={handleCreateBooking}
-            onEndSnoozeEarly={handleEndSnoozeEarly}
-          />
-          {deleteError ? (
-            <p className="mt-3 text-sm font-medium text-red-600">
-              {deleteError}
-            </p>
-          ) : null}
-          {createBookingError ? (
-            <p className="mt-3 text-sm font-medium text-red-600">
-              {createBookingError}
-            </p>
-          ) : null}
-          {vehicleActionError ? (
-            <p className="mt-3 text-sm font-medium text-red-600">
-              {vehicleActionError}
-            </p>
-          ) : null}
-        </div>
+        {renderContent()}
       </PageWrapper>
 
       <PopupWrapper
