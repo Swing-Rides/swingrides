@@ -3,6 +3,7 @@ import { Bebas_Neue, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ChakraUIProvider } from "@/components/providers/chakraProvider";
 import ReduxProvider from "@/components/providers/reduxProvider";
+import { Toaster } from 'sonner';
 
 const bebasNeueGoogle = Bebas_Neue({
   subsets: ["latin"],
@@ -34,6 +35,7 @@ export default function RootLayout({
       <body className="flex flex-col bg-slate-100">
         <ReduxProvider>
           <ChakraUIProvider>{children}</ChakraUIProvider>
+          <Toaster position="top-right" richColors />
         </ReduxProvider>
       </body>
     </html>
