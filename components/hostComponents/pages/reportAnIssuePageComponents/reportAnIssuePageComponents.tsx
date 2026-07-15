@@ -18,12 +18,18 @@ import {
   useCreateIssueReportMutation,
   useGetIssueReportsQuery,
 } from "@/app/store/services/reportApi";
+import ReportAnIssueLoading from "./reportAnIssueLoading";
 
 export default function ReportAnIssuePageComponents() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <ReportAnIssuePageContent />
-    </Suspense>
+    <PageWrapper
+      pageTitle="Report An Issue"
+      pageDescription="Submit a complaint or support request to the SwingRides team. We'll respond within 24 hours."
+    >
+      <Suspense fallback={<ReportAnIssueLoading />}>
+        <ReportAnIssuePageContent />
+      </Suspense>
+    </PageWrapper>
   );
 }
 
@@ -54,10 +60,6 @@ function ReportAnIssuePageContent() {
   };
 
   return (
-    <PageWrapper
-      pageTitle="Report An Issue"
-      pageDescription="Submit a complaint or support request to the SwingRides team. We'll respond within 24 hours."
-    >
       <div className="mt-4 md:mt-8">
         <Tabs
           value={activeTab}
@@ -92,7 +94,6 @@ function ReportAnIssuePageContent() {
           </TabsContent>
         </Tabs>
       </div>
-    </PageWrapper>
   );
 }
 
