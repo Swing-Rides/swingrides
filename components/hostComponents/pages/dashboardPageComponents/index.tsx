@@ -92,9 +92,26 @@ export default function DashboardPageComponent() {
     router.push(query ? `${pathname}?${query}` : pathname);
   }, [hostPayment?.plan, pathname, router, searchParams]);
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+
+    if (hour >= 5 && hour < 12) {
+      return "Good morning";
+    }
+
+    if (hour >= 12 && hour < 17) {
+      return "Good afternoon";
+    }
+
+    return "Good evening";
+  };
+
+  const greeting = getGreeting();
+
   return (
     <PageWrapper
-      pageTitle="Good Morning, Metro Rentals! 👋"
+      // pageTitle="Good Morning, Metro Rentals! 👋"
+      pageTitle={`${greeting}, ${hostProfile?.companyName}! 👋`}
       pageDescription="Here's what's happening with your fleet today."
     >
       <div className="space-y-4">
