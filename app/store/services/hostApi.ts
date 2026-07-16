@@ -21,6 +21,8 @@ import {
   MaintenanceDashboardResponse,
   ServiceHistoryItem,
 } from "@/types/logservice.type";
+import { toast } from "sonner";
+import { BillingPaymentStatus, HostBusinessVerificationStatus } from "./settingsApi";
 
 type AxiosBaseQueryArgs =
   | string
@@ -37,6 +39,10 @@ type AxiosBaseQueryError = {
   data: unknown;
 };
 
+interface ErrorResponseData {
+  message?: string;
+}
+
 const axiosBaseQuery = (): BaseQueryFn<
   AxiosBaseQueryArgs,
   unknown,
@@ -47,11 +53,11 @@ const axiosBaseQuery = (): BaseQueryFn<
       typeof args === "string"
         ? { url: args, method: "GET" as Method }
         : {
-            url: args.url,
-            method: args.method ?? "GET",
-            data: args.data ?? args.body,
-            params: args.params,
-          };
+          url: args.url,
+          method: args.method ?? "GET",
+          data: args.data ?? args.body,
+          params: args.params,
+        };
 
     try {
       const result = await apiClient({
@@ -62,7 +68,20 @@ const axiosBaseQuery = (): BaseQueryFn<
       });
       return { data: result.data };
     } catch (error) {
-      const axiosError = error as AxiosError;
+      const axiosError = error as AxiosError<ErrorResponseData>;
+      const responseData = axiosError.response?.data;
+      const message =
+        typeof responseData?.message === "string"
+          ? responseData.message
+          : typeof responseData === "string"
+            ? responseData
+            : "Process failed";
+
+      toast.message(message);
+
+      console.log("ERROR===", axiosError.response?.data);
+      console.log("message===", axiosError.message);
+
       return {
         error: {
           status: axiosError.response?.status,
@@ -373,6 +392,12 @@ export const hostApi = createApi({
           companyName?: string;
           profilePictureUrl?: string;
           phoneNumber?: string;
+          businessVerification: {
+            status: HostBusinessVerificationStatus;
+          };
+          payment: {
+            plan: BillingPaymentStatus;
+          }
         };
       },
       void

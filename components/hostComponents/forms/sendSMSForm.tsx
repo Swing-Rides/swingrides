@@ -167,7 +167,7 @@ export default function SendSmsForm({
                                 <Button
                                         type='submit'
                                         disabled={isSubmitting}
-                                        className='bg-blue-700 hover:bg-blue-900 text-white font-medium font-text rounded-xs cursor-pointer transition-colors duration-200 disabled:opacity-50 disabled:pointer-events-none'
+                                        className='bg-blue-700 hover:bg-blue-950 py-2 px-5 text-xs text-white font-medium font-text rounded-xs cursor-pointer transition-colors duration-200 disabled:opacity-50 disabled:pointer-events-none'
                                 >
                                         {isSubmitting
                                                 ? (

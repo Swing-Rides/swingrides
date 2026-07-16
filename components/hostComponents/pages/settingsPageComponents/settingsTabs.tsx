@@ -20,6 +20,7 @@ import ProfileCompanyForm, {
   ProfileCompanyFormValues,
 } from "../../forms/profileCompanyForm";
 import ProfileCompanyErrorState from "./profileCompanyErrorState";
+import { DataList } from "../bookingsPageComponents/singleBookingPageComponents/bookingCards";
 
 // ─── Shared Types ───────────────────────────────────────────────────────────
 
@@ -107,6 +108,8 @@ export type BillingTabProps = {
   planPrice: string;
   renewalDate: string;
   onManageBilling?: () => void;
+  onWithdrawFund: () => void;
+  onUnlinkStripe: () => void;
   paymentHistory: PaymentHistoryRow[];
 };
 
@@ -117,9 +120,12 @@ export const BillingTab = ({
   renewalDate,
   onManageBilling,
   paymentHistory,
+  onWithdrawFund,
+  onUnlinkStripe
 }: BillingTabProps) => {
   return (
     <div className="space-y-6 max-w-237.5">
+      {/* Current Plan */}
       <div className="bg-white p-3 md:p-6 rounded-[10px]">
         <h3 className="font-semibold text-base font-text mb-3 md:mb-6">
           Current Plan
@@ -136,15 +142,54 @@ export const BillingTab = ({
           </div>
           <button
             onClick={onManageBilling}
-            className="border border-blue-700 text-blue-700 bg-transparent py-2.5 px-4 rounded-xs hover:bg-blue-900 hover:text-white transition-colors duration-300 cursor-pointer"
+            className="border border-blue-700 text-blue-700 bg-transparent text-xs py-2.5 px-5 rounded-xs hover:bg-blue-900 hover:text-white transition-colors duration-300 cursor-pointer"
           >
             Manage Billing
           </button>
         </div>
       </div>
+
+      {/* Payment */}
+      <div className="bg-white p-3 md:p-6 rounded-[10px] space-y-5">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-base font-text">
+            Payments
+          </h3>
+          <div className="flex items-center justify-end gap-3">
+            <button
+              onClick={onWithdrawFund}
+              className="border border-blue-700 text-blue-700 bg-transparent text-xs py-2.5 px-5 rounded-xs hover:bg-blue-900 hover:text-white transition-colors duration-300 cursor-pointer"
+            >
+              Withdraw Funds
+            </button>
+            <button
+              onClick={onUnlinkStripe}
+              className="border border-red-500 bg-red-500 text-white text-xs py-2.5 px-5 rounded-xs hover:bg-red-900 hover:border-red-900 hover:text-white transition-colors duration-300 cursor-pointer"
+            >
+              Unlink Stripe
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-wrap justify-start gap-10">
+          <DataList 
+            label="Total Earnings"
+            value={"99,999,999"}
+          />
+          <DataList 
+            label="Total Withdraws"
+            value={"99,999,999"}
+          />
+          <DataList 
+            label="Wallet Balance"
+            value={"99,999,999"}
+          />
+        </div>
+      </div>
+
+      {/* Payment History */}
       <div className="bg-white p-3 md:p-6 rounded-[10px]">
         <h3 className="font-semibold text-base font-text mb-3">
-          Payment History
+          Billing History
         </h3>
         <PaymentHistoryTable data={paymentHistory} />
       </div>

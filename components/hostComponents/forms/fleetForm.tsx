@@ -57,10 +57,12 @@ const VEHICLE_TYPES = [
 
 const STATUS_OPTIONS = ["Available", "Rented", "Maintenance", "Inactive"];
 const TRANSMISSION_OPTIONS = ["Automatic", "Manual", "CVT"];
+const FUEL_TYPE_OPTIONS = ["Diesel", "Electric", "Gas/Petrol"]
+const DRIVE_TYPE_OPTIONS = ["All Wheel Drive (AWD)", "Four Wheel Drive (4WD)", "Front Wheel Drive (FWD)", "Rear Wheel Drive (RWD)"]
 
 const MAX_IMAGES = 5;
-const MAX_IMAGE_SIZE_MB = 10;
-const MAX_DOC_SIZE_MB = 10;
+const MAX_IMAGE_SIZE_MB = 5;
+const MAX_DOC_SIZE_MB = 5;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -75,6 +77,7 @@ export type FleetFormValues = {
   insuranceCarrier: string;
   insurancePolicyNumber: string;
   insuranceExpiration: string;
+  dailyInsuranceFee: number | "";
 
   licensePlate: string;
   vin: string;
@@ -89,9 +92,17 @@ export type FleetFormValues = {
   transmission: string;
   seats: number | "";
   mileage: number | "";
+  fuelType: string;
+  doors: number | "";
+  fuelEfficiency: string;
+  engine: string;
+  driveType: string;
+  horsePower: number | "";
 
-  pickupAddress: string;
+  pickupAddressStreet: string;
   city: string;
+  pickupAddressState: string;
+  zipCode: string;
 
   vehicleImages?: FileList;
   vehicleImageUrls?: string[];
@@ -117,18 +128,27 @@ const FALLBACK_DEFAULTS: FleetFormValues = {
   insuranceCarrier: "",
   insurancePolicyNumber: "",
   insuranceExpiration: "",
+  dailyInsuranceFee: "",
   licensePlate: "",
   vin: "",
   priceDaily: "",
   priceWeekly: "",
   priceMonthly: "",
   status: "",
-  instantlyAvailable: false,
+  instantlyAvailable: true,
   transmission: "",
   seats: "",
   mileage: "",
-  pickupAddress: "",
+  fuelType: "",
+  doors: "",
+  fuelEfficiency: "",
+  engine: "",
+  driveType: "",
+  horsePower: "",
+  pickupAddressStreet: "",
   city: "",
+  pickupAddressState: "",
+  zipCode: "",
   description: "",
   pickupInstructions: "",
 };
@@ -191,7 +211,7 @@ export default function FleetForm({
             </FormRow>
 
             <div className="grid grid-cols-2 gap-3">
-              <FormRow label="Make" htmlFor="make" error={errors.make?.message}>
+              <FormRow label="Manufacturer" htmlFor="make" error={errors.make?.message}>
                 <Input
                   id="make"
                   type="text"
@@ -283,7 +303,7 @@ export default function FleetForm({
 
           {/* Cell 2: Insurance Details */}
           <Cell icon={<Info />} title="Insurance Details">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <FormRow
                 label="Carrier / Company"
                 htmlFor="insuranceCarrier"
@@ -312,18 +332,35 @@ export default function FleetForm({
               </FormRow>
             </div>
 
-            <FormRow
-              label="Expiration Date"
-              htmlFor="insuranceExpiration"
-              error={errors.insuranceExpiration?.message}
-            >
-              <DatePickerField
-                name="insuranceExpiration"
-                control={control}
-                placeholder="Pick expiration date"
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <FormRow
+                label="Expiration Date"
+                htmlFor="insuranceExpiration"
                 error={errors.insuranceExpiration?.message}
-              />
-            </FormRow>
+              >
+                <DatePickerField
+                  name="insuranceExpiration"
+                  control={control}
+                  placeholder="Pick expiration date"
+                  error={errors.insuranceExpiration?.message}
+                />
+              </FormRow>
+              <FormRow
+                label="Daily Insurance Fee"
+                htmlFor="dailyInsuranceFee"
+                error={errors.dailyInsuranceFee?.message}
+              >
+                <PriceInput
+                  id="dailyInsuranceFee"
+                  hasError={!!errors.dailyInsuranceFee}
+                  {...register("dailyInsuranceFee", {
+                    required: "Daily insurance fee rate is required",
+                    valueAsNumber: true,
+                    min: { value: 0, message: "Cannot be negative" },
+                  })}
+                />
+              </FormRow>
+            </div>
           </Cell>
 
           {/* Cell 3: Identification */}
@@ -483,7 +520,7 @@ export default function FleetForm({
 
           {/* Cell 2: Vehicle Specs */}
           <Cell icon={<SlidersVertical />} title="Vehicle Specs">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               <FormRow
                 label="Transmission"
                 htmlFor="transmission"
@@ -551,34 +588,194 @@ export default function FleetForm({
                 />
               </FormRow>
             </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              <FormRow
+                label="fuelType"
+                htmlFor="fuelType"
+                error={errors.fuelType?.message}
+              >
+                <Controller
+                  name="fuelType"
+                  control={control}
+                  rules={{ required: "Select fuel type" }}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger
+                        id="fuelType"
+                        className={inputCn(!!errors.fuelType)}
+                      >
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FUEL_TYPE_OPTIONS.map((opt) => (
+                          <SelectItem
+                            key={opt}
+                            value={opt}
+                            className="font-text text-sm"
+                          >
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FormRow>
+              <FormRow
+                label="Doors"
+                htmlFor="doors"
+                error={errors.doors?.message}
+              >
+                <Input
+                  id="doors"
+                  type="number"
+                  placeholder="4"
+                  className={inputCn(!!errors.doors)}
+                  {...register("doors", {
+                    required: "Number of doors is required",
+                    valueAsNumber: true,
+                    min: { value: 1, message: "Must be at least 1" },
+                  })}
+                />
+              </FormRow>
+              <FormRow
+                label="Fuel Efficiency"
+                htmlFor="fuelEfficiency"
+                error={errors.fuelEfficiency?.message}
+              >
+                <Input
+                  id="fuelEfficiency"
+                  type="text"
+                  placeholder="e.g. 8.1L/100km"
+                  className={inputCn(!!errors.fuelEfficiency)}
+                  {...register("fuelEfficiency", {
+                    required: "Fuel efficiency is required",
+                  })}
+                />
+              </FormRow>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              <FormRow
+                label="driveType"
+                htmlFor="driveType"
+                error={errors.driveType?.message}
+              >
+                <Controller
+                  name="driveType"
+                  control={control}
+                  rules={{ required: "Select drive type" }}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger
+                        id="driveType"
+                        className={inputCn(!!errors.driveType)}
+                      >
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DRIVE_TYPE_OPTIONS.map((opt) => (
+                          <SelectItem
+                            key={opt}
+                            value={opt}
+                            className="font-text text-sm"
+                          >
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FormRow>
+              <FormRow
+                label="Horse Power"
+                htmlFor="horsePower"
+                error={errors.horsePower?.message}
+              >
+                <Input
+                  id="horsePower"
+                  type="number"
+                  placeholder="231"
+                  className={inputCn(!!errors.horsePower)}
+                  {...register("horsePower", {
+                    required: "Horse Power is required",
+                    valueAsNumber: true,
+                    min: { value: 1, message: "Must be at least 1" },
+                  })}
+                />
+              </FormRow>
+              <FormRow
+                label="Engine"
+                htmlFor="engine"
+                error={errors.engine?.message}
+              >
+                <Input
+                  id="engine"
+                  type="text"
+                  placeholder="e.g. 2.0L Turbocharged"
+                  className={inputCn(!!errors.engine)}
+                  {...register("engine", {
+                    required: "Engine is required",
+                  })}
+                />
+              </FormRow>
+            </div>
           </Cell>
 
           {/* Cell 3: Location */}
-          <Cell icon={<MapPin />} title="Location">
-            <FormRow
-              label="Pickup Location Address"
-              htmlFor="pickupAddress"
-              error={errors.pickupAddress?.message}
-            >
-              <Input
-                id="pickupAddress"
-                type="text"
-                placeholder="e.g. 123 Main Street"
-                className={inputCn(!!errors.pickupAddress)}
-                {...register("pickupAddress", {
-                  required: "Pickup address is required",
-                })}
-              />
-            </FormRow>
-            <FormRow label="City" htmlFor="city" error={errors.city?.message}>
-              <Input
-                id="city"
-                type="text"
-                placeholder="e.g. Austin"
-                className={inputCn(!!errors.city)}
-                {...register("city", { required: "City is required" })}
-              />
-            </FormRow>
+          <Cell icon={<MapPin />} title="Pickup Location Address">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <FormRow
+                label="Street"
+                htmlFor="street"
+                error={errors.pickupAddressStreet?.message}
+              >
+                <Input
+                  id="pickupAddressStreet"
+                  type="text"
+                  placeholder="e.g. 123 Main Street"
+                  className={inputCn(!!errors.pickupAddressStreet)}
+                  {...register("pickupAddressStreet", {
+                    required: "Pickup address is required",
+                  })}
+                />
+              </FormRow>
+              <FormRow label="City" htmlFor="city" error={errors.city?.message}>
+                <Input
+                  id="city"
+                  type="text"
+                  placeholder="e.g. Bronx"
+                  className={inputCn(!!errors.city)}
+                  {...register("city", { required: "City is required" })}
+                />
+              </FormRow>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <FormRow
+                label="State"
+                htmlFor="pickupAddressState"
+                error={errors.pickupAddressState?.message}
+              >
+                <Input
+                  id="pickupAddressState"
+                  type="text"
+                  placeholder="e.g. New York"
+                  className={inputCn(!!errors.pickupAddressState)}
+                  {...register("pickupAddressState", {
+                    required: "Pickup address is required",
+                  })}
+                />
+              </FormRow>
+              <FormRow label="Zip Code" htmlFor="zipCode" error={errors.zipCode?.message}>
+                <Input
+                  id="zipCode"
+                  type="text"
+                  placeholder="e.g. Austin"
+                  className={inputCn(!!errors.zipCode)}
+                  {...register("zipCode", { required: "zipCode is required" })}
+                />
+              </FormRow>
+            </div>
           </Cell>
         </div>
       </div>

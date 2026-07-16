@@ -24,6 +24,7 @@ import { useState } from "react";
 import { sidebarContent } from "@/constants/hostSidebar";
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 import { AnimatePresence, motion } from "motion/react";
+import { HostBusinessVerificationStatus } from "@/app/store/services/settingsApi";
 
 const linkBase = [
   "flex items-center gap-3 py-2 px-3 w-full rounded-[10px]",
@@ -197,6 +198,29 @@ const LogoCard = () => {
   );
 };
 
+function BusinessVerificationStatusBadge({
+  status,
+}: {
+  status: HostBusinessVerificationStatus | undefined;
+}) {
+  const styles: Record<HostBusinessVerificationStatus, string> = {
+    approved: "bg-green-50 text-green-500",
+    not_submitted: "bg-gray-100 text-gray-500",
+    pending: "bg-amber-50 text-amber-500",
+    rejected: "bg-red-50 text-red-500",
+  };
+
+  const resolvedStatus = status ?? "not_submitted";
+
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${styles[resolvedStatus]}`}
+    >
+      {resolvedStatus === "not_submitted" ? "Not submitted" : resolvedStatus}
+    </span>
+  );
+}
+
 const UserCard = () => {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -206,6 +230,8 @@ const UserCard = () => {
   const avatar = data?.data.profilePictureUrl;
   const displayName = data?.data.companyName || fullName;
   const userInitials = getInitials(displayName);
+  const businessVerificationStatus = data?.data.businessVerification.status;
+  const paymentPlan = data?.data.payment.plan;
 
   return (
     <div className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : ""}`}>
@@ -226,11 +252,16 @@ const UserCard = () => {
 
       {!isCollapsed && (
         <div className="flex flex-col gap-1.5 min-w-0 cursor-pointer">
-          <span className="text-neutral-950 text-sm font-medium font-text leading-5 truncate">
-            {displayName || "—"}
-          </span>
-          <span className="text-xs truncate py-0.5 px-2 rounded-full text-blue-700 bg-[#EBF0FB]">
-            Host Account
+          <div className="flex items-center gap-1">
+            <span className="text-neutral-950 text-sm font-medium font-text leading-5 truncate">
+              {displayName || "—"}
+            </span>
+            <BusinessVerificationStatusBadge
+              status={businessVerificationStatus ?? "not_submitted"}
+            />
+          </div>
+          <span className="w-fit text-xs truncate py-0.5 px-2 rounded-full text-blue-700 bg-blue-100">
+            { paymentPlan || "plan" }
           </span>
         </div>
       )}
