@@ -167,6 +167,13 @@ export const hostApi = createApi({
       }),
     }),
 
+    logout: builder.mutation<void, void>({
+      query: () => ({
+        url: "/api/host/logout",
+        method: "POST",
+      }),
+    }),
+
     // vehicle management endpoints
     listVehcle: builder.query<IListVehiclesResponse, IVehicleDataFilters>({
       query: (filters) => ({
@@ -370,7 +377,10 @@ export const hostApi = createApi({
       },
       void
     >({
-      query: () => ({ url: "/api/host/settings/profile-company", method: "GET" }),
+      query: () => ({
+        url: "/api/host/settings/profile-company",
+        method: "GET",
+      }),
       providesTags: [{ type: "Host", id: "PROFILE" }],
     }),
   }),
@@ -401,6 +411,8 @@ export const {
   useLogMaintenanceServiceMutation,
   useLogServiceModalMutation,
   // maintenance endpoints
+
+  useLogoutMutation,
 
   useGetHostProfileQuery,
 } = hostApi;

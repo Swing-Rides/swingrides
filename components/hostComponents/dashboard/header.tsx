@@ -3,7 +3,10 @@
 import { getInitials } from "@/components/pages/profilePages/utils";
 import { Bell, ChevronDown, LogOut, Search, X, Menu } from "lucide-react";
 import Image from "next/image";
-import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
+import {
+  useGetHostProfileQuery,
+  useLogoutMutation,
+} from "@/app/store/services/hostApi";
 import {
   Popover,
   PopoverContent,
@@ -34,6 +37,7 @@ import {
   useMarkAllAsReadMutation,
   useMarkAsReadMutation,
 } from "@/app/store/services/notificationApi";
+import { useRouter } from "next/navigation";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -90,7 +94,7 @@ export function DashboardHeader() {
         notificationApi.util.invalidateTags([
           { type: "Notifications", id: "LIST" },
           { type: "Notifications", id: "UNREAD" },
-        ])
+        ]),
       );
     };
 
@@ -418,9 +422,39 @@ const HeaderAvatar = () => {
   const avatar = data?.data.profilePictureUrl;
   const displayName = data?.data.companyName || fullName;
   const userInitials = getInitials(displayName);
+  const [logout, { isLoading }] = useLogoutMutation();
+  const router = useRouter();
 
-  const handleLogout = () => {
-    console.log("user logout");
+  const LoadingSpinner = () => (
+    <svg
+      className="animate-spin w-4 h-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+      />
+    </svg>
+  );
+
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+      router.replace("/host/login");
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
   };
 
   return (
@@ -450,8 +484,14 @@ const HeaderAvatar = () => {
             className="flex items-center justify-start gap-2 cursor-pointer text-red-500 hover:text-red-900 transition-colors duration-300"
             onClick={handleLogout}
           >
-            <LogOut className="size-4" />
-            <span>Logout</span>
+            {isLoading ? (
+              <LoadingSpinner />
+            ) : (
+              <>
+                <LogOut className="size-4" />
+                <span>Logout</span>
+              </>
+            )}
           </button>
         </PopoverContent>
       </Popover>
