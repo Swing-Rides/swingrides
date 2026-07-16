@@ -18,12 +18,15 @@ export const useSocket = () => useContext(SocketContext);
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const isProduction = process.env.NODE_ENV === "production";
 
   useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-    
+    const socketUrl = isProduction
+      ? "https://api.swingrides.com"
+      : process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+
     console.log(`🔌 Initializing WebSocket client connection to: ${socketUrl}`);
-    
+
     const socketInstance = io(socketUrl, {
       withCredentials: true,
       autoConnect: true,
