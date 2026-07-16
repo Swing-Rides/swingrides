@@ -63,10 +63,16 @@ export default function HostLoginForm() {
           onSubmit={onSubmit}
           submitLabel="Sign In"
           className="w-full"
+          isLoading={isLoading}
           footerSlot={
-            <RememberForgotRow
-              onForgotPassword={() => setForgotPasswordOpen(true)}
-            />
+            <>
+              {errorMessage && <span className="font-text text-xs text-red-500 text-center">
+                {errorMessage}
+              </span>}
+              <RememberForgotRow
+                onForgotPassword={() => setForgotPasswordOpen(true)}
+              />
+            </>
           }
         />
       </div>
