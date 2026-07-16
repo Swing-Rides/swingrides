@@ -24,9 +24,12 @@ import {
   NotificationCardProps,
 } from "../types/navbar.type";
 import { HOST_NOTIFICATION_TYPE_CONST } from "../utils/helper";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { useSocket } from "@/components/providers/socketProvider";
 import {
   NotificationCategory,
+  notificationApi,
   useGetNotificationsQuery,
   useMarkAllAsReadMutation,
   useMarkAsReadMutation,
@@ -73,8 +76,31 @@ function isToday(dateStr: string): boolean {
 
 export function DashboardHeader() {
   const { toggleSidebar } = useSidebar();
+  const dispatch = useDispatch();
+  const { socket } = useSocket();
 
   const { data } = useGetNotificationsQuery({ limit: 50 });
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNotification = (notif: any) => {
+      console.log("🔌 Real-time notification received via WebSocket:", notif);
+      dispatch(
+        notificationApi.util.invalidateTags([
+          { type: "Notifications", id: "LIST" },
+          { type: "Notifications", id: "UNREAD" },
+        ])
+      );
+    };
+
+    socket.on("notification_received", handleNotification);
+
+    return () => {
+      socket.off("notification_received", handleNotification);
+    };
+  }, [socket, dispatch]);
+
   const [markAllAsRead] = useMarkAllAsReadMutation();
 
   const { todayNotifications, earlierNotifications } = useMemo(() => {
