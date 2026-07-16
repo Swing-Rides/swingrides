@@ -8,6 +8,7 @@ import {
 } from "../../dashboard/customTable";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import { ServiceHistoryItem } from "@/types/logservice.type";
+import { toast } from "sonner";
 
 const serviceHistoryColumns: ColumnDef<ServiceHistoryItem>[] = [
         {
@@ -165,11 +166,30 @@ export function ServiceHistoryTableSection({
                                         }
                                 />
                         }
-                        linkAction={{
-                                label: "View",
-                                href: (row) => `${HOST_DASHBOARD_PATH}maintenance/${row.id}`,
-                                linkIcon: <Download className="size-3" />,
-                        }}
+                        // deleteAction={{
+                        //         dataType: "ServiceHistory",
+                        //         onConfirm: (row) => {
+                        //                 console.log("Deleting", row)
+                        //                 toast.message("Message Deleted")
+                        //         },
+                        //         dialogContent: (row) => (
+                        //                 <div className="space-y-3">
+                        //                         <p className="text-gray-500 text-xs">
+                        //                                 You are about to permanently delete{" "}
+                        //                                 <span className="font-semibold text-neutral-800">
+                        //                                         {row.vehicleName}{" "}
+                        //                                 </span>
+                        //                                 service history for{" "}
+                        //                                 <span className="font-semibold text-neutral-800">
+                        //                                         {Date(row.date)}
+                        //                                 </span>.
+                        //                         </p>
+                        //                         <p className="text-gray-400 text-xs">
+                        //                                 This action cannot be undone.
+                        //                         </p>
+                        //                 </div>
+                        //         ),
+                        // }}
                 />
         );
 }
