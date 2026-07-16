@@ -35,7 +35,7 @@ const settingsTabTitle = [
   {
     value: "billing",
     icon: <CreditCard className="size-5" />,
-    title: "Billing",
+    title: "Payment & Billings",
   },
   {
     value: "communicate",
@@ -240,7 +240,6 @@ const SettingsPageContent = () => {
 
   const handleManageBilling = () => {
     setShowBillingModal(true);
-    console.log("manage billing clicked");
   };
 
   const onSelectNewPlan = (plan: HostPlanType) => {
@@ -251,6 +250,14 @@ const SettingsPageContent = () => {
     // router.push(...)
     // create stripe checkout session
     // call update subscription API
+  }
+
+  const onWithdrawFund = () => {
+    console.log("WithdrawFund stripe clicked")
+  }
+
+  const onUnlinkStripe = () => {
+    console.log("unlink stripe clicked")
   }
 
   return (
@@ -288,6 +295,8 @@ const SettingsPageContent = () => {
             renewalDate={renewalDate}
             onManageBilling={handleManageBilling}
             paymentHistory={paymentHistory}
+            onWithdrawFund={onWithdrawFund}
+            onUnlinkStripe={onUnlinkStripe}
           />
         </TabsContent>
         <TabsContent value="communicate">
