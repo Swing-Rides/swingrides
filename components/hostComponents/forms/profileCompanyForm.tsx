@@ -342,7 +342,7 @@ export default function ProfileCompanyForm({
           <Button
             type="submit"
             disabled={!isDirty || isSubmitting}
-            className="bg-blue-700 hover:bg-blue-900 text-white font-medium font-text cursor-pointer transition-colors duration-200 disabled:opacity-50 disabled:pointer-events-none"
+            className="bg-blue-700 hover:bg-blue-950 px-5 py-2 rounded-xs text-xs text-white font-medium font-text cursor-pointer transition-colors duration-300 disabled:opacity-50 disabled:pointer-events-none"
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">

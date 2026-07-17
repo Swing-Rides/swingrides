@@ -636,33 +636,33 @@ function TableDialog({
         return (
                 /* Backdrop */
                 <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4"
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4"
                         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
                 >
                         {/* Card */}
-                        <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden">
+                        <div className="relative w-full max-w-md bg-white rounded-[10px] shadow-xl flex flex-col overflow-hidden">
 
                                 {/* Header */}
                                 <div className={[
                                         "flex items-center justify-between px-6 py-4 border-b border-gray-100",
                                         variant === "delete" ? "bg-red-50" : "bg-white",
                                 ].join(" ")}>
-                                        <div className="flex items-center gap-2.5">
+                                        <div className="flex items-center gap-2">
                                                 {variant === "delete" && (
-                                                        <span className="flex items-center justify-center size-8 rounded-full bg-red-100">
-                                                                <AlertTriangle className="size-4 text-red-600" />
+                                                        <span className="flex items-center justify-center size-6 rounded-full bg-red-100">
+                                                                <AlertTriangle className="size-3 text-red-600" />
                                                         </span>
                                                 )}
                                                 <h2 className={[
-                                                        "text-base font-semibold font-text",
-                                                        variant === "delete" ? "text-red-700" : "text-neutral-800",
+                                                        "text-sm font-semibold font-text",
+                                                        variant === "delete" ? "text-red-500" : "text-neutral-800",
                                                 ].join(" ")}>
                                                         {title}
                                                 </h2>
                                         </div>
                                         <button
                                                 onClick={onClose}
-                                                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                                                className="p-1.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-100 duration-300 transition-colors cursor-pointer"
                                         >
                                                 <X className="size-4" />
                                         </button>
@@ -677,13 +677,13 @@ function TableDialog({
                                 <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
                                         <button
                                                 onClick={onClose}
-                                                className="px-4 py-2 rounded-lg text-sm font-medium font-text text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-colors"
+                                                className="px-5 py-2 rounded-xs text-sm font-medium font-text text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
                                         >
                                                 Cancel
                                         </button>
                                         <button
                                                 onClick={onConfirm}
-                                                className={`px-4 py-2 rounded-lg text-sm font-medium font-text transition-colors ${confirmClass}`}
+                                                className={`px-5 py-2 rounded-xs text-sm font-medium font-text transition-colors cursor-pointer ${confirmClass}`}
                                         >
                                                 {confirmLabel}
                                         </button>
