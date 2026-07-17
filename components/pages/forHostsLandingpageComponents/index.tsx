@@ -18,6 +18,7 @@ import { StarRating } from "@/components/hostComponents/pages/reviewsPageCompone
 import FAQsSection from "@/components/faqs";
 import { trustContent } from "@/constants/homePage";
 import { TrustContentProps } from "../homepage";
+import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 
 export default function ForHostLandingPage() {
     return (
@@ -27,49 +28,55 @@ export default function ForHostLandingPage() {
             <HowItWork />
             <EverythingYouNeedSection />
             <PriceSection pricingContents={pricingContents} />
-			<TrustSection />
-			<FAQsSection />
+            <TrustSection />
+            <FAQsSection />
         </>
     );
 }
 
 const HeroSection = () => {
-    return (
-        <section className="py-12 px-4 md:pl-8 md:pr-0 md:py-20 section-bg-gradient">
+  return (
+    <section className="py-12 px-4 md:pl-8 md:pr-0 md:py-20 section-bg-gradient overflow-hidden">
 			<div className="flex flex-col md:flex-row md:justify-between md:items-start">
-                <div className="flex flex-col items-start gap-5 max-w-133.75">
-                    <Pill label="The Operating System for Rental Businesses" />
-                    <h2 className="text-4xl md:text-6xl leading-16 font-black ">
-                        Everything independent rental operators need.
-                    </h2>
-                    <h3 className="text-4xl md:text-6xl leading-16 font-black text-blue-700">
-                        Spend less time managing. More time growing.
-                    </h3>
-                    <p className="text-gray-500 text-lg font-normal font-text leading-6 text-left">
-                        SwingRides helps you manage bookings, fleet, customers, maintenance, invoices and more — all in one platform.
-                    </p>
-                    <div className="flex gap-3 items-center justify-center">
-                        <Link
-                            href='#price-list'
-                            className="py-2 px-6 rounded-xs bg-blue-700 text-white font-semibold capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
-                        >
-                            List Your Car
-                        </Link>
-                    </div>
-                </div>
-                <div className="flex -mr-10 aspect-816/704 w-full">
-                    <Image
-                        src={"/images/host-dashboard-screenshot.png"}
-                        alt={"SwingRides Host Platform Dashboard - Everything independent rental operators need."}
-                        title={"Everything independent rental operators need."}
-						width={1224}
-                        height={1056}
-                        className="aspect-816/704 object-cover w-full"
-                    />
-                </div>
-            </div>
-        </section>
-    );
+        <div className="flex flex-col items-start gap-5 max-w-133.75">
+          <Pill label="The Operating System for Rental Businesses" />
+          <h2 className="text-4xl md:text-6xl leading-16 font-black ">
+              Everything independent rental operators need.
+          </h2>
+          <h3 className="text-4xl md:text-6xl leading-16 font-black text-blue-700">
+              Spend less time managing. More time growing.
+          </h3>
+          <p className="text-gray-500 text-lg font-normal font-text leading-6 text-left">
+              SwingRides helps you manage bookings, fleet, customers, maintenance, invoices and more — all in one platform.
+          </p>
+          <div className="flex gap-3 items-center justify-center">
+            <Link
+                href='#price-list'
+              className="py-2 px-6 rounded-xs bg-blue-700 border-blue-700 text-white border text-xs font-semibold capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
+            >
+                Get Started
+            </Link>
+            <Link
+              href={HOST_DASHBOARD_PATH}
+              className="py-2 px-6 rounded-xs border-blue-700 bg-transparent text-blue-700 border text-xs font-semibold capitalize hover:text-white hover:bg-blue-700 transition-colors duration-300 cursor-pointer"
+            >
+              Login as host
+            </Link>
+          </div>
+        </div>
+        <div className="flex -mr-10 aspect-816/704 w-full">
+            <Image
+                src={"/images/host-dashboard-screenshot.png"}
+                alt={"SwingRides Host Platform Dashboard - Everything independent rental operators need."}
+                title={"Everything independent rental operators need."}
+                width={1224}
+                height={1056}
+                className="aspect-816/704 object-cover w-full"
+            />
+        </div>
+      </div>
+    </section>
+  );
 };
 
 const NumberSection = () => {

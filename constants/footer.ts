@@ -16,6 +16,16 @@ export const footerLinksOne = {
                         label: 'My Reservations',
                         href: '/profile',
                 },
+                {
+                        id: 4,
+                        label: 'Login As A Renter',
+                        href: '/sign-in',
+                },
+                {
+                        id: 5,
+                        label: 'Sign Up As A Renter',
+                        href: '/sign-in?modal=sign-up',
+                },
         ]
 }
 
@@ -41,6 +51,11 @@ export const footerLinksTwo = {
                         id: 4,
                         label: 'Pricing Plans',
                         href: '/for-hosts#price-list',
+                },
+                {
+                        id: 5,
+                        label: 'Login As A Host',
+                        href: '/host/login',
                 },
         ]
 }
