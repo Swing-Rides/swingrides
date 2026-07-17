@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import Link from "next/link";
 import { format, addDays, differenceInCalendarDays } from "date-fns";
 import { Shield, CalendarIcon, Clock, AlertTriangle, Loader2 } from "lucide-react";
@@ -16,13 +16,25 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import {
+  type PriceConfig,
+  computePricing,
+  computeInsuranceFee,
+  computeTotal,
+  formatCurrency,
+  pluralize,
+} from "@/lib/pricing";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type PaymentFormValues = {
   pickupDate: string;
   returnDate: string;
-  pickupLocation: string;
+  // Address — split out for structured validation / downstream use
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
   // Insurance — all optional but cross-validated
   insuranceProvider: string;
   policyNumber: string;
@@ -31,121 +43,40 @@ export type PaymentFormValues = {
   // Terms
   agreedToTerms: boolean;
   subtotal?: number;
+  insuranceFee?: number;
   tax?: number;
   taxRate?: number;
   totalAmount?: number;
   totalDays?: number;
 };
 
-type PriceConfig = {
-  daily: number;
-  weekly: number;
-  monthly: number;
-};
-
 type PaymentSectionProps = {
   price: PriceConfig;
-  defaultPickupLocation?: string;
+  /** Flat per-day insurance fee, only charged when the host provides coverage. */
+  insuranceFeePerDay?: number;
+  street?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   vehicleId?: string;
   onSubmit: (values: PaymentFormValues) => void | Promise<void>;
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const formatCurrency = (amount?: number | null) => {
-  const value = typeof amount === "number" && Number.isFinite(amount) ? amount : 0;
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
-};
-
-const pluralize = (n: number, word: string) =>
-  `${n} ${word}${n !== 1 ? "s" : ""}`;
-
-type PricingLineItem = { label: string; total: number };
-
-type ComputedPricing = {
-  displayPrice: number; // headline price shown at top (monthly > weekly > daily)
-  displayPriceTier: string; // label for headline price
-  lineItems: PricingLineItem[];
-  total: number;
-};
-
-/**
- * Mixed-unit billing — full periods at the dominant tier rate,
- * remaining days at the daily rate.
- *
- * Examples:
- *   8 days  → 1 week ($X/wk) + 1 day ($Y/day)
- *   16 days → 2 weeks + 2 days
- *   45 days → 1 month + 2 weeks + 1 day
- */
-const computePricing = (price: PriceConfig, days: number): ComputedPricing => {
-  // Normalize incoming prices
-  const normalizedPrice = {
-    daily: price.daily ?? 0,
-    weekly: price.weekly ?? 0,
-    monthly: price.monthly ?? 0,
-  };
-  const lineItems: PricingLineItem[] = [];
-  let remaining = days;
-  let total = 0;
-
-  // Months
-  const months = Math.floor(remaining / 30);
-  if (months > 0) {
-    const monthTotal = months * normalizedPrice.monthly;
-    total += monthTotal;
-    remaining -= months * 30;
-    lineItems.push({
-      label: `${pluralize(months, "month")} @ ${formatCurrency(normalizedPrice.monthly)}/mo`,
-      total: monthTotal,
-    });
-  }
-
-  // Weeks (from the remainder)
-  const weeks = Math.floor(remaining / 7);
-  if (weeks > 0) {
-    const weekTotal = weeks * normalizedPrice.weekly;
-    total += weekTotal;
-    remaining -= weeks * 7;
-    lineItems.push({
-      label: `${pluralize(weeks, "week")} @ ${formatCurrency(normalizedPrice.weekly)}/wk`,
-      total: weekTotal,
-    });
-  }
-
-  // Days (final remainder)
-  if (remaining > 0) {
-    const dayTotal = remaining * normalizedPrice.daily;
-    total += dayTotal;
-    lineItems.push({
-      label: `${pluralize(remaining, "day")} @ ${formatCurrency(normalizedPrice.daily)}/day`,
-      total: dayTotal,
-    });
-  }
-
-  // Headline: show the dominant tier's unit price
-  let displayPrice = normalizedPrice.daily;
-  let displayPriceTier = "day";
-  if (days >= 30) {
-    displayPrice = normalizedPrice.monthly;
-    displayPriceTier = "month";
-  } else if (days >= 7) {
-    displayPrice = normalizedPrice.weekly;
-    displayPriceTier = "week";
-  }
-
-  return { displayPrice, displayPriceTier, lineItems, total };
-};
-
 const THIRTY_DAYS_FROM_NOW = addDays(new Date(), 30);
+const DEFAULT_TAX_RATE = 0.08;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const PaymentSection = memo(
-  ({ price, defaultPickupLocation = "", onSubmit }: PaymentSectionProps) => {
+  ({
+    price,
+    insuranceFeePerDay = 1,
+    street,
+    city,
+    state,
+    zipCode,
+    onSubmit,
+  }: PaymentSectionProps) => {
     const today = useMemo(() => {
       const d = new Date();
       d.setHours(0, 0, 0, 0);
@@ -163,12 +94,15 @@ export const PaymentSection = memo(
       defaultValues: {
         pickupDate: "",
         returnDate: "",
-        pickupLocation: defaultPickupLocation,
+        street: street ?? "",
+        city: city ?? "",
+        state: state ?? "",
+        zipCode: zipCode ?? "",
         insuranceProvider: "",
         policyNumber: "",
         insuranceExpiry: "",
         hostProvidingCoverage: true,
-        agreedToTerms: false,
+        agreedToTerms: true,
       },
     });
 
@@ -215,6 +149,18 @@ export const PaymentSection = memo(
 
     const pricing = days > 0 ? computePricing(price, days) : null;
 
+    // Insurance is always billed per-day, regardless of rental tier, and
+    // only when the host is providing coverage.
+    const insuranceFee = computeInsuranceFee(
+      days,
+      insuranceFeePerDay,
+      effectiveHostCoverage,
+    );
+
+    const totalBreakdown = pricing
+      ? computeTotal(pricing.total, insuranceFee, DEFAULT_TAX_RATE)
+      : null;
+
     const enteredPickUpDate = pickupDate
       ? format(new Date(pickupDate), "MMM d, h:mm a")
       : null;
@@ -223,19 +169,19 @@ export const PaymentSection = memo(
       : null;
 
     const onFormSubmit = async (values: PaymentFormValues) => {
-      const subtotal = pricing?.total ?? 0;
-      const taxRate = 0.08;
-      const tax = subtotal * taxRate;
-      const totalAmount = subtotal + tax;
+      const breakdown = pricing
+        ? computeTotal(pricing.total, insuranceFee, DEFAULT_TAX_RATE)
+        : computeTotal(0, 0, DEFAULT_TAX_RATE);
 
       // Sync effectiveHostCoverage back into the payload before sending
       await onSubmit({
         ...values,
         hostProvidingCoverage: effectiveHostCoverage,
-        subtotal,
-        tax,
-        taxRate,
-        totalAmount,
+        subtotal: breakdown.subtotal,
+        insuranceFee: breakdown.insuranceFee,
+        tax: breakdown.tax,
+        taxRate: DEFAULT_TAX_RATE,
+        totalAmount: breakdown.totalAmount,
         totalDays: days,
       });
     };
@@ -269,7 +215,7 @@ export const PaymentSection = memo(
           {/* ── Form fields ─────────────────────────── */}
           <div className="flex flex-col gap-4">
             {/* Row 1: Pickup + Return dates */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid lg:grid-cols-2 gap-3">
               <FormRow
                 label="Pick-up Date & Time"
                 htmlFor="pickupDate"
@@ -312,22 +258,82 @@ export const PaymentSection = memo(
               </FormRow>
             </div>
 
-            {/* Row 2: Pickup Location */}
+            {/* Row 2: Address */}
             <FormRow
-              label="Pick-up Location"
-              htmlFor="pickupLocation"
-              error={errors.pickupLocation?.message}
+              label="Street Address"
+              htmlFor="street"
+              error={errors.street?.message}
             >
               <Input
-                id="pickupLocation"
+                id="street"
                 type="text"
-                placeholder="Enter pickup address"
-                className={inputCn(!!errors.pickupLocation)}
-                {...register("pickupLocation", {
-                  required: "Pick-up location is required",
+                placeholder="123 Main St"
+                className={inputCn(!!errors.street)}
+                {...register("street", {
+                  required: "Street address is required",
                 })}
               />
             </FormRow>
+
+            <div className="grid lg:grid-cols-6 gap-3">
+              <div className="col-span-1 lg:col-span-2">
+                <FormRow
+                  label="City"
+                  htmlFor="city"
+                  error={errors.city?.message}
+                >
+                  <Input
+                    id="city"
+                    type="text"
+                    placeholder="City"
+                    className={inputCn(!!errors.city)}
+                    {...register("city", { required: "City is required" })}
+                  />
+                </FormRow>
+              </div>
+
+              <div className="col-span-1 lg:col-span-2">
+                <FormRow
+                  label="State"
+                  htmlFor="state"
+                  error={errors.state?.message}
+                >
+                  <Input
+                    id="state"
+                    type="text"
+                    placeholder="California"
+                    className={cn(inputCn(!!errors.state))}
+                    {...register("state", {
+                      required: "Pick up state is required",
+                    })}
+                  />
+                </FormRow>
+              </div>
+
+              <div className="col-span-1 lg:col-span-2">
+                <FormRow
+                  label="Zip Code"
+                  htmlFor="zipCode"
+                  error={errors.zipCode?.message}
+                >
+                  <Input
+                    id="zipCode"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="94103"
+                    maxLength={10}
+                    className={inputCn(!!errors.zipCode)}
+                    {...register("zipCode", {
+                      required: "Zip code is required",
+                      pattern: {
+                        value: /^\d{5}(-\d{4})?$/,
+                        message: "Invalid zip code",
+                      },
+                    })}
+                  />
+                </FormRow>
+              </div>
+            </div>
           </div>
 
           {/* Date range summary pill */}
@@ -355,6 +361,30 @@ export const PaymentSection = memo(
                   </span>
                 </div>
               ))}
+
+              {/* Insurance fee — always per-day, only shown when charged */}
+              {insuranceFee > 0 && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
+                    Insurance · {pluralize(days, "day")} @{" "}
+                    {formatCurrency(insuranceFeePerDay)}/day
+                  </span>
+                  <span className="text-[#1F2937] text-sm font-medium font-text">
+                    {formatCurrency(insuranceFee)}
+                  </span>
+                </div>
+              )}
+
+              {totalBreakdown && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
+                    Tax ({(DEFAULT_TAX_RATE * 100).toFixed(0)}%)
+                  </span>
+                  <span className="text-[#1F2937] text-sm font-medium font-text">
+                    {formatCurrency(totalBreakdown.tax)}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -364,7 +394,7 @@ export const PaymentSection = memo(
               Total Estimate
             </span>
             <span className="text-[#1A56DB] text-xl font-medium font-text leading-7">
-              {pricing ? formatCurrency(pricing.total) : "—"}
+              {totalBreakdown ? formatCurrency(totalBreakdown.totalAmount) : "—"}
             </span>
           </div>
 
@@ -539,6 +569,12 @@ export const PaymentSection = memo(
                     )}
                   >
                     Host is providing coverage
+                    {insuranceFeePerDay > 0 && (
+                      <span className="text-[#9CA3AF] font-normal">
+                        {" "}
+                        ({formatCurrency(insuranceFeePerDay)}/day)
+                      </span>
+                    )}
                   </label>
                 </div>
               )}
@@ -607,6 +643,12 @@ const applyTime = (
   return merged;
 };
 
+/**
+ * Two-step popover: pick a date, then hit "Next" to move to the time step
+ * (skipped when showTime is false). "Done" closes the popover once a full
+ * value is set. This avoids cramming the calendar + 3 selects into one view
+ * and gives a clearer sense of progress.
+ */
 const DateTimePickerField = ({
   name,
   control,
@@ -615,143 +657,206 @@ const DateTimePickerField = ({
   minDate,
   rules,
   showTime = true,
-}: DateTimePickerFieldProps) => (
-  <Controller
-    name={name}
-    control={control}
-    rules={rules}
-    render={({ field }) => {
-      const parsed = field.value ? new Date(field.value as string) : undefined;
+}: DateTimePickerFieldProps) => {
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"date" | "time">("date");
 
-      // Current time components, derived from the stored value (default noon)
-      const hour24 = parsed ? parsed.getHours() : 12;
-      const currentHour12 = ((hour24 + 11) % 12) + 1;
-      const currentMinute = parsed ? parsed.getMinutes() : 0;
-      const currentPeriod: "AM" | "PM" = hour24 >= 12 ? "PM" : "AM";
+  return (
+    <Controller
+      name={name}
+      control={control}
+      rules={rules}
+      render={({ field }) => {
+        const parsed = field.value
+          ? new Date(field.value as string)
+          : undefined;
 
-      const handleDateSelect = (date: Date | undefined) => {
-        if (!date) {
-          field.onChange("");
-          return;
-        }
-        // Preserve whatever time was already set (or default to noon)
-        const merged = showTime
-          ? applyTime(date, currentHour12, currentMinute, currentPeriod)
-          : date;
-        field.onChange(merged.toISOString());
-      };
+        // Current time components, derived from the stored value (default noon)
+        const hour24 = parsed ? parsed.getHours() : 12;
+        const currentHour12 = ((hour24 + 11) % 12) + 1;
+        const currentMinute = parsed ? parsed.getMinutes() : 0;
+        const currentPeriod: "AM" | "PM" = hour24 >= 12 ? "PM" : "AM";
 
-      const handleTimeChange = (
-        newHour12: number,
-        newMinute: number,
-        newPeriod: "AM" | "PM",
-      ) => {
-        if (!parsed) return;
-        const merged = applyTime(parsed, newHour12, newMinute, newPeriod);
-        field.onChange(merged.toISOString());
-      };
+        const handleDateSelect = (date: Date | undefined) => {
+          if (!date) {
+            field.onChange("");
+            return;
+          }
+          // Preserve whatever time was already set (or default to noon)
+          const merged = showTime
+            ? applyTime(date, currentHour12, currentMinute, currentPeriod)
+            : date;
+          field.onChange(merged.toISOString());
+        };
 
-      return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal rounded-xs font-text text-sm",
-                !parsed && "text-[#9CA3AF]",
-                error
-                  ? "border-red-500 focus-visible:ring-red-500"
-                  : "border-[#E5E7EB] focus-visible:ring-[#1A56DB]",
+        const handleTimeChange = (
+          newHour12: number,
+          newMinute: number,
+          newPeriod: "AM" | "PM",
+        ) => {
+          if (!parsed) return;
+          const merged = applyTime(parsed, newHour12, newMinute, newPeriod);
+          field.onChange(merged.toISOString());
+        };
+
+        const handleOpenChange = (next: boolean) => {
+          setOpen(next);
+          if (next) setStep("date"); // always start from the date step
+        };
+
+        const handleNext = () => {
+          if (!parsed) return;
+          setStep("time");
+        };
+
+        const handleDone = () => setOpen(false);
+
+        return (
+          <Popover open={open} onOpenChange={handleOpenChange}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal rounded-xs font-text text-sm",
+                  !parsed && "text-[#9CA3AF]",
+                  error
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : "border-[#E5E7EB] focus-visible:ring-[#1A56DB]",
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF] shrink-0" />
+                {parsed
+                  ? format(
+                    parsed,
+                    showTime ? "MMM d, yyyy · h:mm a" : "MMM d, yyyy",
+                  )
+                  : (placeholder ?? "Pick a date")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              {(!showTime || step === "date") && (
+                <Calendar
+                  mode="single"
+                  selected={parsed}
+                  onSelect={handleDateSelect}
+                  disabled={(date) => {
+                    if (minDate) {
+                      return (
+                        date < new Date(new Date(minDate).setHours(0, 0, 0, 0))
+                      );
+                    }
+                    return false;
+                  }}
+                />
               )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF] shrink-0" />
-              {parsed
-                ? format(parsed, showTime ? "MMM d, yyyy · h:mm a" : "MMM d, yyyy")
-                : (placeholder ?? "Pick a date")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={parsed}
-              onSelect={handleDateSelect}
-              disabled={(date) => {
-                if (minDate) {
-                  return (
-                    date < new Date(new Date(minDate).setHours(0, 0, 0, 0))
-                  );
-                }
-                return false;
-              }}
-            />
 
-            {showTime && (
-              <div className="flex items-center gap-2 p-3 border-t border-[#E5E7EB]">
-                <Clock className="w-4 h-4 text-[#9CA3AF] shrink-0" />
-                <select
-                  aria-label="Hour"
-                  disabled={!parsed}
-                  value={currentHour12}
-                  onChange={(e) =>
-                    handleTimeChange(
-                      Number(e.target.value),
-                      currentMinute,
-                      currentPeriod,
-                    )
-                  }
-                  className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
-                >
-                  {HOURS_12.map((h) => (
-                    <option key={h} value={h}>
-                      {h}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-sm text-[#9CA3AF]">:</span>
-                <select
-                  aria-label="Minute"
-                  disabled={!parsed}
-                  value={currentMinute.toString().padStart(2, "0")}
-                  onChange={(e) =>
-                    handleTimeChange(
-                      currentHour12,
-                      Number(e.target.value),
-                      currentPeriod,
-                    )
-                  }
-                  className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
-                >
-                  {MINUTE_OPTIONS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  aria-label="AM or PM"
-                  disabled={!parsed}
-                  value={currentPeriod}
-                  onChange={(e) =>
-                    handleTimeChange(
-                      currentHour12,
-                      currentMinute,
-                      e.target.value as "AM" | "PM",
-                    )
-                  }
-                  className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
-                >
-                  <option value="AM">AM</option>
-                  <option value="PM">PM</option>
-                </select>
+              {showTime && step === "time" && (
+                <div className="flex items-center gap-2 p-3">
+                  <Clock className="w-4 h-4 text-[#9CA3AF] shrink-0" />
+                  <select
+                    aria-label="Hour"
+                    disabled={!parsed}
+                    value={currentHour12}
+                    onChange={(e) =>
+                      handleTimeChange(
+                        Number(e.target.value),
+                        currentMinute,
+                        currentPeriod,
+                      )
+                    }
+                    className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
+                  >
+                    {HOURS_12.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-sm text-[#9CA3AF]">:</span>
+                  <select
+                    aria-label="Minute"
+                    disabled={!parsed}
+                    value={currentMinute.toString().padStart(2, "0")}
+                    onChange={(e) =>
+                      handleTimeChange(
+                        currentHour12,
+                        Number(e.target.value),
+                        currentPeriod,
+                      )
+                    }
+                    className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
+                  >
+                    {MINUTE_OPTIONS.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    aria-label="AM or PM"
+                    disabled={!parsed}
+                    value={currentPeriod}
+                    onChange={(e) =>
+                      handleTimeChange(
+                        currentHour12,
+                        currentMinute,
+                        e.target.value as "AM" | "PM",
+                      )
+                    }
+                    className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
+                  >
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Footer nav — Next moves to the time step, Done closes the popover */}
+              <div className="flex items-center justify-between gap-2 p-2 border-t border-[#E5E7EB]">
+                {showTime && step === "time" ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setStep("date")}
+                  >
+                    Back
+                  </Button>
+                ) : (
+                  <span />
+                )}
+
+                {showTime && step === "date" ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!parsed}
+                    className="text-xs bg-[#1A56DB] hover:bg-blue-900"
+                    onClick={handleNext}
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!parsed}
+                    className="text-xs bg-[#1A56DB] hover:bg-blue-900"
+                    onClick={handleDone}
+                  >
+                    Done
+                  </Button>
+                )}
               </div>
-            )}
-          </PopoverContent>
-        </Popover>
-      );
-    }}
-  />
-);
+            </PopoverContent>
+          </Popover>
+        );
+      }}
+    />
+  );
+};
 
 // ─── Shared bits ──────────────────────────────────────────────────────────────
 

@@ -4,6 +4,7 @@ import CarPageComponent from "@/components/pages/broswerCarsPage/carPageComponen
 import { useGetPublicVehicleByIdQuery } from "@/app/store/services/publicApi";
 import { use } from "react";
 import VehicleNotFound from "@/components/pages/broswerCarsPage/vehicleNotFound";
+import CarPageLoading from "@/components/pages/broswerCarsPage/carPageLoading";
 
 export default function CarPage({
   params,
@@ -17,7 +18,7 @@ export default function CarPage({
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <CarPageLoading/>;
   }
 
   if (isError || !data) {
@@ -28,10 +29,6 @@ export default function CarPage({
     <CarPageComponent
       carName={data?.data.carName}
       vehicleId={data?.data.id as string}
-      featuredImage={{
-        alt: data?.data.featuredImage?.alt,
-        src: data?.data.featuredImage?.src,
-      }}
       gallery={
         data?.data.images?.map((d, index) => {
           return {
@@ -79,7 +76,10 @@ export default function CarPage({
         weekly: data?.data.price?.weekly,
         monthly: data?.data.price?.monthly,
       }}
-      pickupLocation={data?.data.location}
+      defaultPickupLocationStreet={"750 E Tremont Ave"}
+      defaultPickupLocationCity={"Bronx"}
+      defaultPickupLocationState={"New York"}
+      defaultPickupLocationZipCode={"10457"}
       insuranceExpiration={data.data.insuranceExpiration}
       insuranceProvider={data.data.insuranceProvider}
       policyNumber={data.data.policyNumber}

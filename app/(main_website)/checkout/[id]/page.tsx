@@ -3,8 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Elements } from "@stripe/react-stripe-js";
+import { toast } from "sonner";
 
 import CheckoutForm from "@/components/forms/checkoutForm";
+import CheckoutAuthModal from "@/components/modals/checkoutAuthModal";
+import CheckoutSkeleton from "@/components/checkout/checkoutSkeleton";
+import CheckoutErrorState from "@/components/checkout/checkoutErrorState";
 import {
   useCreateCheckoutPaymentIntentMutation,
   useCreatePublicBookingMutation,
@@ -13,70 +17,16 @@ import {
 import { useGetProfileQuery } from "@/app/store/services/renterApi";
 import { SITE_URL, DEFAULT_IMAGE_SRC } from "@/constants/constant";
 import { stripePromise } from "@/lib/stripe";
-import { CheckoutContact, CheckoutFormValues } from "@/components/forms/checkoutForm";
-
-type PendingCheckoutDraft = {
-  vehicleId: string;
-  pickupDate: string;
-  returnDate: string;
-  pickupLocation: string;
-  insuranceProvider?: string;
-  policyNumber?: string;
-  insuranceExpiry?: string;
-  hostProvidingCoverage?: boolean;
-  subtotal?: number;
-  tax?: number;
-  taxRate?: number;
-  totalAmount?: number;
-  totalDays?: number;
-  pickupTime: string;
-  returnTime: string;
-  streetAddress?: string;
-  city?: string;
-  state?: string;
-  postalCode?: string;
-};
-
-const getPendingCheckoutStorageKey = (vehicleId: string) =>
-  `swingrides:pending-checkout:${vehicleId}`;
-
-const formatCurrency = (amount?: number | null) =>
-  `$${Number(amount || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}`;
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "data" in error &&
-    typeof error.data === "object" &&
-    error.data !== null &&
-    "message" in error.data &&
-    typeof error.data.message === "string"
-  ) {
-    return error.data.message;
-  }
-
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "data" in error &&
-    typeof error.data === "object" &&
-    error.data !== null &&
-    "error" in error.data &&
-    typeof error.data.error === "string"
-  ) {
-    return error.data.error;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
-};
+import {
+  clearDraftFromStorage,
+  formatCurrency,
+  getErrorMessage,
+  isUnauthenticatedError,
+  readDraftFromStorage,
+  writeDraftToStorage,
+  type PendingCheckoutDraft,
+} from "@/lib/checkout-helpers";
+import type { CheckoutContact, CheckoutFormValues } from "@/components/forms/checkoutForm";
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -88,6 +38,8 @@ export default function CheckoutPage() {
 
   const [draft, setDraft] = useState<PendingCheckoutDraft | null>(null);
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
+  const [draftError, setDraftError] = useState(false);
+
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [pricingSummary, setPricingSummary] = useState<{
     subtotal: number;
@@ -95,40 +47,58 @@ export default function CheckoutPage() {
     taxRate: number;
     totalAmount: number;
   } | null>(null);
+  const [paymentIntentError, setPaymentIntentError] = useState<string | null>(
+    null,
+  );
+  const [paymentIntentRetryCount, setPaymentIntentRetryCount] = useState(0);
+
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [finalizingPaymentIntentId, setFinalizingPaymentIntentId] = useState<
     string | null
   >(null);
 
-  const { data: vehicleData, isLoading: isVehicleLoading } =
-    useGetPublicVehicleByIdQuery({ id: vehicleId });
-  const { data: renterProfile } = useGetProfileQuery();
-  const [createPaymentIntent, { isLoading: isCreatingPaymentIntent }] =
-    useCreateCheckoutPaymentIntentMutation();
+  // Un-dismissable by default: pass `onDismiss` if guest checkout without an
+  // account should be allowed.
+  const [authModalDismissed, setAuthModalDismissed] = useState(false);
+  // True when the modal was forced open by a real "authentication required"
+  // error from the API (as opposed to simply being a not-yet-logged-in
+  // guest browsing checkout) — in that case the modal can't be dismissed,
+  // since there's no valid path forward without signing in.
+  const [authRequiredByFailure, setAuthRequiredByFailure] = useState(false);
+
+  const {
+    data: vehicleData,
+    isLoading: isVehicleLoading,
+    isError: isVehicleError,
+    refetch: refetchVehicle,
+  } = useGetPublicVehicleByIdQuery({ id: vehicleId }, { skip: !vehicleId });
+
+  const {
+    data: renterProfile,
+    isLoading: isProfileLoading,
+    isFetching: isProfileFetching,
+    refetch: refetchProfile,
+  } = useGetProfileQuery();
+
+  const [createPaymentIntent] = useCreateCheckoutPaymentIntentMutation();
   const [createBooking, { isLoading: isCreatingBooking }] =
     useCreatePublicBookingMutation();
 
+  // ── Load the draft from sessionStorage ──────────────────────────────────
   useEffect(() => {
     if (!vehicleId) return;
 
-    const storedDraft = window.sessionStorage.getItem(
-      getPendingCheckoutStorageKey(vehicleId),
-    );
-
-    if (storedDraft) {
-      try {
-        setDraft(JSON.parse(storedDraft) as PendingCheckoutDraft);
-      } catch (error) {
-        console.error("Failed to parse pending checkout draft:", error);
-        setSubmitError(
-          "Unable to load your checkout details. Please start again.",
-        );
-      }
+    const storedDraft = readDraftFromStorage(vehicleId);
+    if (!storedDraft) {
+      setDraftError(true);
+    } else {
+      setDraft(storedDraft);
     }
 
     setIsDraftLoaded(true);
   }, [vehicleId]);
 
+  // ── Finalize booking once Stripe confirms payment ───────────────────────
   const finalizeBooking = useCallback(
     async (checkoutValues?: Partial<CheckoutFormValues>) => {
       if (!draft) {
@@ -155,7 +125,8 @@ export default function CheckoutPage() {
           pickupDate: draft.pickupDate,
           returnDate: draft.returnDate,
           pickupLocation: draft.pickupLocation,
-          streetAddress: checkoutValues?.streetAddress || draft.streetAddress || "",
+          streetAddress:
+            checkoutValues?.streetAddress || draft.streetAddress || "",
           city: checkoutValues?.city || draft.city || "",
           state: checkoutValues?.state || draft.state || "",
           postalCode: checkoutValues?.postalCode || draft.postalCode || "",
@@ -171,23 +142,34 @@ export default function CheckoutPage() {
           throw new Error("Booking was not created after payment.");
         }
 
-        window.sessionStorage.removeItem(
-          getPendingCheckoutStorageKey(vehicleId),
-        );
+        clearDraftFromStorage(vehicleId);
+        toast.success("Booking confirmed!");
         router.push(`/trip/${result.data.id}`);
       } catch (error) {
         setFinalizingPaymentIntentId(null);
-        setSubmitError(
-          getErrorMessage(
-            error,
-            "Payment succeeded, but booking creation failed.",
-          ),
+
+        if (isUnauthenticatedError(error)) {
+          // Don't show a raw "authentication required" error — just get
+          // them signed in and let them resubmit. Also a hard requirement,
+          // so the modal can't be dismissed here either.
+          toast.error("Please sign in to complete your booking.");
+          setAuthRequiredByFailure(true);
+          setAuthModalDismissed(false);
+          return;
+        }
+
+        const message = getErrorMessage(
+          error,
+          "Payment succeeded, but booking creation failed.",
         );
+        setSubmitError(message);
+        toast.error(message);
       }
     },
     [createBooking, draft, finalizingPaymentIntentId, router, vehicleId],
   );
 
+  // ── Auto-finalize on redirect back from Stripe ──────────────────────────
   useEffect(() => {
     if (
       !draft ||
@@ -206,6 +188,7 @@ export default function CheckoutPage() {
     });
   }, [draft, finalizeBooking, redirectStatus, redirectedPaymentIntentId]);
 
+  // ── Create the payment intent ───────────────────────────────────────────
   useEffect(() => {
     if (
       !draft ||
@@ -220,7 +203,7 @@ export default function CheckoutPage() {
 
     const initializePaymentIntent = async () => {
       try {
-        setSubmitError(null);
+        setPaymentIntentError(null);
         const response = await createPaymentIntent({
           vehicleId,
           pickupDate: draft.pickupDate,
@@ -241,12 +224,22 @@ export default function CheckoutPage() {
         });
       } catch (error) {
         if (!isActive) return;
-        setSubmitError(
-          getErrorMessage(
-            error,
-            "Unable to initialize payment. Please sign in and try again.",
-          ),
+
+        if (isUnauthenticatedError(error)) {
+          // Skip the error screen entirely — surface the auth modal so
+          // they can sign in and payment-intent creation will retry.
+          // This is a hard requirement, so the modal can't be dismissed.
+          setAuthRequiredByFailure(true);
+          setAuthModalDismissed(false);
+          return;
+        }
+
+        const message = getErrorMessage(
+          error,
+          "Unable to initialize payment. Please try again.",
         );
+        setPaymentIntentError(message);
+        toast.error(message);
       }
     };
 
@@ -255,10 +248,29 @@ export default function CheckoutPage() {
     return () => {
       isActive = false;
     };
-  }, [clientSecret, createPaymentIntent, draft, redirectStatus, vehicleId]);
+  }, [
+    clientSecret,
+    createPaymentIntent,
+    draft,
+    redirectStatus,
+    vehicleId,
+    paymentIntentRetryCount,
+  ]);
 
   const vehicle = vehicleData?.data;
   const renter = renterProfile?.renter;
+  const isLoggedIn = !!renter;
+
+  // Only prompt once the profile lookup has actually settled — avoids a
+  // flash of the auth modal while the "am I logged in" request is in flight.
+  // A 401 here just means "guest", so it's handled the same as any other
+  // logged-out state rather than as a failure.
+  const shouldPromptAuth =
+    isDraftLoaded &&
+    !isProfileLoading &&
+    !isProfileFetching &&
+    !isLoggedIn &&
+    !authModalDismissed;
 
   const user = useMemo(() => {
     if (!renter) return null;
@@ -297,46 +309,102 @@ export default function CheckoutPage() {
     };
   }, [draft, pricingSummary, vehicle]);
 
+  // Refetching the profile flips `isLoggedIn` to true, which closes the
+  // modal on its own. Bumping the retry count re-runs the payment-intent
+  // effect in case it bailed out earlier on an auth error — it's a no-op if
+  // a clientSecret already exists.
+  const handleAuthSuccess = useCallback(async () => {
+    await refetchProfile();
+    setAuthRequiredByFailure(false);
+    setPaymentIntentRetryCount((count) => count + 1);
+  }, [refetchProfile]);
+
+  const authModal = shouldPromptAuth ? (
+    <CheckoutAuthModal
+      onAuthSuccess={handleAuthSuccess}
+      onDismiss={
+        authRequiredByFailure ? undefined : () => setAuthModalDismissed(true)
+      }
+    />
+  ) : null;
+
+  // ── Failure states ───────────────────────────────────────────────────────
+
   if (!vehicleId) {
     return (
-      <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
-        Invalid checkout session
-      </div>
+      <CheckoutErrorState
+        title="Invalid checkout session"
+        message="We couldn't find a vehicle for this checkout link."
+        primaryAction={{ label: "Browse vehicles", onClick: () => router.push("/") }}
+      />
+    );
+  }
+
+  if (isVehicleError) {
+    return (
+      <CheckoutErrorState
+        title="We couldn't load this vehicle"
+        message="It may have been removed or is temporarily unavailable."
+        primaryAction={{ label: "Try again", onClick: () => refetchVehicle() }}
+        secondaryAction={{ label: "Go back", onClick: () => router.back() }}
+      />
+    );
+  }
+
+  if (draftError) {
+    return (
+      <CheckoutErrorState
+        title="Your checkout session has expired"
+        message="Please head back to the vehicle page and start the booking again."
+        primaryAction={{
+          label: "Start over",
+          onClick: () => router.push(`/vehicles/${vehicleId}`),
+        }}
+      />
     );
   }
 
   if (!isDraftLoaded || isVehicleLoading) {
-    return (
-      <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
-        Loading checkout details...
-      </div>
-    );
+    return <CheckoutSkeleton />;
   }
 
   if (!draft || !summary) {
     return (
-      <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
-        Checkout details not found. Please start again.
-      </div>
+      <CheckoutErrorState
+        title="Checkout details not found"
+        message="Please start your booking again."
+        primaryAction={{
+          label: "Start over",
+          onClick: () => router.push(`/vehicles/${vehicleId}`),
+        }}
+      />
     );
   }
 
   if (redirectStatus === "succeeded" && finalizingPaymentIntentId) {
+    return <CheckoutSkeleton />;
+  }
+
+  if (paymentIntentError && !clientSecret) {
     return (
-      <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
-        Finalizing booking...
-      </div>
+      <CheckoutErrorState
+        title="Unable to prepare secure payment"
+        message={paymentIntentError}
+        primaryAction={{
+          label: "Try again",
+          onClick: () => setPaymentIntentRetryCount((count) => count + 1),
+        }}
+        secondaryAction={{ label: "Go back", onClick: () => router.back() }}
+      />
     );
   }
 
   if (!clientSecret) {
     return (
-      <div className="min-h-[70dvh] bg-gray-200 text-center grid place-content-center">
-        {submitError ||
-          (isCreatingPaymentIntent
-            ? "Preparing secure payment..."
-            : "Unable to load payment details.")}
-      </div>
+      <>
+        <CheckoutSkeleton />
+        {authModal}
+      </>
     );
   }
 
@@ -354,22 +422,22 @@ export default function CheckoutPage() {
         onBeforeConfirm={async (values: CheckoutContact) => {
           const nextDraft = { ...draft, ...values };
           setDraft(nextDraft);
-          window.sessionStorage.setItem(
-            getPendingCheckoutStorageKey(vehicleId),
-            JSON.stringify(nextDraft),
-          );
+          writeDraftToStorage(vehicleId, nextDraft);
         }}
         onSubmit={async (values) => {
           await finalizeBooking(values);
         }}
         onCancel={() => {
-          window.sessionStorage.removeItem(
-            getPendingCheckoutStorageKey(vehicleId),
-          );
+          clearDraftFromStorage(vehicleId);
           router.back();
         }}
       />
-      {isCreatingBooking ? <div>Finalizing booking...</div> : null}
+      {isCreatingBooking && (
+        <div className="text-center text-sm text-gray-500 py-2">
+          Finalizing booking...
+        </div>
+      )}
+      {authModal}
     </Elements>
   );
 }
