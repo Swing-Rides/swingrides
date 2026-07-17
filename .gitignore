@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.dbg/host-plan-intent-dup.env
+debug-host-plan-intent-dup.md
+.dbg/trae-debug-log-host-plan-intent-dup.ndjson
