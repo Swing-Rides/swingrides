@@ -43,11 +43,17 @@ interface ErrorResponseData {
   message?: string;
 }
 
+interface SuccessResponseData {
+  message?: string;
+}
+
+const MUTATING_METHODS: Method[] = ["POST", "PUT", "PATCH", "DELETE"];
+
 const axiosBaseQuery = (): BaseQueryFn<
   AxiosBaseQueryArgs,
   unknown,
   AxiosBaseQueryError
-> => {
+  > => {
   return async (args) => {
     const request =
       typeof args === "string"
@@ -59,6 +65,10 @@ const axiosBaseQuery = (): BaseQueryFn<
           params: args.params,
         };
 
+    const isMutatingMethod = MUTATING_METHODS.includes(
+      request.method.toUpperCase() as Method
+    );
+
     try {
       const result = await apiClient({
         url: request.url,
@@ -66,10 +76,19 @@ const axiosBaseQuery = (): BaseQueryFn<
         data: request.data,
         params: request.params,
       });
+
+      if (isMutatingMethod) {
+        const successData = result.data as SuccessResponseData;
+        if (typeof successData?.message === "string") {
+          toast.success(successData.message);
+        }
+      }
+
       return { data: result.data };
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponseData>;
       const responseData = axiosError.response?.data;
+
       const message =
         typeof responseData?.message === "string"
           ? responseData.message
@@ -77,10 +96,9 @@ const axiosBaseQuery = (): BaseQueryFn<
             ? responseData
             : "Process failed";
 
-      toast.message(message);
-
-      console.log("ERROR===", axiosError.response?.data);
-      console.log("message===", axiosError.message);
+      if (isMutatingMethod) {
+        toast.error(message);
+      }
 
       return {
         error: {
