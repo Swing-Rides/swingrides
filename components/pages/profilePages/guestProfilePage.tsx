@@ -97,7 +97,6 @@ const UserCard = ({
       console.error("Renter logout failed:", error);
     }
   };
-  // const totalCost = getTotalSpent(rentals).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 
   return (
     <div className="p-2.5 md:p-6 flex flex-col gap-5 bg-white rounded-[10px] shadow-[0px_1px_3px_1px_rgba(0,0,0,0.30)] overflow-clip">

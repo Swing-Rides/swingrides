@@ -3,13 +3,14 @@
 import GuestProfilePage from "@/components/pages/profilePages/guestProfilePage";
 import GuestSignInComponent from "@/components/signIn/guestSignInComponent";
 import { useGetProfileQuery } from "@/app/store/services/renterApi";
+import ProfilePageLoading from "@/components/pages/profilePages/profilePageLoading";
 
 export default function ProfilePage() {
   const { data, isLoading } = useGetProfileQuery();
   const renterProfile = data?.renter ?? null;
 
   if (isLoading) {
-    return <main className="min-h-screen bg-[#F9FAFB]" />;
+    return <ProfilePageLoading />;
   }
 
   if (!renterProfile) {
