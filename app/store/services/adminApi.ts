@@ -42,6 +42,7 @@ import {
   AdminReviewDetailResponse,
   AdminReviewActionResponse,
 } from "@/types/admin-reviews.type";
+import { toast } from "sonner";
 
 type AxiosBaseQueryArgs =
   | string
@@ -58,21 +59,36 @@ type AxiosBaseQueryError = {
   data: unknown;
 };
 
+interface ErrorResponseData {
+  message?: string;
+}
+
+interface SuccessResponseData {
+  message?: string;
+}
+
+const MUTATING_METHODS: Method[] = ["POST", "PUT", "PATCH", "DELETE"];
+
+
 const axiosBaseQuery = (): BaseQueryFn<
   AxiosBaseQueryArgs,
   unknown,
   AxiosBaseQueryError
-> => {
+  > => {
   return async (args) => {
     const request =
       typeof args === "string"
         ? { url: args, method: "GET" as Method }
         : {
-            url: args.url,
-            method: args.method ?? "GET",
-            data: args.data ?? args.body,
-            params: args.params,
-          };
+          url: args.url,
+          method: args.method ?? "GET",
+          data: args.data ?? args.body,
+          params: args.params,
+        };
+
+    const isMutatingMethod = MUTATING_METHODS.includes(
+      request.method.toUpperCase() as Method
+    );
 
     try {
       const result = await apiClient({
@@ -81,9 +97,30 @@ const axiosBaseQuery = (): BaseQueryFn<
         data: request.data,
         params: request.params,
       });
+
+      if (isMutatingMethod) {
+        const successData = result.data as SuccessResponseData;
+        if (typeof successData?.message === "string") {
+          toast.success(successData.message);
+        }
+      }
+
       return { data: result.data };
     } catch (error) {
-      const axiosError = error as AxiosError;
+      const axiosError = error as AxiosError<ErrorResponseData>;
+      const responseData = axiosError.response?.data;
+
+      const message =
+        typeof responseData?.message === "string"
+          ? responseData.message
+          : typeof responseData === "string"
+            ? responseData
+            : "Process failed";
+
+      if (isMutatingMethod) {
+        toast.error(message);
+      }
+
       return {
         error: {
           status: axiosError.response?.status,

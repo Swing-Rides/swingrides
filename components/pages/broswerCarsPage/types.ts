@@ -10,10 +10,6 @@ import { FleetStatus } from "@/types/subscribers.type";
 
 export type CarPageComponentProp = {
   carName: string;
-  featuredImage: {
-    src: string;
-    alt: string;
-  };
   gallery: {
     id: string;
     src: string;
@@ -29,7 +25,10 @@ export type CarPageComponentProp = {
     weekly: number;
     monthly: number;
   };
-  pickupLocation: string;
+  defaultPickupLocationStreet: string;
+  defaultPickupLocationCity: string;
+  defaultPickupLocationState: string;
+  defaultPickupLocationZipCode: string;
   vehicleId: string;
   policyNumber: string;
   insuranceProvider: string;
@@ -42,7 +41,7 @@ export type ImagesSectionProps = {
     src: string;
     alt: string;
   }[];
-  featuredImage: { src: string; alt: string };
+  // featuredImage: { src: string; alt: string };
 };
 
 export type CarDetailCardProps = {

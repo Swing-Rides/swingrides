@@ -33,7 +33,7 @@ export default function RootLayout({
       lang="en"
       className={`${bebasNeueGoogle.variable} ${dmSans.variable} h-full antialiased bg-slate-100`}
     >
-      <body className="flex flex-col bg-slate-100">
+      <body className="flex flex-col bg-slate-100 overflow-x-hidden">
         <ReduxProvider>
           <ChakraUIProvider>
             <SocketProvider>{children}</SocketProvider>

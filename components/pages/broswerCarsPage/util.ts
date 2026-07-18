@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+
 export function getStarPercentage(
   starRated: number,
   totalRatings: number,
@@ -27,77 +29,47 @@ export type CarsFilterParams = {
   sort: SortOption;
 };
 
-//         cars: CarDataType[],
-//         params: CarsFilterParams
-// ): CarDataType[] => {
-//         const {
-//                 search,
-//                 rentalType,
-//                 availableOnly,
-//                 priceMin,
-//                 priceMax,
-//                 vehicleTypes,
-//                 seats,
-//                 transmissions,
-//                 sort,
-//         } = params
+interface ShareOptions {
+  title?: string;
+  text?: string;
+  url?: string;
+}
 
-//         const query = search.toLowerCase().trim()
+/**
+ * Shares content using the native Web Share API when available,
+ * falling back to copying the URL to the clipboard.
+ * Shows toast feedback via sonner for each outcome.
+ */
+export async function shareContent({
+  title,
+  text,
+  url = typeof window !== "undefined" ? window.location.href : "",
+}: ShareOptions): Promise<void> {
+  const shareData: ShareData = { title, text, url };
 
-//         const filtered = cars.filter(car => {
-//                 // Search — matches car name, make, model, or body type
-//                 if (query) {
-//                         const haystack = [
-//                                 car.carName,
-//                                 car.specifications.make,
-//                                 car.specifications.model,
-//                                 car.specifications.bodyType,
-//                         ].join(' ').toLowerCase()
-//                         if (!haystack.includes(query)) return false
-//                 }
+  // Use native share sheet on supported browsers (mostly mobile)
+  if (typeof navigator !== "undefined" && navigator.share) {
+    try {
+      if (!navigator.canShare || navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        return; 
+      }
+    } catch (err) {
+      // AbortError happens when the user closes the share sheet — silently ignore
+      if (err instanceof Error && err.name === "AbortError") {
+        return;
+      }
+      console.error("Error sharing content:", err);
+      // fall through to clipboard fallback
+    }
+  }
 
-//                 // Available now only
-//                 if (availableOnly && car.status !== 'Available') return false
-
-//                 // Price range — compare against the active rental type price
-//                 const price = getPriceForRentalType(car, rentalType)
-//                 if (price < priceMin || price > priceMax) return false
-
-//                 // Vehicle type
-//                 if (vehicleTypes.length > 0 && !vehicleTypes.includes(car.specifications.bodyType)) return false
-
-//                 // Seats — stored as numbers in data, filter values are "N Seats" strings
-//                 if (seats.length > 0) {
-//                         const seatLabel = `${car.specifications.seats} Seats`
-//                         if (!seats.includes(seatLabel)) return false
-//                 }
-
-//                 // Transmission — partial match to handle "(8-speed PDK)" variants
-//                 if (transmissions.length > 0) {
-//                         const matched = transmissions.some(t =>
-//                                 car.specifications.transmission.toLowerCase().includes(t.toLowerCase())
-//                         )
-//                         if (!matched) return false
-//                 }
-
-//                 return true
-//         })
-
-//         // Sort
-//         return [...filtered].sort((a, b) => {
-//                 switch (sort) {
-//                         case 'price-asc':
-//                                 return getPriceForRentalType(a, rentalType) - getPriceForRentalType(b, rentalType)
-//                         case 'price-desc':
-//                                 return getPriceForRentalType(b, rentalType) - getPriceForRentalType(a, rentalType)
-//                         case 'rating-desc':
-//                                 return b.reviewsAndRatings.averageRating - a.reviewsAndRatings.averageRating
-//                         case 'rating-asc':
-//                                 return a.reviewsAndRatings.averageRating - b.reviewsAndRatings.averageRating
-//                         case 'name-asc':
-//                                 return a.carName.localeCompare(b.carName)
-//                         default:
-//                                 return 0
-//                 }
-//         })
-// }
+  // Fallback: copy link to clipboard
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard!");
+  } catch (err) {
+    console.error("Error copying to clipboard:", err);
+    toast.error("Couldn't share. Please try again.");
+  }
+}

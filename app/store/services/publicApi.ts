@@ -6,6 +6,7 @@ import {
   PublicBrowseVehiclesResponse,
   VehicleDetails,
 } from "@/types/public-vehicles.type";
+import { toast } from "sonner";
 
 type AxiosBaseQueryArgs =
   | string
@@ -22,11 +23,21 @@ type AxiosBaseQueryError = {
   data: unknown;
 };
 
+interface ErrorResponseData {
+  message?: string;
+}
+
+interface SuccessResponseData {
+  message?: string;
+}
+
+const MUTATING_METHODS: Method[] = ["POST", "PUT", "PATCH", "DELETE"];
+
 const axiosBaseQuery = (): BaseQueryFn<
   AxiosBaseQueryArgs,
   unknown,
   AxiosBaseQueryError
-> => {
+  > => {
   return async (args) => {
     const request =
       typeof args === "string"
@@ -38,6 +49,10 @@ const axiosBaseQuery = (): BaseQueryFn<
           params: args.params,
         };
 
+    const isMutatingMethod = MUTATING_METHODS.includes(
+      request.method.toUpperCase() as Method
+    );
+
     try {
       const result = await apiClient({
         url: request.url,
@@ -45,9 +60,30 @@ const axiosBaseQuery = (): BaseQueryFn<
         data: request.data,
         params: request.params,
       });
+
+      if (isMutatingMethod) {
+        const successData = result.data as SuccessResponseData;
+        if (typeof successData?.message === "string") {
+          toast.success(successData.message);
+        }
+      }
+
       return { data: result.data };
     } catch (error) {
-      const axiosError = error as AxiosError;
+      const axiosError = error as AxiosError<ErrorResponseData>;
+      const responseData = axiosError.response?.data;
+
+      const message =
+        typeof responseData?.message === "string"
+          ? responseData.message
+          : typeof responseData === "string"
+            ? responseData
+            : "Process failed";
+
+      if (isMutatingMethod) {
+        toast.error(message);
+      }
+
       return {
         error: {
           status: axiosError.response?.status,
@@ -109,6 +145,7 @@ export const publicApi = createApi({
     createPublicBooking: builder.mutation<
       {
         success: boolean;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: any;
       },
       {
@@ -172,6 +209,7 @@ export const publicApi = createApi({
     getPublicBookingById: builder.query<
       {
         success: boolean;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: any;
       },
       { id: string }
