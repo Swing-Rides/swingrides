@@ -107,121 +107,121 @@ export default function DashboardPageComponent() {
       {isInitialLoading ? (
         <DashboardLoading />
       ) : (
-      <div className="space-y-4">
-        {shouldShowRegistrationCard ? (
-          <CompleteRegistrationNotification 
-            handleOpenRegistrationModal={handleOpenRegistrationModal}
-            plan={hostPayment.plan}
-            status={hostPayment.status}
-          />
-        ) : null}
-        {summary?.totalVehicles === 0 ? (
-          <AddVehicleCard />
-        ) : (<>
-          <div className="flex flex-wrap gap-4 mt-8">
-            <DashboardOverviewCard
-              icon={<Car className="size-6 text-blue-700" />}
-              iconBgColor="bg-indigo-50"
-              title="Total Vehicles"
-              number={summary?.totalVehicles ?? "—"}
-              trend={true}
-              trendText="+12% from last month"
+        <div className="space-y-4">
+          {shouldShowRegistrationCard ? (
+            <CompleteRegistrationNotification
+              handleOpenRegistrationModal={handleOpenRegistrationModal}
+              plan={hostPayment.plan}
+              status={hostPayment.status}
             />
-            <DashboardOverviewCard
-              icon={<Calendar className="size-6 text-blue-700" />}
-              iconBgColor="bg-indigo-50"
-              title="Active Rentals"
-              number={summary?.activeRentals ?? "—"}
-              trend={false}
-              trendText={`${summary?.utilizationRate ?? 0}% utilization rate`}
-            />
-            <DashboardOverviewCard
-              icon={<DollarSign className="size-6 text-emerald-500" />}
-              iconBgColor="bg-emerald-100"
-              title="Monthly Revenue"
-              number={summary?.monthlyRevenueFormatted ?? "—"}
-              trend={(summary?.revenueGrowthPercent ?? 0) >= 0}
-              trendText={`${(summary?.revenueGrowthPercent ?? 0) >= 0 ? "+" : ""}${summary?.revenueGrowthPercent ?? 0}% from last month`}
-            />
-            <DashboardOverviewCard
-              icon={<Clock className="size-6 text-amber-500" />}
-              iconBgColor="bg-amber-100"
-              title="Pending Bookings"
-              number={summary?.pendingBookings ?? "—"}
-              trend={false}
-              trendText="Requires approval"
-            />
-          </div>
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="md:col-span-2 p-4 md:p-6 bg-white rounded-md border border-gray-200">
-              <RevenueChart
-                graphData={graphData}
-                onFilterChange={handleFilterChange}
-                isLoading={isLoading}
-              />
-            </div>
-            <div className="col-span-1">
-              <BookingsDonutChart chartData={donutData} />
-            </div>
-          </div>
-          <div className="grid md:grid-cols-3 gap-4 items-start">
-            <div className="md:col-span-2 p-4 md:p-6 space-y-4 bg-white rounded-md border border-gray-200 overflow-hidden">
-              <RecentBookingsTable
-                bookings={recentBookings}
-                isLoading={isLoading}
-              />
-            </div>
-            <div className="md:col-span-1 p-4 md:p-6 bg-white rounded-md border border-gray-200">
-              <div className="flex flex-col gap-4">
-                <h3 className="text-neutral-950 text-base font-semibold font-text">
-                  Fleet Status
-                </h3>
-                <div className="flex flex-col gap-3">
-                  <FleetDataList
-                    icon={<Car className="size-4 text-emerald-500" />}
-                    iconBg="bg-green-100"
-                    label="Available"
-                    number={fleetStatus?.available ?? 0}
-                  />
-                  <FleetDataList
-                    icon={<Calendar className="size-4 text-blue-700" />}
-                    iconBg="bg-indigo-50"
-                    label="Rented"
-                    number={fleetStatus?.rented ?? 0}
-                  />
-                  <FleetDataList
-                    icon={<Wrench className="size-4 text-amber-500" />}
-                    iconBg="bg-amber-100"
-                    label="Maintenance"
-                    number={fleetStatus?.maintenance ?? 0}
-                  />
-                  <FleetDataList
-                    icon={<Clock className="size-4 text-gray-500" />}
-                    iconBg="bg-gray-100"
-                    label="Inactive"
-                    number={fleetStatus?.inactive ?? 0}
+          ) : null}
+          {summary?.totalVehicles === 0 ? (
+            <AddVehicleCard />
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-4 mt-8">
+                <DashboardOverviewCard
+                  icon={<Car className="size-6 text-blue-700" />}
+                  iconBgColor="bg-indigo-50"
+                  title="Total Vehicles"
+                  number={summary?.totalVehicles ?? "—"}
+                  trend={true}
+                  trendText="+12% from last month"
+                />
+                <DashboardOverviewCard
+                  icon={<Calendar className="size-6 text-blue-700" />}
+                  iconBgColor="bg-indigo-50"
+                  title="Active Rentals"
+                  number={summary?.activeRentals ?? "—"}
+                  trend={false}
+                  trendText={`${summary?.utilizationRate ?? 0}% utilization rate`}
+                />
+                <DashboardOverviewCard
+                  icon={<DollarSign className="size-6 text-emerald-500" />}
+                  iconBgColor="bg-emerald-100"
+                  title="Monthly Revenue"
+                  number={summary?.monthlyRevenueFormatted ?? "—"}
+                  trend={(summary?.revenueGrowthPercent ?? 0) >= 0}
+                  trendText={`${(summary?.revenueGrowthPercent ?? 0) >= 0 ? "+" : ""}${summary?.revenueGrowthPercent ?? 0}% from last month`}
+                />
+                <DashboardOverviewCard
+                  icon={<Clock className="size-6 text-amber-500" />}
+                  iconBgColor="bg-amber-100"
+                  title="Pending Bookings"
+                  number={summary?.pendingBookings ?? "—"}
+                  trend={false}
+                  trendText="Requires approval"
+                />
+              </div>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 p-4 md:p-6 bg-white rounded-md border border-gray-200">
+                  <RevenueChart
+                    graphData={graphData}
+                    onFilterChange={handleFilterChange}
+                    isLoading={isLoading}
                   />
                 </div>
-                <Separator />
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-800 text-xs font-normal font-text">
-                      Total Fleet
-                    </span>
-                    <span className="text-neutral-950 text-xs font-medium font-text">
-                      {fleetStatus?.totalFleet ?? 0} vehicles
-                    </span>
+                <div className="col-span-1">
+                  <BookingsDonutChart chartData={donutData} />
+                </div>
+              </div>
+              <div className="grid md:grid-cols-3 gap-4 items-start">
+                <div className="md:col-span-2 p-4 md:p-6 space-y-4 bg-white rounded-md border border-gray-200 overflow-hidden">
+                  <RecentBookingsTable
+                    bookings={recentBookings}
+                    isLoading={isLoading}
+                  />
+                </div>
+                <div className="md:col-span-1 p-4 md:p-6 bg-white rounded-md border border-gray-200">
+                  <div className="flex flex-col gap-4">
+                    <h3 className="text-neutral-950 text-base font-semibold font-text">
+                      Fleet Status
+                    </h3>
+                    <div className="flex flex-col gap-3">
+                      <FleetDataList
+                        icon={<Car className="size-4 text-emerald-500" />}
+                        iconBg="bg-green-100"
+                        label="Available"
+                        number={fleetStatus?.available ?? 0}
+                      />
+                      <FleetDataList
+                        icon={<Calendar className="size-4 text-blue-700" />}
+                        iconBg="bg-indigo-50"
+                        label="Rented"
+                        number={fleetStatus?.rented ?? 0}
+                      />
+                      <FleetDataList
+                        icon={<Wrench className="size-4 text-amber-500" />}
+                        iconBg="bg-amber-100"
+                        label="Maintenance"
+                        number={fleetStatus?.maintenance ?? 0}
+                      />
+                      <FleetDataList
+                        icon={<Clock className="size-4 text-gray-500" />}
+                        iconBg="bg-gray-100"
+                        label="Inactive"
+                        number={fleetStatus?.inactive ?? 0}
+                      />
+                    </div>
+                    <Separator />
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-zinc-800 text-xs font-normal font-text">
+                          Total Fleet
+                        </span>
+                        <span className="text-neutral-950 text-xs font-medium font-text">
+                          {fleetStatus?.totalFleet ?? 0} vehicles
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </>)}
-      </div>
+            </>
+          )}
+        </div>
       )}
-      <HostPackageModal 
-        packageId={hostPayment?.plan} 
-      />
+      <HostPackageModal packageId={hostPayment?.plan} />
     </PageWrapper>
   );
 }

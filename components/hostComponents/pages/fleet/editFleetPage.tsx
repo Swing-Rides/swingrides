@@ -17,12 +17,54 @@ type EditFleetComponentsProps = {
 
 const normalizeTransmission = (value?: string): string => {
   if (!value) return "";
-  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+  const normalized = value.toLowerCase();
+  if (normalized === "cvt") return "CVT";
+  if (normalized === "semi-automatic") return "Semi-Automatic";
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
 const normalizeVehicleType = (value?: string): string => {
   if (!value) return "";
-  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+  const normalized = value.toLowerCase();
+  const labels: Record<string, string> = {
+    sedan: "Sedan",
+    suv: "SUV",
+    truck: "Truck",
+    van: "Van",
+    minivan: "Minivan",
+    motorcycle: "Motorcycle",
+    convertible: "Convertible",
+    coupe: "Coupe",
+    hatchback: "Hatchback",
+    "pickup truck": "Pickup Truck",
+    "sports car": "Sports Car",
+    luxury: "Luxury",
+    electric: "Electric",
+  };
+  return labels[normalized] ?? value;
+};
+
+const normalizeFuelType = (value?: string): string => {
+  if (!value) return "";
+  const normalized = value.toLowerCase();
+  const labels: Record<string, string> = {
+    diesel: "Diesel",
+    electric: "Electric",
+    "gas/petrol": "Gas/Petrol",
+  };
+  return labels[normalized] ?? value;
+};
+
+const normalizeDriveType = (value?: string): string => {
+  if (!value) return "";
+  const normalized = value.toLowerCase();
+  const labels: Record<string, string> = {
+    "all wheel drive (awd)": "All Wheel Drive (AWD)",
+    "four wheel drive (4wd)": "Four Wheel Drive (4WD)",
+    "front wheel drive (fwd)": "Front Wheel Drive (FWD)",
+    "rear wheel drive (rwd)": "Rear Wheel Drive (RWD)",
+  };
+  return labels[normalized] ?? value;
 };
 
 const normalizeStatus = (value?: string): string => {
@@ -64,6 +106,7 @@ export default function EditFleetComponents({
         status: normalizeStatus(vehicle.status),
         transmission: normalizeTransmission(vehicle.transmission),
         vehicleName: vehicle.name,
+        vehicleRegistrationUrl: vehicle.vehicleRegistrationUrl,
         vehicleType: normalizeVehicleType(vehicle.vehicleType),
         vin: vehicle.vin,
         year: vehicle.year,
@@ -72,11 +115,11 @@ export default function EditFleetComponents({
         pickupAddressState: vehicle.pickupAddressState,
         dailyInsuranceFee: vehicle.dailyInsuranceFee,
         zipCode: vehicle.zipCode,
-        fuelType: vehicle.fuelType,
+        fuelType: normalizeFuelType(vehicle.fuelType),
         doors: vehicle.doors,
         fuelEfficiency: vehicle.fuelEfficiency,
         engine: vehicle.engine,
-        driveType: vehicle.driveType,
+        driveType: normalizeDriveType(vehicle.driveType),
         horsePower: vehicle.horsePower,
       }
     : {};
@@ -98,6 +141,7 @@ export default function EditFleetComponents({
       insuranceCarrier: values.insuranceCarrier,
       insurancePolicyNumber: values.insurancePolicyNumber,
       insuranceExpiration: values.insuranceExpiration || undefined,
+      vehicleRegistrationUrl: values.vehicleRegistrationUrl,
       status:
         values.status.toLowerCase() === "available"
           ? "active"
@@ -113,7 +157,7 @@ export default function EditFleetComponents({
       pickupLocation: values.pickupAddressStreet,
       pickupAddressState: values.pickupAddressState,
       zipCode: values.zipCode,
-      dailyInsuranceFee: values.dailyInsuranceFee,
+      dailyInsuranceFee: Number(values.dailyInsuranceFee),
       fuelType: values.fuelType.toLowerCase(),
       doors: Number(values.doors),
       fuelEfficiency: values.fuelEfficiency,
