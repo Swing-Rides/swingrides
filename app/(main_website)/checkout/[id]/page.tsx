@@ -301,6 +301,7 @@ export default function CheckoutPage() {
       vehicleName: vehicle.carName || "Vehicle",
       vehicleType: vehicle.vehicleType || "Vehicle",
       vehicleGearType: vehicle.specifications?.transmission || "Automatic",
+      insuranceFee: vehicle.insuranceFee || '$0.00',
       duration: `${draft.totalDays || 1} day${draft.totalDays === 1 ? "" : "s"}`,
       totalPrice: formatCurrency(totalAmount),
       subTotalFee: formatCurrency(subtotal),
@@ -358,7 +359,7 @@ export default function CheckoutPage() {
         message="Please head back to the vehicle page and start the booking again."
         primaryAction={{
           label: "Start over",
-          onClick: () => router.push(`/vehicles/${vehicleId}`),
+          onClick: () => router.push(`/browse-cars/${vehicleId}`),
         }}
       />
     );
@@ -375,7 +376,7 @@ export default function CheckoutPage() {
         message="Please start your booking again."
         primaryAction={{
           label: "Start over",
-          onClick: () => router.push(`/vehicles/${vehicleId}`),
+          onClick: () => router.push(`/browse-cars/${vehicleId}`),
         }}
       />
     );
@@ -414,7 +415,7 @@ export default function CheckoutPage() {
         id={vehicleId}
         {...summary}
         user={user}
-        insuranceFee={"$120"}
+        // insuranceFee={insuranceFee}
         clientSecret={clientSecret}
         returnUrl={`${SITE_URL}/checkout/${vehicleId}`}
         submitError={submitError}
