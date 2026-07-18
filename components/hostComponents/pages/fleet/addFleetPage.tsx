@@ -18,25 +18,28 @@ export default function AddFleetPage() {
       city: values.city,
       colour: values.color,
       dailyPrice: Number(values.priceDaily),
+      dailyInsuranceFee: Number(values.dailyInsuranceFee),
       description: values.description,
+      doors: Number(values.doors),
+      driveType: values.driveType.toLowerCase(),
+      engine: values.engine,
+      fuelEfficiency: values.fuelEfficiency,
+      fuelType: values.fuelType.toLowerCase(),
+      horsePower: Number(values.horsePower),
       images: values.vehicleImageUrls ?? [],
       instantlyAvailable: values.instantlyAvailable,
       licensePlate: values.licensePlate,
       insuranceCarrier: values.insuranceCarrier,
       insuranceExpiration: values.insuranceExpiration,
       insurancePolicyNumber: values.insurancePolicyNumber,
-      dailyInsuranceFee: Number(values.dailyInsuranceFee),
       make: values.make,
-      fuelType: values.fuelType.toLowerCase(),
-      doors: Number(values.doors),
-      fuelEfficiency: values.fuelEfficiency,
-      engine: values.engine,
-      driveType: values.driveType.toLowerCase(),
-      horsePower: Number(values.horsePower),
       mileage: Number(values.mileage),
       monthlyPrice: Number(values.priceMonthly),
       pickupLocation: values.pickupAddressStreet,
       pickupAddressState: values.pickupAddressState,
+      pickupInstructions: values.pickupInstructions,
+      status: values.status.toLowerCase(),
+      vehicleRegistrationUrl: values.vehicleRegistrationUrl,
       zipCode: values.zipCode,
       seats: Number(values.seats),
       name: values.vehicleName,
@@ -50,7 +53,6 @@ export default function AddFleetPage() {
     const response = await addVehicle(payload).unwrap();
     if (response.success) {
       router.push(`${HOST_DASHBOARD_PATH}fleet`);
-      // console.log("payload for backend adding fleet:", response);
     } else {
       console.error("Failed to add vehicle:", response.message);
     }
@@ -80,8 +82,13 @@ export default function AddFleetPage() {
             form="fleet-form"
             className="py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer"
           >
-            {isLoading ? (<span className="flex items-center gap-2 justify-start">
-              <Spinner/> Adding...</span>) : "Add Vehicle"}
+            {isLoading ? (
+              <span className="flex items-center gap-2 justify-start">
+                <Spinner /> Adding...
+              </span>
+            ) : (
+              "Add Vehicle"
+            )}
           </button>
         </div>
       </div>
@@ -102,8 +109,13 @@ export default function AddFleetPage() {
           form="fleet-form"
           className="flex-1 py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer"
         >
-          {isLoading ? (<span className="flex items-center gap-2 justify-start">
-            <Spinner /> Adding...</span>) : "Add Vehicle"}
+          {isLoading ? (
+            <span className="flex items-center gap-2 justify-start">
+              <Spinner /> Adding...
+            </span>
+          ) : (
+            "Add Vehicle"
+          )}
         </button>
       </div>
     </div>
