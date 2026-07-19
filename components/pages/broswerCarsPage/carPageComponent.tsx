@@ -1,7 +1,6 @@
 "use client";
 
 import { memo } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +42,7 @@ export default function CarPageComponent({
   defaultPickupLocationState,
   defaultPickupLocationZipCode,
   vehicleId,
+  insuranceFee,
 }: CarPageComponentProp) {
   return (
     <>
@@ -69,6 +69,7 @@ export default function CarPageComponent({
             defaultPickupLocationState={defaultPickupLocationState}
             defaultPickupLocationZipCode={defaultPickupLocationZipCode}
             vehicleId={vehicleId}
+            insuranceFeePerDay={insuranceFee}
           />
         </div>
       </section>
@@ -161,6 +162,7 @@ const RightContent = memo(
     defaultPickupLocationState, 
     defaultPickupLocationZipCode,
     vehicleId,
+    insuranceFeePerDay,
   }: {
     price: CarPageComponentProp["price"];
     defaultPickupLocationStreet: string;
@@ -168,6 +170,7 @@ const RightContent = memo(
     defaultPickupLocationState: string;
     defaultPickupLocationZipCode: string;
     vehicleId: string;
+    insuranceFeePerDay?: number;
   }) => {
     const router = useRouter();
 
@@ -196,6 +199,7 @@ const RightContent = memo(
           insuranceProvider: values.insuranceProvider,
           policyNumber: values.policyNumber,
           insuranceExpiry: values.insuranceExpiry,
+          insuranceFeePerDay: values.insuranceFee,
           hostProvidingCoverage: values.hostProvidingCoverage,
           subtotal: values.subtotal ?? 0,
           tax: values.tax ?? 0,
@@ -228,6 +232,7 @@ const RightContent = memo(
           zipCode={defaultPickupLocationZipCode}
           vehicleId={vehicleId}
           onSubmit={handleSubmit}
+          insuranceFeePerDay={insuranceFeePerDay}
         />
       </div>
     );

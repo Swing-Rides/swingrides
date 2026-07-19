@@ -78,7 +78,7 @@ type CheckoutFormProps = {
         taxPercentageRate: string
         taxFee: string
         /** Insurance fee shown in the order summary. Defaults to "$0.00" when not provided. */
-        insuranceFee?: string
+        insuranceFee?: number
         /** Checkout session length. Defaults to 20 minutes. */
         durationSeconds?: number
         /** Called once, when the countdown reaches zero. */
@@ -131,7 +131,7 @@ function CheckoutFormInner({
         subTotalFee,
         taxPercentageRate,
         taxFee,
-        insuranceFee = '$0.00',
+        insuranceFee = 0,
 }: CheckoutFormProps) {
         const isLoggedIn = !!user
 
@@ -453,7 +453,7 @@ function CheckoutFormInner({
                                                         label={`Tax (${taxPercentageRate})`}
                                                         value={taxFee}
                                                 />
-                                                <SummaryRow label='Insurance Fee' value={insuranceFee} />
+                                                <SummaryRow label='Insurance Fee' value={`${insuranceFee}`} />
                                         </div>
 
                                         <Separator />

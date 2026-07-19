@@ -117,5 +117,5 @@ export interface VehicleDetails {
   policyNumber: string;
   insuranceProvider: string;
   insuranceExpiration: Date;
-  insuranceFee?: string
+  insuranceFee?: number;
 }
