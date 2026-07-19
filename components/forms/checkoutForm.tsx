@@ -78,7 +78,7 @@ type CheckoutFormProps = {
         taxPercentageRate: string
         taxFee: string
         /** Insurance fee shown in the order summary. Defaults to "$0.00" when not provided. */
-        insuranceFee?: string
+        insuranceFee?: number
         /** Checkout session length. Defaults to 20 minutes. */
         durationSeconds?: number
         /** Called once, when the countdown reaches zero. */
@@ -131,7 +131,7 @@ function CheckoutFormInner({
         subTotalFee,
         taxPercentageRate,
         taxFee,
-        insuranceFee = '$0.00',
+        insuranceFee = 0,
 }: CheckoutFormProps) {
         const isLoggedIn = !!user
 
@@ -225,7 +225,7 @@ function CheckoutFormInner({
                 <form
                         id={formId}
                         onSubmit={handleSubmit(onFormSubmit)}
-                        className='flex flex-col gap-4 w-full'
+                        className='flex flex-col gap-4 w-full max-w-300 mx-auto py-10'
                         noValidate
                 >
                         <CheckoutCountdown
@@ -399,7 +399,7 @@ function CheckoutFormInner({
                                                 <Button
                                                         type='submit'
                                                         disabled={isSubmitting || !hasContactInfo || !stripe || !elements || expired}
-                                                        className='px-6 py-2 border-blue-500 bg-blue-700 rounded-xs text-center text-white text-sm font-semibold font-text hover:bg-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none'
+                                                        className='flex-1 px-6 py-2 border-blue-500 bg-blue-700 rounded-xs text-center text-white text-sm font-semibold font-text hover:bg-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none'
                                                 >
                                                         {isSubmitting ? (
                                                                 <span className='flex items-center gap-2'>
@@ -453,7 +453,7 @@ function CheckoutFormInner({
                                                         label={`Tax (${taxPercentageRate})`}
                                                         value={taxFee}
                                                 />
-                                                <SummaryRow label='Insurance Fee' value={insuranceFee} />
+                                                <SummaryRow label='Insurance Fee' value={`${insuranceFee}`} />
                                         </div>
 
                                         <Separator />

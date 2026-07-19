@@ -51,14 +51,14 @@ export default function CarPage({
         model: data.data.vehicleModel,
         year: data.data.year,
         bodyType: data.data.vehicleType,
-        engine: "",
-        horsepower: 0,
+        engine: data.data.engine,
+        horsepower: data.data.horsepower,
         transmission: data?.data.specifications?.transmission,
-        driveType: "",
+        driveType: data.data.driveType,
         fuelType: data?.data.specifications?.fuelType,
-        fuelEfficiency: "",
+        fuelEfficiency: data.data.fuelEfficiency,
         seats: data?.data.specifications?.seats,
-        doors: 0,
+        doors: data.data.doors,
         color: data.data.color,
         mileage: String(data.data.mileage),
         // features: data.data.features || [],
@@ -76,12 +76,13 @@ export default function CarPage({
         weekly: data?.data.price?.weekly,
         monthly: data?.data.price?.monthly,
       }}
-      defaultPickupLocationStreet={"750 E Tremont Ave"}
-      defaultPickupLocationCity={"Bronx"}
-      defaultPickupLocationState={"New York"}
-      defaultPickupLocationZipCode={"10457"}
+      defaultPickupLocationStreet={data.data.location}
+      defaultPickupLocationCity={data.data.city}
+      defaultPickupLocationState={data.data.state}
+      defaultPickupLocationZipCode={data.data.zipCode}
       insuranceExpiration={data.data.insuranceExpiration}
       insuranceProvider={data.data.insuranceProvider}
+      insuranceFee={data.data.insuranceFee}
       policyNumber={data.data.policyNumber}
     />
   );
