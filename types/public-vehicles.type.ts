@@ -117,5 +117,17 @@ export interface VehicleDetails {
   policyNumber: string;
   insuranceProvider: string;
   insuranceExpiration: Date;
+  streetAdress: string;
+  city: string;
+  zipCode: string;
+  state: string;
+  insuranceDaily: number;
+  taxRate: number;
   insuranceFee?: number;
+
+  engine: string;
+  horsepower: string;
+  driverType: string;
+  fuelEfficiency: string;
+  doors: string;
 }

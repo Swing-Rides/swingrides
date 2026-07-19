@@ -18,7 +18,7 @@ export default function CarPage({
   });
 
   if (isLoading) {
-    return <CarPageLoading/>;
+    return <CarPageLoading />;
   }
 
   if (isError || !data) {
@@ -52,13 +52,13 @@ export default function CarPage({
         year: data.data.year,
         bodyType: data.data.vehicleType,
         engine: data.data.engine,
-        horsepower: data.data.horsepower,
+        horsepower: Number(data.data.horsepower),
         transmission: data?.data.specifications?.transmission,
-        driveType: data.data.driveType,
+        driveType: data.data.driverType,
         fuelType: data?.data.specifications?.fuelType,
         fuelEfficiency: data.data.fuelEfficiency,
         seats: data?.data.specifications?.seats,
-        doors: data.data.doors,
+        doors: Number(data.data.doors),
         color: data.data.color,
         mileage: String(data.data.mileage),
         // features: data.data.features || [],
@@ -76,7 +76,7 @@ export default function CarPage({
         weekly: data?.data.price?.weekly,
         monthly: data?.data.price?.monthly,
       }}
-      defaultPickupLocationStreet={data.data.location}
+      defaultPickupLocationStreet={data.data.streetAdress}
       defaultPickupLocationCity={data.data.city}
       defaultPickupLocationState={data.data.state}
       defaultPickupLocationZipCode={data.data.zipCode}
