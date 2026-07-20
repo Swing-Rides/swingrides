@@ -18,9 +18,13 @@ import {
   AlertTriangle,
   CheckCircle2,
   Loader2,
+  ShieldCheck,
+  Building2,
+  FileText,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -48,6 +52,7 @@ type VehicleOption = {
   dailyPrice: number;
   weeklyPrice: number;
   monthlyPrice: number;
+  insuranceDailyRate: number;
 };
 
 export type NewBookingFormValues = {
@@ -58,18 +63,21 @@ export type NewBookingFormValues = {
   phoneNumber: string;
   pickupDate: string;
   returnDate: string;
-  pickupLocation: string;
   streetAddress: string;
   pickupCity: string;
   pickupState: string;
   postalCode: string;
   pickupTime: string;
   returnTime: string;
+  hostProvidesInsurance: boolean;
+  insuranceProvider: string;
+  insurancePolicyNumber: string;
+  insuranceExpiryDate: string;
 };
 
 type TaxResult = {
   amount: number;
-  rate: number; // e.g. 0.08 for 8%
+  rate: number; 
 };
 
 type NewBookingFormProps = {
@@ -98,6 +106,7 @@ type PricingBreakdown = {
   durationLabel: string;
   baseLineItems: PricingLineItem[];
   baseTotal: number;
+  insuranceFee: number;
   subtotal: number;
 };
 
@@ -121,6 +130,7 @@ const pluralize = (count: number, noun: string) =>
 const computePricing = (
   vehicle: VehicleOption,
   days: number,
+  hostProvidesInsurance: boolean,
 ): PricingBreakdown => {
   const tier = getPricingTier(days);
 
@@ -186,12 +196,20 @@ const computePricing = (
     }
   }
 
+  // Insurance is always billed as the exact number of days times the flat
+  // daily rate — never rolled up into weekly/monthly units like the base
+  // rental rate is (e.g. 21 days of insurance = 21 × rate, not 3 weeks).
+  const insuranceFee = hostProvidesInsurance
+    ? days * vehicle.insuranceDailyRate
+    : 0;
+
   return {
     tier,
     durationLabel: durationParts.join(", "),
     baseLineItems,
     baseTotal,
-    subtotal: baseTotal,
+    insuranceFee,
+    subtotal: baseTotal + insuranceFee,
   };
 };
 
@@ -256,13 +274,16 @@ function NewBookingFormInner({
     phoneNumber: "",
     pickupDate: "",
     returnDate: "",
-    pickupLocation: "",
     streetAddress: "",
     pickupCity: "",
     pickupState: "",
     postalCode: "",
     pickupTime: "",
     returnTime: "",
+    hostProvidesInsurance: false,
+    insuranceProvider: "",
+    insurancePolicyNumber: "",
+    insuranceExpiryDate: "",
   };
 
   const {
@@ -282,20 +303,24 @@ function NewBookingFormInner({
   const email = useWatch({ control, name: "email" });
   const pickupDate = useWatch({ control, name: "pickupDate" });
   const returnDate = useWatch({ control, name: "returnDate" });
+  const hostProvidesInsurance = useWatch({
+    control,
+    name: "hostProvidesInsurance",
+  });
 
   const selectedVehicle = vehicles.find((v) => v.id === vehicleId);
 
   const days =
     pickupDate && returnDate
       ? Math.max(
-          differenceInCalendarDays(new Date(returnDate), new Date(pickupDate)),
-          0,
-        )
+        differenceInCalendarDays(new Date(returnDate), new Date(pickupDate)),
+        0,
+      )
       : 0;
 
   const pricing =
     selectedVehicle && days > 0
-      ? computePricing(selectedVehicle, days)
+      ? computePricing(selectedVehicle, days, !!hostProvidesInsurance)
       : null;
 
   const onFormSubmit = async (values: NewBookingFormValues) => {
@@ -453,6 +478,24 @@ function NewBookingFormInner({
                   />
                 </FormRow>
                 <FormRow
+                  label="Pickup Time"
+                  htmlFor="pickupTime"
+                  error={errors.pickupTime?.message}
+                >
+                  <TimePickerField
+                    name="pickupTime"
+                    control={control}
+                    clearErrors={clearErrors}
+                    trigger={trigger}
+                    placeholder="Select pickup time"
+                    error={errors.pickupTime?.message}
+                    rules={{ required: "Pickup time is required" }}
+                  />
+                </FormRow>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <FormRow
                   label="Return Date"
                   htmlFor="returnDate"
                   error={errors.returnDate?.message}
@@ -475,23 +518,22 @@ function NewBookingFormInner({
                     }}
                   />
                 </FormRow>
+                <FormRow
+                  label="Return Time"
+                  htmlFor="returnTime"
+                  error={errors.returnTime?.message}
+                >
+                  <TimePickerField
+                    name="returnTime"
+                    control={control}
+                    clearErrors={clearErrors}
+                    trigger={trigger}
+                    placeholder="Select return time"
+                    error={errors.returnTime?.message}
+                    rules={{ required: "Return time is required" }}
+                  />
+                </FormRow>
               </div>
-
-              <FormRow
-                label="Pickup Location"
-                htmlFor="pickupLocation"
-                error={errors.pickupLocation?.message}
-              >
-                <IconInput
-                  id="pickupLocation"
-                  icon={<MapPin className="w-4 h-4" />}
-                  placeholder="e.g. 123 Main Street"
-                  hasError={!!errors.pickupLocation}
-                  {...register("pickupLocation", {
-                    required: "Pickup location is required",
-                  })}
-                />
-              </FormRow>
 
               <FormRow
                 label="Street Address"
@@ -557,39 +599,6 @@ function NewBookingFormInner({
                 </FormRow>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <FormRow
-                  label="Pickup Time"
-                  htmlFor="pickupTime"
-                  error={errors.pickupTime?.message}
-                >
-                  <TimePickerField
-                    name="pickupTime"
-                    control={control}
-                    clearErrors={clearErrors}
-                    trigger={trigger}
-                    placeholder="Select pickup time"
-                    error={errors.pickupTime?.message}
-                    rules={{ required: "Pickup time is required" }}
-                  />
-                </FormRow>
-                <FormRow
-                  label="Return Time"
-                  htmlFor="returnTime"
-                  error={errors.returnTime?.message}
-                >
-                  <TimePickerField
-                    name="returnTime"
-                    control={control}
-                    clearErrors={clearErrors}
-                    trigger={trigger}
-                    placeholder="Select return time"
-                    error={errors.returnTime?.message}
-                    rules={{ required: "Return time is required" }}
-                  />
-                </FormRow>
-              </div>
-
               {/* Live availability notice */}
               {selectedVehicle && pickupDate && returnDate && days > 0 && (
                 <Suspense fallback={<AvailabilityPlaceholder />}>
@@ -601,6 +610,128 @@ function NewBookingFormInner({
                     checkAvailability={checkAvailability}
                   />
                 </Suspense>
+              )}
+            </FormSection>
+
+            <Separator />
+
+            {/* Section 4: Insurance */}
+            <FormSection title="Insurance">
+              <label
+                htmlFor="hostProvidesInsurance"
+                className="flex items-start gap-2.5 p-3 rounded-[10px] border border-gray-200 cursor-pointer"
+              >
+                <Controller
+                  name="hostProvidesInsurance"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="hostProvidesInsurance"
+                      checked={field.value}
+                      onCheckedChange={async (checked) => {
+                        const isChecked = checked === true;
+                        field.onChange(isChecked);
+                        if (isChecked) {
+                          clearErrors([
+                            "insuranceProvider",
+                            "insurancePolicyNumber",
+                            "insuranceExpiryDate",
+                          ]);
+                        } else {
+                          await trigger([
+                            "insuranceProvider",
+                            "insurancePolicyNumber",
+                            "insuranceExpiryDate",
+                          ]);
+                        }
+                      }}
+                      className="mt-0.5"
+                    />
+                  )}
+                />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[#1F2937] text-sm font-medium font-text flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-blue-700" />
+                    The host provides the insurance
+                  </span>
+                  <span className="text-[#6B7280] text-xs font-normal font-text">
+                    {selectedVehicle
+                      ? `Adds a flat insurance fee of ${formatCurrency(selectedVehicle.insuranceDailyRate)}/day for the exact rental duration.`
+                      : "If left unchecked, the renter's own insurance details are required below."}
+                  </span>
+                </div>
+              </label>
+
+              {!hostProvidesInsurance && (
+                <>
+                  <FormRow
+                    label="Insurance Provider"
+                    htmlFor="insuranceProvider"
+                    error={errors.insuranceProvider?.message}
+                  >
+                    <IconInput
+                      id="insuranceProvider"
+                      icon={<Building2 className="w-4 h-4" />}
+                      placeholder="e.g. State Farm"
+                      hasError={!!errors.insuranceProvider}
+                      {...register("insuranceProvider", {
+                        required: !hostProvidesInsurance
+                          ? "Insurance provider is required"
+                          : false,
+                      })}
+                    />
+                  </FormRow>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormRow
+                      label="Policy Number"
+                      htmlFor="insurancePolicyNumber"
+                      error={errors.insurancePolicyNumber?.message}
+                    >
+                      <IconInput
+                        id="insurancePolicyNumber"
+                        icon={<FileText className="w-4 h-4" />}
+                        placeholder="e.g. POL-123456"
+                        hasError={!!errors.insurancePolicyNumber}
+                        {...register("insurancePolicyNumber", {
+                          required: !hostProvidesInsurance
+                            ? "Policy number is required"
+                            : false,
+                        })}
+                      />
+                    </FormRow>
+                    <FormRow
+                      label="Expiry Date"
+                      htmlFor="insuranceExpiryDate"
+                      error={errors.insuranceExpiryDate?.message}
+                    >
+                      <DatePickerField
+                        name="insuranceExpiryDate"
+                        control={control}
+                        placeholder="Pick a date"
+                        error={errors.insuranceExpiryDate?.message}
+                        rules={{
+                          required: !hostProvidesInsurance
+                            ? "Expiry date is required"
+                            : false,
+                          validate: (value: string) => {
+                            if (hostProvidesInsurance) return true;
+                            if (!value) return true;
+                            const minValidDate = new Date();
+                            minValidDate.setHours(0, 0, 0, 0);
+                            minValidDate.setDate(
+                              minValidDate.getDate() + 30,
+                            );
+                            return (
+                              new Date(value) > minValidDate ||
+                              "Expiry date must be more than 30 days from today"
+                            );
+                          },
+                        }}
+                      />
+                    </FormRow>
+                  </div>
+                </>
               )}
             </FormSection>
           </div>
@@ -659,6 +790,12 @@ function NewBookingFormInner({
                         value={formatCurrency(item.total)}
                       />
                     ))}
+                    {pricing.insuranceFee > 0 && (
+                      <SummaryRow
+                        label={`Host insurance (${pluralize(days, "day")} @ ${formatCurrency(selectedVehicle.insuranceDailyRate)}/day)`}
+                        value={formatCurrency(pricing.insuranceFee)}
+                      />
+                    )}
                   </div>
                 ) : (
                   <EmptySummaryNotice message="Select pickup and return dates to calculate pricing." />
@@ -708,12 +845,12 @@ function NewBookingFormInner({
                       Host notification will be sent to your account.
                     </span>
                   </div>
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4 text-[#6B7280] shrink-0" />
-            <span className="text-[#6B7280] text-xs font-normal font-text">
-              You will continue to checkout before the booking is created.
-            </span>
-          </div>
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="w-4 h-4 text-[#6B7280] shrink-0" />
+                    <span className="text-[#6B7280] text-xs font-normal font-text">
+                      You will continue to checkout before the booking is created.
+                    </span>
+                  </div>
                 </div>
               </>
             )}
@@ -951,8 +1088,10 @@ type DatePickerFieldProps = {
   rules?: object;
 };
 
+type TimeFieldName = "pickupTime" | "returnTime";
+
 type TimePickerFieldProps = {
-  name: keyof NewBookingFormValues;
+  name: TimeFieldName;
   control: ReturnType<typeof useForm<NewBookingFormValues>>["control"];
   clearErrors: ReturnType<typeof useForm<NewBookingFormValues>>["clearErrors"];
   trigger: ReturnType<typeof useForm<NewBookingFormValues>>["trigger"];
