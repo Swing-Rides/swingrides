@@ -40,34 +40,47 @@ const calculateBookingAmounts = (
     dailyPrice: number;
     weeklyPrice: number;
     monthlyPrice: number;
+    insuranceDailyRate: number;
   },
   pickupDate: string,
   returnDate: string,
+  hostProvidesInsurance: boolean,
 ) => {
   const totalDays = Math.max(
     differenceInCalendarDays(new Date(returnDate), new Date(pickupDate)),
     0,
   );
 
-  let subtotal = 0;
+  let baseTotal = 0;
   if (totalDays >= 30) {
     const months = Math.floor(totalDays / 30);
     const remainingDays = totalDays % 30;
-    subtotal = months * vehicle.monthlyPrice + remainingDays * vehicle.dailyPrice;
+    baseTotal = months * vehicle.monthlyPrice + remainingDays * vehicle.dailyPrice;
   } else if (totalDays >= 7) {
     const weeks = Math.floor(totalDays / 7);
     const remainingDays = totalDays % 7;
-    subtotal = weeks * vehicle.weeklyPrice + remainingDays * vehicle.dailyPrice;
+    baseTotal = weeks * vehicle.weeklyPrice + remainingDays * vehicle.dailyPrice;
   } else {
-    subtotal = totalDays * vehicle.dailyPrice;
+    baseTotal = totalDays * vehicle.dailyPrice;
   }
 
+  // Insurance is only charged when the host is providing it, and always at
+  // the flat per-day rate × the exact number of days — never converted to
+  // weekly/monthly units the way the base rental rate is (21 days is 21
+  // days, not 3 weeks).
+  const insuranceFee = hostProvidesInsurance
+    ? totalDays * vehicle.insuranceDailyRate
+    : 0;
+
+  const subtotal = baseTotal + insuranceFee;
   const taxRate = 0.08;
   const tax = subtotal * taxRate;
   const totalAmount = subtotal + tax;
 
   return {
     totalDays,
+    baseTotal,
+    insuranceFee,
     subtotal,
     taxRate,
     tax,
@@ -95,7 +108,10 @@ export default function NewBookingPageComponent() {
     );
   }, [vehiclesResponse]);
 
-  const bookingRows = bookingsResponse?.data ?? [];
+  const bookingRows = useMemo(
+    () => bookingsResponse?.data ?? [],
+    [bookingsResponse?.data]
+  );
   const bookingId = useMemo(
     () =>
       getNextReferenceCode(bookingRows.map((booking) => booking.referenceCode)),
@@ -112,6 +128,7 @@ export default function NewBookingPageComponent() {
       dailyPrice: vehicle.dailyPrice,
       weeklyPrice: vehicle.weeklyPrice,
       monthlyPrice: vehicle.monthlyPrice,
+      insuranceDailyRate: vehicle.dailyInsuranceFee ?? 0,
     }));
   }, [availableVehicles]);
 
@@ -156,7 +173,6 @@ export default function NewBookingPageComponent() {
 
       const renterName = `${values.firstName} ${values.lastName}`.trim();
       const location = [
-        values.pickupLocation,
         values.streetAddress,
         values.pickupCity,
         values.pickupState,
@@ -193,9 +209,11 @@ export default function NewBookingPageComponent() {
             dailyPrice: vehicle.dailyPrice,
             weeklyPrice: vehicle.weeklyPrice,
             monthlyPrice: vehicle.monthlyPrice,
+            insuranceDailyRate: vehicle.dailyInsuranceFee ?? 0,
           },
           values.pickupDate,
           values.returnDate,
+          values.hostProvidesInsurance,
         );
 
         if (pricing.totalDays <= 0) {
@@ -211,7 +229,6 @@ export default function NewBookingPageComponent() {
           pickupDate: values.pickupDate,
           returnDate: values.returnDate,
           location,
-          pickupLocation: values.pickupLocation,
           streetAddress: values.streetAddress,
           city: values.pickupCity,
           state: values.pickupState,
@@ -221,6 +238,7 @@ export default function NewBookingPageComponent() {
           subtotal: pricing.subtotal,
           tax: pricing.tax,
           taxRate: pricing.taxRate,
+          insuranceFee: pricing.insuranceFee,
           totalAmount: pricing.totalAmount,
           totalDays: pricing.totalDays,
           vehicleName: vehicle.name,
@@ -228,6 +246,16 @@ export default function NewBookingPageComponent() {
           vehicleDailyPrice: vehicle.dailyPrice,
           vehicleWeeklyPrice: vehicle.weeklyPrice,
           vehicleMonthlyPrice: vehicle.monthlyPrice,
+          hostProvidesInsurance: values.hostProvidesInsurance,
+          insuranceProvider: values.hostProvidesInsurance
+            ? undefined
+            : values.insuranceProvider,
+          insurancePolicyNumber: values.hostProvidesInsurance
+            ? undefined
+            : values.insurancePolicyNumber,
+          insuranceExpiryDate: values.hostProvidesInsurance
+            ? undefined
+            : values.insuranceExpiryDate,
         };
 
         window.sessionStorage.setItem(
@@ -242,12 +270,12 @@ export default function NewBookingPageComponent() {
         const fallbackMessage = "Unable to create booking. Please try again.";
         const errorMessage =
           typeof error === "object" &&
-          error !== null &&
-          "data" in error &&
-          typeof error.data === "object" &&
-          error.data !== null &&
-          "message" in error.data &&
-          typeof error.data.message === "string"
+            error !== null &&
+            "data" in error &&
+            typeof error.data === "object" &&
+            error.data !== null &&
+            "message" in error.data &&
+            typeof error.data.message === "string"
             ? error.data.message
             : fallbackMessage;
 
