@@ -23,7 +23,6 @@ type PendingHostCheckoutDraft = {
   pickupDate: string;
   returnDate: string;
   location: string;
-  pickupLocation: string;
   streetAddress: string;
   city: string;
   state: string;
@@ -33,10 +32,15 @@ type PendingHostCheckoutDraft = {
   subtotal: number;
   tax: number;
   taxRate: number;
+  insuranceFee: number;
   totalAmount: number;
   totalDays: number;
   vehicleName: string;
   vehicleImageUrl?: string;
+  hostProvidesInsurance: boolean;
+  insuranceProvider?: string;
+  insurancePolicyNumber?: string;
+  insuranceExpiryDate?: string;
 };
 
 const getPendingHostCheckoutStorageKey = (vehicleId: string) =>
@@ -83,6 +87,7 @@ export default function HostBookingCheckoutPage() {
     subtotal: number;
     tax: number;
     taxRate: number;
+    insuranceFee: number;
     totalAmount: number;
   } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -153,6 +158,19 @@ export default function HostBookingCheckoutPage() {
           postalCode: checkoutValues?.postalCode || draft.postalCode,
           pickupTime: draft.pickupTime,
           returnTime: draft.returnTime,
+          // hostProvidesInsurance: draft.hostProvidesInsurance,
+          insuranceFee: draft.hostProvidesInsurance
+            ? (pricingSummary?.insuranceFee ?? draft.insuranceFee ?? 0)
+            : 0,
+          insuranceProvider: draft.hostProvidesInsurance
+            ? undefined
+            : draft.insuranceProvider,
+          insurancePolicyNumber: draft.hostProvidesInsurance
+            ? undefined
+            : draft.insurancePolicyNumber,
+          insuranceExpiryDate: draft.hostProvidesInsurance
+            ? undefined
+            : draft.insuranceExpiryDate,
         }).unwrap();
 
         if (!result.success || !result.data?.id) {
@@ -173,7 +191,7 @@ export default function HostBookingCheckoutPage() {
         );
       }
     },
-    [createBooking, draft, finalizingPaymentIntentId, router, vehicleId],
+    [createBooking, draft, finalizingPaymentIntentId, pricingSummary, router, vehicleId],
   );
 
   useEffect(() => {
@@ -230,6 +248,9 @@ export default function HostBookingCheckoutPage() {
           subtotal: response.data.subtotal,
           tax: response.data.tax,
           taxRate: response.data.taxRate,
+          // Server is the source of truth for the charged insurance fee;
+          // fall back to the draft value only if the API doesn't echo it back.
+          insuranceFee: draft.insuranceFee ?? 0,
           totalAmount: response.data.totalAmount,
         });
       } catch (error) {
@@ -278,18 +299,22 @@ export default function HostBookingCheckoutPage() {
     const subtotal = pricingSummary?.subtotal ?? draft.subtotal ?? 0;
     const tax = pricingSummary?.tax ?? draft.tax ?? 0;
     const taxRate = pricingSummary?.taxRate ?? draft.taxRate ?? 0.08;
+    const insuranceFee = pricingSummary?.insuranceFee ?? draft.insuranceFee ?? 0;
     const totalAmount = pricingSummary?.totalAmount ?? draft.totalAmount ?? 0;
 
     return {
       imageUrl: draft.vehicleImageUrl || DEFAULT_IMAGE_SRC,
       vehicleName: draft.vehicleName || "Vehicle",
-      vehicleType: draft.pickupLocation || "Manual booking",
+      vehicleType: draft.hostProvidesInsurance
+        ? "Host-provided insurance"
+        : "Renter-provided insurance",
       vehicleGearType: `${draft.pickupTime} - ${draft.returnTime}`,
       duration: `${draft.totalDays || 1} day${draft.totalDays === 1 ? "" : "s"}`,
       totalPrice: formatCurrency(totalAmount),
       subTotalFee: formatCurrency(subtotal),
       taxPercentageRate: `${taxRate * 100}%`,
       taxFee: formatCurrency(tax),
+      insuranceFee,
     };
   }, [draft, pricingSummary]);
 
@@ -342,7 +367,6 @@ export default function HostBookingCheckoutPage() {
         id={vehicleId}
         {...summary}
         user={user}
-        insuranceFee={"$0"}
         clientSecret={clientSecret}
         returnUrl={`${SITE_URL}${HOST_DASHBOARD_PATH}bookings/new-booking/checkout/${vehicleId}`}
         submitError={submitError}
