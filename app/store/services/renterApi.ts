@@ -270,7 +270,7 @@ export const renterApi = createApi({
       {
         id: string;
         categoryRatings: Record<string, number>;
-        review: string;
+        review?: string;
         recommend: "yes" | "no";
       }
     >({
