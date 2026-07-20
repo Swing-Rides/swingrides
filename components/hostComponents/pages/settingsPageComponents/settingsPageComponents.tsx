@@ -17,8 +17,12 @@ import {
 } from "./settingsTabs";
 import {
   HostPlanType,
+  HostBillingCycle,
+  UpgradePlanResponse,
   useGetHostSettingsDashboardQuery,
   useUpdateProfileCompanySettingsMutation,
+  useUnlinkStripeConnectMutation,
+  useUpgradePlanMutation,
 } from "@/app/store/services/settingsApi";
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 import { toast } from "sonner";
@@ -79,6 +83,9 @@ const SettingsPageContent = () => {
     useGetHostSettingsDashboardQuery();
   const [updateProfileCompanySettings] =
     useUpdateProfileCompanySettingsMutation();
+  const [unlinkStripeConnect, { isLoading: isUnlinkingStripe }] =
+    useUnlinkStripeConnectMutation();
+  const [upgradePlan] = useUpgradePlanMutation();
   const { refetch } = useGetHostProfileQuery();
 
   const settingsData = settingsResponse?.data;
@@ -242,23 +249,42 @@ const SettingsPageContent = () => {
     setShowBillingModal(true);
   };
 
-  const onSelectNewPlan = (plan: HostPlanType) => {
-    console.log("Selected plan:", plan);
-    setShowBillingModal(false);
+  const onSelectNewPlan = async (
+    plan: HostPlanType,
+    billingCycle: HostBillingCycle,
+  ): Promise<UpgradePlanResponse | null> => {
+    try {
+      const result = await upgradePlan({ plan, billingCycle }).unwrap();
+      return result.data;
+    } catch {
+      return null;
+    }
+  };
 
-    // TODO:
-    // router.push(...)
-    // create stripe checkout session
-    // call update subscription API
-  }
+  const onUpgradeComplete = () => {
+    refetch();
+  };
 
   const onWithdrawFund = () => {
-    console.log("WithdrawFund stripe clicked")
-  }
+    // TODO: open withdraw funds flow / redirect to Stripe dashboard
+    console.log("WithdrawFund stripe clicked");
+  };
 
-  const onUnlinkStripe = () => {
-    console.log("unlink stripe clicked")
-  }
+  const onUnlinkStripe = async () => {
+    try {
+      await unlinkStripeConnect().unwrap();
+      toast.success("Stripe disconnected", {
+        description: "Your Stripe Connect account has been unlinked.",
+      });
+      await refetch();
+    } catch (error) {
+      toast.error("Failed to unlink Stripe", {
+        description:
+          (error as { data?: { message?: string } })?.data?.message ??
+          "Something went wrong. Please try again.",
+      });
+    }
+  };
 
   return (
     <div className="mt-4 md:mt-8">
@@ -297,6 +323,8 @@ const SettingsPageContent = () => {
             paymentHistory={paymentHistory}
             onWithdrawFund={onWithdrawFund}
             onUnlinkStripe={onUnlinkStripe}
+            isUnlinkingStripe={isUnlinkingStripe}
+            wallet={settingsData?.profileCompany.payment.wallet}
           />
         </TabsContent>
         <TabsContent value="communicate">
@@ -311,6 +339,7 @@ const SettingsPageContent = () => {
           currentPlan={settingsData?.billing.currentPlan.plan}
           onClose={() => setShowBillingModal(false)}
           onSelect={onSelectNewPlan}
+          onUpgradeComplete={onUpgradeComplete}
         />
       )}
     </div>
