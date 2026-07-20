@@ -26,7 +26,10 @@ import {
   writeDraftToStorage,
   type PendingCheckoutDraft,
 } from "@/lib/checkout-helpers";
-import type { CheckoutContact, CheckoutFormValues } from "@/components/forms/checkoutForm";
+import type {
+  CheckoutContact,
+  CheckoutFormValues,
+} from "@/components/forms/checkoutForm";
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -220,7 +223,9 @@ export default function CheckoutPage() {
           subtotal: response.data.subtotal,
           tax: response.data.tax,
           taxRate: response.data.taxRate,
-          totalAmount: response.data.totalAmount,
+          totalAmount:
+            response.data.totalAmount +
+            Number(vehicleData?.data.insuranceDaily),
         });
       } catch (error) {
         if (!isActive) return;
@@ -301,7 +306,7 @@ export default function CheckoutPage() {
       vehicleName: vehicle.carName || "Vehicle",
       vehicleType: vehicle.vehicleType || "Vehicle",
       vehicleGearType: vehicle.specifications?.transmission || "Automatic",
-      insuranceFee: vehicle.insuranceFee || '$0.00',
+      insuranceFee: vehicle.insuranceFee || "$0.00",
       duration: `${draft.totalDays || 1} day${draft.totalDays === 1 ? "" : "s"}`,
       totalPrice: formatCurrency(totalAmount),
       subTotalFee: formatCurrency(subtotal),
@@ -336,7 +341,10 @@ export default function CheckoutPage() {
       <CheckoutErrorState
         title="Invalid checkout session"
         message="We couldn't find a vehicle for this checkout link."
-        primaryAction={{ label: "Browse vehicles", onClick: () => router.push("/") }}
+        primaryAction={{
+          label: "Browse vehicles",
+          onClick: () => router.push("/"),
+        }}
       />
     );
   }
@@ -415,7 +423,7 @@ export default function CheckoutPage() {
         id={vehicleId}
         {...summary}
         user={user}
-        // insuranceFee={insuranceFee}
+        insuranceFee={vehicleData?.data.insuranceDaily}
         clientSecret={clientSecret}
         returnUrl={`${SITE_URL}/checkout/${vehicleId}`}
         submitError={submitError}

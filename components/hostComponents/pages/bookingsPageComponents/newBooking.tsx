@@ -8,7 +8,10 @@ import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import NewBookingForm, {
   NewBookingFormValues,
 } from "../../forms/newBookingForm";
-import { useListVehcleQuery } from "@/app/store/services/hostApi";
+import {
+  useGetHostProfileQuery,
+  useListVehcleQuery,
+} from "@/app/store/services/hostApi";
 import { useListBookingsQuery } from "@/app/store/services/bookingApi";
 
 const FORM_ID = "new-booking-form";
@@ -55,11 +58,13 @@ const calculateBookingAmounts = (
   if (totalDays >= 30) {
     const months = Math.floor(totalDays / 30);
     const remainingDays = totalDays % 30;
-    baseTotal = months * vehicle.monthlyPrice + remainingDays * vehicle.dailyPrice;
+    baseTotal =
+      months * vehicle.monthlyPrice + remainingDays * vehicle.dailyPrice;
   } else if (totalDays >= 7) {
     const weeks = Math.floor(totalDays / 7);
     const remainingDays = totalDays % 7;
-    baseTotal = weeks * vehicle.weeklyPrice + remainingDays * vehicle.dailyPrice;
+    baseTotal =
+      weeks * vehicle.weeklyPrice + remainingDays * vehicle.dailyPrice;
   } else {
     baseTotal = totalDays * vehicle.dailyPrice;
   }
@@ -91,6 +96,7 @@ const calculateBookingAmounts = (
 export default function NewBookingPageComponent() {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const { data } = useGetHostProfileQuery();
   const {
     data: vehiclesResponse,
     isLoading: isVehiclesLoading,
@@ -110,7 +116,7 @@ export default function NewBookingPageComponent() {
 
   const bookingRows = useMemo(
     () => bookingsResponse?.data ?? [],
-    [bookingsResponse?.data]
+    [bookingsResponse?.data],
   );
   const bookingId = useMemo(
     () =>
@@ -163,9 +169,9 @@ export default function NewBookingPageComponent() {
 
   // Returns both the tax amount and the rate so the UI can display "Tax (8%)"
   const fetchTax = useCallback(async (subtotal: number) => {
-    const rate = 0.08;
+    const rate = data?.data.taxFee as number;
     return { amount: subtotal * rate, rate };
-  }, []);
+  }, [data?.data.taxFee]);
 
   const handleSubmit = useCallback(
     async (values: NewBookingFormValues) => {
@@ -270,12 +276,12 @@ export default function NewBookingPageComponent() {
         const fallbackMessage = "Unable to create booking. Please try again.";
         const errorMessage =
           typeof error === "object" &&
-            error !== null &&
-            "data" in error &&
-            typeof error.data === "object" &&
-            error.data !== null &&
-            "message" in error.data &&
-            typeof error.data.message === "string"
+          error !== null &&
+          "data" in error &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "message" in error.data &&
+          typeof error.data.message === "string"
             ? error.data.message
             : fallbackMessage;
 

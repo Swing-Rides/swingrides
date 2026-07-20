@@ -12,8 +12,13 @@ import {
   useCreateBookingMutation,
   useCreateBookingPaymentIntentMutation,
 } from "@/app/store/services/bookingApi";
-import { DEFAULT_IMAGE_SRC, HOST_DASHBOARD_PATH, SITE_URL } from "@/constants/constant";
+import {
+  DEFAULT_IMAGE_SRC,
+  HOST_DASHBOARD_PATH,
+  SITE_URL,
+} from "@/constants/constant";
 import { stripePromise } from "@/lib/stripe";
+import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 
 type PendingHostCheckoutDraft = {
   vehicleId: string;
@@ -99,6 +104,7 @@ export default function HostBookingCheckoutPage() {
     useCreateBookingPaymentIntentMutation();
   const [createBooking, { isLoading: isCreatingBooking }] =
     useCreateBookingMutation();
+  const { data } = useGetHostProfileQuery();
 
   useEffect(() => {
     if (!vehicleId) return;
@@ -140,7 +146,8 @@ export default function HostBookingCheckoutPage() {
         setSubmitError(null);
         setFinalizingPaymentIntentId(paymentIntentId);
 
-        const renterName = `${checkoutValues?.firstName || ""} ${checkoutValues?.lastName || ""}`.trim() ||
+        const renterName =
+          `${checkoutValues?.firstName || ""} ${checkoutValues?.lastName || ""}`.trim() ||
           draft.renterName;
 
         const result = await createBooking({
@@ -159,17 +166,17 @@ export default function HostBookingCheckoutPage() {
           pickupTime: draft.pickupTime,
           returnTime: draft.returnTime,
           // hostProvidesInsurance: draft.hostProvidesInsurance,
-          insuranceFee: draft.hostProvidesInsurance
-            ? (pricingSummary?.insuranceFee ?? draft.insuranceFee ?? 0)
-            : 0,
+          // insuranceFee: draft.hostProvidesInsurance
+          //   ? (pricingSummary?.insuranceFee ?? draft.insuranceFee ?? 0)
+          //   : 0,
           insuranceProvider: draft.hostProvidesInsurance
-            ? undefined
+            ? String(data?.data.insurance?.provvider)
             : draft.insuranceProvider,
-          insurancePolicyNumber: draft.hostProvidesInsurance
-            ? undefined
+          policyNumber: draft.hostProvidesInsurance
+            ? String(data?.data.insurance?.policyNumber)
             : draft.insurancePolicyNumber,
-          insuranceExpiryDate: draft.hostProvidesInsurance
-            ? undefined
+          insuranceExpiry: draft.hostProvidesInsurance
+            ? String(data?.data.insurance?.expiryDate)
             : draft.insuranceExpiryDate,
         }).unwrap();
 
@@ -191,7 +198,14 @@ export default function HostBookingCheckoutPage() {
         );
       }
     },
-    [createBooking, draft, finalizingPaymentIntentId, pricingSummary, router, vehicleId],
+    [
+      createBooking,
+      draft,
+      finalizingPaymentIntentId,
+      pricingSummary,
+      router,
+      vehicleId,
+    ],
   );
 
   useEffect(() => {
@@ -269,13 +283,7 @@ export default function HostBookingCheckoutPage() {
     return () => {
       isActive = false;
     };
-  }, [
-    clientSecret,
-    createPaymentIntent,
-    draft,
-    redirectStatus,
-    vehicleId,
-  ]);
+  }, [clientSecret, createPaymentIntent, draft, redirectStatus, vehicleId]);
 
   const user = useMemo(() => {
     if (!draft) return null;
@@ -299,7 +307,8 @@ export default function HostBookingCheckoutPage() {
     const subtotal = pricingSummary?.subtotal ?? draft.subtotal ?? 0;
     const tax = pricingSummary?.tax ?? draft.tax ?? 0;
     const taxRate = pricingSummary?.taxRate ?? draft.taxRate ?? 0.08;
-    const insuranceFee = pricingSummary?.insuranceFee ?? draft.insuranceFee ?? 0;
+    const insuranceFee =
+      pricingSummary?.insuranceFee ?? draft.insuranceFee ?? 0;
     const totalAmount = pricingSummary?.totalAmount ?? draft.totalAmount ?? 0;
 
     return {
