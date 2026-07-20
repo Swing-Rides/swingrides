@@ -86,7 +86,7 @@ export default function Footer() {
 
                                                 <div className='flex items-center justify-between gap-2 text-sm'>
                                                         <Link
-                                                                href='/privacy-policy'
+                                                                href='/legal/privacy-policy'
                                                                 className='hover:text-black transition-colors duration-300'
                                                         >
                                                                 Privacy Policy
@@ -97,7 +97,7 @@ export default function Footer() {
                                                         </div>
 
                                                         <Link
-                                                                href='/terms-of-service'
+                                                                href='/legal/terms-and-conditions-of-use'
                                                                 className='hover:text-black transition-colors duration-300'
                                                         >
                                                                 Terms of Service
