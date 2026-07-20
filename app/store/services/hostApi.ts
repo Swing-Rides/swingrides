@@ -22,7 +22,10 @@ import {
   ServiceHistoryItem,
 } from "@/types/logservice.type";
 import { toast } from "sonner";
-import { BillingPaymentStatus, HostBusinessVerificationStatus } from "./settingsApi";
+import {
+  BillingPaymentStatus,
+  HostBusinessVerificationStatus,
+} from "./settingsApi";
 
 type AxiosBaseQueryArgs =
   | string
@@ -53,20 +56,20 @@ const axiosBaseQuery = (): BaseQueryFn<
   AxiosBaseQueryArgs,
   unknown,
   AxiosBaseQueryError
-  > => {
+> => {
   return async (args) => {
     const request =
       typeof args === "string"
         ? { url: args, method: "GET" as Method }
         : {
-          url: args.url,
-          method: args.method ?? "GET",
-          data: args.data ?? args.body,
-          params: args.params,
-        };
+            url: args.url,
+            method: args.method ?? "GET",
+            data: args.data ?? args.body,
+            params: args.params,
+          };
 
     const isMutatingMethod = MUTATING_METHODS.includes(
-      request.method.toUpperCase() as Method
+      request.method.toUpperCase() as Method,
     );
 
     try {
@@ -410,12 +413,19 @@ export const hostApi = createApi({
           companyName?: string;
           profilePictureUrl?: string;
           phoneNumber?: string;
+          taxFee?: number;
+          insurance?: {
+            fee: number;
+            provvider: string;
+            policyNumber: string;
+            expiryDate: string;
+          };
           businessVerification: {
             status: HostBusinessVerificationStatus;
           };
           payment: {
             plan: BillingPaymentStatus;
-          }
+          };
         };
       },
       void
