@@ -105,6 +105,7 @@ export type HostProfileCompanySettings = {
       payoutsEnabled: boolean;
       transfersCapability: StripeConnectCapabilityStatus;
     };
+    wallet: HostStripeWalletInfo;
   };
 };
 
@@ -268,6 +269,38 @@ export type CreateHostStripeConnectOnboardingLinkResponse = {
     payoutsEnabled: boolean;
     transfersCapability: StripeConnectCapabilityStatus;
   };
+};
+
+export type HostStripeWalletInfo = {
+  totalEarnings: number;
+  totalWithdrawals: number;
+  walletBalance: number;
+  currency: string;
+};
+
+export type UnlinkStripeConnectResponse = {
+  unlinked: boolean;
+  message: string;
+};
+
+export type UpgradePlanRequest = {
+  plan: HostPlanType;
+  billingCycle: HostBillingCycle;
+  couponCode?: string;
+};
+
+export type UpgradePlanResponse = {
+  clientSecret: string;
+  paymentIntentId: string;
+  subscriptionId: string;
+  plan: HostPlanType;
+  billingCycle: HostBillingCycle;
+  subtotal: number;
+  discount: number;
+  totalAmount: number;
+  currency: string;
+  couponCode?: string;
+  isUpgrade: boolean;
 };
 
 export const settingsApi = createApi({
@@ -472,6 +505,41 @@ export const settingsApi = createApi({
         { type: "HostSettings", id: "BILLING" },
       ],
     }),
+
+    unlinkStripeConnect: builder.mutation<
+      ApiEnvelope<UnlinkStripeConnectResponse>,
+      void
+    >({
+      query: () => ({
+        url: "/api/host/settings/plan/connect/unlink",
+        method: "POST",
+      }),
+      invalidatesTags: [
+        { type: "HostSettings", id: "DASHBOARD" },
+        { type: "HostSettings", id: "PROFILE_COMPANY" },
+        { type: "HostSettings", id: "BILLING" },
+      ],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        dispatch(hostApi.util.invalidateTags([{ type: "Host", id: "PROFILE" }]));
+      },
+    }),
+
+    upgradePlan: builder.mutation<
+      ApiEnvelope<UpgradePlanResponse>,
+      UpgradePlanRequest
+    >({
+      query: (payload) => ({
+        url: "/api/host/settings/plan/upgrade",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [
+        { type: "HostSettings", id: "DASHBOARD" },
+        { type: "HostSettings", id: "PROFILE_COMPANY" },
+        { type: "HostSettings", id: "BILLING" },
+      ],
+    }),
   }),
 });
 
@@ -490,4 +558,6 @@ export const {
   useCreateHostPlanPaymentIntentMutation,
   useCompleteHostPlanPaymentMutation,
   useCreateHostStripeConnectOnboardingLinkMutation,
+  useUnlinkStripeConnectMutation,
+  useUpgradePlanMutation,
 } = settingsApi;

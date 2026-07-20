@@ -110,7 +110,14 @@ export type BillingTabProps = {
   onManageBilling?: () => void;
   onWithdrawFund: () => void;
   onUnlinkStripe: () => void;
+  isUnlinkingStripe?: boolean;
   paymentHistory: PaymentHistoryRow[];
+  wallet?: {
+    totalEarnings: number;
+    totalWithdrawals: number;
+    walletBalance: number;
+    currency: string;
+  };
 };
 
 export const BillingTab = ({
@@ -121,8 +128,18 @@ export const BillingTab = ({
   onManageBilling,
   paymentHistory,
   onWithdrawFund,
-  onUnlinkStripe
+  onUnlinkStripe,
+  isUnlinkingStripe,
+  wallet,
 }: BillingTabProps) => {
+  const formatAmount = (amount: number, currency: string) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+
   return (
     <div className="space-y-6 max-w-237.5">
       {/* Current Plan */}
@@ -164,24 +181,25 @@ export const BillingTab = ({
             </button>
             <button
               onClick={onUnlinkStripe}
-              className="border border-red-500 bg-red-500 text-white text-xs py-2.5 px-5 rounded-xs hover:bg-red-900 hover:border-red-900 hover:text-white transition-colors duration-300 cursor-pointer"
+              disabled={isUnlinkingStripe}
+              className="border border-red-500 bg-red-500 text-white text-xs py-2.5 px-5 rounded-xs hover:bg-red-900 hover:border-red-900 hover:text-white transition-colors duration-300 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Unlink Stripe
+              {isUnlinkingStripe ? "Unlinking…" : "Unlink Stripe"}
             </button>
           </div>
         </div>
         <div className="flex flex-wrap justify-start gap-10">
-          <DataList 
+          <DataList
             label="Total Earnings"
-            value={"99,999,999"}
+            value={wallet ? formatAmount(wallet.totalEarnings, wallet.currency) : "—"}
           />
-          <DataList 
-            label="Total Withdraws"
-            value={"99,999,999"}
+          <DataList
+            label="Total Withdrawals"
+            value={wallet ? formatAmount(wallet.totalWithdrawals, wallet.currency) : "—"}
           />
-          <DataList 
+          <DataList
             label="Wallet Balance"
-            value={"99,999,999"}
+            value={wallet ? formatAmount(wallet.walletBalance, wallet.currency) : "—"}
           />
         </div>
       </div>

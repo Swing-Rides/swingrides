@@ -193,6 +193,9 @@ type CreateBookingPayload = {
   pickupTime: string;
   returnTime: string;
   addOns?: string[];
+  insuranceProvider?: string;
+  policyNumber?: string;
+  insuranceExpiry?: string;
 };
 
 type CreateBookingPaymentIntentPayload = {
