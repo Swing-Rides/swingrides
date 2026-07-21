@@ -82,7 +82,7 @@ export default function CarPage({
       defaultPickupLocationZipCode={data.data.zipCode}
       insuranceExpiration={data.data.insuranceExpiration}
       insuranceProvider={data.data.insuranceProvider}
-      insuranceFee={data.data.insuranceFee}
+      insuranceFee={data.data.insuranceDaily}
       policyNumber={data.data.policyNumber}
     />
   );

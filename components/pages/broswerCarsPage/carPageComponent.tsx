@@ -232,7 +232,7 @@ const RightContent = memo(
           zipCode={defaultPickupLocationZipCode}
           vehicleId={vehicleId}
           onSubmit={handleSubmit}
-          insuranceFeePerDay={insuranceFeePerDay}
+          insuranceFeePerDay={insuranceFeePerDay || 0}
         />
       </div>
     );
@@ -433,7 +433,7 @@ const HostCard = memo(
               Member since {memberSince} · {tripsCompleted} trips completed
             </span>
             <div className="flex items-center gap-1">
-              <Star className="size-4 text-gray-500" />
+              <Star className="size-4 fill-yellow-400 text-yellow-400" />
               <span className="text-[#0B0B0B] text-xs font-medium font-text leading-4">
                 {rating} Host Rating
               </span>
@@ -443,7 +443,7 @@ const HostCard = memo(
         <Link 
           href={`tel:${contactNumber}`} 
           title={`Contact ${hostName}`}
-          className="p-2 px-5 text-xs rounded-xs border border-blue-700 text-blue-700 hover:bg-blue-950 hover:text-white hover:border-blue-950 transition-colors duration-300 text-nowrap font-medium font-text leading-5 cursor-pointer"
+          className="w-fit p-2 px-5 text-xs rounded-xs border border-blue-700 text-blue-700 hover:bg-blue-950 hover:text-white hover:border-blue-950 transition-colors duration-300 text-nowrap font-medium font-text leading-5 cursor-pointer"
         >
           Contact Host
         </Link>

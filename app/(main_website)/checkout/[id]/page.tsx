@@ -26,6 +26,7 @@ import {
   writeDraftToStorage,
   type PendingCheckoutDraft,
 } from "@/lib/checkout-helpers";
+import { computeInsuranceFee } from "@/lib/pricing";
 import type {
   CheckoutContact,
   CheckoutFormValues,
@@ -260,6 +261,7 @@ export default function CheckoutPage() {
     redirectStatus,
     vehicleId,
     paymentIntentRetryCount,
+    vehicleData?.data.insuranceDaily,
   ]);
 
   const vehicle = vehicleData?.data;
@@ -296,17 +298,23 @@ export default function CheckoutPage() {
   const summary = useMemo(() => {
     if (!draft || !vehicle) return null;
 
-    const subtotal = pricingSummary?.subtotal ?? draft.subtotal ?? 0;
-    const tax = pricingSummary?.tax ?? draft.tax ?? 0;
-    const taxRate = pricingSummary?.taxRate ?? draft.taxRate ?? 0.08;
-    const totalAmount = pricingSummary?.totalAmount ?? draft.totalAmount ?? 0;
+    const subtotal = draft.subtotal ?? pricingSummary?.subtotal ?? 0;
+    const tax = draft.tax ?? pricingSummary?.tax ?? 0;
+    const taxRate = draft.taxRate ?? pricingSummary?.taxRate ?? 0.08;
+    const totalAmount = draft.totalAmount ?? pricingSummary?.totalAmount ?? 0;
+
+    const totalInsuranceFee = computeInsuranceFee(
+      draft.totalDays || 1,
+      vehicle.insuranceDaily || 0,
+      !!draft.hostProvidingCoverage,
+    );
 
     return {
       imageUrl: vehicle.featuredImage?.src || DEFAULT_IMAGE_SRC,
       vehicleName: vehicle.carName || "Vehicle",
       vehicleType: vehicle.vehicleType || "Vehicle",
       vehicleGearType: vehicle.specifications?.transmission || "Automatic",
-      insuranceFee: vehicle.insuranceFee || "$0.00",
+      insuranceFee: totalInsuranceFee,
       duration: `${draft.totalDays || 1} day${draft.totalDays === 1 ? "" : "s"}`,
       totalPrice: formatCurrency(totalAmount),
       subTotalFee: formatCurrency(subtotal),
@@ -423,7 +431,7 @@ export default function CheckoutPage() {
         id={vehicleId}
         {...summary}
         user={user}
-        insuranceFee={vehicleData?.data.insuranceDaily}
+        // insuranceFee={vehicleData?.data.insuranceDaily}
         clientSecret={clientSecret}
         returnUrl={`${SITE_URL}/checkout/${vehicleId}`}
         submitError={submitError}

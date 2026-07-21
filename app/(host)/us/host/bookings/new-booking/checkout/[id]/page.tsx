@@ -262,8 +262,8 @@ export default function HostBookingCheckoutPage() {
           subtotal: response.data.subtotal,
           tax: response.data.tax,
           taxRate: response.data.taxRate,
-          // Server is the source of truth for the charged insurance fee;
-          // fall back to the draft value only if the API doesn't echo it back.
+          // Server doesn't echo back the insurance fee at all, so this is
+          // always the draft's own (already mixed-tier-correct) value.
           insuranceFee: draft.insuranceFee ?? 0,
           totalAmount: response.data.totalAmount,
         });
@@ -301,15 +301,21 @@ export default function HostBookingCheckoutPage() {
     };
   }, [draft]);
 
+  // The draft was computed on the previous page using the shared mixed-unit
+  // pricing calculator (month → week → day + insurance + tax), so it's
+  // already correct. The payment-intent response is only used as a
+  // fallback for any field the draft happens to be missing — never the
+  // other way around, since we don't know that the backend applies the
+  // same tiered-billing rules.
   const summary = useMemo(() => {
     if (!draft) return null;
 
-    const subtotal = pricingSummary?.subtotal ?? draft.subtotal ?? 0;
-    const tax = pricingSummary?.tax ?? draft.tax ?? 0;
-    const taxRate = pricingSummary?.taxRate ?? draft.taxRate ?? 0.08;
+    const subtotal = draft.subtotal ?? pricingSummary?.subtotal ?? 0;
+    const tax = draft.tax ?? pricingSummary?.tax ?? 0;
+    const taxRate = draft.taxRate ?? pricingSummary?.taxRate ?? 0.08;
     const insuranceFee =
-      pricingSummary?.insuranceFee ?? draft.insuranceFee ?? 0;
-    const totalAmount = pricingSummary?.totalAmount ?? draft.totalAmount ?? 0;
+      draft.insuranceFee ?? pricingSummary?.insuranceFee ?? 0;
+    const totalAmount = draft.totalAmount ?? pricingSummary?.totalAmount ?? 0;
 
     return {
       imageUrl: draft.vehicleImageUrl || DEFAULT_IMAGE_SRC,

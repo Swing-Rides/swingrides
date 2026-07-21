@@ -13,17 +13,16 @@ import {
   useListVehcleQuery,
 } from "@/app/store/services/hostApi";
 import { useListBookingsQuery } from "@/app/store/services/bookingApi";
+import { checkVehicleAvailability } from "@/lib/checkVehicleDateAvailability";
+import {
+  computePricing,
+  computeInsuranceFee,
+  computeTotal,
+} from "@/lib/pricing";
 
 const FORM_ID = "new-booking-form";
 const getPendingHostCheckoutStorageKey = (vehicleId: string) =>
   `swingrides:host-booking-checkout:${vehicleId}`;
-
-const dateRangesOverlap = (
-  startA: Date,
-  endA: Date,
-  startB: Date,
-  endB: Date,
-) => startA <= endB && endA >= startB;
 
 const getNextReferenceCode = (references: string[]) => {
   const currentYear = new Date().getFullYear();
@@ -54,42 +53,32 @@ const calculateBookingAmounts = (
     0,
   );
 
-  let baseTotal = 0;
-  if (totalDays >= 30) {
-    const months = Math.floor(totalDays / 30);
-    const remainingDays = totalDays % 30;
-    baseTotal =
-      months * vehicle.monthlyPrice + remainingDays * vehicle.dailyPrice;
-  } else if (totalDays >= 7) {
-    const weeks = Math.floor(totalDays / 7);
-    const remainingDays = totalDays % 7;
-    baseTotal =
-      weeks * vehicle.weeklyPrice + remainingDays * vehicle.dailyPrice;
-  } else {
-    baseTotal = totalDays * vehicle.dailyPrice;
-  }
+  // Same mixed-unit billing used on the browse-cars checkout flow: full
+  // periods at the dominant tier rate, remaining days at the daily rate.
+  const pricing = computePricing(
+    {
+      daily: vehicle.dailyPrice,
+      weekly: vehicle.weeklyPrice,
+      monthly: vehicle.monthlyPrice,
+    },
+    totalDays,
+  );
 
-  // Insurance is only charged when the host is providing it, and always at
-  // the flat per-day rate × the exact number of days — never converted to
-  // weekly/monthly units the way the base rental rate is (21 days is 21
-  // days, not 3 weeks).
-  const insuranceFee = hostProvidesInsurance
-    ? totalDays * vehicle.insuranceDailyRate
-    : 0;
+  // Insurance is always billed per-day, regardless of rental tier, and
+  // only when the host is providing coverage.
+  const insuranceFee = computeInsuranceFee(
+    totalDays,
+    vehicle.insuranceDailyRate,
+    hostProvidesInsurance,
+  );
 
-  const subtotal = baseTotal + insuranceFee;
-  const taxRate = 0.08;
-  const tax = subtotal * taxRate;
-  const totalAmount = subtotal + tax;
+  const breakdown = computeTotal(pricing.total, insuranceFee, 0.08);
 
   return {
     totalDays,
-    baseTotal,
-    insuranceFee,
-    subtotal,
-    taxRate,
-    tax,
-    totalAmount,
+    baseTotal: pricing.total,
+    taxRate: 0.08,
+    ...breakdown,
   };
 };
 
@@ -139,31 +128,14 @@ export default function NewBookingPageComponent() {
   }, [availableVehicles]);
 
   const checkAvailability = useCallback(
-    async (vehicleId: string, startDate: Date, endDate: Date) => {
-      const selectedVehicle = availableVehicles.find(
-        (vehicle) => vehicle._id === vehicleId,
-      );
-
-      if (!selectedVehicle) return false;
-      if (
-        selectedVehicle.status !== "active" ||
-        !selectedVehicle.instantlyAvailable
-      ) {
-        return false;
-      }
-
-      return !bookingRows.some((booking) => {
-        if (booking.vehicleId !== vehicleId) return false;
-        if (["cancelled", "completed"].includes(booking.status)) return false;
-
-        return dateRangesOverlap(
-          startDate,
-          endDate,
-          new Date(booking.pickupDate),
-          new Date(booking.returnDate),
-        );
-      });
-    },
+    async (vehicleId: string, startDate: Date, endDate: Date) =>
+      checkVehicleAvailability(
+        vehicleId,
+        availableVehicles,
+        bookingRows,
+        startDate,
+        endDate,
+      ),
     [availableVehicles, bookingRows],
   );
 
@@ -276,12 +248,12 @@ export default function NewBookingPageComponent() {
         const fallbackMessage = "Unable to create booking. Please try again.";
         const errorMessage =
           typeof error === "object" &&
-          error !== null &&
-          "data" in error &&
-          typeof error.data === "object" &&
-          error.data !== null &&
-          "message" in error.data &&
-          typeof error.data.message === "string"
+            error !== null &&
+            "data" in error &&
+            typeof error.data === "object" &&
+            error.data !== null &&
+            "message" in error.data &&
+            typeof error.data.message === "string"
             ? error.data.message
             : fallbackMessage;
 
