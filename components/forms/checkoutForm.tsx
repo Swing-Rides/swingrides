@@ -139,7 +139,6 @@ function CheckoutFormInner({
 }: CheckoutFormProps) {
   const isLoggedIn = !!user;
 
-  // const [guestDetails, setGuestDetails] = useState<CheckoutContact | null>(null)
   const [isProcessing, setIsProcessing] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
@@ -232,7 +231,7 @@ function CheckoutFormInner({
     <form
       id={formId}
       onSubmit={handleSubmit(onFormSubmit)}
-      className="flex flex-col gap-4 w-full max-w-300 mx-auto py-10"
+      className="flex flex-col gap-4 w-full max-w-250 mx-auto py-10 px-5"
       noValidate
     >
       <CheckoutCountdown
@@ -511,7 +510,7 @@ function CheckoutFormInner({
           <div className="flex flex-col gap-2 w-full">
             <SummaryRow label="Subtotal" value={subTotalFee} />
             <SummaryRow label={`Tax (${taxPercentageRate})`} value={taxFee} />
-            <SummaryRow label="Insurance Fee" value={`${insuranceFee}`} />
+            <SummaryRow label={`Insurance Fee`} value={`$${insuranceFee}`} />
           </div>
 
           <Separator />

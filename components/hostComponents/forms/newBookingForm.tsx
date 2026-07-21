@@ -42,6 +42,10 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import {
+  computePricing as computeSharedPricing,
+  computeInsuranceFee,
+} from "@/lib/pricing";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -77,7 +81,7 @@ export type NewBookingFormValues = {
 
 type TaxResult = {
   amount: number;
-  rate: number; 
+  rate: number;
 };
 
 type NewBookingFormProps = {
@@ -94,16 +98,14 @@ type NewBookingFormProps = {
   onSubmit: (values: NewBookingFormValues) => void | Promise<void>;
 };
 
-type PricingTier = "daily" | "weekly" | "monthly";
-
 type PricingLineItem = {
   label: string;
   total: number;
 };
 
 type PricingBreakdown = {
-  tier: PricingTier;
   durationLabel: string;
+  displayPriceTier: "day" | "week" | "month";
   baseLineItems: PricingLineItem[];
   baseTotal: number;
   insuranceFee: number;
@@ -112,100 +114,68 @@ type PricingBreakdown = {
 
 // ─── Pricing helpers ───────────────────────────────────────────────────────────
 
-const getPricingTier = (days: number): PricingTier => {
-  if (days < 7) return "daily";
-  if (days < 30) return "weekly";
-  return "monthly";
-};
-
 const pluralize = (count: number, noun: string) =>
   `${count} ${noun}${count !== 1 ? "s" : ""}`;
 
 /**
- * Mixed-unit billing: full periods at the tier rate, remaining days at the
- * daily rate — e.g. 35 days = 1 month + 5 days, not 2 months.
- * Add-ons are always billed at their stated per-day price × actual days,
- * regardless of base tier, to avoid ambiguity when units are mixed.
+ * Wraps the shared mixed-unit billing helper (month → week → day cascade)
+ * and reshapes it into the label/line-item format this form's summary
+ * panel renders.
  */
 const computePricing = (
   vehicle: VehicleOption,
   days: number,
   hostProvidesInsurance: boolean,
 ): PricingBreakdown => {
-  const tier = getPricingTier(days);
+  const {
+    lineItems,
+    total: baseTotal,
+    displayPriceTier,
+  } = computeSharedPricing(
+    {
+      daily: vehicle.dailyPrice,
+      weekly: vehicle.weeklyPrice,
+      monthly: vehicle.monthlyPrice,
+    },
+    days,
+  );
 
-  const baseLineItems: PricingLineItem[] = [];
+  // computeSharedPricing's line-item labels already include the rate
+  // (e.g. "3 weeks @ $60.00/wk") — reformat the leading count into the
+  // "N week(s) (@ $rate/wk)" shape this form displays.
+  const baseLineItems: PricingLineItem[] = lineItems.map((item) => ({
+    label: item.label.replace(/^(.*?) @ (.*)$/, "$1 (@ $2)"),
+    total: item.total,
+  }));
+
   const durationParts: string[] = [];
-  let baseTotal = 0;
-
-  if (tier === "daily") {
-    baseTotal = vehicle.dailyPrice * days;
-    const label = pluralize(days, "day");
-    durationParts.push(label);
-    baseLineItems.push({
-      label: `${label} (@ ${formatCurrency(vehicle.dailyPrice)}/day)`,
-      total: baseTotal,
-    });
-  } else if (tier === "weekly") {
-    const weeks = Math.floor(days / 7);
-    const remDays = days % 7;
-
-    if (weeks > 0) {
-      const weeksTotal = weeks * vehicle.weeklyPrice;
-      baseTotal += weeksTotal;
-      const label = pluralize(weeks, "week");
-      durationParts.push(label);
-      baseLineItems.push({
-        label: `${label} (@ ${formatCurrency(vehicle.weeklyPrice)}/wk)`,
-        total: weeksTotal,
-      });
-    }
-    if (remDays > 0) {
-      const daysTotal = remDays * vehicle.dailyPrice;
-      baseTotal += daysTotal;
-      const label = pluralize(remDays, "day");
-      durationParts.push(label);
-      baseLineItems.push({
-        label: `${label} (@ ${formatCurrency(vehicle.dailyPrice)}/day)`,
-        total: daysTotal,
-      });
-    }
-  } else {
-    const months = Math.floor(days / 30);
-    const remDays = days % 30;
-
-    if (months > 0) {
-      const monthsTotal = months * vehicle.monthlyPrice;
-      baseTotal += monthsTotal;
-      const label = pluralize(months, "month");
-      durationParts.push(label);
-      baseLineItems.push({
-        label: `${label} (@ ${formatCurrency(vehicle.monthlyPrice)}/mo)`,
-        total: monthsTotal,
-      });
-    }
-    if (remDays > 0) {
-      const daysTotal = remDays * vehicle.dailyPrice;
-      baseTotal += daysTotal;
-      const label = pluralize(remDays, "day");
-      durationParts.push(label);
-      baseLineItems.push({
-        label: `${label} (@ ${formatCurrency(vehicle.dailyPrice)}/day)`,
-        total: daysTotal,
-      });
-    }
+  let remaining = days;
+  const months = Math.floor(remaining / 30);
+  if (months > 0) {
+    durationParts.push(pluralize(months, "month"));
+    remaining -= months * 30;
+  }
+  const weeks = Math.floor(remaining / 7);
+  if (weeks > 0) {
+    durationParts.push(pluralize(weeks, "week"));
+    remaining -= weeks * 7;
+  }
+  if (remaining > 0) {
+    durationParts.push(pluralize(remaining, "day"));
   }
 
   // Insurance is always billed as the exact number of days times the flat
   // daily rate — never rolled up into weekly/monthly units like the base
   // rental rate is (e.g. 21 days of insurance = 21 × rate, not 3 weeks).
-  const insuranceFee = hostProvidesInsurance
-    ? days * vehicle.insuranceDailyRate
-    : 0;
+  const insuranceFee = computeInsuranceFee(
+    days,
+    vehicle.insuranceDailyRate,
+    hostProvidesInsurance,
+  );
 
   return {
-    tier,
     durationLabel: durationParts.join(", "),
+    displayPriceTier,
     baseLineItems,
     baseTotal,
     insuranceFee,
@@ -763,9 +733,9 @@ function NewBookingFormInner({
                       {selectedVehicle.name}
                     </span>
                     <span className="text-[#6B7280] text-xs font-normal font-text">
-                      {pricing?.tier === "weekly"
+                      {pricing?.displayPriceTier === "week"
                         ? `${formatCurrency(selectedVehicle.weeklyPrice)}/week`
-                        : pricing?.tier === "monthly"
+                        : pricing?.displayPriceTier === "month"
                           ? `${formatCurrency(selectedVehicle.monthlyPrice)}/month`
                           : `${formatCurrency(selectedVehicle.dailyPrice)}/day`}
                     </span>

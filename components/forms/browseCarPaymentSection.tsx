@@ -53,7 +53,7 @@ export type PaymentFormValues = {
 type PaymentSectionProps = {
   price: PriceConfig;
   /** Flat per-day insurance fee, only charged when the host provides coverage. */
-  insuranceFeePerDay?: number;
+  insuranceFeePerDay: number;
   street?: string;
   city?: string;
   state?: string;
@@ -70,7 +70,7 @@ const DEFAULT_TAX_RATE = 0.08;
 export const PaymentSection = memo(
   ({
     price,
-    insuranceFeePerDay = 1,
+    insuranceFeePerDay,
     street,
     city,
     state,
@@ -393,7 +393,7 @@ export const PaymentSection = memo(
             <span className="text-[#0B0B0B] text-base font-bold font-text leading-6">
               Total Estimate
             </span>
-            <span className="text-[#1A56DB] text-xl font-medium font-text leading-7">
+            <span className="text-blue-700 text-xl font-medium font-text leading-7">
               {totalBreakdown ? formatCurrency(totalBreakdown.totalAmount) : "—"}
             </span>
           </div>
@@ -414,7 +414,7 @@ export const PaymentSection = memo(
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
                     className={cn(
-                      "data-[state=checked]:bg-[#1A56DB] data-[state=checked]:border-[#1A56DB]",
+                      "data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700",
                       errors.agreedToTerms
                         ? "border-red-500"
                         : "border-[#E5E7EB]",
@@ -426,8 +426,8 @@ export const PaymentSection = memo(
                   >
                     I agree to the{" "}
                     <Link
-                      href="/terms-of-service"
-                      className="text-[#1A56DB] hover:text-blue-900 duration-300 transition-colors underline"
+                      href="/legal/terms-and-conditions-of-use"
+                      className="text-blue-700 hover:text-blue-950 duration-300 transition-colors underline"
                       target="_blank"
                       title="terms and conditions link"
                     >
@@ -553,7 +553,7 @@ export const PaymentSection = memo(
                       field.onChange(!!checked);
                     }}
                     className={cn(
-                      "data-[state=checked]:bg-[#1A56DB] data-[state=checked]:border-[#1A56DB]",
+                      "data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700",
                       hasInsuranceInput
                         ? "opacity-50 cursor-not-allowed"
                         : "border-[#E5E7EB]",
@@ -596,7 +596,7 @@ export const PaymentSection = memo(
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full font-text text-white px-10 py-3 bg-[#1A56DB] rounded-xs cursor-pointer hover:bg-blue-900 duration-300 transition-colors disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+          className="w-full font-text text-white px-10 py-3 bg-blue-700 rounded-xs cursor-pointer hover:bg-blue-900 duration-300 transition-colors disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <>
@@ -722,7 +722,7 @@ const DateTimePickerField = ({
                   !parsed && "text-[#9CA3AF]",
                   error
                     ? "border-red-500 focus-visible:ring-red-500"
-                    : "border-[#E5E7EB] focus-visible:ring-[#1A56DB]",
+                    : "border-[#E5E7EB] focus-visible:ring-blue-700",
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF] shrink-0" />
@@ -833,7 +833,7 @@ const DateTimePickerField = ({
                     type="button"
                     size="sm"
                     disabled={!parsed}
-                    className="text-xs bg-[#1A56DB] hover:bg-blue-900"
+                    className="text-xs bg-blue-700 hover:bg-blue-900"
                     onClick={handleNext}
                   >
                     Next
@@ -843,7 +843,7 @@ const DateTimePickerField = ({
                     type="button"
                     size="sm"
                     disabled={!parsed}
-                    className="text-xs bg-[#1A56DB] hover:bg-blue-900"
+                    className="text-xs bg-blue-700 hover:bg-blue-900"
                     onClick={handleDone}
                   >
                     Done
@@ -889,6 +889,6 @@ const FieldError = ({ message }: { message: string }) => (
 
 const inputCn = (hasError: boolean) =>
   cn(
-    "rounded-xs border-[#E5E7EB] focus-visible:ring-[#1A56DB] font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF] w-full",
+    "rounded-xs border-[#E5E7EB] focus-visible:ring-blue-700 font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF] w-full",
     hasError && "border-red-500 focus-visible:ring-red-500",
   );

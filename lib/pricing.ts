@@ -10,7 +10,7 @@ export type PricingLineItem = { label: string; total: number };
 
 export type ComputedPricing = {
         displayPrice: number; // headline price shown at top (monthly > weekly > daily)
-        displayPriceTier: string; // label for headline price
+        displayPriceTier: "day" | "week" | "month"; // label for headline price
         lineItems: PricingLineItem[];
         total: number;
 };
@@ -90,7 +90,7 @@ export const computePricing = (
 
         // Headline: show the dominant tier's unit price
         let displayPrice = normalizedPrice.daily;
-        let displayPriceTier = "day";
+        let displayPriceTier: "day" | "week" | "month" = "day";
         if (days >= 30) {
                 displayPrice = normalizedPrice.monthly;
                 displayPriceTier = "month";
