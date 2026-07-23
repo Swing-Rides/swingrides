@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { Suspense } from "react";
 import Image from "next/image";
 import MainContent from "./mainContent";
 import ModifyTripModal from "@/components/modifyTripModal";
 import CancelTripDialog from "@/components/cancelTripDialog";
-import { User, AccountDetailProps, Rentals } from "./types";
+import { User, AccountDetailProps } from "./types";
 import { getInitials, getTotalTrips, getAverageRating } from "./utils";
 import { FieldSeparator } from "@/components/ui/field";
 import ContentLoading from "@/components/loading/contentLoading";
@@ -24,7 +24,6 @@ export default function GuestProfilePage({
   phoneNumber,
   totalSpentByUser,
 }: User) {
-  const [rentals, setRentals] = useState<Rentals[] | undefined>(initialRentals);
 
   return (
     <>
@@ -35,7 +34,7 @@ export default function GuestProfilePage({
             fullName={fullName}
             email={email}
             memberSince={memberSince}
-            rentals={rentals}
+            rentals={initialRentals}
             totalSpentByUser={totalSpentByUser}
           />
           <AccountDetail
@@ -48,25 +47,18 @@ export default function GuestProfilePage({
         </div>
         <div className="col-span-1 md:col-span-2">
           <Suspense fallback={<ContentLoading />}>
-            <MainContent rentals={rentals} />
+            <MainContent rentals={initialRentals} />
           </Suspense>
         </div>
       </div>
 
       <Suspense>
-        <ModifyTripModal rentals={rentals} />
+        <ModifyTripModal rentals={initialRentals} />
       </Suspense>
 
       <Suspense>
         <CancelTripDialog
-          rentals={rentals}
-          onCancel={(updatedRental) =>
-            setRentals((currentRentals) =>
-              currentRentals?.map((rental) =>
-                rental.id === updatedRental.id ? updatedRental : rental,
-              ),
-            )
-          }
+          rentals={initialRentals}
         />
       </Suspense>
     </>
