@@ -122,7 +122,7 @@ export default function MainForm({
       <Button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-[#1A56DB] hover:bg-[#1E429F] text-white font-medium font-text rounded-xs cursor-pointer transition-colors duration-200 disabled:opacity-50 disabled:pointer-events-none"
+        className="w-full bg-blue-700 hover:bg-blue-950 text-white font-medium font-text rounded-xs cursor-pointer transition-colors duration-300 disabled:opacity-50 disabled:pointer-events-none"
       >
         {isLoading ? (
           <span className="flex items-center gap-2">
@@ -147,15 +147,15 @@ type FormFieldProps = {
   errors: ReturnType<typeof useForm>["formState"]["errors"];
 };
 
-const FormField = ({ field, register, control, errors }: FormFieldProps) => {
+export const FormField = ({ field, register, control, errors }: FormFieldProps) => {
   const error = errors[field.name]?.message as string | undefined;
 
   const wrapper = (children: React.ReactNode) => (
-    <div className={cn("flex flex-col gap-1.5", field.className)}>
+    <div className={cn("flex flex-col gap-1.5 flex-1", field.className)}>
       {field.label && (
         <Label
           htmlFor={field.name}
-          className="text-[#6B7280] text-xs font-semibold font-text uppercase"
+          className="text-zinc-800 text-xs font-semibold font-text uppercase"
         >
           {field.label}
           {field.validation?.required && (
@@ -217,12 +217,12 @@ type ControllerProps = {
 
 const inputClass = (error?: string) =>
   cn(
-    "border-[#E5E7EB] focus-visible:ring-[#1A56DB] font-text text-sm text-[#1F2937] rounded-xs placeholder:text-[#9CA3AF]",
-    error && "border-[#EF4444] focus-visible:ring-[#EF4444]",
+    "border-zinc-400 focus-visible:ring-blue-700 font-text text-sm text-zinc-700 rounded-xs placeholder:text-gray-500",
+    error && "border-red-500 focus-visible:ring-red-700",
   );
 
 // Text / email / tel / number
-const TextInput = ({ field, register, error }: InputProps) => {
+export const TextInput = ({ field, register, error }: InputProps) => {
   const hasIcon = !!field.icon;
 
   return (
@@ -469,7 +469,7 @@ const DateTimeInput = ({ field, control, error }: ControllerProps) => {
                   type="time"
                   value={timeValue}
                   onChange={handleTimeChange}
-                  className="w-full border border-[#E5E7EB] rounded-md px-3 py-2 text-sm font-text text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent"
+                  className="w-full border border-[#E5E7EB] rounded-md px-3 py-2 text-sm font-text text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent"
                 />
               </div>
             </PopoverContent>
@@ -519,7 +519,7 @@ const FileInput = ({ field, register, error }: InputProps) => {
           "flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-5 cursor-pointer transition-colors duration-200 group",
           error
             ? "border-[#EF4444] bg-[#FFF5F5]"
-            : "border-[#E5E7EB] hover:border-[#1A56DB]"
+            : "border-[#E5E7EB] hover:border-blue-700"
         )}
       >
         {icon}
@@ -528,7 +528,7 @@ const FileInput = ({ field, register, error }: InputProps) => {
           <span
             className={cn(
               "text-sm font-medium font-text",
-              error ? "text-[#EF4444]" : "text-[#1A56DB] group-hover:underline"
+              error ? "text-[#EF4444]" : "text-blue-700 group-hover:underline"
             )}
           >
             Click to upload
@@ -655,7 +655,7 @@ const CheckboxInput = ({ field, control, error }: ControllerProps) => {
                                                 checked={!!ctrl.value}
                                                 onCheckedChange={ctrl.onChange}
                                                 className={cn(
-                                                        'mt-0.5 border-[#E5E7EB] data-[state=checked]:bg-[#1A56DB] data-[state=checked]:border-[#1A56DB]',
+                                                        'mt-0.5 border-[#E5E7EB] data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700',
                                                         error && 'border-[#EF4444]'
                                                 )}
                                         />

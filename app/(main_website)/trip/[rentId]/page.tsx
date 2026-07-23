@@ -2,6 +2,8 @@
 
 import { useGetBookingByIdQuery } from "@/app/store/services/renterApi";
 import RentalDetailPage from "@/components/pages/rentalDetailPage";
+import RentalDetailSkeleton from "@/components/pages/rentalDetailPage/tripLoadingState";
+import TripNotFoundState from "@/components/pages/rentalDetailPage/tripNotFoundState";
 import { useParams } from "next/navigation";
 
 export default function SingleTripPage() {
@@ -10,15 +12,25 @@ export default function SingleTripPage() {
   const { data, isLoading, isError } = useGetBookingByIdQuery({ id: rentId });
 
   if (isLoading) {
-    return <div>Loading rental details...</div>;
+    return <RentalDetailSkeleton/>;
+  }
+  
+  if (!data?.data) {
+    return (
+      <TripNotFoundState
+        title="Rental not found"
+        message="This rental doesn't exist or may have been removed."
+      />
+    );
   }
 
   if (isError) {
-    return <div>This page can not be found</div>;
-  }
-
-  if (!data?.data) {
-    return <div>This page can not be found</div>;
+    return (
+      <TripNotFoundState
+        title="Something went wrong"
+        message="We couldn't load this rental right now. Please try again later."
+      />
+    );
   }
 
   const rental = data.data;
