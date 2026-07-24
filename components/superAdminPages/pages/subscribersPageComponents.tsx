@@ -53,6 +53,7 @@ import {
 import { formatDate } from "../utils/formatDate";
 import { useGetAdminSubscribersQuery } from "@/app/store/services/adminApi";
 import { SubscribersPageSkeleton } from "../loadingSkeletons/subscribersPageSkeleton";
+import ErrorStateUI from "../dashboard/errorState";
 
 type SelectUIProps = {
   title: string;
@@ -114,9 +115,17 @@ export default function SubscribersPageComponents() {
 
   if (isError || !data?.data) {
     return (
-      <div className="p-6 text-sm text-red-600">
-        Failed to load subscribers.
-      </div>
+      <PageWrapper
+        pageTitle="Subscribers"
+        pageDescription="Manage all host organisations on the platform"
+      >
+        <div className="mt-8">
+          <ErrorStateUI 
+            title="We couldn't load your subscribers"
+            description = "Something went wrong while fetching subscribers. Please check your connection and try again."
+          />
+        </div>
+      </PageWrapper>
     );
   }
 

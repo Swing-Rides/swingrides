@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { PageIntro } from "../pages/subscriberDetailPage";
+import PageIntro from "../pages/singleSubscriberPageComponents/pageIntro";
 import Link from "next/link";
 import { ChevronRight as BreadcrumbChevron } from "lucide-react";
 import { SubscriberStatus, BookingStatus, FleetStatus, BillingStatus } from "@/types/subscribers.type";
@@ -28,7 +28,7 @@ export default function SubscribersSubPageWrapper({ pageTitle, pageDescription, 
                                                 </Link>
                                                 <BreadcrumbChevron className="size-4 text-[#6B7280]" />
                                                 {parentSlug && (
-                                                        <Link 
+                                                        <Link
                                                                 href={`/admin/subscribers/${parentSlug}`}
                                                                 className="text-gray-500 text-sm font-normal font-text leading-5 hover:text-gray-700 transition-colors"
                                                         >
@@ -40,7 +40,7 @@ export default function SubscribersSubPageWrapper({ pageTitle, pageDescription, 
                                                         Booking Details
                                                 </span>
                                         </div>
-                                        <PageIntro 
+                                        <PageIntro
                                                 pageTitle={pageTitle}
                                                 pageDesc={pageDescription}
                                                 status={status}

@@ -1,4 +1,4 @@
-import SubscriberDetailPageClient from "@/components/superAdminPages/pages/subscriberDetailPageClient";
+import SubscriberDetailPageClient from "@/components/superAdminPages/pages/singleSubscriberPageComponents/subscriberDetailPageClient";
 
 export default async function SubscriberPage({
   params,

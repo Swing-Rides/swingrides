@@ -1,3 +1,5 @@
+"use client"
+
 import Logo from "../headerNav/logo";
 import Link from "next/link";
 import {
@@ -5,17 +7,25 @@ import {
   HostRegisterPageRightContent,
 } from "./registerPageComponents";
 import HostLoginForm from "../forms/hostLoginForm";
+import apiClient from "@/lib";
 
 export default function LoginPageComponent() {
+  const handleGoogleLogin = () => {
+    window.location.href = `${apiClient.defaults.baseURL}/api/host/google`;
+  };
   return (
     <section className="grid lg:grid-cols-2 min-h-screen bg-white">
-      <HostLoginPageLeftContent />
+      <HostLoginPageLeftContent handleGoogleLogin={handleGoogleLogin} />
       <HostRegisterPageRightContent />
     </section>
   );
 }
 
-export const HostLoginPageLeftContent = () => {
+export const HostLoginPageLeftContent = ({
+  handleGoogleLogin,
+}: {
+  handleGoogleLogin: () => void;
+}) => {
   return (
     <div className="flex justify-center p-10 md:p-20 bg-white">
       <div className="max-w-137.75 w-full flex flex-col gap-4.5 md:gap-10">
@@ -46,7 +56,11 @@ export const HostLoginPageLeftContent = () => {
               <div className="bg-gray-200 w-full h-px" />
             </div>
             <div>
-              <button className="flex gap-3 justify-center items-center py-3 px-15 w-full bg-white rounded-xs border border-gray-300 hover:bg-gray-300 cursor-pointer duration-300 transition-colors">
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="flex gap-3 justify-center items-center py-3 px-15 w-full bg-white rounded-xs border border-gray-300 hover:bg-gray-300 cursor-pointer duration-300 transition-colors"
+              >
                 <GoogleIcon />
                 <span className="text-gray-800 text-sm font-medium font-text leading-5">
                   Continue with Google

@@ -39,20 +39,20 @@ const axiosBaseQuery = (): BaseQueryFn<
   AxiosBaseQueryArgs,
   unknown,
   AxiosBaseQueryError
-  > => {
+> => {
   return async (args) => {
     const request =
       typeof args === "string"
         ? { url: args, method: "GET" as Method }
         : {
-          url: args.url,
-          method: args.method ?? "GET",
-          data: args.data ?? args.body,
-          params: args.params,
-        };
+            url: args.url,
+            method: args.method ?? "GET",
+            data: args.data ?? args.body,
+            params: args.params,
+          };
 
     const isMutatingMethod = MUTATING_METHODS.includes(
-      request.method.toUpperCase() as Method
+      request.method.toUpperCase() as Method,
     );
 
     try {
@@ -61,6 +61,7 @@ const axiosBaseQuery = (): BaseQueryFn<
         method: request.method,
         data: request.data,
         params: request.params,
+        withCredentials: true,
       });
 
       if (isMutatingMethod) {
@@ -156,7 +157,7 @@ export const renterApi = createApi({
     getBookingById: builder.query<
       {
         success: boolean;
-        data: SingleRent['data'];
+        data: SingleRent["data"];
       },
       { id: string }
     >({
