@@ -1,8 +1,12 @@
+"use client";
+
 import Image from "next/image";
 import Logo from "../headerNav/logo";
 import Link from "next/link";
 import HostRegisterForm from "../forms/hostRegisterForm";
 import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import apiClient from "@/lib";
 
 export default function RegisterPageComponents() {
   return (
@@ -16,6 +20,17 @@ export default function RegisterPageComponents() {
 }
 
 export const HostRegisterPageLeftContent = () => {
+  const searchParams = useSearchParams();
+  const plan = searchParams.get("plan");
+
+  const handleGoogleSignUp = () => {
+    if (!plan) {
+      // no plan in the URL — don't send a broken request to the backend
+      return;
+    }
+    window.location.href = `${apiClient.defaults.baseURL}/api/host/google?plan=${plan}`;
+  };
+
   return (
     <div className="flex justify-center p-10 md:p-20 bg-white">
       <div className="max-w-137.75 w-full flex flex-col gap-4.5 md:gap-10">
@@ -46,7 +61,11 @@ export const HostRegisterPageLeftContent = () => {
               <div className="bg-gray-200 w-full h-px" />
             </div>
             <div>
-              <button className="flex gap-3 justify-center items-center py-3 px-15 w-full bg-white rounded-xs border border-gray-300 hover:bg-gray-300 cursor-pointer duration-300 transition-colors">
+              <button
+                onClick={handleGoogleSignUp}
+                disabled={!plan}
+                className="flex gap-3 justify-center items-center py-3 px-15 w-full bg-white rounded-xs border border-gray-300 hover:bg-gray-300 cursor-pointer duration-300 transition-colors"
+              >
                 <GoogleIcon />
                 <span className="text-gray-800 text-sm font-medium font-text leading-5">
                   Continue with Google

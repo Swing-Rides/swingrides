@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import Link from "next/link";
 import GuestSignUpForm from "../forms/GuestSignUpForm";
 import ModelBackdrop from "./modelBackdrop";
+import apiClient from "@/lib";
 
 export default function GuestSignUpModal() {
   return (
@@ -65,7 +66,12 @@ const ModalComponent = () => {
         </div>
 
         <div className="w-full">
-          <button className="w-full flex gap-3 items-center justify-center px-10 py-3 bg-transparent hover:bg-blue-900 hover:text-white transition-color duration-300 rounded-xs border border-[#E5E7EB] cursor-pointer">
+          <button
+            onClick={() => {
+              window.location.href = `${apiClient.defaults.baseURL}/api/auth/google`;
+            }}
+            className="w-full flex gap-3 items-center justify-center px-10 py-3 bg-transparent hover:bg-blue-900 hover:text-white transition-color duration-300 rounded-xs border border-[#E5E7EB] cursor-pointer"
+          >
             <GoogleIcon />
             <span className="text-nowrap">Continue with Google</span>
           </button>
