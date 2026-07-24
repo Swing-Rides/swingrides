@@ -1,8 +1,9 @@
 "use client";
 
-import SubscriberDetailPage from "@/components/superAdminPages/pages/subscriberDetailPage";
+import SubscriberDetailPage from "@/components/superAdminPages/pages/singleSubscriberPageComponents/subscriberDetailPage";
 import { useGetAdminSubscriberByIdQuery } from "@/app/store/services/adminApi";
-import { SubscriberDetailPageSkeleton } from "../loadingSkeletons/subscriberDetailPageSkeleton";
+import { SubscriberDetailPageSkeleton } from "../../loadingSkeletons/subscriberDetailPageSkeleton";
+import ErrorStateUI from "../../dashboard/errorState";
 
 type SubscriberDetailPageClientProps = {
   slug: string;
@@ -15,15 +16,16 @@ export default function SubscriberDetailPageClient({
 
   if (isLoading) {
     return (
-      <SubscriberDetailPageSkeleton/>
+      <SubscriberDetailPageSkeleton />
     );
   }
 
   if (isError || !data?.data) {
     return (
-      <div className="p-6 text-sm text-red-600">
-        Failed to load subscriber details.
-      </div>
+      <ErrorStateUI
+        title="We couldn't load this subscriber"
+        description="Something went wrong while fetching this subscriber. Please check your connection and try again."
+      />
     );
   }
 
