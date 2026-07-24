@@ -6,8 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { TripStatus } from "../profilePages/types";
 import { ManageBookingButtonConfig, ManageBookingCardProps } from "./types";
 import {
+  BanknoteArrowUp,
   Car,
-  ClipboardPen,
   PenLine,
   PhoneCall,
   Repeat,
@@ -19,6 +19,8 @@ import CancelTripDialog from "@/components/cancelTripDialog";
 import CompleteVehicleReturnModal from "@/components/completeVehicleReturnModal";
 import { Rentals } from "../profilePages/types";
 import StartVehicleCheckIn from "@/components/startVehicleCheckInModal";
+import RequestReimbursementModal from "@/components/modals/requestReimbursementModal";
+import ReportVehicleDamageModal from "@/components/modals/reportVehicleDamageModal";
 
 export default function RightContent({
   rentals: initialRentals,
@@ -27,9 +29,9 @@ export default function RightContent({
 
   const rentalsAsArray = rental ? [rental] : undefined;
 
-  const handleCancel = useCallback((updatedRental: Rentals) => {
-    setRental(updatedRental);
-  }, []);
+  // const handleCancel = useCallback((updatedRental: Rentals) => {
+  //   setRental(updatedRental);
+  // }, []);
 
   const handleComplete = useCallback((updatedRental: Rentals) => {
     setRental(updatedRental);
@@ -39,36 +41,66 @@ export default function RightContent({
     setRental(updatedRental);
   }, []);
 
+  if (!rental) return null;
+
+  const status = rental.status;
+  const isUpcoming = status === "Upcoming";
+  const isActive = status === "Active";
+  const isCompleted = status === "Completed";
+
+
   return (
-    <>
-      <div className="col-span-1 md:col-span-5 w-full">
+    <div className="col-span-1 md:col-span-5 w-full space-y-3 md:space-y-6">
+      <div className="w-full">
         <Suspense>
           <ManageBookingCard rentals={rental} />
         </Suspense>
       </div>
 
-      <Suspense>
-        <ModifyTripModal rentals={rentalsAsArray} />
-      </Suspense>
+      {(isActive || isCompleted) && (
+        <div>
+          <ReportVehicleDamageCard rentals={rental} />
+        </div>
+      )}
 
-      <Suspense>
-        <CancelTripDialog rentals={rentalsAsArray} onCancel={handleCancel} />
-      </Suspense>
+      {isUpcoming && (
+        <Suspense>
+          <StartVehicleCheckIn rentals={rentalsAsArray} onComplete={handleCheckIn} />
+        </Suspense>
+      )}
 
-      <Suspense>
-        <StartVehicleCheckIn
-          rentals={rentalsAsArray}
-          onComplete={handleCheckIn}
-        />
-      </Suspense>
+      {isUpcoming && (
+        <Suspense>
+          <ModifyTripModal rentals={rentalsAsArray} />
+        </Suspense>
+      )}
 
-      <Suspense>
-        <CompleteVehicleReturnModal
-          rentals={rentalsAsArray}
-          onComplete={handleComplete}
-        />
-      </Suspense>
-    </>
+      {isUpcoming && (
+        <Suspense>
+          <CancelTripDialog rentals={rentalsAsArray} />
+        </Suspense>
+      )}
+
+      {isActive && (
+        <Suspense>
+          <CompleteVehicleReturnModal rentals={rentalsAsArray} onComplete={handleComplete} />
+        </Suspense>
+      )}
+
+      {(isActive || isCompleted) && (
+        <Suspense>
+          <RequestReimbursementModal rentals={rentalsAsArray} />
+        </Suspense>
+      )}
+
+      {(isActive || isCompleted) && (
+        <Suspense>
+          <ReportVehicleDamageModal
+            rentals={rentalsAsArray} 
+          />
+        </Suspense>
+      )}
+    </div>
   );
 }
 
@@ -77,7 +109,9 @@ export const getManageBookingButtons = (
   rentId: string,
   currentParams: string,
   contactNumber: string,
+  carId: string,
 ): ManageBookingButtonConfig[] => {
+
   const checkInParams = new URLSearchParams(currentParams);
   checkInParams.set("checkIn", rentId);
 
@@ -87,18 +121,24 @@ export const getManageBookingButtons = (
   const returnParams = new URLSearchParams(currentParams);
   returnParams.set("return", rentId);
 
+  const reimbursementParams = new URLSearchParams(currentParams);
+  reimbursementParams.set("reimbursement", rentId);
+
+  const refundParams = new URLSearchParams(currentParams);
+  refundParams.set("refund", rentId);
+
   const completedStyle =
-    "bg-[#1A56DB] text-white border-[#1A56DB] hover:bg-transparent hover:text-[#1A56DB]";
+    "bg-blue-700 text-white border-blue-700 hover:bg-blue-950 hover:border-blue-950";
   const checkInStyle =
     "bg-blue-700 text-white border-blue-700 hover:bg-blue-950";
   const modifyStyle =
-    "bg-transparent text-[#1A56DB] border-[#1A56DB] hover:bg-[#1A56DB] hover:text-white";
+    "bg-transparent text-blue-700 border-blue-700 hover:bg-blue-950 hover:border-blue-950 hover:text-white";
   const cancelStyle =
-    "bg-transparent text-[#EF4444] border-[#EF4444] hover:bg-[#EF4444] hover:text-white";
+    "bg-transparent text-red-500 border-red-500 hover:bg-red-500 hover:text-white";
   const contactStyle =
-    "bg-transparent text-[#333333] border-[#333333] hover:bg-[#333333] hover:text-white";
+    "bg-transparent text-zinc-800 border-zinc-800 hover:bg-zinc-800 hover:text-white";
   const reportStyle =
-    "bg-[#EF4444] text-white border-[#EF4444] hover:bg-red-900";
+    "bg-red-500 text-white border-red-500 hover:bg-red-900 hover:border-red-900";
 
   switch (status) {
     case "Upcoming":
@@ -146,13 +186,19 @@ export const getManageBookingButtons = (
           href: `tel:${contactNumber}`,
           className: contactStyle,
         },
+        {
+          icon: <BanknoteArrowUp className="size-4" />,
+          label: "Request Reimbursement",
+          href: `?${reimbursementParams.toString()}`,
+          className: reportStyle,
+        },
       ];
     case "Completed":
       return [
         {
           icon: <Repeat className="w-4" />,
           label: "Book Again",
-          href: `/trip/${rentId}`,
+          href: `/browse-cars/${carId}`,
           className: modifyStyle,
         },
         {
@@ -160,6 +206,12 @@ export const getManageBookingButtons = (
           label: "Rate Trip",
           href: `/trip/${rentId}/rate`,
           className: completedStyle,
+        },
+        {
+          icon: <BanknoteArrowUp className="size-4" />,
+          label: "Request Reimbursement",
+          href: `?${reimbursementParams.toString()}`,
+          className: reportStyle,
         },
         {
           icon: <PhoneCall className="w-4" />,
@@ -171,13 +223,13 @@ export const getManageBookingButtons = (
     case "Cancelled":
       return [
         {
-          icon: <ClipboardPen className="w-4" />,
-          label: "Submit A Report",
-          href: `tel:${contactNumber}`,
+          icon: <BanknoteArrowUp className="size-4" />,
+          label: "Request Refund",
+          href: `?${refundParams.toString()}`,
           className: reportStyle,
         },
         {
-          icon: <PhoneCall className="w-4" />,
+          icon: <PhoneCall className="size-4" />,
           label: "Contact Host",
           href: `tel:${contactNumber}`,
           className: contactStyle,
@@ -198,11 +250,13 @@ const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
     rentals.id,
     searchParams.toString(),
     rentals.host.contactNumber,
+    rentals.car.carId
   );
+
   return (
     <div className="p-4 md:p-6 bg-white rounded-[10px] border border-gray-200">
-      <div className="flex flex-col gap-3 pb-3 border-b border-[#E5E7EB]">
-        <h3 className="text-[#0B0B0B] text-base font-semibold font-text leading-6">
+      <div className="flex flex-col gap-3 pb-3 mb-3 border-b border-gray-300">
+        <h3 className="text-neutral-950 text-base font-semibold font-text leading-6">
           Manage Booking
         </h3>
         <span className="text-gray-500 text-xs font-normal font-text leading-5">
@@ -233,7 +287,7 @@ const ManageBookingButton = memo(
     return (
       <Link href={href}>
         <button
-          className={`flex gap-2 justify-center items-center w-full px-36 py-3 rounded-xs border cursor-pointer duration-300 transition-colors ${className}`}
+          className={`flex gap-2 justify-center items-center w-full px-6 py-2.5 rounded-xs border cursor-pointer duration-300 transition-colors ${className}`}
         >
           {icon}
           <span>{label}</span>
@@ -243,3 +297,34 @@ const ManageBookingButton = memo(
   },
 );
 ManageBookingButton.displayName = "ManageBookingButton";
+
+const ReportVehicleDamageCard = memo(({ rentals }: ManageBookingCardProps) => {
+
+  if (!rentals) return null;
+
+  const tripId = rentals.id
+
+  return (
+    <div className="p-4 md:p-6 bg-white rounded-[10px] border border-gray-200">
+      <div className="flex flex-col gap-3 pb-3 border-b border-gray-300">
+        <h3 className="text-blue-700 text-base font-semibold font-text leading-6">
+          Report Vehicle Damage
+        </h3>
+        <span className="text-gray-500 text-xs font-normal font-text leading-5">
+          Notify your host about any damage during your trip.
+        </span>
+      </div>
+
+      <Link 
+        href={`?reportVehicleDamage=${tripId}`}
+        className="flex gap-2 justify-center items-center w-full px-6 py-2.5 rounded-xs border bg-black text-white border-black hover:bg-black/80 hover:border-black/80 duration-300 transition-colors"
+      >
+        <PhoneCall className="size-4 text-white"/>
+        <span>
+          Report Damage
+        </span>
+      </Link>
+    </div>
+  );
+});
+ReportVehicleDamageCard.displayName = "ReportVehicleDamageCard";

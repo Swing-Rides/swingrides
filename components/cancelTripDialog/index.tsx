@@ -13,19 +13,17 @@ import {
         AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Rentals } from '../pages/profilePages/types'
-import { normalizeRentalDetail, useCancelBookingMutation } from '@/app/store/services/renterApi'
 
 type CancelTripDialogProps = {
         rentals?: Rentals[]
-        onCancel: (updatedRental: Rentals) => void
+        // onCancel: (updatedRental: Rentals) => void
 }
 
-export default function CancelTripDialog({ rentals, onCancel }: CancelTripDialogProps) {
+export default function CancelTripDialog({ rentals }: CancelTripDialogProps) {
         
         const searchParams = useSearchParams()
         const router = useRouter()
         const pathname = usePathname()
-        const [cancelBooking, { isLoading }] = useCancelBookingMutation()
 
         const cancelId = searchParams.get('cancel')
         const rental = rentals?.find(r => r.id === cancelId && r.status === 'Upcoming')
@@ -37,17 +35,10 @@ export default function CancelTripDialog({ rentals, onCancel }: CancelTripDialog
                 router.push(query ? `${pathname}?${query}` : pathname)
         }, [searchParams, router, pathname])
 
-        const handleConfirm = useCallback(async () => {
+        const handleConfirm = useCallback(() => {
                 if (!cancelId) return
-
-                try {
-                        const response = await cancelBooking({ id: cancelId }).unwrap()
-                        onCancel(normalizeRentalDetail(response.data) as Rentals)
-                        handleClose()
-                } catch (error) {
-                        console.error('Failed to cancel booking:', error)
-                }
-        }, [cancelId, cancelBooking, onCancel, handleClose])
+                router.push(`/trip/${cancelId}/cancel`)
+        }, [cancelId, router])
 
         // Only Upcoming rentals can be cancelled — if rental not found or not Upcoming, silently dismiss
         if (!cancelId || !rental) return null
@@ -56,7 +47,9 @@ export default function CancelTripDialog({ rentals, onCancel }: CancelTripDialog
                 <AlertDialog open={!!cancelId && !!rental} onOpenChange={(open) => { if (!open) handleClose() }}>
                         <AlertDialogContent>
                                 <AlertDialogHeader>
-                                        <AlertDialogTitle>
+                                        <AlertDialogTitle
+                                                className='text-red-500 text-base font-semibold font-text leading-6'
+                                        >
                                                 Cancel this trip?
                                         </AlertDialogTitle>
                                         <AlertDialogDescription asChild>
@@ -102,15 +95,17 @@ export default function CancelTripDialog({ rentals, onCancel }: CancelTripDialog
                                         </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                        <AlertDialogCancel onClick={handleClose}>
+                                        <AlertDialogCancel 
+                                                onClick={handleClose}
+                                                className='px-6 py-2.5 rounded-xs hover:border-black cursor-pointer duration-300'
+                                        >
                                                 Keep trip
                                         </AlertDialogCancel>
                                         <AlertDialogAction
                                                 onClick={handleConfirm}
-                                                disabled={isLoading}
-                                                className='bg-[#EF4444] text-white hover:bg-[#DC2626] border-transparent'
+                                                className='px-6 py-2.5 rounded-xs bg-red-500 text-white hover:bg-red-700 cursor-pointer border-transparent'
                                         >
-                                                {isLoading ? 'Cancelling...' : 'Yes, cancel trip'}
+                                                Yes, cancel trip
                                         </AlertDialogAction>
                                 </AlertDialogFooter>
                         </AlertDialogContent>
