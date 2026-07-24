@@ -78,6 +78,7 @@ const axiosBaseQuery = (): BaseQueryFn<
         method: request.method,
         data: request.data,
         params: request.params,
+        withCredentials: true,
       });
 
       if (isMutatingMethod) {
