@@ -64,9 +64,6 @@ export default function GuestLoginForm({
       toast.success("Welcome back!");
 
       if (onSuccess) {
-        // Caller takes over from here (e.g. closing a modal) — skip the
-        // default navigation so in-progress state (like a payment intent)
-        // isn't disturbed.
         await onSuccess();
         return;
       }
