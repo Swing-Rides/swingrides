@@ -274,7 +274,7 @@ const CarDetailCard = memo(
             <h3 className="text-neutral-950 text-2xl font-bold font-text leading-8">
               {carName}
             </h3>
-            <div className="px-3 py-0.5 bg-green-100 text-green-500 capitalize text-xs font-medium font-text leading-5 rounded-full">
+            <div className={`px-3 py-0.5 capitalize text-xs font-medium font-text leading-5 rounded-full ${status === "available" ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'}`}>
               <span>{status}</span>
             </div>
           </div>

@@ -49,13 +49,13 @@ export default function CancelTripDialog({ rentals }: CancelTripDialogProps) {
                 const toastId = toast.loading("Please wait! Redirecting to cancellation page");
 
                 try {
-                        window.location.assign(`${pathname}/cancel`);
+                        window.location.assign(`/trip/${cancelId}/cancel`);
                         toast.dismiss(toastId);
                 } catch {
                         toast.dismiss(toastId);
                         toast.error("Failed to redirect. Please try again.");
                 }
-        }, [pathname, cancelId, isUpcoming]);
+        }, [cancelId, isUpcoming]);
 
         // Only Upcoming rentals can be cancelled — if rental not found or not Upcoming, silently dismiss
         if (!cancelId || !rental) return null
