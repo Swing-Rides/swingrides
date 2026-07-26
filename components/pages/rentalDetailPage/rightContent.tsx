@@ -105,7 +105,7 @@ export const getManageBookingButtons = (
   rentId: string,
   currentParams: string,
   contactNumber: string,
-  vehicleId: string,
+  vehicleId?: string,
 ): ManageBookingButtonConfig[] => {
 
   const checkInParams = new URLSearchParams(currentParams);
@@ -194,7 +194,7 @@ export const getManageBookingButtons = (
         {
           icon: <Repeat className="w-4" />,
           label: "Book Again",
-          href: `/browse-cars/${vehicleId}`,
+          href: `/browse-cars/${vehicleId ?? vehicleId}`,
           className: modifyStyle,
         },
         {
