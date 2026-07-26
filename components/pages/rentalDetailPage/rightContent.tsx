@@ -60,21 +60,19 @@ export default function RightContent({
       )}
 
       {isUpcoming && (
-        <Suspense>
-          <StartVehicleCheckIn rentals={rentalsAsArray} onComplete={handleCheckIn} />
-        </Suspense>
-      )}
+        <>
+          <Suspense>
+            <StartVehicleCheckIn rentals={rentalsAsArray} onComplete={handleCheckIn} />
+          </Suspense>
 
-      {isUpcoming && (
-        <Suspense>
-          <ModifyTripModal rentals={rentalsAsArray} />
-        </Suspense>
-      )}
+          <Suspense>
+            <ModifyTripModal rentals={rentalsAsArray} />
+          </Suspense>
 
-      {isUpcoming && (
-        <Suspense>
-          <CancelTripDialog rentals={rentalsAsArray} />
-        </Suspense>
+          <Suspense>
+            <CancelTripDialog rentals={rentalsAsArray} />
+          </Suspense>
+        </>
       )}
 
       {isActive && (
@@ -84,17 +82,19 @@ export default function RightContent({
       )}
 
       {(isActive || isCompleted) && (
-        <Suspense>
-          <RequestReimbursementModal rentals={rentalsAsArray} />
-        </Suspense>
+          <Suspense>
+            <RequestReimbursementModal rentals={rentalsAsArray} />
+          </Suspense>
       )}
 
       {(isActive || isCompleted) && (
-        <Suspense>
-          <ReportVehicleDamageModal
-            rentals={rentalsAsArray} 
-          />
-        </Suspense>
+        <>
+          <Suspense>
+            <ReportVehicleDamageModal
+              rentals={rentalsAsArray} 
+            />
+          </Suspense>
+        </>
       )}
     </div>
   );
@@ -218,12 +218,6 @@ export const getManageBookingButtons = (
       ];
     case "Cancelled":
       return [
-        {
-          icon: <BanknoteArrowUp className="size-4" />,
-          label: "Request Refund",
-          href: `?${refundParams.toString()}`,
-          className: reportStyle,
-        },
         {
           icon: <PhoneCall className="size-4" />,
           label: "Contact Host",

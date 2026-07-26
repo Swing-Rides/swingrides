@@ -159,7 +159,7 @@ const TripCard = ({ rentals }: TripCardProps) => {
 
   return (
     <div className="p-2.5 md:p-6 flex flex-col md:flex-row gap-6 bg-white rounded-[10px] shadow-[0px_1px_3px_1px_rgba(0,0,0,0.30)] overflow-clip">
-      <div className="aspect-3/2 min-w-30 max-w-60 size-full object-center object-cover overflow-clip rounded-[10px]">
+      <div className="aspect-3/2 min-w-30 md:max-w-60 size-full object-center object-cover overflow-clip rounded-[10px]">
         <Image
           src={rentals.car.imageUrl}
           alt={rentals.car.carName}

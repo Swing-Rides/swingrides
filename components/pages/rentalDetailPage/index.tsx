@@ -13,6 +13,8 @@ import { ManageBookingCardProps } from "./types";
 import { getTripDuration } from "../profilePages/utils";
 import { useGetProfileQuery } from "@/app/store/services/renterApi";
 
+type BreadcrumbProps = { rentId: string }
+
 type TripSummaryCardProps = {
   pickUpDate: string;
   returnDate: string;
@@ -41,12 +43,12 @@ type VechicleCardProps = {
 type DocumentVerificationCardProps = {
   verificationDriverLicenseImageSrc?: string;
   verificationSelfieImageSrc?: string;
-  rentId: string;
+  tripId: string;
 };
 
 type VehicleConditionPhotosCardProps = {
   vehicleConditionImages?: string[];
-  rentId: string;
+  tripId: string;
   currentMileage?: number;
   fuelLevelAtPickup?: string;
 };
@@ -76,7 +78,9 @@ export default function RentalDetailPage({
   vehicleConditionImages,
   currentMileage,
   fuelLevelAtPickup,
-}: PageTitleSectionProps &
+  tripId
+}: BreadcrumbProps & 
+  PageTitleSectionProps &
   TripSummaryCardProps &
   VechicleCardProps &
   ManageBookingCardProps &
@@ -129,10 +133,10 @@ export default function RentalDetailPage({
               resolvedVerificationDriverLicenseImageSrc
             }
             verificationSelfieImageSrc={resolvedVerificationSelfieImageSrc}
-            rentId={rentId}
             vehicleConditionImages={resolvedVehicleConditionImages}
             currentMileage={resolvedCurrentMileage}
             fuelLevelAtPickup={resolvedFuelLevelAtPickup}
+            tripId={tripId}
           />
           <RightContent rentals={rentals} />
         </div>
@@ -208,7 +212,7 @@ const LeftContent = memo(
     reviews,
     verificationDriverLicenseImageSrc,
     verificationSelfieImageSrc,
-    rentId,
+    tripId,
     vehicleConditionImages,
     currentMileage,
     fuelLevelAtPickup,
@@ -244,11 +248,11 @@ const LeftContent = memo(
               verificationDriverLicenseImageSrc
             }
             verificationSelfieImageSrc={verificationSelfieImageSrc}
-            rentId={rentId}
+            tripId={tripId}
           />
           <VehicleConditionPhotosCard
             vehicleConditionImages={vehicleConditionImages}
-            rentId={rentId}
+            tripId={tripId}
             currentMileage={currentMileage}
             fuelLevelAtPickup={fuelLevelAtPickup}
           />
@@ -457,7 +461,7 @@ const DocumentVerificationCard = memo(
   ({
     verificationDriverLicenseImageSrc,
     verificationSelfieImageSrc,
-    rentId,
+    tripId,
   }: DocumentVerificationCardProps) => {
     const content: {
       key: number;
@@ -521,8 +525,8 @@ const DocumentVerificationCard = memo(
                   </Link>
                 ) : (
                   <Link
-                    href={`?checkIn=${rentId}`}
-                    className="text-red-700 text-sm font-medium font-text leading-5"
+                    href={`?checkIn=${tripId}`}
+                    className="text-red-500 text-sm font-medium font-text leading-5"
                   >
                     Start Check-In
                   </Link>
@@ -540,7 +544,7 @@ DocumentVerificationCard.displayName = "DocumentVerificationCard";
 const VehicleConditionPhotosCard = memo(
   ({
     vehicleConditionImages,
-    rentId,
+    tripId,
     currentMileage,
     fuelLevelAtPickup,
   }: VehicleConditionPhotosCardProps) => {
@@ -595,7 +599,7 @@ const VehicleConditionPhotosCard = memo(
                 </p>
               </div>
               <Link
-                href={`?checkIn=${rentId}`}
+                href={`?checkIn=${tripId}`}
                 className="text-red-700 text-sm font-medium font-text leading-5"
               >
                 Start Check-In

@@ -70,6 +70,7 @@ export default function SingleTripPage() {
         vehicleConditionImages={checkIn?.vehicleConditionPhotoUrls ?? []}
         currentMileage={checkIn?.mileage}
         fuelLevelAtPickup={checkIn?.fuelLevel}
+        tripId={rentalDetails.id}
       />
     </div>
   );
