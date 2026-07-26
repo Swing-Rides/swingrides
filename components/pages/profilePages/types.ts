@@ -6,6 +6,7 @@ export type RentalRate = {
 
 export type Rentals = {
   id: string;
+  vehicleId: string;
   rentId: string;
   status: TripStatus;
   hostRatingForGuest?: string | number;
