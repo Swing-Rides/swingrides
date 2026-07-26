@@ -300,7 +300,7 @@ export default function CheckoutPage() {
 
     const subtotal = draft.subtotal ?? pricingSummary?.subtotal ?? 0;
     const tax = draft.tax ?? pricingSummary?.tax ?? 0;
-    const taxRate = draft.taxRate ?? pricingSummary?.taxRate ?? 0.08;
+    const taxRate = draft.taxRate ?? pricingSummary?.taxRate ?? 0.00;
     const totalAmount = draft.totalAmount ?? pricingSummary?.totalAmount ?? 0;
 
     const totalInsuranceFee = computeInsuranceFee(

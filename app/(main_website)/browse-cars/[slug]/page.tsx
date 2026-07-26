@@ -76,7 +76,7 @@ export default function CarPage({
         weekly: data?.data.price?.weekly,
         monthly: data?.data.price?.monthly,
       }}
-      defaultPickupLocationStreet={data.data.streetAdress}
+      defaultPickupLocationStreet={data.data.location}
       defaultPickupLocationCity={data.data.city}
       defaultPickupLocationState={data.data.state}
       defaultPickupLocationZipCode={data.data.zipCode}

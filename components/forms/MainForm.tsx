@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, use, Suspense, useMemo } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, Control, UseFormRegister, FieldValues, Path, PathValue, RegisterOptions, FieldErrors } from 'react-hook-form'
 import { format } from 'date-fns'
 import { CalendarIcon, LockIcon, EyeIcon, EyeOffIcon, UploadIcon, ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -20,13 +20,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-        Popover,
-        PopoverContent,
-        PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { FormFieldConfig, MainFormProps } from "./types";
+import Image from 'next/image';
 
 export default function MainForm({
   title,
@@ -139,16 +140,16 @@ export default function MainForm({
 
 // ─── Field router ─────────────────────────────────────────────────────────────
 
-type FormFieldProps = {
+export type FormFieldProps<T extends FieldValues = FieldValues> = {
   field: FormFieldConfig;
-  register: ReturnType<typeof useForm>["register"];
-  control: ReturnType<typeof useForm>["control"];
-  getValues: ReturnType<typeof useForm>["getValues"];
-  errors: ReturnType<typeof useForm>["formState"]["errors"];
+  register: UseFormRegister<T>;
+  control: Control<T>;
+  getValues: () => T;
+  errors: FieldErrors<T>;
 };
 
-export const FormField = ({ field, register, control, errors }: FormFieldProps) => {
-  const error = errors[field.name]?.message as string | undefined;
+export const FormField = <T extends FieldValues = FieldValues>({ field, register, control, errors }: FormFieldProps<T>) => {
+  const error = errors[field.name as Path<T>]?.message as string | undefined;
 
   const wrapper = (children: React.ReactNode) => (
     <div className={cn("flex flex-col gap-1.5 flex-1", field.className)}>
@@ -178,51 +179,51 @@ export const FormField = ({ field, register, control, errors }: FormFieldProps) 
     </div>
   );
 
-        switch (field.type) {
-                case 'password':
-                        return wrapper(<PasswordInput field={field} register={register} error={error} />)
-                case 'date':
-                        return wrapper(<DateInput field={field} control={control} error={error} />)
-                case 'datetime':
-                        return wrapper(<DateTimeInput field={field} control={control} error={error} />)
-                case 'select':
-                        return wrapper(<SelectInput field={field} control={control} error={error} />)
-                case 'textarea':
-                        return wrapper(<TextareaInput field={field} register={register} error={error} />)
-                case 'file':
-                case 'image':
-                        return wrapper(<FileInput field={field} register={register} error={error} />)
-                case 'checkbox':
-                        return wrapper(<CheckboxInput field={field} control={control} error={error} />)
-                case 'number-dollar':
-                        return wrapper(<DollarInput field={field} register={register} error={error} />)
-                default:
-                        return wrapper(<TextInput field={field} register={register} error={error} />)
-        }
+  switch (field.type) {
+    case 'password':
+      return wrapper(<PasswordInput field={field} register={register} error={error} />)
+    case 'date':
+      return wrapper(<DateInput field={field} control={control} error={error} />)
+    case 'datetime':
+      return wrapper(<DateTimeInput field={field} control={control} error={error} />)
+    case 'select':
+      return wrapper(<SelectInput field={field} control={control} error={error} />)
+    case 'textarea':
+      return wrapper(<TextareaInput field={field} register={register} error={error} />)
+    case 'file':
+    case 'image':
+      return wrapper(<FileInput field={field} register={register} error={error} />)
+    case 'checkbox':
+      return wrapper(<CheckboxInput field={field} control={control} error={error} />)
+    case 'number-dollar':
+      return wrapper(<DollarInput field={field} register={register} error={error} />)
+    default:
+      return wrapper(<TextInput field={field} register={register} error={error} />)
+  }
 }
 
 // ─── Input variants ───────────────────────────────────────────────────────────
 
-type InputProps = {
+export type InputProps<T extends FieldValues = FieldValues> = {
   field: FormFieldConfig;
-  register: ReturnType<typeof useForm>["register"];
+  register: UseFormRegister<T>;
   error?: string;
 };
 
-type ControllerProps = {
+export type ControllerProps<T extends FieldValues = FieldValues> = {
   field: FormFieldConfig;
-  control: ReturnType<typeof useForm>["control"];
+  control: Control<T>;
   error?: string;
 };
 
-const inputClass = (error?: string) =>
+export const inputClass = (error?: string) =>
   cn(
     "border-zinc-400 focus-visible:ring-blue-700 font-text text-sm text-zinc-700 rounded-xs placeholder:text-gray-500",
     error && "border-red-500 focus-visible:ring-red-700",
   );
 
 // Text / email / tel / number
-export const TextInput = ({ field, register, error }: InputProps) => {
+export const TextInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => {
   const hasIcon = !!field.icon;
 
   return (
@@ -243,14 +244,14 @@ export const TextInput = ({ field, register, error }: InputProps) => {
         step={field.step}
         defaultValue={field.defaultValue as string}
         className={cn(inputClass(error), hasIcon && "pl-9")}
-        {...register(field.name, field.validation)}
+        {...register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>)}
       />
     </div>
   );
 };
 
 // Password — padlock leading + eye trailing
-const PasswordInput = ({ field, register, error }: InputProps) => {
+const PasswordInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => {
   const [show, setShow] = useState(false);
 
   return (
@@ -265,7 +266,7 @@ const PasswordInput = ({ field, register, error }: InputProps) => {
         autoComplete={field.autoComplete ?? "current-password"}
         disabled={field.disabled}
         className={cn(inputClass(error), "pl-9 pr-10")}
-        {...register(field.name, field.validation)}
+        {...register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>)}
       />
       <button
         type="button"
@@ -284,93 +285,101 @@ const PasswordInput = ({ field, register, error }: InputProps) => {
 };
 
 // Textarea
-const TextareaInput = ({ field, register, error }: InputProps) => {
-        return (
-                <Textarea
-                        id={field.name}
-                        placeholder={field.placeholder}
-                        disabled={field.disabled}
-                        rows={field.rows ?? 8}
-                        style={field.height ? { height: `${field.height}px` } : undefined}
-                        className={cn(inputClass(error), 'resize-none')}
-                        {...register(field.name, field.validation)}
-                />
-        )
+export const TextareaInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => {
+  return (
+    <Textarea
+      id={field.name}
+      placeholder={field.placeholder}
+      disabled={field.disabled}
+      rows={field.rows ?? 8}
+      style={field.height ? { height: `${field.height}px` } : undefined}
+      className={cn(inputClass(error), 'resize-none')}
+      {...register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>)}
+    />
+  )
 }
 
 // Select
-const AsyncSelectInput = ({ field, control, error }: ControllerProps) => {
-        // useMemo keeps the promise stable across re-renders as long as
-        // field.loadOptions keeps the same reference — no effect, no setState
-        const optionsPromise = useMemo(() => field.loadOptions!(), [field.loadOptions])
-        const options = use(optionsPromise)
+export const AsyncSelectInput = <T extends FieldValues = FieldValues>({ field, control, error }: ControllerProps<T>) => {
+  // useMemo keeps the promise stable across re-renders as long as
+  // field.loadOptions keeps the same reference — no effect, no setState
+  const optionsPromise = useMemo(() => field.loadOptions!(), [field.loadOptions])
+  const options = use(optionsPromise)
 
-        return (
-                <Controller
-                        name={field.name}
-                        control={control}
-                        defaultValue={field.defaultValue ?? ''}
-                        rules={field.validation}
-                        render={({ field: ctrl }) => (
-                                <Select onValueChange={ctrl.onChange} value={ctrl.value} disabled={field.disabled}>
-                                        <SelectTrigger id={field.name} className={cn(inputClass(error), 'w-full')}>
-                                                <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                                {options.map((opt) => (
-                                                        <SelectItem key={opt.value} value={opt.value} className='font-text text-sm'>
-                                                                {opt.label}
-                                                        </SelectItem>
-                                                ))}
-                                        </SelectContent>
-                                </Select>
-                        )}
-                />
-        )
+  return (
+    <Controller
+      name={field.name as Path<T>}
+      control={control}
+      defaultValue={(field.defaultValue ?? '') as PathValue<T, Path<T>>}
+      rules={field.validation as RegisterOptions<T, Path<T>>}
+      render={({ field: ctrl }) => (
+        <Select onValueChange={ctrl.onChange} value={ctrl.value} disabled={field.disabled}>
+          <SelectTrigger id={field.name} className={cn(inputClass(error), 'w-full')}>
+            <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value} className='font-text text-sm'>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    />
+  )
 }
 
-const SelectInput = ({ field, control, error }: ControllerProps) => {
+export const SelectInput = <T extends FieldValues = FieldValues>({ field, control, error }: ControllerProps<T>) => {
 
-        if (field.loadOptions) {
-                return (
-                        <Suspense fallback={<Skeleton className='h-10 w-full rounded-md' />}>
-                                <AsyncSelectInput field={field} control={control} error={error} />
-                        </Suspense>
-                )
-        }
+  if (field.loadOptions) {
+    return (
+      <Suspense fallback={<Skeleton className='h-10 w-full rounded-md' />}>
+        <AsyncSelectInput field={field} control={control} error={error} />
+      </Suspense>
+    )
+  }
 
-        return (
-                <Controller
-                        name={field.name}
-                        control={control}
-                        defaultValue={field.defaultValue ?? ''}
-                        rules={field.validation}
-                        render={({ field: ctrl }) => (
-                                <Select onValueChange={ctrl.onChange} value={ctrl.value} disabled={field.disabled}>
-                                        <SelectTrigger id={field.name} className={cn(inputClass(error), 'w-full')}>
-                                                <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                                {(field.options ?? []).map((opt) => (
-                                                        <SelectItem key={opt.value} value={opt.value} className='font-text text-sm'>
-                                                                {opt.label}
-                                                        </SelectItem>
-                                                ))}
-                                        </SelectContent>
-                                </Select>
-                        )}
-                />
-        )
+  return (
+    <Controller
+      name={field.name as Path<T>}
+      control={control}
+      defaultValue={(field.defaultValue ?? '') as PathValue<T, Path<T>>}
+      rules={field.validation as RegisterOptions<T, Path<T>>}
+      render={({ field: ctrl }) => (
+        <Select onValueChange={ctrl.onChange} value={ctrl.value} disabled={field.disabled}>
+          <SelectTrigger id={field.name} className={cn(inputClass(error), 'w-full')}>
+            <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
+          </SelectTrigger>
+          <SelectContent>
+            {(field.options ?? []).map((opt) => (
+              <SelectItem key={opt.value} value={opt.value} className='font-text text-sm'>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    />
+  )
 }
 
 // Date picker
-const DateInput = ({ field, control, error }: ControllerProps) => {
+export const DateInput = <T extends FieldValues = FieldValues>({ field, control, error }: ControllerProps<T>) => {
+  const minDate = field.minDate ? new Date(field.minDate) : undefined;
+
+  const isDateDisabled = (date: Date) => {
+    if (field.disabled) return true;
+    if (minDate) return date < new Date(new Date(minDate).setHours(0, 0, 0, 0));
+    return false;
+  };
+
   return (
     <Controller
-      name={field.name}
+      name={field.name as Path<T>}
       control={control}
-      defaultValue={field.defaultValue ?? ""}
-      rules={field.validation}
+      defaultValue={(field.defaultValue ?? "") as PathValue<T, Path<T>>}
+      rules={field.validation as RegisterOptions<T, Path<T>>}
       render={({ field: ctrl }) => (
         <Popover>
           <PopoverTrigger asChild>
@@ -394,8 +403,8 @@ const DateInput = ({ field, control, error }: ControllerProps) => {
             <Calendar
               mode="single"
               selected={ctrl.value ? new Date(ctrl.value) : undefined}
-              onSelect={(date) => ctrl.onChange(date?.toISOString() ?? "")}
-              disabled={field.disabled}
+              onSelect={(date: Date | undefined) => ctrl.onChange(date?.toISOString() ?? "")}
+              disabled={isDateDisabled}
               initialFocus
             />
           </PopoverContent>
@@ -406,13 +415,21 @@ const DateInput = ({ field, control, error }: ControllerProps) => {
 };
 
 // DateTime picker
-const DateTimeInput = ({ field, control, error }: ControllerProps) => {
+export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, control, error }: ControllerProps<T>) => {
+  const minDate = field.minDate ? new Date(field.minDate) : undefined;
+
+  const isDateDisabled = (date: Date) => {
+    if (field.disabled) return true;
+    if (minDate) return date < new Date(new Date(minDate).setHours(0, 0, 0, 0));
+    return false;
+  };
+
   return (
     <Controller
-      name={field.name}
+      name={field.name as Path<T>}
       control={control}
-      defaultValue={field.defaultValue ?? ""}
-      rules={field.validation}
+      defaultValue={(field.defaultValue ?? "") as PathValue<T, Path<T>>}
+      rules={field.validation as RegisterOptions<T, Path<T>>}
       render={({ field: ctrl }) => {
         const parsed = ctrl.value ? new Date(ctrl.value) : undefined;
 
@@ -458,7 +475,7 @@ const DateTimeInput = ({ field, control, error }: ControllerProps) => {
                 mode="single"
                 selected={parsed}
                 onSelect={handleDateChange}
-                disabled={field.disabled}
+                disabled={isDateDisabled}
                 initialFocus
               />
               <div className="border-t border-[#E5E7EB] p-3 flex flex-col gap-1.5">
@@ -481,11 +498,11 @@ const DateTimeInput = ({ field, control, error }: ControllerProps) => {
 };
 
 // File / Image upload
-const FileInput = ({ field, register, error }: InputProps) => {
+export const FileInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => {
   const [files, setFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const { ref, ...rest } = register(field.name, field.validation);
+  const { ref, ...rest } = register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>);
 
   const defaultIcon =
     field.type === "image" ? (
@@ -602,7 +619,7 @@ const FileInput = ({ field, register, error }: InputProps) => {
                 className="relative rounded-lg border border-[#E5E7EB] overflow-hidden bg-white"
               >
                 {isImage && field.showPreview !== false ? (
-                  <img
+                  <Image
                     src={preview!}
                     alt={file.name}
                     className="w-full aspect-square object-cover"
@@ -640,60 +657,73 @@ const FileInput = ({ field, register, error }: InputProps) => {
 };
 
 // Checkbox
-const CheckboxInput = ({ field, control, error }: ControllerProps) => {
-        return (
-                <Controller
-                        name={field.name}
-                        control={control}
-                        defaultValue={false}
-                        rules={field.validation}
-                        render={({ field: ctrl }) => (
-                                <div className='flex items-start gap-2'>
-                                        <Checkbox
-                                                id={field.name}
-                                                disabled={field.disabled}
-                                                checked={!!ctrl.value}
-                                                onCheckedChange={ctrl.onChange}
-                                                className={cn(
-                                                        'mt-0.5 border-[#E5E7EB] data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700',
-                                                        error && 'border-[#EF4444]'
-                                                )}
-                                        />
-                                        {field.label && (
-                                                <label
-                                                        htmlFor={field.name}
-                                                        className='text-[#6B7280] text-sm font-normal font-text leading-5 cursor-pointer'
-                                                >
-                                                        {field.label}
-                                                </label>
-                                        )}
-                                </div>
-                        )}
-                />
-        )
+export type CheckboxInputProps<T extends FieldValues = FieldValues> = ControllerProps<T> & {
+  /** Override the checked state with a derived value instead of the raw field value. */
+  checked?: boolean
+  /** Override the change handler — e.g. to guard against re-checking, or to sync a related field. */
+  onCheckedChange?: (checked: boolean) => void
+}
+
+export const CheckboxInput = <T extends FieldValues = FieldValues>({ field, control, error, checked, onCheckedChange }: CheckboxInputProps<T>) => {
+  return (
+    <Controller
+      name={field.name as Path<T>}
+      control={control}
+      defaultValue={(field.defaultValue ?? false) as PathValue<T, Path<T>>}
+      rules={field.validation as RegisterOptions<T, Path<T>>}
+      render={({ field: ctrl }) => (
+        <div className={cn('flex items-start gap-2', field.className)}>
+          <Checkbox
+            id={field.name}
+            disabled={field.disabled}
+            checked={checked ?? !!ctrl.value}
+            onCheckedChange={(value: boolean | "indeterminate") =>
+              onCheckedChange ? onCheckedChange(!!value) : ctrl.onChange(value)
+            }
+            className={cn(
+              'mt-0.5 border-[#E5E7EB] data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700',
+              error && 'border-[#EF4444]',
+              field.disabled && 'opacity-50 cursor-not-allowed'
+            )}
+          />
+          {field.label && (
+            <label
+              htmlFor={field.name}
+              className={cn(
+                'text-sm font-normal font-text leading-5 cursor-pointer select-none',
+                field.disabled ? 'text-[#9CA3AF] cursor-not-allowed' : 'text-[#6B7280]'
+              )}
+            >
+              {field.label}
+            </label>
+          )}
+        </div>
+      )}
+    />
+  )
 }
 
 // Money/Price Input
-const DollarInput = ({ field, register, error }: InputProps) => (
-        <div className='relative flex items-center'>
-                <span className='absolute left-3 text-[#6B7280] text-sm font-medium pointer-events-none select-none'>
-                        $
-                </span>
-                <Input
-                        id={field.name}
-                        type='number'
-                        placeholder={field.placeholder}
-                        disabled={field.disabled}
-                        min={field.min}
-                        max={field.max}
-                        step={field.step}
-                        className={cn(inputClass(error), 'pl-7')}
-                        {...register(field.name, field.validation)}
-                />
-        </div>
+export const DollarInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => (
+  <div className='relative flex items-center'>
+    <span className='absolute left-3 text-[#6B7280] text-sm font-medium pointer-events-none select-none'>
+      $
+    </span>
+    <Input
+      id={field.name}
+      type='number'
+      placeholder={field.placeholder}
+      disabled={field.disabled}
+      min={field.min}
+      max={field.max}
+      step={field.step}
+      className={cn(inputClass(error), 'pl-7')}
+      {...register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>)}
+    />
+  </div>
 )
 
-const ErrorIcon = () => (
+export const ErrorIcon = () => (
   <svg
     className="size-3"
     width="12"
@@ -714,7 +744,7 @@ const ErrorIcon = () => (
   </svg>
 );
 
-const LoadingSpinner = () => (
+export const LoadingSpinner = () => (
   <svg
     className="animate-spin w-4 h-4"
     viewBox="0 0 24 24"

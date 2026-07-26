@@ -11,7 +11,7 @@ export type FieldType =
         | 'textarea'
         | 'select'
         | 'date'
-        | 'datetime' 
+        | 'datetime'
         | 'file'
         | 'image'
         | 'checkbox'
@@ -24,7 +24,7 @@ export type SelectOption = {
 export type FormFieldConfig = {
         name: string
         type: FieldType
-        label?: string
+        label?: ReactNode           // string, or JSX (e.g. a checkbox label with an inline link)
         placeholder?: string
         description?: string        // helper text below the field
         icon?: ReactNode            // optional leading icon for text inputs
@@ -34,10 +34,11 @@ export type FormFieldConfig = {
         options?: SelectOption[]    // for select fields
         loadOptions?: () => Promise<SelectOption[]>     // ← add this for async selects
         rows?: number               // for textarea
-        height?: number             
+        height?: number
         min?: number | string
         max?: number | string
         step?: number
+        minDate?: Date | string     // for date/datetime — disables earlier dates
         autoComplete?: string
         validation?: RegisterOptions
         defaultValue?: string | number | boolean
