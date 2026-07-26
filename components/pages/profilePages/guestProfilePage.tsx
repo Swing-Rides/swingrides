@@ -9,7 +9,7 @@ import { User, AccountDetailProps } from "./types";
 import { getInitials, getTotalTrips, getAverageRating } from "./utils";
 import { FieldSeparator } from "@/components/ui/field";
 import ContentLoading from "@/components/loading/contentLoading";
-import { LogOut } from "lucide-react";
+import { CircleAlert, LogOut } from "lucide-react";
 import { useRenterLogoutMutation } from "@/app/store/services/renterApi";
 import { renterApi } from "@/app/store/services/renterApi";
 import { useRouter } from "next/navigation";
@@ -121,21 +121,21 @@ const UserCard = ({
         </div>
         <div>
           <button
-            className="flex gap-1.5 items-center opacity-70 pb-px border-b border-b-red-700 cursor-pointer hover:opacity-100 transition-opacity duration-300"
+            className="flex gap-1.5 items-center opacity-70 pb-px border-b border-b-red-500 cursor-pointer hover:opacity-100 transition-opacity duration-300"
             onClick={handleSignOut}
             disabled={isLoading}
           >
-            <span className="text-red-700 text-xs font-normal font-text">
+            <span className="text-red-500 text-xs font-normal font-text">
               {isLoading ? "Signing out..." : "Signout"}
             </span>
-            <LogOut className="size-3 text-red-700" />
+            <LogOut className="size-3 text-red-500" />
           </button>
         </div>
       </div>
       <FieldSeparator />
       <div className="grid grid-cols-3 gap-4">
         <div className="px-3.5 flex flex-col justify-start items-center gap-1 text-center">
-          <h3 className="text-center text-[#1A56DB] text-xl font-medium font-text">
+          <h3 className="text-center text-blue-700 text-xl font-medium font-text">
             {totalTrip}
           </h3>
           <span className="text-center text-[#6B7280] text-xs font-normal uppercase">
@@ -144,7 +144,7 @@ const UserCard = ({
         </div>
 
         <div className="px-3.5 flex flex-col justify-start items-center gap-1 text-center">
-          <h3 className="text-center text-[#1A56DB] text-xl font-medium font-text">
+          <h3 className="text-center text-blue-700 text-xl font-medium font-text">
             {averageRating}
           </h3>
           <span className="text-center text-[#6B7280] text-xs font-normal uppercase">
@@ -153,7 +153,7 @@ const UserCard = ({
         </div>
 
         <div className="px-3.5 flex flex-col justify-start items-center gap-1 text-center">
-          <h3 className="text-center text-[#1A56DB] text-xl font-medium font-text">
+          <h3 className="text-center text-blue-700 text-xl font-medium font-text">
             {totalSpentByUser}
           </h3>
           <span className="text-center text-[#6B7280] text-xs font-normal uppercase">
@@ -241,7 +241,7 @@ const DefaultUserAvater = ({ fullName }: { fullName?: string }) => {
   const initials = getInitials(fullName);
 
   return (
-    <div className="flex size-20 items-center justify-center rounded-full bg-[#1A56DB] text-white text-3xl font-bold font-text leading-10 uppercase overflow-clip">
+    <div className="flex size-20 items-center justify-center rounded-full bg-blue-700 text-white text-3xl font-bold font-text leading-10 uppercase overflow-clip">
       {initials || "?"}
     </div>
   );
@@ -249,57 +249,16 @@ const DefaultUserAvater = ({ fullName }: { fullName?: string }) => {
 
 const WarningCard = () => {
   return (
-    <div className="bg-[#FEF3C7] p-2.5 md:p-3 rounded-md flex gap-2 items-start justify-between">
+    <div className="bg-amber-100 p-2.5 md:p-3 rounded-md flex gap-2 items-start justify-between">
       <div className="pt-px">
-        <WarningIcon />
+        <CircleAlert className="size-4 bg-amber-500"/>
       </div>
       <div className="flex">
-        <span className="flex text-[#6B7280] text-xs font-normal font-text leading-4">
+        <span className="flex text-zinc-600 text-xs font-normal font-text leading-4">
           Documents are not saved for security reasons. You will be asked to
           re-upload your license for each new booking.
         </span>
       </div>
     </div>
-  );
-};
-
-const WarningIcon = () => {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <g clipPath="url(#clip0_272_1066)">
-        <path
-          d="M7.99642 14.6618C11.6771 14.6618 14.6608 11.678 14.6608 7.9974C14.6608 4.31676 11.6771 1.33301 7.99642 1.33301C4.31578 1.33301 1.33203 4.31676 1.33203 7.9974C1.33203 11.678 4.31578 14.6618 7.99642 14.6618Z"
-          stroke="#F59E0B"
-          strokeWidth="1.33288"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M7.99805 10.6628V7.99707"
-          stroke="#F59E0B"
-          strokeWidth="1.33288"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M7.99805 5.33154H8.00471"
-          stroke="#F59E0B"
-          strokeWidth="1.33288"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </g>
-      <defs>
-        <clipPath id="clip0_272_1066">
-          <rect width="15.9945" height="15.9945" fill="white" />
-        </clipPath>
-      </defs>
-    </svg>
   );
 };
