@@ -13,6 +13,7 @@ import {
         AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Rentals } from '../pages/profilePages/types'
+import { toast } from 'sonner'
 
 type CancelTripDialogProps = {
         rentals?: Rentals[]
@@ -26,7 +27,9 @@ export default function CancelTripDialog({ rentals }: CancelTripDialogProps) {
         const pathname = usePathname()
 
         const cancelId = searchParams.get('cancel')
+
         const rental = rentals?.find(r => r.id === cancelId && r.status === 'Upcoming')
+        const isUpcoming = rental?.status === "Upcoming"
 
         const handleClose = useCallback(() => {
                 const params = new URLSearchParams(searchParams.toString())
@@ -35,10 +38,24 @@ export default function CancelTripDialog({ rentals }: CancelTripDialogProps) {
                 router.push(query ? `${pathname}?${query}` : pathname)
         }, [searchParams, router, pathname])
 
-        const handleConfirm = useCallback(() => {
-                if (!cancelId) return
-                router.push(`/trip/${cancelId}/cancel`)
-        }, [cancelId, router])
+        const handleConfirm = useCallback(async () => {
+                if (!isUpcoming) {
+                        toast.error("This booking cannot be cancelled");
+                        return;
+                }
+
+                if (!cancelId) return;
+
+                const toastId = toast.loading("Please wait! Redirecting to cancellation page");
+
+                try {
+                        window.location.assign(`${pathname}/cancel`);
+                        toast.dismiss(toastId);
+                } catch {
+                        toast.dismiss(toastId);
+                        toast.error("Failed to redirect. Please try again.");
+                }
+        }, [pathname, cancelId, isUpcoming]);
 
         // Only Upcoming rentals can be cancelled — if rental not found or not Upcoming, silently dismiss
         if (!cancelId || !rental) return null
