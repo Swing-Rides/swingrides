@@ -14,7 +14,7 @@ const PriBtn = ({ btn }: BtnProps) => {
                         title={btn.label}
                 >
                         <button 
-                                className="py-2 px-6 rounded-xs bg-[#1A56DB] text-white font-semibold capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
+                                className="text-nowrap py-2 px-6 rounded-xs text-xs bg-blue-700 text-white font-semibold capitalize hover:bg-blue-950 transition-colors duration-300 cursor-pointer"
                         >
                                 {btn.label}
                         </button>
@@ -29,7 +29,7 @@ const SecBtn = ({ btn }: BtnProps) => {
                         title={btn.label}
                 >
                         <button 
-                                className="py-2 px-6 rounded-xs bg-white text-neutral-950 font-semibold capitalize hover:bg-white/80 transition-colors duration-300 cursor-pointer"
+                                className="text-nowrap py-2 px-6 rounded-xs text-xs bg-white text-neutral-950 font-semibold capitalize hover:bg-white/80 transition-colors duration-300 cursor-pointer"
                         >
                                 {btn.label}
                         </button>
@@ -44,7 +44,7 @@ const TetBtn = ({ btn }: BtnProps) => {
                         title={btn.label}
                 >
                         <button 
-                                className="py-2 px-6 rounded-xs bg-transparent text-white border border-solid border-white font-semibold capitalize hover:bg-black/80 transition-colors duration-300 cursor-pointer"
+                                className="text-nowrap py-2 px-6 rounded-xs text-xs bg-transparent text-white border border-solid border-white font-semibold capitalize hover:bg-black/80 transition-colors duration-300 cursor-pointer"
                         >
                                 {btn.label}
                         </button>
