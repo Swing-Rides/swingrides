@@ -29,10 +29,6 @@ export default function RightContent({
 
   const rentalsAsArray = rental ? [rental] : undefined;
 
-  // const handleCancel = useCallback((updatedRental: Rentals) => {
-  //   setRental(updatedRental);
-  // }, []);
-
   const handleComplete = useCallback((updatedRental: Rentals) => {
     setRental(updatedRental);
   }, []);
@@ -64,21 +60,19 @@ export default function RightContent({
       )}
 
       {isUpcoming && (
-        <Suspense>
-          <StartVehicleCheckIn rentals={rentalsAsArray} onComplete={handleCheckIn} />
-        </Suspense>
-      )}
+        <>
+          <Suspense>
+            <StartVehicleCheckIn rentals={rentalsAsArray} onComplete={handleCheckIn} />
+          </Suspense>
 
-      {isUpcoming && (
-        <Suspense>
-          <ModifyTripModal rentals={rentalsAsArray} />
-        </Suspense>
-      )}
+          <Suspense>
+            <ModifyTripModal rentals={rentalsAsArray} />
+          </Suspense>
 
-      {isUpcoming && (
-        <Suspense>
-          <CancelTripDialog rentals={rentalsAsArray} />
-        </Suspense>
+          <Suspense>
+            <CancelTripDialog rentals={rentalsAsArray} />
+          </Suspense>
+        </>
       )}
 
       {isActive && (
@@ -88,17 +82,19 @@ export default function RightContent({
       )}
 
       {(isActive || isCompleted) && (
-        <Suspense>
-          <RequestReimbursementModal rentals={rentalsAsArray} />
-        </Suspense>
+          <Suspense>
+            <RequestReimbursementModal rentals={rentalsAsArray} />
+          </Suspense>
       )}
 
       {(isActive || isCompleted) && (
-        <Suspense>
-          <ReportVehicleDamageModal
-            rentals={rentalsAsArray} 
-          />
-        </Suspense>
+        <>
+          <Suspense>
+            <ReportVehicleDamageModal
+              rentals={rentalsAsArray} 
+            />
+          </Suspense>
+        </>
       )}
     </div>
   );
@@ -109,7 +105,7 @@ export const getManageBookingButtons = (
   rentId: string,
   currentParams: string,
   contactNumber: string,
-  carId: string,
+  vehicleId?: string,
 ): ManageBookingButtonConfig[] => {
 
   const checkInParams = new URLSearchParams(currentParams);
@@ -198,7 +194,7 @@ export const getManageBookingButtons = (
         {
           icon: <Repeat className="w-4" />,
           label: "Book Again",
-          href: `/browse-cars/${carId}`,
+          href: `/browse-cars/${vehicleId ?? vehicleId}`,
           className: modifyStyle,
         },
         {
@@ -223,12 +219,6 @@ export const getManageBookingButtons = (
     case "Cancelled":
       return [
         {
-          icon: <BanknoteArrowUp className="size-4" />,
-          label: "Request Refund",
-          href: `?${refundParams.toString()}`,
-          className: reportStyle,
-        },
-        {
           icon: <PhoneCall className="size-4" />,
           label: "Contact Host",
           href: `tel:${contactNumber}`,
@@ -250,7 +240,7 @@ const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
     rentals.id,
     searchParams.toString(),
     rentals.host.contactNumber,
-    rentals.car.carId
+    rentals.vehicleId
   );
 
   return (

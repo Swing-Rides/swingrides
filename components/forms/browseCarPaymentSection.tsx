@@ -1,21 +1,10 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo } from "react";
 import Link from "next/link";
-import { format, addDays, differenceInCalendarDays } from "date-fns";
-import { Shield, CalendarIcon, Clock, AlertTriangle, Loader2 } from "lucide-react";
-import { useForm, Controller, useWatch } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { addDays, differenceInCalendarDays, format } from "date-fns";
+import { Shield, AlertTriangle } from "lucide-react";
+import { useForm, useWatch } from "react-hook-form";
 import {
   type PriceConfig,
   computePricing,
@@ -24,6 +13,15 @@ import {
   formatCurrency,
   pluralize,
 } from "@/lib/pricing";
+import {
+  TextInput,
+  DateInput,
+  DateTimeInput,
+  CheckboxInput,
+  LoadingSpinner,
+} from "./MainForm";
+import { validators } from "@/components/forms/form.validators";
+import { FormRow, FieldError, DEFAULT_TAX_RATE } from "../helpers/browseCarPaymentSection.helpers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,10 +58,14 @@ type PaymentSectionProps = {
   zipCode?: string;
   vehicleId?: string;
   onSubmit: (values: PaymentFormValues) => void | Promise<void>;
+  /** Host's own insurance details — used in place of user-entered values
+   * whenever the user opts to use the host's coverage. */
+  hostInsuranceProvider?: string;
+  hostInsurancePolicyNumber?: string;
+  hostInsuranceExpiry?: string | Date;
 };
 
 const THIRTY_DAYS_FROM_NOW = addDays(new Date(), 30);
-const DEFAULT_TAX_RATE = 0.08;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -76,7 +78,11 @@ export const PaymentSection = memo(
     state,
     zipCode,
     onSubmit,
+    hostInsuranceProvider,
+    hostInsurancePolicyNumber,
+    hostInsuranceExpiry,
   }: PaymentSectionProps) => {
+    
     const today = useMemo(() => {
       const d = new Date();
       d.setHours(0, 0, 0, 0);
@@ -139,10 +145,7 @@ export const PaymentSection = memo(
     const days =
       pickupDate && returnDate
         ? Math.max(
-          differenceInCalendarDays(
-            new Date(returnDate),
-            new Date(pickupDate),
-          ),
+          differenceInCalendarDays(new Date(returnDate), new Date(pickupDate)),
           0,
         )
         : 0;
@@ -173,9 +176,29 @@ export const PaymentSection = memo(
         ? computeTotal(pricing.total, insuranceFee, DEFAULT_TAX_RATE)
         : computeTotal(0, 0, DEFAULT_TAX_RATE);
 
+      // When the user is using the host's coverage, the host's insurance
+      // details are the source of truth — send those instead of whatever
+      // (if anything) is sitting in the form fields.
+      const insuranceValues = effectiveHostCoverage
+        ? {
+          insuranceProvider: hostInsuranceProvider ?? "",
+          policyNumber: hostInsurancePolicyNumber ?? "",
+          insuranceExpiry: hostInsuranceExpiry
+            ? typeof hostInsuranceExpiry === "string"
+              ? hostInsuranceExpiry
+              : hostInsuranceExpiry.toISOString()
+            : "",
+        }
+        : {
+          insuranceProvider: values.insuranceProvider,
+          policyNumber: values.policyNumber,
+          insuranceExpiry: values.insuranceExpiry,
+        };
+
       // Sync effectiveHostCoverage back into the payload before sending
       await onSubmit({
         ...values,
+        ...insuranceValues,
         hostProvidingCoverage: effectiveHostCoverage,
         subtotal: breakdown.subtotal,
         insuranceFee: breakdown.insuranceFee,
@@ -221,13 +244,16 @@ export const PaymentSection = memo(
                 htmlFor="pickupDate"
                 error={errors.pickupDate?.message}
               >
-                <DateTimePickerField
-                  name="pickupDate"
+                <DateTimeInput
+                  field={{
+                    name: "pickupDate",
+                    type: "datetime",
+                    placeholder: "Pick a date & time",
+                    minDate: today,
+                    validation: { required: "Pick-up date is required" },
+                  }}
                   control={control}
-                  placeholder="Pick a date & time"
                   error={errors.pickupDate?.message}
-                  rules={{ required: "Pick-up date is required" }}
-                  minDate={today}
                 />
               </FormRow>
 
@@ -236,24 +262,25 @@ export const PaymentSection = memo(
                 htmlFor="returnDate"
                 error={errors.returnDate?.message}
               >
-                <DateTimePickerField
-                  name="returnDate"
-                  control={control}
-                  placeholder="Pick a date & time"
-                  error={errors.returnDate?.message}
-                  minDate={
-                    pickupDate ? addDays(new Date(pickupDate), 1) : today
-                  }
-                  rules={{
-                    required: "Return date is required",
-                    validate: (value: string) => {
-                      if (!pickupDate || !value) return true;
-                      return (
-                        new Date(value) > new Date(pickupDate) ||
-                        "Must be after pick-up date"
-                      );
+                <DateTimeInput
+                  field={{
+                    name: "returnDate",
+                    type: "datetime",
+                    placeholder: "Pick a date & time",
+                    minDate: pickupDate ? addDays(new Date(pickupDate), 1) : today,
+                    validation: {
+                      required: "Return date is required",
+                      validate: (value: string) => {
+                        if (!pickupDate || !value) return true;
+                        return (
+                          new Date(value) > new Date(pickupDate) ||
+                          "Must be after pick-up date"
+                        );
+                      },
                     },
                   }}
+                  control={control}
+                  error={errors.returnDate?.message}
                 />
               </FormRow>
             </div>
@@ -264,14 +291,15 @@ export const PaymentSection = memo(
               htmlFor="street"
               error={errors.street?.message}
             >
-              <Input
-                id="street"
-                type="text"
-                placeholder="123 Main St"
-                className={inputCn(!!errors.street)}
-                {...register("street", {
-                  required: "Street address is required",
-                })}
+              <TextInput
+                field={{
+                  name: "street",
+                  type: "text",
+                  placeholder: "123 Main St",
+                  validation: validators.required("Street address"),
+                }}
+                register={register}
+                error={errors.street?.message}
               />
             </FormRow>
 
@@ -282,12 +310,15 @@ export const PaymentSection = memo(
                   htmlFor="city"
                   error={errors.city?.message}
                 >
-                  <Input
-                    id="city"
-                    type="text"
-                    placeholder="City"
-                    className={inputCn(!!errors.city)}
-                    {...register("city", { required: "City is required" })}
+                  <TextInput
+                    field={{
+                      name: "city",
+                      type: "text",
+                      placeholder: "Address city",
+                      validation: validators.required("city"),
+                    }}
+                    register={register}
+                    error={errors.city?.message}
                   />
                 </FormRow>
               </div>
@@ -298,14 +329,15 @@ export const PaymentSection = memo(
                   htmlFor="state"
                   error={errors.state?.message}
                 >
-                  <Input
-                    id="state"
-                    type="text"
-                    placeholder="California"
-                    className={cn(inputCn(!!errors.state))}
-                    {...register("state", {
-                      required: "Pick up state is required",
-                    })}
+                  <TextInput
+                    field={{
+                      name: "state",
+                      type: "text",
+                      placeholder: "Address state",
+                      validation: validators.required("state"),
+                    }}
+                    register={register}
+                    error={errors.state?.message}
                   />
                 </FormRow>
               </div>
@@ -316,20 +348,15 @@ export const PaymentSection = memo(
                   htmlFor="zipCode"
                   error={errors.zipCode?.message}
                 >
-                  <Input
-                    id="zipCode"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="94103"
-                    maxLength={10}
-                    className={inputCn(!!errors.zipCode)}
-                    {...register("zipCode", {
-                      required: "Zip code is required",
-                      pattern: {
-                        value: /^\d{5}(-\d{4})?$/,
-                        message: "Invalid zip code",
-                      },
-                    })}
+                  <TextInput
+                    field={{
+                      name: "zipCode",
+                      type: "text",
+                      placeholder: "Address zipCode",
+                      validation: validators.required("zipCode"),
+                    }}
+                    register={register}
+                    error={errors.zipCode?.message}
                   />
                 </FormRow>
               </div>
@@ -399,31 +426,14 @@ export const PaymentSection = memo(
           </div>
 
           {/* Terms checkbox */}
-          <Controller
-            name="agreedToTerms"
-            control={control}
-            rules={{
-              validate: (value) =>
-                value === true || "You must agree to the terms and conditions",
-            }}
-            render={({ field }) => (
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="agreedToTerms"
-                    checked={!!field.value}
-                    onCheckedChange={field.onChange}
-                    className={cn(
-                      "data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700",
-                      errors.agreedToTerms
-                        ? "border-red-500"
-                        : "border-[#E5E7EB]",
-                    )}
-                  />
-                  <label
-                    htmlFor="agreedToTerms"
-                    className="text-gray-800 text-xs font-medium font-text leading-5 cursor-pointer"
-                  >
+          <div className="flex flex-col gap-1.5">
+            <CheckboxInput
+              field={{
+                name: "agreedToTerms",
+                type: "checkbox",
+                defaultValue: true,
+                label: (
+                  <>
                     I agree to the{" "}
                     <Link
                       href="/legal/terms-and-conditions-of-use"
@@ -433,16 +443,21 @@ export const PaymentSection = memo(
                     >
                       terms and conditions
                     </Link>
-                  </label>
-                </div>
-                {errors.agreedToTerms && (
-                  <FieldError
-                    message={errors.agreedToTerms.message as string}
-                  />
-                )}
-              </div>
+                  </>
+                ),
+                validation: {
+                  validate: (value: boolean) =>
+                    value === true ||
+                    "You must agree to the terms and conditions",
+                },
+              }}
+              control={control}
+              error={errors.agreedToTerms?.message as string}
+            />
+            {errors.agreedToTerms && (
+              <FieldError message={errors.agreedToTerms.message as string} />
             )}
-          />
+          </div>
 
           {/* Security notice */}
           <div className="flex items-center gap-2">
@@ -471,14 +486,15 @@ export const PaymentSection = memo(
               htmlFor="insuranceProvider"
               error={errors.insuranceProvider?.message}
             >
-              <Input
-                id="insuranceProvider"
-                type="text"
-                placeholder="e.g. Progressive, Geico, State Farm"
-                className={inputCn(!!errors.insuranceProvider)}
-                {...register("insuranceProvider", {
-                  onChange: handleInsuranceChange,
-                })}
+              <TextInput
+                field={{
+                  name: "insuranceProvider",
+                  type: "text",
+                  placeholder: "e.g. Progressive, Geico, State Farm",
+                  validation: { onChange: handleInsuranceChange },
+                }}
+                register={register}
+                error={errors.insuranceProvider?.message}
               />
             </FormRow>
 
@@ -488,21 +504,24 @@ export const PaymentSection = memo(
               htmlFor="policyNumber"
               error={errors.policyNumber?.message}
             >
-              <Input
-                id="policyNumber"
-                type="text"
-                placeholder="e.g. PLY-123456789"
-                className={inputCn(!!errors.policyNumber)}
-                {...register("policyNumber", {
-                  onChange: handleInsuranceChange,
-                  validate: (value) => {
-                    // If provider is filled, policy number becomes required
-                    if (insuranceProvider && !value) {
-                      return "Policy number is required when provider is entered";
-                    }
-                    return true;
+              <TextInput
+                field={{
+                  name: "policyNumber",
+                  type: "text",
+                  placeholder: "e.g. PLY-123456789",
+                  validation: {
+                    onChange: handleInsuranceChange,
+                    validate: (value: string) => {
+                      // If provider is filled, policy number becomes required
+                      if (insuranceProvider && !value) {
+                        return "Policy number is required when provider is entered";
+                      }
+                      return true;
+                    },
                   },
-                })}
+                }}
+                register={register}
+                error={errors.policyNumber?.message}
               />
             </FormRow>
 
@@ -512,62 +531,44 @@ export const PaymentSection = memo(
               htmlFor="insuranceExpiry"
               error={errors.insuranceExpiry?.message}
             >
-              <DateTimePickerField
-                name="insuranceExpiry"
-                control={control}
-                placeholder="Pick expiry date"
-                error={errors.insuranceExpiry?.message}
-                showTime={false}
-                // Only dates more than 30 days from now are valid
-                minDate={THIRTY_DAYS_FROM_NOW}
-                rules={{
-                  validate: (value: string) => {
-                    // Required if either provider or policy number is filled
-                    if ((insuranceProvider || policyNumber) && !value) {
-                      return "Expiry date is required with insurance details";
-                    }
-                    if (!value) return true;
-                    const expiry = new Date(value);
-                    if (expiry <= THIRTY_DAYS_FROM_NOW) {
-                      return "Expiry date must be more than 30 days from today";
-                    }
-                    return true;
+              <DateInput
+                field={{
+                  name: "insuranceExpiry",
+                  type: "date",
+                  placeholder: "Pick expiry date",
+                  // Only dates more than 30 days from now are valid
+                  minDate: THIRTY_DAYS_FROM_NOW,
+                  validation: {
+                    validate: (value: string) => {
+                      // Required if either provider or policy number is filled
+                      if ((insuranceProvider || policyNumber) && !value) {
+                        return "Expiry date is required with insurance details";
+                      }
+                      if (!value) return true;
+                      const expiry = new Date(value);
+                      if (expiry <= THIRTY_DAYS_FROM_NOW) {
+                        return "Expiry date must be more than 30 days from today";
+                      }
+                      return true;
+                    },
                   },
                 }}
+                control={control}
+                error={errors.insuranceExpiry?.message}
               />
             </FormRow>
 
-            {/* Host providing coverage checkbox */}
-            <Controller
-              name="hostProvidingCoverage"
-              control={control}
-              render={({ field }) => (
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="hostProvidingCoverage"
-                    checked={effectiveHostCoverage}
-                    disabled={hasInsuranceInput}
-                    onCheckedChange={(checked) => {
-                      // Block re-checking when insurance fields are filled
-                      if (hasInsuranceInput) return;
-                      field.onChange(!!checked);
-                    }}
-                    className={cn(
-                      "data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700",
-                      hasInsuranceInput
-                        ? "opacity-50 cursor-not-allowed"
-                        : "border-[#E5E7EB]",
-                    )}
-                  />
-                  <label
-                    htmlFor="hostProvidingCoverage"
-                    className={cn(
-                      "text-sm font-medium font-text cursor-pointer select-none",
-                      hasInsuranceInput
-                        ? "text-[#9CA3AF] cursor-not-allowed"
-                        : "text-[#1F2937]",
-                    )}
-                  >
+            {/* Host providing coverage checkbox — checked state is derived
+                (effectiveHostCoverage), not the raw field value, and it
+                self-disables once insurance details are entered, so it
+                uses CheckboxInput's checked/onCheckedChange overrides */}
+            <CheckboxInput
+              field={{
+                name: "hostProvidingCoverage",
+                type: "checkbox",
+                disabled: hasInsuranceInput,
+                label: (
+                  <>
                     Host is providing coverage
                     {insuranceFeePerDay > 0 && (
                       <span className="text-[#9CA3AF] font-normal">
@@ -575,9 +576,17 @@ export const PaymentSection = memo(
                         ({formatCurrency(insuranceFeePerDay)}/day)
                       </span>
                     )}
-                  </label>
-                </div>
-              )}
+                  </>
+                ),
+              }}
+              control={control}
+              checked={effectiveHostCoverage}
+              onCheckedChange={(checked) => {
+                if (hasInsuranceInput) return;
+                setValue("hostProvidingCoverage", checked, {
+                  shouldValidate: false,
+                });
+              }}
             />
 
             {hasInsuranceInput && (
@@ -600,7 +609,7 @@ export const PaymentSection = memo(
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="animate-spin w-4 h-4" />
+              <LoadingSpinner />
               Processing...
             </>
           ) : (
@@ -612,283 +621,3 @@ export const PaymentSection = memo(
   },
 );
 PaymentSection.displayName = "PaymentSection";
-
-// ─── Date + time picker field ──────────────────────────────────────────────────
-
-type DateTimePickerFieldProps = {
-  name: keyof PaymentFormValues;
-  control: ReturnType<typeof useForm<PaymentFormValues>>["control"];
-  placeholder?: string;
-  error?: string;
-  minDate?: Date;
-  rules?: object;
-  /** Show the hour/minute/AM-PM row below the calendar. Defaults to true. */
-  showTime?: boolean;
-};
-
-const HOURS_12 = Array.from({ length: 12 }, (_, i) => i + 1); // 1‑12
-const MINUTE_OPTIONS = ["00", "15", "30", "45"];
-
-/** Combine a calendar date with a 12h clock time, returns a new Date. */
-const applyTime = (
-  date: Date,
-  hour12: number,
-  minute: number,
-  period: "AM" | "PM",
-) => {
-  const hour24 =
-    period === "PM" ? (hour12 % 12) + 12 : hour12 % 12;
-  const merged = new Date(date);
-  merged.setHours(hour24, minute, 0, 0);
-  return merged;
-};
-
-/**
- * Two-step popover: pick a date, then hit "Next" to move to the time step
- * (skipped when showTime is false). "Done" closes the popover once a full
- * value is set. This avoids cramming the calendar + 3 selects into one view
- * and gives a clearer sense of progress.
- */
-const DateTimePickerField = ({
-  name,
-  control,
-  placeholder,
-  error,
-  minDate,
-  rules,
-  showTime = true,
-}: DateTimePickerFieldProps) => {
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<"date" | "time">("date");
-
-  return (
-    <Controller
-      name={name}
-      control={control}
-      rules={rules}
-      render={({ field }) => {
-        const parsed = field.value
-          ? new Date(field.value as string)
-          : undefined;
-
-        // Current time components, derived from the stored value (default noon)
-        const hour24 = parsed ? parsed.getHours() : 12;
-        const currentHour12 = ((hour24 + 11) % 12) + 1;
-        const currentMinute = parsed ? parsed.getMinutes() : 0;
-        const currentPeriod: "AM" | "PM" = hour24 >= 12 ? "PM" : "AM";
-
-        const handleDateSelect = (date: Date | undefined) => {
-          if (!date) {
-            field.onChange("");
-            return;
-          }
-          // Preserve whatever time was already set (or default to noon)
-          const merged = showTime
-            ? applyTime(date, currentHour12, currentMinute, currentPeriod)
-            : date;
-          field.onChange(merged.toISOString());
-        };
-
-        const handleTimeChange = (
-          newHour12: number,
-          newMinute: number,
-          newPeriod: "AM" | "PM",
-        ) => {
-          if (!parsed) return;
-          const merged = applyTime(parsed, newHour12, newMinute, newPeriod);
-          field.onChange(merged.toISOString());
-        };
-
-        const handleOpenChange = (next: boolean) => {
-          setOpen(next);
-          if (next) setStep("date"); // always start from the date step
-        };
-
-        const handleNext = () => {
-          if (!parsed) return;
-          setStep("time");
-        };
-
-        const handleDone = () => setOpen(false);
-
-        return (
-          <Popover open={open} onOpenChange={handleOpenChange}>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal rounded-xs font-text text-sm",
-                  !parsed && "text-[#9CA3AF]",
-                  error
-                    ? "border-red-500 focus-visible:ring-red-500"
-                    : "border-[#E5E7EB] focus-visible:ring-blue-700",
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF] shrink-0" />
-                {parsed
-                  ? format(
-                    parsed,
-                    showTime ? "MMM d, yyyy · h:mm a" : "MMM d, yyyy",
-                  )
-                  : (placeholder ?? "Pick a date")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              {(!showTime || step === "date") && (
-                <Calendar
-                  mode="single"
-                  selected={parsed}
-                  onSelect={handleDateSelect}
-                  disabled={(date) => {
-                    if (minDate) {
-                      return (
-                        date < new Date(new Date(minDate).setHours(0, 0, 0, 0))
-                      );
-                    }
-                    return false;
-                  }}
-                />
-              )}
-
-              {showTime && step === "time" && (
-                <div className="flex items-center gap-2 p-3">
-                  <Clock className="w-4 h-4 text-[#9CA3AF] shrink-0" />
-                  <select
-                    aria-label="Hour"
-                    disabled={!parsed}
-                    value={currentHour12}
-                    onChange={(e) =>
-                      handleTimeChange(
-                        Number(e.target.value),
-                        currentMinute,
-                        currentPeriod,
-                      )
-                    }
-                    className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
-                  >
-                    {HOURS_12.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-sm text-[#9CA3AF]">:</span>
-                  <select
-                    aria-label="Minute"
-                    disabled={!parsed}
-                    value={currentMinute.toString().padStart(2, "0")}
-                    onChange={(e) =>
-                      handleTimeChange(
-                        currentHour12,
-                        Number(e.target.value),
-                        currentPeriod,
-                      )
-                    }
-                    className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
-                  >
-                    {MINUTE_OPTIONS.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    aria-label="AM or PM"
-                    disabled={!parsed}
-                    value={currentPeriod}
-                    onChange={(e) =>
-                      handleTimeChange(
-                        currentHour12,
-                        currentMinute,
-                        e.target.value as "AM" | "PM",
-                      )
-                    }
-                    className="rounded-xs border border-[#E5E7EB] font-text text-sm text-[#1F2937] px-1.5 py-1 disabled:opacity-50"
-                  >
-                    <option value="AM">AM</option>
-                    <option value="PM">PM</option>
-                  </select>
-                </div>
-              )}
-
-              {/* Footer nav — Next moves to the time step, Done closes the popover */}
-              <div className="flex items-center justify-between gap-2 p-2 border-t border-[#E5E7EB]">
-                {showTime && step === "time" ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => setStep("date")}
-                  >
-                    Back
-                  </Button>
-                ) : (
-                  <span />
-                )}
-
-                {showTime && step === "date" ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={!parsed}
-                    className="text-xs bg-blue-700 hover:bg-blue-900"
-                    onClick={handleNext}
-                  >
-                    Next
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={!parsed}
-                    className="text-xs bg-blue-700 hover:bg-blue-900"
-                    onClick={handleDone}
-                  >
-                    Done
-                  </Button>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-        );
-      }}
-    />
-  );
-};
-
-// ─── Shared bits ──────────────────────────────────────────────────────────────
-
-type FormRowProps = {
-  label: string;
-  htmlFor: string;
-  error?: string;
-  children: React.ReactNode;
-};
-
-const FormRow = ({ label, htmlFor, error, children }: FormRowProps) => (
-  <div className="flex flex-col gap-1.5">
-    <Label
-      htmlFor={htmlFor}
-      className="text-[#1F2937] text-xs font-semibold font-text uppercase"
-    >
-      {label}
-    </Label>
-    {children}
-    {error && <FieldError message={error} />}
-  </div>
-);
-
-const FieldError = ({ message }: { message: string }) => (
-  <span className="text-red-500 text-xs font-normal font-text flex items-center gap-1">
-    <AlertTriangle className="w-3 h-3 shrink-0" />
-    {message}
-  </span>
-);
-
-const inputCn = (hasError: boolean) =>
-  cn(
-    "rounded-xs border-[#E5E7EB] focus-visible:ring-blue-700 font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF] w-full",
-    hasError && "border-red-500 focus-visible:ring-red-500",
-  );

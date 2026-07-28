@@ -43,6 +43,9 @@ export default function CarPageComponent({
   defaultPickupLocationZipCode,
   vehicleId,
   insuranceFee,
+  insuranceExpiration,
+  insuranceProvider,
+  policyNumber,
 }: CarPageComponentProp) {
   return (
     <>
@@ -70,6 +73,9 @@ export default function CarPageComponent({
             defaultPickupLocationZipCode={defaultPickupLocationZipCode}
             vehicleId={vehicleId}
             insuranceFeePerDay={insuranceFee}
+            insuranceExpiration={insuranceExpiration}
+            insuranceProvider={insuranceProvider}
+            policyNumber={policyNumber}
           />
         </div>
       </section>
@@ -103,7 +109,7 @@ const NotificationBar = memo(({ carName }: { carName: string }) => {
         </div>
         <div className="flex justify-start items-center">
           <button
-            onClick={handleShare} 
+            onClick={handleShare}
             className="w-full md:w-fit font-text px-4 py-1.5 text-xs cursor-pointer border border-blue-700 text-blue-700 bg-transparent hover:bg-blue-700 hover:text-white transition-colors duration-300 rounded-xs text-nowrap"
           >
             Share this vehicle
@@ -154,24 +160,32 @@ const LeftContent = memo(
 );
 LeftContent.displayName = "LeftContent";
 
+type RightContentProps = {
+  price: CarPageComponentProp["price"];
+  defaultPickupLocationStreet: string;
+  defaultPickupLocationCity: string;
+  defaultPickupLocationState: string;
+  defaultPickupLocationZipCode: string;
+  vehicleId: string;
+  insuranceFeePerDay?: number;
+  insuranceExpiration: Date;
+  insuranceProvider: string;
+  policyNumber: string
+}
+
 const RightContent = memo(
   ({
     price,
     defaultPickupLocationStreet,
     defaultPickupLocationCity,
-    defaultPickupLocationState, 
+    defaultPickupLocationState,
     defaultPickupLocationZipCode,
     vehicleId,
     insuranceFeePerDay,
-  }: {
-    price: CarPageComponentProp["price"];
-    defaultPickupLocationStreet: string;
-    defaultPickupLocationCity: string;
-    defaultPickupLocationState: string;
-    defaultPickupLocationZipCode: string;
-    vehicleId: string;
-    insuranceFeePerDay?: number;
-  }) => {
+    insuranceExpiration,
+    insuranceProvider,
+    policyNumber,
+  }: RightContentProps) => {
     const router = useRouter();
 
     const handleSubmit = async (values: PaymentFormValues) => {
@@ -210,6 +224,8 @@ const RightContent = memo(
           returnTime,
         };
 
+        // console.log("first====", pendingCheckout)
+
         window.sessionStorage.setItem(
           getPendingCheckoutStorageKey(vehicleId),
           JSON.stringify(pendingCheckout),
@@ -233,6 +249,9 @@ const RightContent = memo(
           vehicleId={vehicleId}
           onSubmit={handleSubmit}
           insuranceFeePerDay={insuranceFeePerDay || 0}
+          hostInsuranceProvider={insuranceProvider}
+          hostInsurancePolicyNumber={policyNumber}
+          hostInsuranceExpiry={insuranceExpiration}
         />
       </div>
     );
@@ -255,7 +274,7 @@ const CarDetailCard = memo(
             <h3 className="text-neutral-950 text-2xl font-bold font-text leading-8">
               {carName}
             </h3>
-            <div className="px-3 py-0.5 bg-green-100 text-green-500 capitalize text-xs font-medium font-text leading-5 rounded-full">
+            <div className={`px-3 py-0.5 capitalize text-xs font-medium font-text leading-5 rounded-full ${status === "available" ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'}`}>
               <span>{status}</span>
             </div>
           </div>
@@ -440,8 +459,8 @@ const HostCard = memo(
             </div>
           </div>
         </div>
-        <Link 
-          href={`tel:${contactNumber}`} 
+        <Link
+          href={`tel:${contactNumber}`}
           title={`Contact ${hostName}`}
           className="w-fit p-2 px-5 text-xs rounded-xs border border-blue-700 text-blue-700 hover:bg-blue-950 hover:text-white hover:border-blue-950 transition-colors duration-300 text-nowrap font-medium font-text leading-5 cursor-pointer"
         >
