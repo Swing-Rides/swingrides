@@ -34,6 +34,7 @@ export type CarPageComponentProp = {
   insuranceProvider: string;
   insuranceExpiration: Date;
   insuranceFee?: number;
+  taxRate: number;
 };
 
 export type ImagesSectionProps = {

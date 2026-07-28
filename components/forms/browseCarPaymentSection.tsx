@@ -21,7 +21,10 @@ import {
   LoadingSpinner,
 } from "./MainForm";
 import { validators } from "@/components/forms/form.validators";
-import { FormRow, FieldError, DEFAULT_TAX_RATE } from "../helpers/browseCarPaymentSection.helpers";
+import {
+  FormRow,
+  FieldError,
+} from "../helpers/browseCarPaymentSection.helpers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -63,6 +66,7 @@ type PaymentSectionProps = {
   hostInsuranceProvider?: string;
   hostInsurancePolicyNumber?: string;
   hostInsuranceExpiry?: string | Date;
+  taxRate: number;
 };
 
 const THIRTY_DAYS_FROM_NOW = addDays(new Date(), 30);
@@ -81,8 +85,8 @@ export const PaymentSection = memo(
     hostInsuranceProvider,
     hostInsurancePolicyNumber,
     hostInsuranceExpiry,
+    taxRate,
   }: PaymentSectionProps) => {
-    
     const today = useMemo(() => {
       const d = new Date();
       d.setHours(0, 0, 0, 0);
@@ -145,9 +149,12 @@ export const PaymentSection = memo(
     const days =
       pickupDate && returnDate
         ? Math.max(
-          differenceInCalendarDays(new Date(returnDate), new Date(pickupDate)),
-          0,
-        )
+            differenceInCalendarDays(
+              new Date(returnDate),
+              new Date(pickupDate),
+            ),
+            0,
+          )
         : 0;
 
     const pricing = days > 0 ? computePricing(price, days) : null;
@@ -161,7 +168,7 @@ export const PaymentSection = memo(
     );
 
     const totalBreakdown = pricing
-      ? computeTotal(pricing.total, insuranceFee, DEFAULT_TAX_RATE)
+      ? computeTotal(pricing.total, insuranceFee, taxRate)
       : null;
 
     const enteredPickUpDate = pickupDate
@@ -173,27 +180,27 @@ export const PaymentSection = memo(
 
     const onFormSubmit = async (values: PaymentFormValues) => {
       const breakdown = pricing
-        ? computeTotal(pricing.total, insuranceFee, DEFAULT_TAX_RATE)
-        : computeTotal(0, 0, DEFAULT_TAX_RATE);
+        ? computeTotal(pricing.total, insuranceFee, taxRate)
+        : computeTotal(0, 0, taxRate);
 
       // When the user is using the host's coverage, the host's insurance
       // details are the source of truth — send those instead of whatever
       // (if anything) is sitting in the form fields.
       const insuranceValues = effectiveHostCoverage
         ? {
-          insuranceProvider: hostInsuranceProvider ?? "",
-          policyNumber: hostInsurancePolicyNumber ?? "",
-          insuranceExpiry: hostInsuranceExpiry
-            ? typeof hostInsuranceExpiry === "string"
-              ? hostInsuranceExpiry
-              : hostInsuranceExpiry.toISOString()
-            : "",
-        }
+            insuranceProvider: hostInsuranceProvider ?? "",
+            policyNumber: hostInsurancePolicyNumber ?? "",
+            insuranceExpiry: hostInsuranceExpiry
+              ? typeof hostInsuranceExpiry === "string"
+                ? hostInsuranceExpiry
+                : hostInsuranceExpiry.toISOString()
+              : "",
+          }
         : {
-          insuranceProvider: values.insuranceProvider,
-          policyNumber: values.policyNumber,
-          insuranceExpiry: values.insuranceExpiry,
-        };
+            insuranceProvider: values.insuranceProvider,
+            policyNumber: values.policyNumber,
+            insuranceExpiry: values.insuranceExpiry,
+          };
 
       // Sync effectiveHostCoverage back into the payload before sending
       await onSubmit({
@@ -203,7 +210,7 @@ export const PaymentSection = memo(
         subtotal: breakdown.subtotal,
         insuranceFee: breakdown.insuranceFee,
         tax: breakdown.tax,
-        taxRate: DEFAULT_TAX_RATE,
+        taxRate: taxRate,
         totalAmount: breakdown.totalAmount,
         totalDays: days,
       });
@@ -267,7 +274,9 @@ export const PaymentSection = memo(
                     name: "returnDate",
                     type: "datetime",
                     placeholder: "Pick a date & time",
-                    minDate: pickupDate ? addDays(new Date(pickupDate), 1) : today,
+                    minDate: pickupDate
+                      ? addDays(new Date(pickupDate), 1)
+                      : today,
                     validation: {
                       required: "Return date is required",
                       validate: (value: string) => {
@@ -405,7 +414,7 @@ export const PaymentSection = memo(
               {totalBreakdown && (
                 <div className="flex justify-between gap-4">
                   <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
-                    Tax ({(DEFAULT_TAX_RATE * 100).toFixed(0)}%)
+                    Tax ({(taxRate)}%)
                   </span>
                   <span className="text-[#1F2937] text-sm font-medium font-text">
                     {formatCurrency(totalBreakdown.tax)}
@@ -421,7 +430,9 @@ export const PaymentSection = memo(
               Total Estimate
             </span>
             <span className="text-blue-700 text-xl font-medium font-text leading-7">
-              {totalBreakdown ? formatCurrency(totalBreakdown.totalAmount) : "—"}
+              {totalBreakdown
+                ? formatCurrency(totalBreakdown.totalAmount)
+                : "—"}
             </span>
           </div>
 
