@@ -184,7 +184,8 @@ export default function ModifyBookingForm({
       }).unwrap();
       onClose();
     } catch (error) {
-      toast.error("Failed to update booking:", error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to update booking";
+      toast.error(errorMessage);
       console.error("Failed to update booking:", error);
     }
   };
