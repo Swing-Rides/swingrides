@@ -268,10 +268,6 @@ export default function CheckoutPage() {
   const renter = renterProfile?.renter;
   const isLoggedIn = !!renter;
 
-  // Only prompt once the profile lookup has actually settled — avoids a
-  // flash of the auth modal while the "am I logged in" request is in flight.
-  // A 401 here just means "guest", so it's handled the same as any other
-  // logged-out state rather than as a failure.
   const shouldPromptAuth =
     isDraftLoaded &&
     !isProfileLoading &&
@@ -288,12 +284,12 @@ export default function CheckoutPage() {
       lastName: rest.join(" "),
       email: renter.email,
       phoneNumber: renter.phoneNumber,
-      streetAddress: "2266 Nostrand Ave",
-      city: "Brooklyn",
-      state: "New York",
-      postalCode: "11210",
+      streetAddress: vehicle?.location as string,
+      city: vehicle?.city as string,
+      state: vehicle?.state as string,
+      postalCode: vehicle?.zipCode as string,
     };
-  }, [renter]);
+  }, [renter, vehicle]);
 
   const summary = useMemo(() => {
     if (!draft || !vehicle) return null;

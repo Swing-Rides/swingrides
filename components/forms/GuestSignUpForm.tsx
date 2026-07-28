@@ -1,7 +1,7 @@
 "use client";
 
 import { Mail, User } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { useRenterRegisterMutation } from "@/app/store/services/renterApi";
@@ -9,6 +9,7 @@ import MainForm from "./MainForm";
 import { validators } from "./form.validators";
 import { FormFieldConfig } from "./types";
 import { getErrorMessage } from "@/lib/checkout-helpers";
+import { useCallback } from "react";
 
 const fields: FormFieldConfig[] = [
   {
@@ -89,6 +90,15 @@ export default function GuestSignUpForm({
 }: GuestSignUpFormProps) {
   const router = useRouter();
   const [renterSignUp, { isLoading }] = useRenterRegisterMutation();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const handleClose = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("modal");
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  }, [searchParams, router, pathname]);
 
   const handleSubmit = async (values: SignUpValues) => {
     try {
@@ -100,22 +110,23 @@ export default function GuestSignUpForm({
         phoneNumber: String(values.phoneNumber),
         termsAgreement: Boolean(values.terms),
       }).unwrap();
-
+      
       if (!response.success) {
         toast.error("Unable to create your account. Please try again.");
         return;
       }
-
+      
       toast.success("Account created — you're all set!");
-
       if (onSuccess) {
         await onSuccess();
         return;
       }
-
+      
       if (route) {
+        handleClose();
         router.push(route);
       } else {
+        handleClose();
         router.refresh();
       }
     } catch (error) {

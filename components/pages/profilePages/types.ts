@@ -54,26 +54,62 @@ export type Rentals = {
 export type SingleRent = {
   success: boolean;
   data: Omit<Rentals, "pickUpDate"> & {
-    referenceCode: string;
-    renterName: string;
-    renterEmail: string;
-    renterPhone: string;
-    vehicleId: string;
-    vehicleName: string;
-    vehicleDetails: string;
-    pickupDate: string;
-    location: string;
-    totalAmount: number;
-    subtotal: number;
-    tax: number;
-    taxRate: number;
-    bookingType: "daily" | "weekly" | "monthly";
-    createdAt: string;
-    transmission?: string;
-    seats?: number;
-    averageRating?: number;
-    reviews?: [];
-    checkIn?: Rentals["checkIn"];
+    id: string;
+  rentId: string;
+  referenceCode: string;
+  renterName: string;
+  renterEmail: string;
+  renterPhone: string;
+  vehicleId: string;
+  vehicleName: string;
+  vehicleDetails: string;
+  pickupDate: string;
+  returnDate: string;
+  location: string;
+  pickupLocation: string;
+  totalAmount: number;
+  subtotal: number;
+  tax: number;
+  taxRate: number;
+  bookingType: "daily" | "weekly" | "monthly";
+  status: "Upcoming" | "Active" | "Completed" | "Cancelled";
+  createdAt: Date;
+  licensePlate?: string;
+  price: string;
+  totalPaid: string;
+  tripCost: string;
+  tripDurationDays: string;
+  pickupStreet?: string;
+  pickupCity?: string;
+  state?: string;
+  postalCode?: string;
+  pickupTime?: string;
+  returnTime?: string;
+  rentalRate: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+  };
+  car: {
+    carId: string;
+    imageUrl: string;
+    carName: string;
+    carType: string;
+    manufactureYear: number;
+    plateNumber: string;
+    features: string[];
+  };
+  host: {
+    hostId: string;
+    hostName: string;
+    hostSlug: string;
+    contactNumber: string;
+  };
+  transmission?: string;
+  seats?: number;
+  averageRating?: number;
+  reviews?: any[];
+    mileage: number
   };
 };
 
