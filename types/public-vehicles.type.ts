@@ -131,3 +131,62 @@ export interface VehicleDetails {
   fuelEfficiency: string;
   doors: string;
 }
+
+export interface RenterBookingDetailResponse {
+  id: string;
+  rentId: string;
+  referenceCode: string;
+  renterName: string;
+  renterEmail: string;
+  renterPhone: string;
+  vehicleId: string;
+  vehicleName: string;
+  vehicleDetails: string;
+  pickupDate: string;
+  returnDate: string;
+  location: string;
+  pickupLocation: string;
+  totalAmount: number;
+  subtotal: number;
+  tax: number;
+  taxRate: number;
+  bookingType: "daily" | "weekly" | "monthly";
+  status: "Upcoming" | "Active" | "Completed" | "Cancelled";
+  createdAt: Date;
+  licensePlate?: string;
+  price: string;
+  totalPaid: string;
+  tripCost: string;
+  tripDurationDays: string;
+  pickupStreet?: string;
+  pickupCity?: string;
+  state?: string;
+  postalCode?: string;
+  pickupTime?: string;
+  returnTime?: string;
+  rentalRate: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+  };
+  car: {
+    carId: string;
+    imageUrl: string;
+    carName: string;
+    carType: string;
+    manufactureYear: number;
+    plateNumber: string;
+    features: string[];
+  };
+  host: {
+    hostId: string;
+    hostName: string;
+    hostSlug: string;
+    contactNumber: string;
+  };
+  transmission?: string;
+  seats?: number;
+  averageRating?: number;
+  reviews?: unknown[];
+    mileage: number
+}

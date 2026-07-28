@@ -5,6 +5,7 @@ import {
   PublicBrowseVehiclesQuery,
   PublicBrowseVehiclesResponse,
   VehicleDetails,
+  RenterBookingDetailResponse
 } from "@/types/public-vehicles.type";
 import { toast } from "sonner";
 
@@ -210,7 +211,10 @@ export const publicApi = createApi({
       {
         success: boolean;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data: any;
+        data: {
+          success: boolean;
+          data: RenterBookingDetailResponse
+        };
       },
       { id: string }
     >({
