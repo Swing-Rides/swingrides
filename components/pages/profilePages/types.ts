@@ -12,11 +12,15 @@ export type Rentals = {
   hostRatingForGuest?: string | number;
   pickUpDate: string;
   returnDate: string;
+  pickupTime?: string;
+  returnTime?: string;
   pickupLocation: string;
   price: string;
   tripDurationDays?: string;
   pickupStreet?: string;
   pickupCity?: string;
+  state?: string;
+  postalCode?: string;
   rentalRate?: RentalRate;
   tripCost: string;
   totalPaid: string;
@@ -28,6 +32,7 @@ export type Rentals = {
     manufactureYear: number;
     plateNumber: string;
     features: string[];
+    mileage?: number;
   };
   host: {
     hostId: string;

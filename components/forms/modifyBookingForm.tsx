@@ -1,20 +1,18 @@
-import { useEffect, useMemo } from "react";
-import { useForm, Controller, useWatch } from "react-hook-form";
-import { format, differenceInCalendarDays, addDays } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { AlertCircle, CalendarIcon, MapPin } from "lucide-react";
-import { ModifyFormProps, ModifyFormValues } from "../modifyTripModal/types";
+"use client";
+
+import { useMemo, useState } from "react";
+import { differenceInCalendarDays, addDays } from "date-fns";
+import { AlertCircle } from "lucide-react";
+
+import MainForm from "@/components/forms/MainForm";
+import { FormFieldConfig } from "@/components/forms/types";
+import { validators } from "@/components/forms/form.validators";
+import { US_STATES } from "@/constants/addressState";
+
+import { ModifyFormProps } from "../modifyTripModal/types";
 import { RentalRate } from "../pages/profilePages/types";
 import { useUpdateBookingMutation } from "@/app/store/services/renterApi";
+import { toast } from "sonner";
 
 const formatCurrency = (amount: number) =>
   amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -59,11 +57,29 @@ const computeTotal = (
   return { breakdown: parts.join(" + "), total };
 };
 
+type ModifyBookingFormValues = {
+  pickupDate: string;
+  returnDate: string;
+  pickupStreet: string;
+  pickupCity: string;
+  pickupState: string;
+  pickupZipcode: string;
+};
+
 export default function ModifyBookingForm({
   rental,
   onClose,
 }: ModifyFormProps) {
   const [updateBooking, { isLoading }] = useUpdateBookingMutation();
+
+  // Shown after a submission attempt — MainForm owns its own useForm
+  // instance internally, so we can't watch fields live as the user types.
+  // We compute + display the summary once the user has submitted.
+  const [summary, setSummary] = useState<{
+    days: number;
+    breakdown: string;
+    total: number;
+  } | null>(null);
 
   const today = useMemo(() => {
     const d = new Date();
@@ -71,302 +87,160 @@ export default function ModifyBookingForm({
     return d;
   }, []);
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isSubmitting },
-    reset
-  } = useForm<ModifyFormValues>({
-    mode: "onTouched",
-    defaultValues: {
-      pickupDate: rental.pickUpDate
+  const fields: FormFieldConfig[] = [
+    {
+      name: "pickupDate",
+      type: "datetime",
+      label: "Pickup Date",
+      placeholder: "Pick date & time",
+      minDate: today,
+      defaultValue: rental.pickUpDate
         ? new Date(rental.pickUpDate).toISOString()
-        : "",
-      returnDate: rental.returnDate
-        ? new Date(rental.returnDate).toISOString()
-        : "",
-      pickupStreet: rental.pickupStreet ?? "",
-      pickupCity: rental.pickupCity ?? "",
+        : undefined,
+      validation: validators.required("Pickup date"),
     },
-  });
-
-  useEffect(() => {
-    reset({
-      pickupDate: rental.pickUpDate
-        ? new Date(rental.pickUpDate).toISOString()
-        : "",
-
-      returnDate: rental.returnDate
+    {
+      name: "returnDate",
+      type: "datetime",
+      label: "Return Date",
+      placeholder: "Pick date & time",
+      minDate: addDays(today, 1),
+      defaultValue: rental.returnDate
         ? new Date(rental.returnDate).toISOString()
-        : "",
+        : undefined,
+      validation: {
+        required: "Return date is required",
+        validate: (value, formValues) => {
+          const { pickupDate } = formValues as ModifyBookingFormValues;
+          if (!pickupDate || !value) return true;
+          return (
+            new Date(value as string) > new Date(pickupDate) ||
+            "Must be after pickup date"
+          );
+        },
+      },
+    },
+    {
+      name: "pickupStreet",
+      type: "text",
+      label: "Street",
+      placeholder: "e.g. 123 Main Street",
+      defaultValue: rental.pickupStreet ?? "",
+      validation: validators.required("Street"),
+    },
+    {
+      name: "pickupCity",
+      type: "text",
+      label: "City",
+      placeholder: "e.g. Austin",
+      defaultValue: rental.pickupCity ?? "",
+      validation: validators.required("City"),
+    },
+    {
+      name: "pickupState",
+      type: "select",
+      label: "State",
+      placeholder: "Select a state",
+      options: US_STATES,
+      defaultValue: rental.state ?? "",
+      validation: validators.required("State"),
+    },
+    {
+      name: "pickupZipcode",
+      type: "text",
+      label: "Zip Code",
+      placeholder: "e.g. 78701",
+      defaultValue: rental.postalCode ?? "",
+      validation: {
+        required: "Zip code is required",
+        pattern: {
+          value: /^\d{5}(-\d{4})?$/,
+          message: "Enter a valid US zip code (e.g. 78701)",
+        },
+      },
+    },
+  ];
 
-      pickupStreet: rental.pickupStreet ?? "",
+  const handleSubmit = async (values: Record<string, unknown>) => {
+    const formValues = values as ModifyBookingFormValues;
 
-      pickupCity: rental.pickupCity ?? "",
-    });
-  }, [rental, reset]);
+    const days = Math.max(
+      differenceInCalendarDays(
+        new Date(formValues.returnDate),
+        new Date(formValues.pickupDate),
+      ),
+      0,
+    );
+    const computed = computeTotal(days, rental.rentalRate);
+    setSummary({ days, breakdown: computed.breakdown, total: computed.total });
 
-  const pickupDate = useWatch({ control, name: "pickupDate" });
-  const returnDate = useWatch({ control, name: "returnDate" });
-
-  const days =
-    pickupDate && returnDate
-      ? Math.max(
-          differenceInCalendarDays(new Date(returnDate), new Date(pickupDate)),
-          0,
-        )
-      : 0;
-
-  const computed = days > 0 ? computeTotal(days, rental.rentalRate) : null;
-
-  const onSubmit = async (values: ModifyFormValues) => {
     try {
-      const pickupLocation = `${values.pickupStreet}, ${values.pickupCity}`;
+      const pickupLocation = `${formValues.pickupStreet}, ${formValues.pickupCity}, ${formValues.pickupState} ${formValues.pickupZipcode}`;
       await updateBooking({
         id: rental.id,
-        pickupDate: values.pickupDate,
-        returnDate: values.returnDate,
+        pickupDate: formValues.pickupDate,
+        returnDate: formValues.returnDate,
         pickupLocation,
       }).unwrap();
       onClose();
     } catch (error) {
+      toast.error("Failed to update booking:", error)
       console.error("Failed to update booking:", error);
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col gap-4"
-      noValidate
-    >
-      {/* Section label */}
+    <div className="flex flex-col gap-4">
       <span className="text-gray-500 text-xs font-semibold font-text uppercase leading-5">
         New Booking Details
       </span>
 
-      {/* Row 1: Pickup Date + Return Date */}
-      <div className="grid grid-cols-2 gap-3">
-        <FormRow
-          label="Pickup Date"
-          htmlFor="pickupDate"
-          error={errors.pickupDate?.message}
-        >
-          <DatePickerField
-            name="pickupDate"
-            control={control}
-            placeholder="Pick a date"
-            error={errors.pickupDate?.message}
-            minDate={today}
-            rules={{ required: "Pickup date is required" }}
-          />
-        </FormRow>
+      <MainForm
+        fields={fields}
+        rowPairs={[
+          ["pickupDate", "returnDate"],
+          ["pickupStreet", "pickupCity"],
+          ["pickupState", "pickupZipcode"],
+        ]}
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+        submitLabel="Confirm Changes"
+        footerSlot={
+          <>
+            {summary && (
+              <div className="p-4 bg-indigo-50 rounded-[10px] flex flex-col justify-start items-start gap-1">
+                <div className="flex gap-3 justify-between items-center w-full">
+                  <span className="flex text-blue-700 text-sm font-normal font-text leading-5">
+                    {`New Duration: ${pluralize(summary.days, "day")}${summary.breakdown ? ` (${summary.breakdown})` : ""
+                      }`}
+                  </span>
+                  <span className="flex text-blue-700 text-base font-medium font-text leading-6 text-nowrap">
+                    {`New Total: ${formatCurrency(summary.total)}`}
+                  </span>
+                </div>
+                <span className="flex-1 justify-start text-gray-500 text-xs font-normal font-text leading-4">
+                  Final amount will be confirmed after modification.
+                </span>
+              </div>
+            )}
 
-        <FormRow
-          label="Return Date"
-          htmlFor="returnDate"
-          error={errors.returnDate?.message}
-        >
-          <DatePickerField
-            name="returnDate"
-            control={control}
-            placeholder="Pick a date"
-            error={errors.returnDate?.message}
-            minDate={
-              pickupDate ? addDays(new Date(pickupDate), 1) : addDays(today, 1)
-            }
-            rules={{
-              required: "Return date is required",
-              validate: (value: string) => {
-                if (!pickupDate || !value) return true;
-                return (
-                  new Date(value) > new Date(pickupDate) ||
-                  "Must be after pickup date"
-                );
-              },
-            }}
-          />
-        </FormRow>
-      </div>
+            <div className="p-4 bg-amber-100 rounded-[10px] flex justify-start items-start gap-2">
+              <AlertCircle className="size-4 text-amber-500 shrink-0 mt-0.5" />
+              <span className="block text-amber-800 text-xs font-normal font-text leading-5">
+                Modifications within 24 hours of pickup may incur a fee.
+              </span>
+            </div>
 
-      {/* Row 2: Pickup Location */}
-      <FormRow
-        label="Street"
-        htmlFor="pickupStreet"
-        error={errors.pickupStreet?.message}
-      >
-        <div className="relative flex items-center">
-          <span className="absolute left-3 text-[#9CA3AF] pointer-events-none">
-            <MapPin className="w-4 h-4" />
-          </span>
-          <Input
-            id="pickupStreet"
-            type="text"
-            placeholder="e.g. 123 Main Street"
-            className={cn(inputCn(!!errors.pickupStreet), "pl-9")}
-            {...register("pickupStreet", { required: "Street is required" })}
-          />
-        </div>
-      </FormRow>
-
-      <FormRow
-        label="City"
-        htmlFor="pickupCity"
-        error={errors.pickupCity?.message}
-      >
-        <Input
-          id="pickupCity"
-          type="text"
-          placeholder="e.g. Austin"
-          className={inputCn(!!errors.pickupCity)}
-          {...register("pickupCity", { required: "City is required" })}
-        />
-      </FormRow>
-
-      {/* New duration + total summary */}
-      <div className="p-4 bg-indigo-50 rounded-[10px] flex flex-col justify-start items-start gap-1">
-        <div className="flex gap-3 justify-between items-center w-full">
-          <span className="flex text-blue-700 text-sm font-normal font-text leading-5">
-            {computed
-              ? `New Duration: ${pluralize(days, "day")} (${computed.breakdown})`
-              : "New Duration: — days"}
-          </span>
-          <span className="flex text-blue-700 text-base font-medium font-text leading-6 text-nowrap">
-            {computed
-              ? `New Total: ${formatCurrency(computed.total)}`
-              : "New Total: $—"}
-          </span>
-        </div>
-        <span className="flex-1 justify-start text-gray-500 text-xs font-normal font-text leading-4">
-          Final amount will be confirmed after modification.
-        </span>
-      </div>
-
-      {/* Warning */}
-      <div className="p-4 bg-amber-100 rounded-[10px] flex justify-start items-start gap-2">
-        <AlertCircle className="size-4 text-amber-500 shrink-0 mt-0.5" />
-        <span className="block text-amber-800 text-xs font-normal font-text leading-5">
-          Modifications within 24 hours of pickup may incur a fee.
-        </span>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex-1 text-sm font-medium font-text leading-5 border border-gray-500 text-gray-500 rounded-xs py-2 px-4 bg-transparent hover:bg-gray-200 transition-colors duration-300 cursor-pointer"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting || isLoading}
-          className="flex-1 text-sm font-medium font-text leading-5 border border-blue-700 text-white rounded-xs py-2 px-4 bg-blue-700 hover:bg-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
-        >
-          {isSubmitting || isLoading ? "Saving..." : "Confirm Changes"}
-        </button>
-      </div>
-    </form>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full text-sm font-medium font-text leading-5 border border-gray-500 text-gray-500 rounded-xs py-2 px-4 bg-transparent hover:bg-gray-200 transition-colors duration-300 cursor-pointer"
+            >
+              Cancel
+            </button>
+          </>
+        }
+      />
+    </div>
   );
 }
-
-// ─── Date picker ──────────────────────────────────────────────────────────────
-
-type DatePickerFieldProps = {
-  name: keyof ModifyFormValues;
-  control: ReturnType<typeof useForm<ModifyFormValues>>["control"];
-  placeholder?: string;
-  error?: string;
-  minDate?: Date;
-  rules?: object;
-};
-
-const DatePickerField = ({
-  name,
-  control,
-  placeholder,
-  error,
-  minDate,
-  rules,
-}: DatePickerFieldProps) => (
-  <Controller
-    name={name}
-    control={control}
-    rules={rules}
-    render={({ field }) => {
-      const parsed = field.value ? new Date(field.value as string) : undefined;
-
-      return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal rounded-xs font-text text-sm h-9 px-3",
-                !parsed && "text-[#9CA3AF]",
-                error
-                  ? "border-red-500 focus-visible:ring-red-500"
-                  : "border-[#E5E7EB] focus-visible:ring-blue-700",
-              )}
-            >
-              <CalendarIcon className="mr-1.5 h-3.5 w-3.5 text-[#9CA3AF] shrink-0" />
-              {parsed
-                ? format(parsed, "MMM d, yyyy")
-                : (placeholder ?? "Pick a date")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={parsed}
-              onSelect={(date) => field.onChange(date?.toISOString() ?? "")}
-              disabled={(date) => {
-                if (minDate)
-                  return (
-                    date < new Date(new Date(minDate).setHours(0, 0, 0, 0))
-                  );
-                return false;
-              }}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-      );
-    }}
-  />
-);
-
-// ─── Shared bits ──────────────────────────────────────────────────────────────
-
-type FormRowProps = {
-  label: string;
-  htmlFor: string;
-  error?: string;
-  children: React.ReactNode;
-};
-
-const FormRow = ({ label, htmlFor, error, children }: FormRowProps) => (
-  <div className="flex flex-col gap-1.5">
-    <Label
-      htmlFor={htmlFor}
-      className="text-gray-500 text-xs font-semibold font-text uppercase"
-    >
-      {label}
-    </Label>
-    {children}
-    {error && (
-      <span className="text-red-500 text-xs font-normal font-text">
-        {error}
-      </span>
-    )}
-  </div>
-);
-
-const inputCn = (hasError: boolean) =>
-  cn(
-    "rounded-xs border-[#E5E7EB] focus-visible:ring-blue-700 font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF] w-full",
-    hasError && "border-red-500 focus-visible:ring-red-500",
-  );

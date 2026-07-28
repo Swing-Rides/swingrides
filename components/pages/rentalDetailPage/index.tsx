@@ -10,7 +10,7 @@ import { TripStatus } from "../profilePages/types";
 import { CircleCheck, CircleX, Clock } from "lucide-react";
 import RightContent from "./rightContent";
 import { ManageBookingCardProps } from "./types";
-import { getTripDuration } from "../profilePages/utils";
+// import { getTripDuration } from "../profilePages/utils";
 import { useGetProfileQuery } from "@/app/store/services/renterApi";
 
 type BreadcrumbProps = { rentId: string }
@@ -18,7 +18,10 @@ type BreadcrumbProps = { rentId: string }
 type TripSummaryCardProps = {
   pickUpDate: string;
   returnDate: string;
+  pickupTime?: string;
+  returnTime?: string;
   pickUpLocation: string;
+  tripDurationDays?: string;
   totalPaid: string;
   tripCost: string;
   price: string;
@@ -58,7 +61,10 @@ export default function RentalDetailPage({
   status,
   pickUpDate,
   returnDate,
+  pickupTime,
+  returnTime,
   pickUpLocation,
+  tripDurationDays,
   price,
   totalPaid,
   tripCost,
@@ -115,7 +121,10 @@ export default function RentalDetailPage({
           <LeftContent
             pickUpDate={pickUpDate}
             returnDate={returnDate}
+            // pickupTime={pickupTime}
+            // returnTime={returnTime}
             pickUpLocation={pickUpLocation}
+            tripDurationDays={tripDurationDays}
             price={price}
             totalPaid={totalPaid}
             tripCost={tripCost}
@@ -196,7 +205,10 @@ const LeftContent = memo(
   ({
     pickUpDate,
     returnDate,
+    pickupTime,
+    returnTime,
     pickUpLocation,
+    tripDurationDays,
     price,
     totalPaid,
     tripCost,
@@ -226,7 +238,10 @@ const LeftContent = memo(
           <TripSummaryCard
             pickUpDate={pickUpDate}
             returnDate={returnDate}
+            pickupTime={pickupTime}
+            returnTime={returnTime}
             pickUpLocation={pickUpLocation}
+            tripDurationDays={tripDurationDays}
             price={price}
             totalPaid={totalPaid}
             tripCost={tripCost}
@@ -267,14 +282,17 @@ const TripSummaryCard = memo(
   ({
     pickUpDate,
     returnDate,
+    pickupTime,
+    returnTime,
     pickUpLocation,
-    price,
-    features,
+    tripDurationDays,
+    // price,
+    // features,
     totalPaid,
-    tripCost,
+    // tripCost,
   }: TripSummaryCardProps) => {
-    const tripDuration = getTripDuration(pickUpDate, returnDate);
-    const displayPrice = price;
+    // const tripDuration = getTripDuration(pickUpDate, returnDate);
+    // const displayPrice = price;
 
     const tripDetails: {
       id: number;
@@ -293,28 +311,36 @@ const TripSummaryCard = memo(
       },
       {
         id: 3,
+        title: "Pickup Time",
+        content: pickupTime as string,
+      },
+      {
+        id: 4,
+        title: "Return Time",
+        content: returnTime as string,
+      },
+      {
+        id: 5,
         title: "Pickup Location",
         content: pickUpLocation,
       },
       {
-        id: 4,
+        id: 6,
         title: "Duration",
-        content: tripDuration,
+        content: tripDurationDays as string,
       },
     ];
 
     return (
-      <div className="flex flex-col gap-4.25 p-4 md:p-6 rounded-[10px] border border-gray-200">
-        <div className="">
-          <h3 className="text-[#0B0B0B] text-base font-semibold font-text leading-6">
-            Trip Summary
-          </h3>
-        </div>
+      <div className="flex flex-col gap-4.25 p-4 md:p-6 rounded-[10px] bg-white border border-gray-200">
+        <h3 className="text-neutral-950 text-base font-semibold font-text leading-6">
+          Trip Summary
+        </h3>
 
-        <div className="grid grid-cols-2 gap-3 pb-6.25 border-b border-b-[#E5E7EB]">
+        <div className="grid grid-cols-2 gap-3 pb-6.25 border-b border-b-gray-200">
           {tripDetails.map((item) => (
-            <div key={item.id} className="flex flex-col gap-2 p-4 bg-[#F8F9FB]">
-              <h4 className="text-[#6B7280] text-xs font-normal font-text uppercase leading-4">
+            <div key={item.id} className="flex flex-col gap-2 p-4 bg-gray-100 rounded-xs">
+              <h4 className="text-zinc-500 text-xs font-normal font-text uppercase leading-4">
                 {item.title}
               </h4>
               <span className="text-[#0B0B0B] text-base font-semibold font-text leading-6">
@@ -324,7 +350,7 @@ const TripSummaryCard = memo(
           ))}
         </div>
 
-        <div className="flex flex-col gap-3 pb-6.25 border-b border-b-[#E5E7EB]">
+        {/* <div className="flex flex-col gap-3 pb-6.25 border-b border-b-[#E5E7EB]">
           <div className="flex justify-between gap-4">
             <div>
               <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
@@ -347,19 +373,7 @@ const TripSummaryCard = memo(
               </span>
             </div>
           </div>
-          <div className="flex justify-between gap-4">
-            <div>
-              <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
-                Fuel & Extras
-              </span>
-            </div>
-            <div>
-              <span className="text-[#F59E0B] text-sm font-normal font-text text-right leading-5">
-                Charged separately
-              </span>
-            </div>
-          </div>
-        </div>
+        </div> */}
 
         <div className="flex justify-between gap-4">
           <h4 className="text-neutral-950 text-base font-bold font-text leading-6">
@@ -371,7 +385,7 @@ const TripSummaryCard = memo(
           </span>
         </div>
 
-        <div className="flex gap-2 items-center flex-wrap">
+        {/* <div className="flex gap-2 items-center flex-wrap">
           {features.map((item, index) => (
             <Badge
               key={index}
@@ -380,7 +394,7 @@ const TripSummaryCard = memo(
               {item}
             </Badge>
           ))}
-        </div>
+        </div> */}
       </div>
     );
   },
@@ -421,16 +435,16 @@ const VechicleCard = memo(
                 {carName}
               </h4>
               <div className="flex gap-1.5 items-center text-[#333333] text-sm font-normal font-text leading-5">
-                <span className="">{carType}</span>
+                <span className="uppercase">{carType}</span>
                 <span>·</span>
-                <span>{transmission}</span>
+                <span className="capitalize">{transmission}</span>
                 <span>·</span>
-                <span>{seats}</span>
+                <span>{seats} Seats</span>
                 <span>·</span>
                 <span>{year}</span>
               </div>
               <div>
-                <Badge className="bg-[#0891B21A] text-[#0891B2] py-1 px-2">
+                <Badge className="bg-cyan-100 text-cyan-500 py-1 px-2">
                   {plateNumber}
                 </Badge>
               </div>

@@ -76,7 +76,7 @@ export default function GuestCheckInForm({
       type: "image",
       label: "Pick Up Condition Photos",
       description:
-        "Take clear photos of the vehicle before driving the vehicle.",
+        "Take clear photos of the vehicle before driving the vehicle. Make sure to include pictures of the mileage and fuel level at pickup",
       accept: "image/*",
       capture: "environment",
       multiple: true,
@@ -143,9 +143,10 @@ export default function GuestCheckInForm({
       name: "notes",
       type: "textarea",
       label: "Additional Notes (Optional)",
-      description: "Any notes about the vehicle condition on return...",
+      description: "Any notes about the vehicle condition.",
+      height: 100,
       rows: 8,
-      validation: validators.maxLength(1000, "Notes"),
+      validation: validators.maxLength(500, "Notes"),
     },
     {
       name: "confirmed",

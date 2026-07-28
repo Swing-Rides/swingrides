@@ -622,6 +622,9 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
                   <Image
                     src={preview!}
                     alt={file.name}
+                    title={file.name}
+                    width={250}
+                    height={250}
                     className="w-full aspect-square object-cover"
                   />
                 ) : (
