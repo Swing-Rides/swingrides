@@ -637,19 +637,25 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
 
   const icon = field.uploadIcon ?? defaultIcon;
 
-  const removeFile = (index: number) => {
+  // Two files are treated as "the same" if name, size and lastModified all match —
+  // avoids accidental duplicates if a user reselects the same file twice.
+  const isSameFile = (a: File, b: File) =>
+    a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
+
+  const syncInputFiles = (updated: File[]) => {
     if (!inputRef.current) return;
-
-    const updated = files.filter((_, i) => i !== index);
-
-    setFiles(updated);
 
     const dt = new DataTransfer();
     updated.forEach((file) => dt.items.add(file));
-
     inputRef.current.files = dt.files;
 
     rest.onChange({ target: inputRef.current } as unknown as Event);
+  };
+
+  const removeFile = (index: number) => {
+    const updated = files.filter((_, i) => i !== index);
+    setFiles(updated);
+    syncInputFiles(updated);
   };
 
   return (
@@ -697,6 +703,9 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
           id={field.name}
           type="file"
           accept={field.accept}
+          // Only forward `capture` if the field explicitly opts into camera-only capture.
+          // Leaving it unset lets mobile browsers show their native chooser
+          // (camera OR photo library) instead of jumping straight to the camera.
           capture={field.capture}
           multiple={field.multiple}
           disabled={field.disabled}
@@ -707,26 +716,26 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
             inputRef.current = e;
           }}
           onChange={(e) => {
-            const selected = Array.from(e.target.files ?? []);
+            const newlySelected = Array.from(e.target.files ?? []);
 
-            const limited = field.maxFiles
-              ? selected.slice(0, field.maxFiles)
-              : selected;
+            // Merge with whatever was already picked, rather than replacing it.
+            // For single-file fields (multiple=false) the new pick still replaces,
+            // since there's only ever one slot.
+            let combined = field.multiple
+              ? [
+                ...files,
+                ...newlySelected.filter(
+                  (nf) => !files.some((existing) => isSameFile(existing, nf))
+                ),
+              ]
+              : newlySelected;
 
-            setFiles(limited);
-
-            const dt = new DataTransfer();
-            limited.forEach((file) => dt.items.add(file));
-
-            if (inputRef.current) {
-              inputRef.current.files = dt.files;
+            if (field.maxFiles) {
+              combined = combined.slice(0, field.maxFiles);
             }
 
-            if (inputRef.current) {
-              rest.onChange({ target: inputRef.current } as unknown as Event);
-            } else {
-              rest.onChange(e);
-            }
+            setFiles(combined);
+            syncInputFiles(combined);
           }}
         />
       </label>
@@ -739,7 +748,7 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
 
             return (
               <div
-                key={`${file.name}-${index}`}
+                key={`${file.name}-${file.lastModified}-${index}`}
                 className="relative rounded-lg border border-[#E5E7EB] overflow-hidden bg-white"
               >
                 {isImage && field.showPreview !== false ? (
