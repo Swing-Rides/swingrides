@@ -417,6 +417,8 @@ export const DateInput = <T extends FieldValues = FieldValues>({ field, control,
 // DateTime picker
 export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, control, error }: ControllerProps<T>) => {
   const minDate = field.minDate ? new Date(field.minDate) : undefined;
+  const [step, setStep] = useState<"date" | "time">("date");
+  const [open, setOpen] = useState(false);
 
   const isDateDisabled = (date: Date) => {
     if (field.disabled) return true;
@@ -440,19 +442,31 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
           ctrl.onChange(date.toISOString());
         };
 
-        const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const [hours, minutes] = e.target.value.split(":").map(Number);
+        // Derive current hour/minute/period from stored value
+        const hour24 = parsed ? parsed.getHours() : 12;
+        const period: "AM" | "PM" = hour24 >= 12 ? "PM" : "AM";
+        const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+        const minute = parsed ? parsed.getMinutes() : 0;
+
+        const applyTime = (h12: number, m: number, p: "AM" | "PM") => {
           const base = ctrl.value ? new Date(ctrl.value) : new Date();
-          base.setHours(hours, minutes);
+          let h24 = h12 % 12;
+          if (p === "PM") h24 += 12;
+          base.setHours(h24, m);
           ctrl.onChange(base.toISOString());
         };
 
-        const timeValue = parsed
-          ? `${String(parsed.getHours()).padStart(2, "0")}:${String(parsed.getMinutes()).padStart(2, "0")}`
-          : "";
+        const hourOptions = Array.from({ length: 12 }, (_, i) => i + 1);
+        const minuteOptions = Array.from({ length: 59 }, (_, i) => i + 1);
 
         return (
-          <Popover>
+          <Popover
+            open={open}
+            onOpenChange={(o) => {
+              setOpen(o);
+              if (o) setStep("date");
+            }}
+          >
             <PopoverTrigger asChild>
               <Button
                 id={field.name}
@@ -470,25 +484,135 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
                   : (field.placeholder ?? "Pick date & time")}
               </Button>
             </PopoverTrigger>
+
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={parsed}
-                onSelect={handleDateChange}
-                disabled={isDateDisabled}
-                initialFocus
-              />
-              <div className="border-t border-[#E5E7EB] p-3 flex flex-col gap-1.5">
-                <label className="text-[#6B7280] text-xs font-semibold font-text uppercase tracking-wide">
-                  Time
-                </label>
-                <input
-                  type="time"
-                  value={timeValue}
-                  onChange={handleTimeChange}
-                  className="w-full border border-[#E5E7EB] rounded-md px-3 py-2 text-sm font-text text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent"
-                />
-              </div>
+              {step === "date" ? (
+                <>
+                  <Calendar
+                    mode="single"
+                    captionLayout="dropdown"
+                    fromYear={1950}
+                    toYear={new Date().getFullYear() + 20}
+                    selected={parsed}
+                    onSelect={handleDateChange}
+                    disabled={isDateDisabled}
+                    initialFocus
+                  />
+                  <div className="border-t border-[#E5E7EB] p-3">
+                    <Button
+                      type="button"
+                      disabled={!ctrl.value}
+                      onClick={() => setStep("time")}
+                      className="w-full bg-blue-700 hover:bg-blue-950 text-white text-sm font-medium font-text rounded-xs cursor-pointer transition-colors duration-300 disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      Next: pick a time
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 flex flex-col gap-3 w-65">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-800 text-xs font-semibold font-text uppercase">
+                      Pick a time
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setStep("date")}
+                      className="text-xs font-text text-blue-700 hover:underline cursor-pointer"
+                    >
+                      Back to date
+                    </button>
+                  </div>
+
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-end gap-2">
+                      {/* Hour */}
+                      <div className="flex flex-col gap-1 flex-1">
+                        <label className="text-[10px] text-[#9CA3AF] font-text uppercase">
+                          Hour
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={12}
+                          list={`${field.name}-hour-list`}
+                          value={hour12}
+                          onChange={(e) => {
+                            const raw = parseInt(e.target.value, 10);
+                            if (Number.isNaN(raw)) return;
+                            applyTime(Math.min(12, Math.max(1, raw)), minute, period);
+                          }}
+                          className="w-full border border-[#E5E7EB] rounded-md px-2 py-2 text-sm font-text text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent"
+                        />
+                        <datalist id={`${field.name}-hour-list`}>
+                          {hourOptions.map((h) => (
+                            <option key={h} value={h} />
+                          ))}
+                        </datalist>
+                      </div>
+
+                      <span className="text-lg font-text text-[#6B7280] pb-2">:</span>
+
+                      {/* Minute */}
+                      <div className="flex flex-col gap-1 flex-1">
+                        <label className="text-[10px] text-[#9CA3AF] font-text uppercase">
+                          Minute
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={59}
+                          list={`${field.name}-minute-list`}
+                          value={minute}
+                          onChange={(e) => {
+                            const raw = parseInt(e.target.value, 10);
+                            if (Number.isNaN(raw)) return;
+                            applyTime(hour12, Math.min(59, Math.max(1, raw)), period);
+                          }}
+                          className="w-full border border-[#E5E7EB] rounded-md px-2 py-2 text-sm font-text text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent"
+                        />
+                        <datalist id={`${field.name}-minute-list`}>
+                          {minuteOptions.map((m) => (
+                            <option key={m} value={m} />
+                          ))}
+                        </datalist>
+                      </div>
+                    </div>
+
+                    {/* AM / PM toggle */}
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-[10px] text-[#9CA3AF] font-text uppercase">
+                        &nbsp;
+                      </span>
+                      <div className="flex justify-center border border-[#E5E7EB] rounded-md overflow-hidden">
+                        {(["AM", "PM"] as const).map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => applyTime(hour12, minute, p)}
+                            className={cn(
+                              "px-3 py-2 text-xs font-semibold font-text cursor-pointer transition-colors",
+                              period === p
+                                ? "bg-blue-700 text-white"
+                                : "bg-white text-[#6B7280] hover:bg-[#F9FAFB]",
+                            )}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="w-full bg-blue-700 hover:bg-blue-950 text-white text-sm font-medium font-text rounded-xs cursor-pointer transition-colors duration-300 mt-2"
+                  >
+                    Done
+                  </Button>
+                </div>
+              )}
             </PopoverContent>
           </Popover>
         );
