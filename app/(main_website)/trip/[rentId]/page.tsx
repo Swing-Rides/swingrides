@@ -47,7 +47,10 @@ export default function SingleTripPage() {
         status={rentalDetails.status}
         pickUpDate={rentalDetails.pickUpDate}
         returnDate={rentalDetails.returnDate}
+        pickupTime={rentalDetails.pickupTime}
+        returnTime={rentalDetails.returnTime}
         pickUpLocation={rentalDetails.pickupLocation}
+        tripDurationDays={rentalDetails.tripDurationDays}
         price={rentalDetails.price}
         totalPaid={rentalDetails.totalPaid}
         tripCost={rentalDetails.tripCost}
@@ -68,7 +71,7 @@ export default function SingleTripPage() {
         verificationDriverLicenseImageSrc={checkIn?.driverLicensePhotoUrl}
         verificationSelfieImageSrc={checkIn?.selfiePhotoUrl}
         vehicleConditionImages={checkIn?.vehicleConditionPhotoUrls ?? []}
-        currentMileage={checkIn?.mileage}
+        currentMileage={rentalDetails.car.mileage || checkIn?.mileage}
         fuelLevelAtPickup={checkIn?.fuelLevel}
         tripId={rentalDetails.id}
       />

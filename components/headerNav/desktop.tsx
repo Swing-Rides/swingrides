@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Logo from './logo'
 import { navLinks } from '@/constants/header'
 import { PriBtn } from '../buttons'
-import { UserCircle, LogOut } from 'lucide-react'
+import { UserCircle } from 'lucide-react'
 import { useGetProfileQuery } from "@/app/store/services/renterApi"
 import { Skeleton } from '../ui/skeleton'
 
