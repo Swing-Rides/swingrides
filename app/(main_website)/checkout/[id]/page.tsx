@@ -214,6 +214,8 @@ export default function CheckoutPage() {
           vehicleId,
           pickupDate: draft.pickupDate,
           returnDate: draft.returnDate,
+          hostProvidingCoverage: draft.hostProvidingCoverage,
+          insuranceFeePerDay: vehicleData?.data.insuranceDaily ?? 0,
           metadata: {
             pickupLocation: draft.pickupLocation,
           },
@@ -294,10 +296,10 @@ export default function CheckoutPage() {
   const summary = useMemo(() => {
     if (!draft || !vehicle) return null;
 
-    const subtotal = draft.subtotal ?? pricingSummary?.subtotal ?? 0;
-    const tax = draft.tax ?? pricingSummary?.tax ?? 0;
-    const taxRate = draft.taxRate ?? pricingSummary?.taxRate ?? 0.0;
-    const totalAmount = draft.totalAmount ?? pricingSummary?.totalAmount ?? 0;
+    const subtotal = pricingSummary?.subtotal ?? draft.subtotal ?? 0;
+    const tax = pricingSummary?.tax ?? draft.tax ?? 0;
+    const taxRate = pricingSummary?.taxRate ?? draft.taxRate ?? 0.0;
+    const totalAmount = pricingSummary?.totalAmount ?? draft.totalAmount ?? 0;
 
     const totalInsuranceFee = computeInsuranceFee(
       draft.totalDays || 1,

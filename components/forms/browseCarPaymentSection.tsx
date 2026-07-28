@@ -19,12 +19,15 @@ import {
   DateTimeInput,
   CheckboxInput,
   LoadingSpinner,
+  SelectInput,
 } from "./MainForm";
 import { validators } from "@/components/forms/form.validators";
 import {
   FormRow,
   FieldError,
 } from "../helpers/browseCarPaymentSection.helpers";
+import { readDraftFromStorage } from "@/lib/checkout-helpers";
+import { US_STATES } from "@/constants/addressState";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,12 +84,14 @@ export const PaymentSection = memo(
     city,
     state,
     zipCode,
+    vehicleId,
     onSubmit,
     hostInsuranceProvider,
     hostInsurancePolicyNumber,
     hostInsuranceExpiry,
     taxRate,
   }: PaymentSectionProps) => {
+
     const today = useMemo(() => {
       const d = new Date();
       d.setHours(0, 0, 0, 0);
@@ -101,18 +106,26 @@ export const PaymentSection = memo(
       formState: { errors, isSubmitting },
     } = useForm<PaymentFormValues>({
       mode: "onTouched",
-      defaultValues: {
-        pickupDate: "",
-        returnDate: "",
-        street: street ?? "",
-        city: city ?? "",
-        state: state ?? "",
-        zipCode: zipCode ?? "",
-        insuranceProvider: "",
-        policyNumber: "",
-        insuranceExpiry: "",
-        hostProvidingCoverage: true,
-        agreedToTerms: true,
+      defaultValues: async () => {
+        const savedDraft = vehicleId ? readDraftFromStorage(vehicleId) : null;
+        const usingHostCoverage = savedDraft?.hostProvidingCoverage ?? true;
+
+        return {
+          pickupDate: savedDraft?.pickupDate ?? "",
+          returnDate: savedDraft?.returnDate ?? "",
+          street: savedDraft?.streetAddress ?? street ?? "",
+          city: savedDraft?.city ?? city ?? "",
+          state: savedDraft?.state ?? state ?? "",
+          zipCode: savedDraft?.postalCode ?? zipCode ?? "",
+          // Only restore the user's own insurance details if that's what they
+          // were actually using — otherwise leave them blank so hasInsuranceInput
+          // stays false and the host-coverage checkbox doesn't get contradicted.
+          insuranceProvider: usingHostCoverage ? "" : (savedDraft?.insuranceProvider ?? ""),
+          policyNumber: usingHostCoverage ? "" : (savedDraft?.policyNumber ?? ""),
+          insuranceExpiry: usingHostCoverage ? "" : (savedDraft?.insuranceExpiry ?? ""),
+          hostProvidingCoverage: usingHostCoverage,
+          agreedToTerms: true,
+        };
       },
     });
 
@@ -338,14 +351,15 @@ export const PaymentSection = memo(
                   htmlFor="state"
                   error={errors.state?.message}
                 >
-                  <TextInput
+                  <SelectInput
                     field={{
                       name: "state",
-                      type: "text",
-                      placeholder: "Address state",
+                      type: "select",
+                      placeholder: "Select state",
+                      options: US_STATES,
                       validation: validators.required("state"),
                     }}
-                    register={register}
+                    control={control}
                     error={errors.state?.message}
                   />
                 </FormRow>
@@ -389,10 +403,10 @@ export const PaymentSection = memo(
             <div className="flex flex-col gap-2 pb-6.25 border-b border-b-[#E5E7EB]">
               {pricing.lineItems.map((item, i) => (
                 <div key={i} className="flex justify-between gap-4">
-                  <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
+                  <span className="text-zinc-500 text-sm font-normal font-text leading-5">
                     {item.label}
                   </span>
-                  <span className="text-[#1F2937] text-sm font-medium font-text">
+                  <span className="text-gray-700 text-sm font-medium font-text">
                     {formatCurrency(item.total)}
                   </span>
                 </div>
@@ -401,11 +415,11 @@ export const PaymentSection = memo(
               {/* Insurance fee — always per-day, only shown when charged */}
               {insuranceFee > 0 && (
                 <div className="flex justify-between gap-4">
-                  <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
+                  <span className="text-zinc-500 text-sm font-normal font-text leading-5">
                     Insurance · {pluralize(days, "day")} @{" "}
                     {formatCurrency(insuranceFeePerDay)}/day
                   </span>
-                  <span className="text-[#1F2937] text-sm font-medium font-text">
+                  <span className="text-gray-700 text-sm font-medium font-text">
                     {formatCurrency(insuranceFee)}
                   </span>
                 </div>
@@ -523,9 +537,19 @@ export const PaymentSection = memo(
                   validation: {
                     onChange: handleInsuranceChange,
                     validate: (value: string) => {
-                      // If provider is filled, policy number becomes required
                       if (insuranceProvider && !value) {
                         return "Policy number is required when provider is entered";
+                      }
+                      // Block submitting the host's own policy number as if it were
+                      // the renter's — this is only meaningful once they've actually
+                      // opted out of host coverage and are claiming their own policy.
+                      if (
+                        value &&
+                        hostInsurancePolicyNumber &&
+                        value.trim().toLowerCase() ===
+                        hostInsurancePolicyNumber.trim().toLowerCase()
+                      ) {
+                        return "This matches the host's policy — enter your own insurance details";
                       }
                       return true;
                     },
@@ -577,7 +601,6 @@ export const PaymentSection = memo(
               field={{
                 name: "hostProvidingCoverage",
                 type: "checkbox",
-                disabled: hasInsuranceInput,
                 label: (
                   <>
                     Host is providing coverage
@@ -593,10 +616,13 @@ export const PaymentSection = memo(
               control={control}
               checked={effectiveHostCoverage}
               onCheckedChange={(checked) => {
-                if (hasInsuranceInput) return;
-                setValue("hostProvidingCoverage", checked, {
-                  shouldValidate: false,
-                });
+                if (checked) {
+                  // Re-selecting host coverage clears the renter's own insurance details
+                  setValue("insuranceProvider", "", { shouldValidate: false });
+                  setValue("policyNumber", "", { shouldValidate: false });
+                  setValue("insuranceExpiry", "", { shouldValidate: false });
+                }
+                setValue("hostProvidingCoverage", checked, { shouldValidate: false });
               }}
             />
 

@@ -13,12 +13,7 @@ import { ModifyFormProps } from "../modifyTripModal/types";
 import { RentalRate } from "../pages/profilePages/types";
 import { useUpdateBookingMutation } from "@/app/store/services/renterApi";
 import { toast } from "sonner";
-
-const formatCurrency = (amount: number) =>
-  amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
-
-const pluralize = (n: number, word: string) =>
-  `${n} ${word}${n !== 1 ? "s" : ""}`;
+import { formatCurrency, pluralize } from "@/lib/pricing";
 
 /**
  * Mixed-unit billing — same logic used across the project:
@@ -72,8 +67,7 @@ export default function ModifyBookingForm({
 }: ModifyFormProps) {
   const [updateBooking, { isLoading }] = useUpdateBookingMutation();
 
-  // Shown after a submission attempt — MainForm owns its own useForm
-  // instance internally, so we can't watch fields live as the user types.
+  // Shown after a submission attempt.
   // We compute + display the summary once the user has submitted.
   const [summary, setSummary] = useState<{
     days: number;
