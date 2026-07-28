@@ -77,6 +77,8 @@ export default function CheckoutPage() {
     refetch: refetchVehicle,
   } = useGetPublicVehicleByIdQuery({ id: vehicleId }, { skip: !vehicleId });
 
+  console.log(vehicleData);
+
   const {
     data: renterProfile,
     isLoading: isProfileLoading,
@@ -224,9 +226,7 @@ export default function CheckoutPage() {
           subtotal: response.data.subtotal,
           tax: response.data.tax,
           taxRate: response.data.taxRate,
-          totalAmount:
-            response.data.totalAmount +
-            Number(vehicleData?.data.insuranceDaily),
+          totalAmount: response.data.totalAmount,
         });
       } catch (error) {
         if (!isActive) return;
@@ -296,7 +296,7 @@ export default function CheckoutPage() {
 
     const subtotal = draft.subtotal ?? pricingSummary?.subtotal ?? 0;
     const tax = draft.tax ?? pricingSummary?.tax ?? 0;
-    const taxRate = draft.taxRate ?? pricingSummary?.taxRate ?? 0.00;
+    const taxRate = draft.taxRate ?? pricingSummary?.taxRate ?? 0.0;
     const totalAmount = draft.totalAmount ?? pricingSummary?.totalAmount ?? 0;
 
     const totalInsuranceFee = computeInsuranceFee(

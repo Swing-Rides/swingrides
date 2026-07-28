@@ -84,6 +84,7 @@ export default function CarPage({
       insuranceProvider={data.data.insuranceProvider}
       insuranceFee={data.data.insuranceDaily}
       policyNumber={data.data.policyNumber}
+      taxRate={data.data.taxRate}
     />
   );
 }

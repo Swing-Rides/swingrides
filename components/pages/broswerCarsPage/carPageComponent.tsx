@@ -46,6 +46,7 @@ export default function CarPageComponent({
   insuranceExpiration,
   insuranceProvider,
   policyNumber,
+  taxRate
 }: CarPageComponentProp) {
   return (
     <>
@@ -76,6 +77,7 @@ export default function CarPageComponent({
             insuranceExpiration={insuranceExpiration}
             insuranceProvider={insuranceProvider}
             policyNumber={policyNumber}
+            taxRate={taxRate}
           />
         </div>
       </section>
@@ -84,7 +86,6 @@ export default function CarPageComponent({
 }
 
 const NotificationBar = memo(({ carName }: { carName: string }) => {
-
   const handleShare = () => {
     shareContent({
       title: carName,
@@ -170,8 +171,9 @@ type RightContentProps = {
   insuranceFeePerDay?: number;
   insuranceExpiration: Date;
   insuranceProvider: string;
-  policyNumber: string
-}
+  policyNumber: string;
+  taxRate: number;
+};
 
 const RightContent = memo(
   ({
@@ -185,6 +187,7 @@ const RightContent = memo(
     insuranceExpiration,
     insuranceProvider,
     policyNumber,
+    taxRate,
   }: RightContentProps) => {
     const router = useRouter();
 
@@ -230,7 +233,7 @@ const RightContent = memo(
           getPendingCheckoutStorageKey(vehicleId),
           JSON.stringify(pendingCheckout),
         );
-        toast.success('Processing checkout')
+        toast.success("Processing checkout");
         router.push(`/checkout/${vehicleId}`);
       } catch (error) {
         toast.error("Failed to start checkout");
@@ -252,6 +255,7 @@ const RightContent = memo(
           hostInsuranceProvider={insuranceProvider}
           hostInsurancePolicyNumber={policyNumber}
           hostInsuranceExpiry={insuranceExpiration}
+          taxRate={taxRate}
         />
       </div>
     );
@@ -274,7 +278,9 @@ const CarDetailCard = memo(
             <h3 className="text-neutral-950 text-2xl font-bold font-text leading-8">
               {carName}
             </h3>
-            <div className={`px-3 py-0.5 capitalize text-xs font-medium font-text leading-5 rounded-full ${status === "available" ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'}`}>
+            <div
+              className={`px-3 py-0.5 capitalize text-xs font-medium font-text leading-5 rounded-full ${status === "available" ? "text-green-500 bg-green-100" : "text-red-500 bg-red-100"}`}
+            >
               <span>{status}</span>
             </div>
           </div>
@@ -298,7 +304,9 @@ const CarDetailCard = memo(
         <div className="flex flex-wrap gap-3">
           <Badge className="flex gap-2 py-3 px-4 bg-gray-100 rounded-[10px] capitalize">
             <Car className="size-4 aspect-square text-gray-500" />
-            <span className="flex text-gray-500">{specifications.bodyType}</span>
+            <span className="flex text-gray-500">
+              {specifications.bodyType}
+            </span>
           </Badge>
           <Badge className="flex gap-2 py-3 px-4 bg-gray-100 rounded-[10px]">
             <Settings className="size-4 aspect-square text-gray-500" />
@@ -308,7 +316,9 @@ const CarDetailCard = memo(
           </Badge>
           <Badge className="flex gap-2 py-3 px-4 bg-gray-100 rounded-[10px]">
             <Users className="size-4 aspect-square text-gray-500" />
-            <span className="flex text-gray-500">{specifications.seats} seats</span>
+            <span className="flex text-gray-500">
+              {specifications.seats} seats
+            </span>
           </Badge>
           <Badge className="flex gap-2 py-3 px-4 bg-gray-100 rounded-[10px]">
             <Calendar className="size-4 text-gray-500" />
