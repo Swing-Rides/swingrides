@@ -214,6 +214,7 @@ export default function CheckoutPage() {
           vehicleId,
           pickupDate: draft.pickupDate,
           returnDate: draft.returnDate,
+          hostProvidingCoverage: draft.hostProvidingCoverage,
           metadata: {
             pickupLocation: draft.pickupLocation,
           },

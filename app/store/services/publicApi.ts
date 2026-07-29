@@ -197,6 +197,7 @@ export const publicApi = createApi({
         pickupDate: string;
         returnDate: string;
         currency?: string;
+        hostProvidingCoverage?: boolean;
         metadata?: Record<string, string>;
       }
     >({
