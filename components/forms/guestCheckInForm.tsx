@@ -78,7 +78,6 @@ export default function GuestCheckInForm({
       description:
         "Take clear photos of the vehicle before driving the vehicle. Make sure to include pictures of the mileage and fuel level at pickup",
       accept: "image/*",
-      capture: "environment",
       multiple: true,
       maxFiles: 8,
       showPreview: true,
@@ -95,7 +94,6 @@ export default function GuestCheckInForm({
       label: `Driver's License Photo`,
       description: `You will need to upload your driver's license photo to confirm this booking.`,
       accept: "image/*",
-      capture: "environment",
       multiple: false,
       showPreview: true,
       validation: validators.file({
@@ -112,7 +110,6 @@ export default function GuestCheckInForm({
       description:
         "You will need to upload your selfie holding your license to confirm this booking.",
       accept: "image/*",
-      capture: "environment",
       multiple: false,
       showPreview: true,
       validation: validators.file({

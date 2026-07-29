@@ -23,10 +23,11 @@ import {
 import { Calendar, Car, Settings, Star, Users } from "lucide-react";
 import GallerySlider from "@/components/slider/gallerySlider";
 import { shareContent } from "./util";
+import { writeDraftToStorage } from "@/lib/checkout-helpers";
 import { toast } from "sonner";
 
-const getPendingCheckoutStorageKey = (vehicleId: string) =>
-  `swingrides:pending-checkout:${vehicleId}`;
+// const getPendingCheckoutStorageKey = (vehicleId: string) =>
+//   `swingrides:pending-checkout:${vehicleId}`;
 
 export default function CarPageComponent({
   carName,
@@ -209,10 +210,11 @@ const RightContent = memo(
           vehicleId,
           pickupDate: values.pickupDate,
           returnDate: values.returnDate,
-          street: values.street,
+          streetAddress: values.street,
           city: values.city,
           state: values.state,
-          zipCode: values.zipCode,
+          postalCode: values.zipCode,
+          pickupLocation: `${values.street}, ${values.city}, ${values.state}, ${values.zipCode}`,
           insuranceProvider: values.insuranceProvider,
           policyNumber: values.policyNumber,
           insuranceExpiry: values.insuranceExpiry,
@@ -227,12 +229,12 @@ const RightContent = memo(
           returnTime,
         };
 
-        // console.log("first====", pendingCheckout)
+        writeDraftToStorage(vehicleId, pendingCheckout);
 
-        window.sessionStorage.setItem(
-          getPendingCheckoutStorageKey(vehicleId),
-          JSON.stringify(pendingCheckout),
-        );
+        // window.sessionStorage.setItem(
+        //   getPendingCheckoutStorageKey(vehicleId),
+        //   JSON.stringify(pendingCheckout),
+        // );
         toast.success("Processing checkout");
         router.push(`/checkout/${vehicleId}`);
       } catch (error) {
