@@ -103,7 +103,6 @@ export default function EditFleetComponents({
         priceMonthly: vehicle.monthlyPrice,
         priceWeekly: vehicle.weeklyPrice,
         seats: vehicle.seats,
-        status: normalizeStatus(vehicle.status),
         transmission: normalizeTransmission(vehicle.transmission),
         vehicleName: vehicle.name,
         vehicleRegistrationUrl: vehicle.vehicleRegistrationUrl,
@@ -142,12 +141,6 @@ export default function EditFleetComponents({
       insurancePolicyNumber: values.insurancePolicyNumber,
       insuranceExpiration: values.insuranceExpiration || undefined,
       vehicleRegistrationUrl: values.vehicleRegistrationUrl,
-      status:
-        values.status.toLowerCase() === "available"
-          ? "active"
-            : values.status.toLowerCase() === "maintenance"
-          ? "unavailable"
-            : values.status.toLowerCase(),
       transmission: values.transmission.toLowerCase(),
       vehicleModel: values.model,
       vehicleType: values.vehicleType.toLowerCase(),
@@ -223,8 +216,13 @@ export default function EditFleetComponents({
           form="fleet-form"
           className="flex-1 py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer"
         >
-          {isUpdating ? (<span className="flex items-center gap-2 justify-start">
-            <Spinner /> Saving...</span>) : "Save Changes"}
+          {isUpdating ? (
+            <span className="flex items-center gap-2 justify-start">
+              <Spinner /> Saving...
+            </span>
+          ) : (
+            "Save Changes"
+          )}
         </button>
       </div>
     </div>
