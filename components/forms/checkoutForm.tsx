@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import {
@@ -23,13 +23,19 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import GuestSignUpForm from "./GuestSignUpForm";
+
+// Reuse MainForm's field renderer + config type + shared validators instead of
+// hand-rolling inputs/labels/errors again here. Any UI change to inputs now
+// only needs to happen once, in MainForm.tsx.
+import { FormField } from "@/components/forms/MainForm";
+import { FormFieldConfig } from "@/components/forms/types";
+import { validators } from "@/components/forms/form.validators";
+import { US_STATES } from "@/constants/addressState";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -160,7 +166,8 @@ function CheckoutFormInner({
   const {
     register,
     handleSubmit,
-    // setValue,
+    control,
+    getValues,
     reset,
     formState: { errors },
   } = useForm<CheckoutContact>({
@@ -179,6 +186,76 @@ function CheckoutFormInner({
     reset(user ?? emptyContact);
     onCancel?.();
   };
+
+  // ── Contact field configs — same shape MainForm consumes elsewhere, so any
+  // styling/behavior change to inputs lives in MainForm.tsx, not here.
+  const contactFields: FormFieldConfig[] = useMemo(
+    () => [
+      {
+        name: "firstName",
+        type: "text",
+        label: "First Name",
+        icon: <User className="size-4" />,
+        validation: validators.name("First name"),
+      },
+      {
+        name: "lastName",
+        type: "text",
+        label: "Last Name",
+        icon: <User className="size-4" />,
+        validation: validators.name("Last name"),
+      },
+      {
+        name: "email",
+        type: "email",
+        label: "Email Address",
+        icon: <Mail className="size-4" />,
+        validation: validators.email(),
+      },
+      {
+        name: "phoneNumber",
+        type: "tel",
+        label: "Phone Number",
+        icon: <Phone className="size-4" />,
+        validation: validators.phone(),
+      },
+      {
+        name: "streetAddress",
+        type: "text",
+        label: "Street Address",
+        placeholder: "123 Main St",
+        icon: <MapPin className="size-4" />,
+        validation: validators.required("Street address"),
+      },
+      {
+        name: "city",
+        type: "text",
+        label: "City",
+        icon: <Building2 className="size-4" />,
+        validation: validators.required("City"),
+      },
+      {
+        name: "state",
+        type: "select",
+        options: US_STATES,
+        label: "State",
+        placeholder: "e.g. CA",
+        icon: <MapIcon className="size-4" />,
+        validation: validators.required("State"),
+      },
+      {
+        name: "postalCode",
+        type: "text",
+        label: "Postal Code",
+        icon: <Hash className="w-4 h-4" />,
+        validation: validators.required("Postal code"),
+      },
+    ],
+    [],
+  );
+
+  const getField = (name: string) =>
+    contactFields.find((f) => f.name === name)!;
 
   const onFormSubmit = async (values: CheckoutContact) => {
     if (expired) return;
@@ -213,7 +290,7 @@ function CheckoutFormInner({
       if (error) {
         setStripeError(
           error.message ??
-            "Your payment could not be processed. Please check your card details and try again.",
+          "Your payment could not be processed. Please check your card details and try again.",
         );
         return;
       }
@@ -270,128 +347,68 @@ function CheckoutFormInner({
             {isLoggedIn ? (
               <div className="flex flex-col gap-3 w-full">
                 <div className="grid grid-cols-2 gap-3">
-                  <FormRow
-                    label="First Name"
-                    htmlFor="firstName"
-                    error={errors.firstName?.message}
-                  >
-                    <IconInput
-                      id="firstName"
-                      icon={<User className="w-4 h-4" />}
-                      hasError={!!errors.firstName}
-                      {...register("firstName", {
-                        required: "First name is required",
-                      })}
-                    />
-                  </FormRow>
-                  <FormRow
-                    label="Last Name"
-                    htmlFor="lastName"
-                    error={errors.lastName?.message}
-                  >
-                    <IconInput
-                      id="lastName"
-                      icon={<User className="w-4 h-4" />}
-                      hasError={!!errors.lastName}
-                      {...register("lastName", {
-                        required: "Last name is required",
-                      })}
-                    />
-                  </FormRow>
+                  <FormField
+                    field={getField("firstName")}
+                    register={register}
+                    control={control}
+                    getValues={getValues}
+                    errors={errors}
+                  />
+                  <FormField
+                    field={getField("lastName")}
+                    register={register}
+                    control={control}
+                    getValues={getValues}
+                    errors={errors}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <FormRow
-                    label="Email Address"
-                    htmlFor="email"
-                    error={errors.email?.message}
-                  >
-                    <IconInput
-                      id="email"
-                      type="email"
-                      icon={<Mail className="w-4 h-4" />}
-                      hasError={!!errors.email}
-                      {...register("email", {
-                        required: "Email is required",
-                        pattern: {
-                          value: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,8}$/i,
-                          message: "Enter a valid email address",
-                        },
-                      })}
-                    />
-                  </FormRow>
-                  <FormRow
-                    label="Phone Number"
-                    htmlFor="phoneNumber"
-                    error={errors.phoneNumber?.message}
-                  >
-                    <IconInput
-                      id="phoneNumber"
-                      type="tel"
-                      icon={<Phone className="w-4 h-4" />}
-                      hasError={!!errors.phoneNumber}
-                      {...register("phoneNumber", {
-                        required: "Phone number is required",
-                      })}
-                    />
-                  </FormRow>
+                  <FormField
+                    field={getField("email")}
+                    register={register}
+                    control={control}
+                    getValues={getValues}
+                    errors={errors}
+                  />
+                  <FormField
+                    field={getField("phoneNumber")}
+                    register={register}
+                    control={control}
+                    getValues={getValues}
+                    errors={errors}
+                  />
                 </div>
 
-                <FormRow
-                  label="Street Address"
-                  htmlFor="streetAddress"
-                  error={errors.streetAddress?.message}
-                >
-                  <IconInput
-                    id="streetAddress"
-                    icon={<MapPin className="w-4 h-4" />}
-                    hasError={!!errors.streetAddress}
-                    placeholder="123 Main St"
-                    {...register("streetAddress", {
-                      required: "Street address is required",
-                    })}
-                  />
-                </FormRow>
+                <FormField
+                  field={getField("streetAddress")}
+                  register={register}
+                  control={control}
+                  getValues={getValues}
+                  errors={errors}
+                />
 
                 <div className="grid grid-cols-3 gap-3">
-                  <FormRow
-                    label="City"
-                    htmlFor="city"
-                    error={errors.city?.message}
-                  >
-                    <IconInput
-                      id="city"
-                      icon={<Building2 className="w-4 h-4" />}
-                      hasError={!!errors.city}
-                      {...register("city", { required: "City is required" })}
-                    />
-                  </FormRow>
-                  <FormRow
-                    label="State"
-                    htmlFor="state"
-                    error={errors.state?.message}
-                  >
-                    <IconInput
-                      id="state"
-                      icon={<MapIcon className="w-4 h-4" />}
-                      hasError={!!errors.state}
-                      placeholder="e.g. CA"
-                      {...register("state", { required: "State is required" })}
-                    />
-                  </FormRow>
-                  <FormRow
-                    label="Postal Code"
-                    htmlFor="postalCode"
-                    error={errors.postalCode?.message}
-                  >
-                    <IconInput
-                      id="postalCode"
-                      icon={<Hash className="w-4 h-4" />}
-                      hasError={!!errors.postalCode}
-                      {...register("postalCode", {
-                        required: "Postal code is required",
-                      })}
-                    />
-                  </FormRow>
+                  <FormField
+                    field={getField("city")}
+                    register={register}
+                    control={control}
+                    getValues={getValues}
+                    errors={errors}
+                  />
+                  <FormField
+                    field={getField("state")}
+                    register={register}
+                    control={control}
+                    getValues={getValues}
+                    errors={errors}
+                  />
+                  <FormField
+                    field={getField("postalCode")}
+                    register={register}
+                    control={control}
+                    getValues={getValues}
+                    errors={errors}
+                  />
                 </div>
               </div>
             ) : (
@@ -475,7 +492,7 @@ function CheckoutFormInner({
         </div>
 
         {/* ── Right: order summary ────────────────────────────── */}
-        <div className="order-1 lg:order-2 lg:sticky lg:top-4 p-4 rounded-[10px] border border-gray-200 bg-white flex flex-col gap-5 w-full">
+        <div className="order-1 lg:order-2 lg:sticky lg:top-22 p-4 rounded-[10px] border border-gray-200 bg-white flex flex-col gap-5 w-full">
           <h2 className="text-neutral-950 text-base font-semibold font-text">
             Order Summary
           </h2>
@@ -586,55 +603,7 @@ const CheckoutCountdown = ({
   );
 };
 
-// ─── Shared bits (mirrors newBookingForm conventions) ─────────────────────────
-
-type FormRowProps = {
-  label: string;
-  htmlFor: string;
-  error?: string;
-  children: React.ReactNode;
-};
-
-const FormRow = ({ label, htmlFor, error, children }: FormRowProps) => (
-  <div className="flex flex-col gap-1.5">
-    <Label
-      htmlFor={htmlFor}
-      className="text-gray-500 text-xs font-semibold font-text uppercase"
-    >
-      {label}
-    </Label>
-    {children}
-    {error && (
-      <span className="text-[#EF4444] text-xs font-normal font-text flex items-center gap-1">
-        <AlertTriangle className="w-3 h-3 shrink-0" />
-        {error}
-      </span>
-    )}
-  </div>
-);
-
-const IconInput = ({
-  icon,
-  hasError,
-  className,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & {
-  icon: React.ReactNode;
-  hasError?: boolean;
-}) => (
-  <div className="relative flex items-center">
-    <span className="absolute left-3 text-[#9CA3AF] pointer-events-none">
-      {icon}
-    </span>
-    <Input className={cn(inputCn(!!hasError), "pl-9", className)} {...props} />
-  </div>
-);
-
-const inputCn = (hasError: boolean) =>
-  cn(
-    "rounded-xs border-[#E5E7EB] focus-visible:ring-blue-700 font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF] w-full",
-    hasError && "border-[#EF4444] focus-visible:ring-[#EF4444]",
-  );
+// ─── Order summary row ─────────────────────────────────────────────────────────
 
 const SummaryRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex items-center justify-between gap-3">
