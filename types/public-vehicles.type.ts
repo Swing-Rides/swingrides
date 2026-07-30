@@ -130,6 +130,10 @@ export interface VehicleDetails {
   driverType: string;
   fuelEfficiency: string;
   doors: string;
+  bookingStartDate?: string | Date | null;
+  bookingReturnDate?: string | Date | null;
+  bookingStartTime?: string | null;
+  bookingReturnTime?: string | null;
 }
 
 export interface RenterBookingDetailResponse {
@@ -188,5 +192,5 @@ export interface RenterBookingDetailResponse {
   seats?: number;
   averageRating?: number;
   reviews?: unknown[];
-    mileage: number
+  mileage: number;
 }

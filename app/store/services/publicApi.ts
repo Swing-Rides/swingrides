@@ -5,19 +5,18 @@ import {
   PublicBrowseVehiclesQuery,
   PublicBrowseVehiclesResponse,
   VehicleDetails,
-  RenterBookingDetailResponse
 } from "@/types/public-vehicles.type";
 import { toast } from "sonner";
 
 type AxiosBaseQueryArgs =
   | string
   | {
-    url: string;
-    method?: Method;
-    body?: unknown;
-    data?: unknown;
-    params?: Record<string, string | number | boolean | undefined>;
-  };
+      url: string;
+      method?: Method;
+      body?: unknown;
+      data?: unknown;
+      params?: Record<string, string | number | boolean | undefined>;
+    };
 
 type AxiosBaseQueryError = {
   status?: number;
@@ -38,20 +37,20 @@ const axiosBaseQuery = (): BaseQueryFn<
   AxiosBaseQueryArgs,
   unknown,
   AxiosBaseQueryError
-  > => {
+> => {
   return async (args) => {
     const request =
       typeof args === "string"
         ? { url: args, method: "GET" as Method }
         : {
-          url: args.url,
-          method: args.method ?? "GET",
-          data: args.data ?? args.body,
-          params: args.params,
-        };
+            url: args.url,
+            method: args.method ?? "GET",
+            data: args.data ?? args.body,
+            params: args.params,
+          };
 
     const isMutatingMethod = MUTATING_METHODS.includes(
-      request.method.toUpperCase() as Method
+      request.method.toUpperCase() as Method,
     );
 
     try {
@@ -140,7 +139,9 @@ export const publicApi = createApi({
       { id: string }
     >({
       query: ({ id }) => `/api/public/vehicles/${id}`,
-      providesTags: (_result, _error, { id }) => [{ type: "PublicVehicles", id }],
+      providesTags: (_result, _error, { id }) => [
+        { type: "PublicVehicles", id },
+      ],
     }),
 
     createPublicBooking: builder.mutation<
@@ -207,21 +208,6 @@ export const publicApi = createApi({
         body: payload,
       }),
     }),
-
-    getPublicBookingById: builder.query<
-      {
-        success: boolean;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data: {
-          success: boolean;
-          data: RenterBookingDetailResponse
-        };
-      },
-      { id: string }
-    >({
-      query: ({ id }) => `/api/auth/renter/bookings/${id}`,
-      providesTags: (_result, _error, { id }) => [{ type: "PublicBookings", id }],
-    }),
   }),
 });
 
@@ -230,5 +216,4 @@ export const {
   useGetPublicVehicleByIdQuery,
   useCreatePublicBookingMutation,
   useCreateCheckoutPaymentIntentMutation,
-  useGetPublicBookingByIdQuery,
 } = publicApi;

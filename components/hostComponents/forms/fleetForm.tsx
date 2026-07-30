@@ -458,7 +458,7 @@ export default function FleetForm({
         {/* ── Right column ─────────────────────────── */}
         <div className="flex flex-col gap-6">
           {/* Cell 1: Status & Availability */}
-          <Cell icon={<CalendarCheck />} title="Status & Availability">
+          {/* <Cell icon={<CalendarCheck />} title="Status & Availability">
             <div className="grid grid-cols-2 gap-3">
               <FormRow
                 label="Status"
@@ -516,7 +516,7 @@ export default function FleetForm({
                 />
               </div>
             </div>
-          </Cell>
+          </Cell> */}
 
           {/* Cell 2: Vehicle Specs */}
           <Cell icon={<SlidersVertical />} title="Vehicle Specs">

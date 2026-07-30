@@ -28,6 +28,7 @@ import {
 } from "../helpers/browseCarPaymentSection.helpers";
 import { readDraftFromStorage } from "@/lib/checkout-helpers";
 import { US_STATES } from "@/constants/addressState";
+import { useGetPublicVehicleByIdQuery } from "@/app/store/services/publicApi";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,34 @@ export const PaymentSection = memo(
     hostInsuranceExpiry,
     taxRate,
   }: PaymentSectionProps) => {
+    const { data, isLoading, isError } = useGetPublicVehicleByIdQuery({
+      id: vehicleId as string,
+    });
+
+    const bookingStartDate = data?.data.bookingStartDate;
+    const bookingEndDate = data?.data.bookingReturnDate;
+    const bookingStartTime = data?.data.bookingStartTime;
+    const bookingEndTime = data?.data.bookingReturnTime;
+
+    // The booking dates are already full ISO datetime strings with time included
+    // bookingStartDate = when current booking starts (vehicle unavailable from this point)
+    // bookingEndDate = when current booking ends (vehicle available after this point)
+    const unavailableFrom = useMemo(() => {
+      if (!bookingStartDate) return null;
+      return new Date(bookingStartDate);
+    }, [bookingStartDate]);
+
+    const unavailableUntil = useMemo(() => {
+      if (!bookingEndDate) return null;
+      return new Date(bookingEndDate);
+    }, [bookingEndDate]);
+
+    console.log("Booking data:", {
+      bookingStartDate,
+      bookingEndDate,
+      unavailableFrom,
+      unavailableUntil,
+    });
 
     const today = useMemo(() => {
       const d = new Date();
@@ -120,9 +149,15 @@ export const PaymentSection = memo(
           // Only restore the user's own insurance details if that's what they
           // were actually using — otherwise leave them blank so hasInsuranceInput
           // stays false and the host-coverage checkbox doesn't get contradicted.
-          insuranceProvider: usingHostCoverage ? "" : (savedDraft?.insuranceProvider ?? ""),
-          policyNumber: usingHostCoverage ? "" : (savedDraft?.policyNumber ?? ""),
-          insuranceExpiry: usingHostCoverage ? "" : (savedDraft?.insuranceExpiry ?? ""),
+          insuranceProvider: usingHostCoverage
+            ? ""
+            : (savedDraft?.insuranceProvider ?? ""),
+          policyNumber: usingHostCoverage
+            ? ""
+            : (savedDraft?.policyNumber ?? ""),
+          insuranceExpiry: usingHostCoverage
+            ? ""
+            : (savedDraft?.insuranceExpiry ?? ""),
           hostProvidingCoverage: usingHostCoverage,
           agreedToTerms: true,
         };
@@ -162,12 +197,12 @@ export const PaymentSection = memo(
     const days =
       pickupDate && returnDate
         ? Math.max(
-            differenceInCalendarDays(
-              new Date(returnDate),
-              new Date(pickupDate),
-            ),
-            0,
-          )
+          differenceInCalendarDays(
+            new Date(returnDate),
+            new Date(pickupDate),
+          ),
+          0,
+        )
         : 0;
 
     const pricing = days > 0 ? computePricing(price, days) : null;
@@ -201,19 +236,19 @@ export const PaymentSection = memo(
       // (if anything) is sitting in the form fields.
       const insuranceValues = effectiveHostCoverage
         ? {
-            insuranceProvider: hostInsuranceProvider ?? "",
-            policyNumber: hostInsurancePolicyNumber ?? "",
-            insuranceExpiry: hostInsuranceExpiry
-              ? typeof hostInsuranceExpiry === "string"
-                ? hostInsuranceExpiry
-                : hostInsuranceExpiry.toISOString()
-              : "",
-          }
+          insuranceProvider: hostInsuranceProvider ?? "",
+          policyNumber: hostInsurancePolicyNumber ?? "",
+          insuranceExpiry: hostInsuranceExpiry
+            ? typeof hostInsuranceExpiry === "string"
+              ? hostInsuranceExpiry
+              : hostInsuranceExpiry.toISOString()
+            : "",
+        }
         : {
-            insuranceProvider: values.insuranceProvider,
-            policyNumber: values.policyNumber,
-            insuranceExpiry: values.insuranceExpiry,
-          };
+          insuranceProvider: values.insuranceProvider,
+          policyNumber: values.policyNumber,
+          insuranceExpiry: values.insuranceExpiry,
+        };
 
       // Sync effectiveHostCoverage back into the payload before sending
       await onSubmit({
@@ -228,6 +263,8 @@ export const PaymentSection = memo(
         totalDays: days,
       });
     };
+
+    console.log({bookingEndDate, bookingEndTime, bookingStartDate, bookingStartTime})
 
     return (
       <form
@@ -270,7 +307,37 @@ export const PaymentSection = memo(
                     type: "datetime",
                     placeholder: "Pick a date & time",
                     minDate: today,
-                    validation: { required: "Pick-up date is required" },
+                    validation: {
+                      required: "Pick-up date is required",
+                      validate: (value: string) => {
+                        if (!value) return true;
+
+                        const selected = new Date(value);
+
+                        console.log("Pickup validation:", {
+                          selected,
+                          unavailableFrom,
+                          unavailableUntil,
+                          selectedTime: selected.getTime(),
+                          unavailableFromTime: unavailableFrom?.getTime(),
+                          unavailableUntilTime: unavailableUntil?.getTime(),
+                        });
+
+                        // Check if selected pickup time falls within existing booking
+                        if (unavailableFrom && unavailableUntil) {
+                          if (selected.getTime() >= unavailableFrom.getTime() && selected.getTime() < unavailableUntil.getTime()) {
+                            return `This vehicle is booked from ${format(unavailableFrom, "MMM d, yyyy 'at' h:mm a")} to ${format(unavailableUntil, "MMM d, yyyy 'at' h:mm a")}`;
+                          }
+                        }
+
+                        // Also check if pickup is before the booking ends (would overlap)
+                        if (unavailableUntil && selected.getTime() < unavailableUntil.getTime()) {
+                          return `This vehicle is unavailable until ${format(unavailableUntil, "MMM d, yyyy 'at' h:mm a")}`;
+                        }
+
+                        return true;
+                      },
+                    },
                   }}
                   control={control}
                   error={errors.pickupDate?.message}
@@ -294,10 +361,28 @@ export const PaymentSection = memo(
                       required: "Return date is required",
                       validate: (value: string) => {
                         if (!pickupDate || !value) return true;
-                        return (
-                          new Date(value) > new Date(pickupDate) ||
-                          "Must be after pick-up date"
-                        );
+
+                        const selected = new Date(value);
+                        const pickup = new Date(pickupDate);
+
+                        // Must be after pick-up date
+                        if (selected.getTime() <= pickup.getTime()) {
+                          return "Must be after pick-up date";
+                        }
+
+                        // Check if return time falls within existing booking
+                        if (unavailableFrom && unavailableUntil) {
+                          if (selected.getTime() > unavailableFrom.getTime() && selected.getTime() <= unavailableUntil.getTime()) {
+                            return `This vehicle is booked from ${format(unavailableFrom, "MMM d, yyyy 'at' h:mm a")} to ${format(unavailableUntil, "MMM d, yyyy 'at' h:mm a")}`;
+                          }
+                        }
+
+                        // Also check if return overlaps with booking (pickup before booking starts, return during/after booking)
+                        if (unavailableFrom && pickup.getTime() < unavailableFrom.getTime() && selected.getTime() >= unavailableFrom.getTime()) {
+                          return `Return must be before next booking on ${format(unavailableFrom, "MMM d, yyyy 'at' h:mm a")}`;
+                        }
+
+                        return true;
                       },
                     },
                   }}
@@ -428,7 +513,7 @@ export const PaymentSection = memo(
               {totalBreakdown && (
                 <div className="flex justify-between gap-4">
                   <span className="text-[#6B7280] text-sm font-normal font-text leading-5">
-                    Tax ({(taxRate)}%)
+                    Tax ({taxRate}%)
                   </span>
                   <span className="text-[#1F2937] text-sm font-medium font-text">
                     {formatCurrency(totalBreakdown.tax)}
@@ -622,7 +707,9 @@ export const PaymentSection = memo(
                   setValue("policyNumber", "", { shouldValidate: false });
                   setValue("insuranceExpiry", "", { shouldValidate: false });
                 }
-                setValue("hostProvidingCoverage", checked, { shouldValidate: false });
+                setValue("hostProvidingCoverage", checked, {
+                  shouldValidate: false,
+                });
               }}
             />
 

@@ -31,11 +31,7 @@ import {
 type FleetTableRow = IListVehiclesDatum & { id: string };
 
 export type VehicleStatus =
-  | "available"
-  | "rented"
-  | "unlisted"
-  | "snoozed"
-  | "maintenance";
+  "available" | "rented" | "unlisted" | "snoozed" | "maintenance";
 
 function normalizeVehicleStatus(status: string): VehicleStatus {
   const normalized = status.trim().toLowerCase();
@@ -44,9 +40,14 @@ function normalizeVehicleStatus(status: string): VehicleStatus {
   if (normalized === "unavailable") return "maintenance";
 
   if (
-    ["available", "rented", "unlisted", "snoozed", "maintenance"].includes(
-      normalized,
-    )
+    [
+      "available",
+      "rented",
+      "unlisted",
+      "snoozed",
+      "maintenance",
+      "inactive",
+    ].includes(normalized)
   ) {
     return normalized as VehicleStatus;
   }
