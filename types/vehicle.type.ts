@@ -59,7 +59,6 @@ export type CreateVehicle = {
   weeklyPrice: number;
   monthlyPrice: number;
   dailyInsuranceFee?: number;
-  status?: string;
   instantlyAvailable: boolean;
   transmission: string;
   seats: number;

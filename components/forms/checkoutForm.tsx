@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  Suspense,
+  use,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import {
@@ -17,6 +24,7 @@ import {
   Building2,
   Map as MapIcon,
   Hash,
+  CheckCircle2,
 } from "lucide-react";
 import {
   PaymentElement,
@@ -36,6 +44,7 @@ import { FormField } from "@/components/forms/MainForm";
 import { FormFieldConfig } from "@/components/forms/types";
 import { validators } from "@/components/forms/form.validators";
 import { US_STATES } from "@/constants/addressState";
+import { format } from "date-fns";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -99,6 +108,16 @@ type CheckoutFormProps = {
   clientSecret: string;
   /** Where Stripe redirects for payment methods that require it. */
   returnUrl: string;
+  /** Start date of booking */
+  startDate?: Date;
+  /** End date of booking */
+  endDate?: Date;
+  /** Checks vehicle availability for the given period. */
+  checkAvailability?: (
+    vehicleId: string,
+    startDate: Date,
+    endDate: Date,
+  ) => Promise<boolean>;
   /** Gives the parent a chance to persist contact data before Stripe redirects. */
   onBeforeConfirm?: (values: CheckoutContact) => void | Promise<void>;
   /** Fires after Stripe confirms the payment client-side. The parent owns everything after this — creating the order record, redirecting, etc. */
@@ -110,6 +129,67 @@ type CheckoutFormProps = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// type AvailabilityNoticeProps = {
+//   vehicleId: string;
+//   vehicleName: string;
+//   startDate: Date;
+//   endDate: Date;
+//   checkAvailability: (
+//     vehicleId: string,
+//     startDate: Date,
+//     endDate: Date,
+//   ) => Promise<boolean>;
+//   onResolved?: (available: boolean) => void;
+// };
+
+// const AvailabilityNotice = ({
+//   vehicleId,
+//   vehicleName,
+//   startDate,
+//   endDate,
+//   checkAvailability,
+//   onResolved,
+// }: AvailabilityNoticeProps) => {
+//   const startTime = startDate.getTime();
+//   const endTime = endDate.getTime();
+
+//   const availabilityPromise = useMemo(
+//     () => checkAvailability(vehicleId, new Date(startTime), new Date(endTime)),
+//     [vehicleId, startTime, endTime, checkAvailability],
+//   );
+
+//   const isAvailable = use(availabilityPromise);
+//   React.useEffect(() => {
+//     onResolved?.(isAvailable);
+//   }, [isAvailable, onResolved]);
+//   const rangeLabel = `${format(startDate, "MMM d")} – ${format(endDate, "MMM d, yyyy")}`;
+
+//   return isAvailable ? (
+//     <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-md text-emerald-700">
+//       <CheckCircle2 className="w-4 h-4 shrink-0" />
+//       <span className="text-sm font-medium font-text">
+//         {vehicleName} is available for {rangeLabel}
+//       </span>
+//     </div>
+//   ) : (
+//     <div className="flex items-center gap-2 p-3 bg-red-50 rounded-md text-red-600">
+//       <AlertTriangle className="w-4 h-4 shrink-0" />
+//       <span className="text-sm font-medium font-text">
+//         {vehicleName} is not available for {rangeLabel}
+//       </span>
+//     </div>
+//   );
+// };
+
+// const AvailabilityPlaceholder = () => (
+//   <div className="flex items-center gap-2 p-3 bg-[#F9FAFB] rounded-md text-[#9CA3AF]">
+//     <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+//     <span className="text-sm font-medium font-text">
+//       Checking availability...
+//     </span>
+//   </div>
+// );
+
 const pad = (n: number) => n.toString().padStart(2, "0");
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -120,14 +200,16 @@ export default function CheckoutForm(props: CheckoutFormProps) {
 }
 
 function CheckoutFormInner({
-  // id,
+  id,
   formId = "checkout-form",
   user,
   durationSeconds = 20 * 60,
   onExpire,
   onLogin,
-  // clientSecret,
   returnUrl,
+  startDate,
+  endDate,
+  checkAvailability,
   onBeforeConfirm,
   onSubmit,
   onCancel,
@@ -148,6 +230,7 @@ function CheckoutFormInner({
   const [isProcessing, setIsProcessing] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
+  const [vehicleAvailable, setVehicleAvailable] = useState(true);
 
   const stripe = useStripe();
   const elements = useElements();
@@ -290,7 +373,7 @@ function CheckoutFormInner({
       if (error) {
         setStripeError(
           error.message ??
-          "Your payment could not be processed. Please check your card details and try again.",
+            "Your payment could not be processed. Please check your card details and try again.",
         );
         return;
       }
@@ -322,6 +405,17 @@ function CheckoutFormInner({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 items-start">
         {/* ── Left: contact + payment ─────────────────────────── */}
         <div className="order-2 lg:order-1 flex flex-col gap-4 w-full">
+          {/* Availability notice */}
+          {/* <Suspense fallback={<AvailabilityPlaceholder />}>
+            <AvailabilityNotice
+              vehicleId={id}
+              vehicleName={vehicleName}
+              startDate={startDate}
+              endDate={endDate}
+              checkAvailability={checkAvailability}
+              onResolved={setVehicleAvailable}
+            />
+          </Suspense> */}
           {/* Contact information */}
           <div className="p-4 rounded-[10px] border border-gray-200 bg-white flex flex-col gap-4 w-full">
             <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -475,7 +569,8 @@ function CheckoutFormInner({
                 !hasContactInfo ||
                 !stripe ||
                 !elements ||
-                expired
+                expired ||
+                !vehicleAvailable
               }
               className="flex-1 px-6 py-2 border-blue-500 bg-blue-700 rounded-xs text-center text-white text-sm font-semibold font-text hover:bg-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
             >

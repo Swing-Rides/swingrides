@@ -215,7 +215,6 @@ export default function CheckoutPage() {
           pickupDate: draft.pickupDate,
           returnDate: draft.returnDate,
           hostProvidingCoverage: draft.hostProvidingCoverage,
-          insuranceFeePerDay: vehicleData?.data.insuranceDaily ?? 0,
           metadata: {
             pickupLocation: draft.pickupLocation,
           },

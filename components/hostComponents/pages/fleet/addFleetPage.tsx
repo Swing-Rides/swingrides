@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useAddVehicleMutation } from "@/app/store/services/hostApi";
 import FleetForm, {
   FleetFormValues,
@@ -7,7 +9,6 @@ import FleetForm, {
 import { Spinner } from "@/components/ui/spinner";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import { CreateVehicle } from "@/types/vehicle.type";
-import { useRouter } from "next/navigation";
 
 export default function AddFleetPage() {
   const router = useRouter();
@@ -38,7 +39,6 @@ export default function AddFleetPage() {
       pickupLocation: values.pickupAddressStreet,
       pickupAddressState: values.pickupAddressState,
       pickupInstructions: values.pickupInstructions,
-      status: values.status.toLowerCase(),
       vehicleRegistrationUrl: values.vehicleRegistrationUrl,
       zipCode: values.zipCode,
       seats: Number(values.seats),

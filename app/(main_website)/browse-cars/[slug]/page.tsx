@@ -5,6 +5,7 @@ import { useGetPublicVehicleByIdQuery } from "@/app/store/services/publicApi";
 import { use } from "react";
 import VehicleNotFound from "@/components/pages/broswerCarsPage/vehicleNotFound";
 import CarPageLoading from "@/components/pages/broswerCarsPage/carPageLoading";
+import { FleetStatus } from "@/types/subscribers.type";
 
 export default function CarPage({
   params,
@@ -45,7 +46,11 @@ export default function CarPage({
         starRatingBreakdown: [],
         reviews: [],
       }}
-      status={data?.data.status === "available" ? "available" : "unlisted"}
+      status={
+        data?.data.status === "available"
+          ? "available"
+          : (data?.data.status as FleetStatus)
+      }
       specifications={{
         make: data.data.make,
         model: data.data.vehicleModel,

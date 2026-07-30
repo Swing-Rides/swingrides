@@ -411,6 +411,7 @@ export default function HostBookingCheckoutPage() {
           );
           router.push(`${HOST_DASHBOARD_PATH}bookings/new-booking`);
         }}
+        // checkAvailability={}
       />
       {isCreatingBooking ? <div>Finalizing booking...</div> : null}
     </Elements>
