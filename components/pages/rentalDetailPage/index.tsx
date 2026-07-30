@@ -121,8 +121,8 @@ export default function RentalDetailPage({
           <LeftContent
             pickUpDate={pickUpDate}
             returnDate={returnDate}
-            // pickupTime={pickupTime}
-            // returnTime={returnTime}
+            pickupTime={pickupTime}
+            returnTime={returnTime}
             pickUpLocation={pickUpLocation}
             tripDurationDays={tripDurationDays}
             price={price}
