@@ -58,5 +58,5 @@ export type MainFormProps = {
         isLoading?: boolean
         className?: string
         rowPairs?: [string, string][]
-        footerSlot?: React.ReactNode
+        footerSlot?: ReactNode | ((values: Record<string, unknown>) => ReactNode)
 }

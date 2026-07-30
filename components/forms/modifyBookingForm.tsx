@@ -1,66 +1,56 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { differenceInCalendarDays, addDays } from "date-fns";
-import { AlertCircle } from "lucide-react";
+import { differenceInCalendarDays, addDays, format, parse } from "date-fns";
 
 import MainForm from "@/components/forms/MainForm";
 import { FormFieldConfig } from "@/components/forms/types";
 import { validators } from "@/components/forms/form.validators";
 import { US_STATES } from "@/constants/addressState";
 
-import { ModifyFormProps } from "../modifyTripModal/types";
-import { RentalRate } from "../pages/profilePages/types";
+import { ExtraDaysSummary, ModifyBookingFormValues, ModifyFormProps } from "../modifyTripModal/types";
 import { useUpdateBookingMutation } from "@/app/store/services/renterApi";
 import { toast } from "sonner";
-import { formatCurrency, pluralize } from "@/lib/pricing";
-import { writeDraftToStorage } from "@/lib/checkout-helpers";
-import { useRouter } from "next/router";
+import { computeInsuranceFee, computePricing, computeTotal, formatCurrency, PriceConfig } from "@/lib/pricing";
+import { PendingCheckoutDraft, writeDraftToStorage } from "@/lib/checkout-helpers";
+import { useRouter } from "next/navigation";
+import ModifyRentalFormFooter from "../modifyTripModal/formFooter";
+import ModifyTripRefundDialog from "../modifyTripModal/refundDialog";
 
-/**
- * Mixed-unit billing — same logic used across the project:
- * full months → full weeks → remaining days
- * e.g. 45 days = 1 month + 2 weeks + 1 day
- */
-const computeTotal = (
-  days: number,
-  rate: RentalRate | undefined,
-): { breakdown: string; total: number } => {
-  if (!rate) {
-    return { breakdown: "", total: 0 };
-  }
+/** Combine a server-format date + time pair into one ISO datetime for the form. */
+const combineDateAndTime = (dateLabel?: string, timeLabel?: string): string => {
+  if (!dateLabel) return "";
 
-  const months = Math.floor(days / 30);
-  const rem1 = days % 30;
-  const weeks = Math.floor(rem1 / 7);
-  const remDays = rem1 % 7;
+  const parsedDate = parse(dateLabel, "MMM d, yyyy", new Date());
+  if (Number.isNaN(parsedDate.getTime())) return "";
 
-  let total = 0;
-  const parts: string[] = [];
+  const timeMatch = timeLabel?.match(
+    /^(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z?$/,
+  );
+  const [, hh = "0", mm = "0", ss = "0", ms = "0"] = timeMatch ?? [];
 
-  if (months > 0) {
-    total += months * rate.monthly;
-    parts.push(pluralize(months, "mo"));
-  }
-  if (weeks > 0) {
-    total += weeks * rate.weekly;
-    parts.push(pluralize(weeks, "wk"));
-  }
-  if (remDays > 0) {
-    total += remDays * rate.daily;
-    parts.push(pluralize(remDays, "day"));
-  }
-
-  return { breakdown: parts.join(" + "), total };
+  return new Date(
+    Date.UTC(
+      parsedDate.getFullYear(),
+      parsedDate.getMonth(),
+      parsedDate.getDate(),
+      Number(hh),
+      Number(mm),
+      Number(ss),
+      Number(ms.padEnd(3, "0")),
+    ),
+  ).toISOString();
 };
 
-type ModifyBookingFormValues = {
-  pickupDate: string;
-  returnDate: string;
-  pickupStreet: string;
-  pickupCity: string;
-  pickupState: string;
-  pickupZipcode: string;
+/** Split a form ISO datetime back into the server's date + time pair. */
+const splitDateAndTime = (iso: string): { date: string; time: string } => {
+  if (!iso) return { date: "", time: "" };
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { date: "", time: "" };
+  return {
+    date: format(d, "MMM d, yyyy"),
+    time: d.toISOString().split("T")[1] ?? "",
+  };
 };
 
 export default function ModifyBookingForm({
@@ -70,19 +60,28 @@ export default function ModifyBookingForm({
   const [updateBooking, { isLoading }] = useUpdateBookingMutation();
   const router = useRouter();
 
-  // Shown after a submission attempt.
-  // We compute + display the summary once the user has submitted.
-  const [summary, setSummary] = useState<{
-    days: number;
-    breakdown: string;
-    total: number;
-  } | null>(null);
+  // Shown after checking the summary, or after a submission that grows the duration.
+  const [summary, setSummary] = useState<ExtraDaysSummary | null>(null);
+
+  // Refund-contact popup, shown when the new duration is shorter than the old one.
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
 
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
+
+  // The booking's current pickup/return as one combined ISO each — used both
+  // to prefill the form and as the "unchanged?" baseline for Check Summary.
+  const originalPickupISO = useMemo(
+    () => combineDateAndTime(rental.pickUpDate, rental.pickupTime),
+    [rental.pickUpDate, rental.pickupTime],
+  );
+  const originalReturnISO = useMemo(
+    () => combineDateAndTime(rental.returnDate, rental.returnTime),
+    [rental.returnDate, rental.returnTime],
+  );
 
   const fields: FormFieldConfig[] = [
     {
@@ -91,9 +90,7 @@ export default function ModifyBookingForm({
       label: "Pickup Date",
       placeholder: "Pick date & time",
       minDate: today,
-      defaultValue: rental.pickUpDate
-        ? new Date(rental.pickUpDate).toISOString()
-        : undefined,
+      defaultValue: originalPickupISO || undefined,
       validation: validators.required("Pickup date"),
     },
     {
@@ -102,9 +99,7 @@ export default function ModifyBookingForm({
       label: "Return Date",
       placeholder: "Pick date & time",
       minDate: addDays(today, 1),
-      defaultValue: rental.returnDate
-        ? new Date(rental.returnDate).toISOString()
-        : undefined,
+      defaultValue: originalReturnISO || undefined,
       validation: {
         required: "Return date is required",
         validate: (value, formValues) => {
@@ -158,64 +153,187 @@ export default function ModifyBookingForm({
     },
   ];
 
-  const handleSubmit = async (values: Record<string, unknown>) => {
-    const formValues = values as ModifyBookingFormValues;
+  const applyBookingUpdate = async (formValues: ModifyBookingFormValues) => {
+    const { date: pickupDate, time: pickupTime } = splitDateAndTime(
+      formValues.pickupDate,
+    );
+    const { date: returnDate, time: returnTime } = splitDateAndTime(
+      formValues.returnDate,
+    );
+    const pickupLocation = `${formValues.pickupStreet}, ${formValues.pickupCity}, ${formValues.pickupState} ${formValues.pickupZipcode}`;
 
-    const days = Math.max(
+    await updateBooking({
+      id: rental.id,
+      pickupDate,
+      pickupTime,
+      returnDate,
+      returnTime,
+      pickupLocation,
+    }).unwrap();
+  };
+
+  /** Duration change (in days) between the current booking and the given values. */
+  const extraDaysFor = (pickupISO: string, returnISO: string): number => {
+    const oldDays = Math.max(
       differenceInCalendarDays(
-        new Date(formValues.returnDate),
-        new Date(formValues.pickupDate),
+        new Date(originalReturnISO),
+        new Date(originalPickupISO),
       ),
       0,
     );
-    const computed = computeTotal(days, rental.rentalRate);
-    setSummary({ days, breakdown: computed.breakdown, total: computed.total });
+    const newDays = Math.max(
+      differenceInCalendarDays(new Date(returnISO), new Date(pickupISO)),
+      0,
+    );
+    return newDays - oldDays;
+  };
+
+  const buildExtraDaysSummary = (extraDays: number): ExtraDaysSummary => {
+    const extraDaysPricing = computePricing(
+      rental.rentalRate as PriceConfig,
+      extraDays,
+    );
+    const insuranceFee = computeInsuranceFee(
+      extraDays,
+      rental.insuranceFee,
+      rental.hostProvidingCoverage,
+    );
+    const extraDaysTotalAmount = computeTotal(
+      extraDaysPricing.total,
+      rental.insuranceFee,
+      rental.taxRate,
+    );
+    return {
+      days: extraDays,
+      breakdown: extraDaysPricing.lineItems,
+      total: extraDaysPricing.total,
+      insuranceTotalFee: formatCurrency(insuranceFee),
+      taxRate: extraDaysTotalAmount.tax,
+      taxAmount: formatCurrency(extraDaysTotalAmount.taxableAmount),
+      totalAmount: formatCurrency(extraDaysTotalAmount.totalAmount),
+    };
+  };
+
+  // Preview-only: reads the live (unsubmitted) form values and shows what the
+  // additional charge would be, without touching the booking or navigating.
+  const handleCheckSummary = (values: Partial<ModifyBookingFormValues>) => {
+    const { pickupDate: pickupISO, returnDate: returnISO } = values;
+
+    if (!pickupISO || !returnISO) {
+      toast.error("Pick both a pickup and return date & time first");
+      return;
+    }
+
+    if (pickupISO === originalPickupISO && returnISO === originalReturnISO) {
+      setSummary(null);
+      toast.info(
+        "Nothing has changed — pickup and return are still the same as your current booking.",
+      );
+      return;
+    }
+
+    const extraDays = extraDaysFor(pickupISO, returnISO);
+
+    if (extraDays <= 0) {
+      setSummary(null);
+      toast.info(
+        extraDays === 0
+          ? "Same duration — no additional charge."
+          : "Shorter duration — no additional charge. A refund conversation with your host may apply once confirmed.",
+      );
+      return;
+    }
+
+    setSummary(buildExtraDaysSummary(extraDays));
+  };
+
+
+  const handleSubmit = async (values: Record<string, unknown>) => {
+    const formValues = values as ModifyBookingFormValues;
+
+    if (
+      formValues.pickupDate === originalPickupISO &&
+      formValues.returnDate === originalReturnISO
+    ) {
+      toast.info("Nothing has changed — pickup and return are unchanged.");
+      return;
+    }
+
+    const extraDays = extraDaysFor(formValues.pickupDate, formValues.returnDate);
 
     try {
-      const pickupLocation = `${formValues.pickupStreet}, ${formValues.pickupCity}, ${formValues.pickupState} ${formValues.pickupZipcode}`;
-      // await updateBooking({
-      //   id: rental.id,
-      //   pickupDate: formValues.pickupDate,
-      //   returnDate: formValues.returnDate,
-      //   pickupLocation,
-      // }).unwrap();
+      if (extraDays === 0) {
+        // Case 1: same duration — only the times (or an equal date shift) changed.
+        await applyBookingUpdate(formValues);
+        toast.success("Booking updated successfully");
+        onClose();
+        return;
+      }
 
-      // const pendingCheckout = {
-      //   vehicleId,
-      //   pickupDate: values.pickupDate,
-      //   returnDate: values.returnDate,
-      //   streetAddress: values.street,
-      //   city: values.city,
-      //   state: values.state,
-      //   postalCode: values.zipCode,
-      //   pickupLocation: `${values.street}, ${values.city}, ${values.state}, ${values.zipCode}`,
-      //   insuranceProvider: values.insuranceProvider,
-      //   policyNumber: values.policyNumber,
-      //   insuranceExpiry: values.insuranceExpiry,
-      //   insuranceFeePerDay: values.insuranceFee,
-      //   hostProvidingCoverage: values.hostProvidingCoverage,
-      //   subtotal: values.subtotal ?? 0,
-      //   tax: values.tax ?? 0,
-      //   taxRate: values.taxRate ?? 0.08,
-      //   totalAmount: values.totalAmount ?? 0,
-      //   totalDays: values.totalDays ?? 0,
-      //   pickupTime,
-      //   returnTime,
-      // };
+      if (extraDays < 0) {
+        // Case 2: duration shrank — apply the change, then prompt the user
+        // to work out a refund with the host.
+        await applyBookingUpdate(formValues);
+        setShowRefundDialog(true);
+        return;
+      }
 
-      // writeDraftToStorage(vehicleId, pendingCheckout);
+      // Case 3: duration grew — don't apply the change yet. Send the user
+      // to checkout to pay for only the additional days, not the full new duration.
+      const extraDaysSummary = buildExtraDaysSummary(extraDays);
+      const extraDaysPricing = computePricing(
+        rental.rentalRate as PriceConfig,
+        extraDays,
+      );
+      const taxRate = rental.taxRate ?? 0.08;
+      const extraDaysTotalAmount = computeTotal(
+        extraDaysPricing.total,
+        rental.insuranceFee,
+        taxRate,
+      );
 
-      // window.sessionStorage.setItem(
-      //   getPendingCheckoutStorageKey(vehicleId),
-      //   JSON.stringify(pendingCheckout),
-      // );
-      toast.success("Processing checkout");
-      // router.push(`/checkout/${vehicleId}`);
+      setSummary(extraDaysSummary);
 
+      const { date: pickupDate, time: pickupTime } = splitDateAndTime(
+        formValues.pickupDate,
+      );
+      const { date: returnDate, time: returnTime } = splitDateAndTime(
+        formValues.returnDate,
+      );
+
+      const pendingCheckout: PendingCheckoutDraft = {
+        // DATA SOURCE
+        vehicleId: rental.vehicleId as string,
+
+        // NEW DATA
+        pickupDate,
+        returnDate,
+        pickupTime,
+        returnTime,
+        streetAddress: formValues.pickupStreet,
+        city: formValues.pickupCity || rental.pickupCity || "",
+        state: formValues.pickupState,
+        postalCode: formValues.pickupZipcode,
+        pickupLocation: `${formValues.pickupStreet}, ${formValues.pickupCity}, ${formValues.pickupState}, ${formValues.pickupZipcode}`,
+        subtotal: extraDaysTotalAmount.subtotal,
+        totalAmount: extraDaysTotalAmount.totalAmount,
+        totalDays: extraDays,
+        tax: extraDaysTotalAmount.tax,
+
+        // UNCHANGED DATA
+        insuranceProvider: rental.insuranceProvider || undefined,
+        policyNumber: rental.policyNumber,
+        insuranceExpiry: rental.insuranceExpiry,
+        insuranceFeePerDay: rental.insuranceFee,
+        hostProvidingCoverage: rental.hostProvidingCoverage,
+        taxRate,
+      };
+
+      writeDraftToStorage(rental.vehicleId as string, pendingCheckout);
+      toast.success("Redirecting to checkout for the additional days");
+      router.push(`/checkout/${rental.id}`);
       onClose();
     } catch (error) {
-      toast.error("Failed to start checkout");
-      console.error("Failed to start checkout:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to update booking";
       toast.error(errorMessage);
@@ -239,42 +357,23 @@ export default function ModifyBookingForm({
         onSubmit={handleSubmit}
         isLoading={isLoading}
         submitLabel="Confirm Changes"
-        footerSlot={
-          <>
-            {summary && (
-              <div className="p-4 bg-indigo-50 rounded-[10px] flex flex-col justify-start items-start gap-1">
-                <div className="flex gap-3 justify-between items-center w-full">
-                  <span className="flex text-blue-700 text-sm font-normal font-text leading-5">
-                    {`New Duration: ${pluralize(summary.days, "day")}${
-                      summary.breakdown ? ` (${summary.breakdown})` : ""
-                    }`}
-                  </span>
-                  <span className="flex text-blue-700 text-base font-medium font-text leading-6 text-nowrap">
-                    {`New Total: ${formatCurrency(summary.total)}`}
-                  </span>
-                </div>
-                <span className="flex-1 justify-start text-gray-500 text-xs font-normal font-text leading-4">
-                  Final amount will be confirmed after modification.
-                </span>
-              </div>
-            )}
+        footerSlot={(values) => (
+          <ModifyRentalFormFooter
+            summary={summary}
+            hostProvidingCoverage={rental.hostProvidingCoverage}
+            insuranceDailyFee={rental.insuranceDailyFee}
+            onClose={onClose}
+            handleCheckSummary={() =>
+              handleCheckSummary(values as Partial<ModifyBookingFormValues>)
+            }
+          />
+        )}
+      />
 
-            <div className="p-4 bg-amber-100 rounded-[10px] flex justify-start items-start gap-2">
-              <AlertCircle className="size-4 text-amber-500 shrink-0 mt-0.5" />
-              <span className="block text-amber-800 text-xs font-normal font-text leading-5">
-                Modifications within 24 hours of pickup may incur a fee.
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full text-sm font-medium font-text leading-5 border border-gray-500 text-gray-500 rounded-xs py-2 px-4 bg-transparent hover:bg-gray-200 transition-colors duration-300 cursor-pointer"
-            >
-              Cancel
-            </button>
-          </>
-        }
+      <ModifyTripRefundDialog 
+        showRefundDialog={showRefundDialog}
+        setShowRefundDialog={setShowRefundDialog}
+        onClose={onClose}
       />
     </div>
   );

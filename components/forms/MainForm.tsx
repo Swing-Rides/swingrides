@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, use, Suspense, useMemo } from 'react'
-import { useForm, Controller, Control, UseFormRegister, FieldValues, Path, PathValue, RegisterOptions, FieldErrors } from 'react-hook-form'
+import { useForm, Controller, Control, UseFormRegister, FieldValues, Path, PathValue, RegisterOptions, FieldErrors, useWatch } from 'react-hook-form'
 import { format } from 'date-fns'
 import { CalendarIcon, LockIcon, EyeIcon, EyeOffIcon, UploadIcon, ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -47,6 +47,11 @@ export default function MainForm({
     getValues,
     formState: { errors },
   } = useForm({ mode: "onTouched" });
+
+  // Lets a parent read live field values (e.g. for a "preview" action) without
+  // needing to submit the form — MainForm owns its own useForm() internally,
+  // so this is the only way out for a config-driven form like this one.
+  const watchedValues = useWatch({ control });
 
   const renderedPairs = new Set<string>();
 
@@ -118,7 +123,7 @@ export default function MainForm({
         })}
       </div>
 
-      {footerSlot}
+      {typeof footerSlot === "function" ? footerSlot(watchedValues) : footerSlot}
 
       <Button
         type="submit"
