@@ -14,6 +14,8 @@ import { RentalRate } from "../pages/profilePages/types";
 import { useUpdateBookingMutation } from "@/app/store/services/renterApi";
 import { toast } from "sonner";
 import { formatCurrency, pluralize } from "@/lib/pricing";
+import { writeDraftToStorage } from "@/lib/checkout-helpers";
+import { useRouter } from "next/router";
 
 /**
  * Mixed-unit billing — same logic used across the project:
@@ -66,6 +68,7 @@ export default function ModifyBookingForm({
   onClose,
 }: ModifyFormProps) {
   const [updateBooking, { isLoading }] = useUpdateBookingMutation();
+  const router = useRouter();
 
   // Shown after a submission attempt.
   // We compute + display the summary once the user has submitted.
@@ -170,15 +173,51 @@ export default function ModifyBookingForm({
 
     try {
       const pickupLocation = `${formValues.pickupStreet}, ${formValues.pickupCity}, ${formValues.pickupState} ${formValues.pickupZipcode}`;
-      await updateBooking({
-        id: rental.id,
-        pickupDate: formValues.pickupDate,
-        returnDate: formValues.returnDate,
-        pickupLocation,
-      }).unwrap();
+      // await updateBooking({
+      //   id: rental.id,
+      //   pickupDate: formValues.pickupDate,
+      //   returnDate: formValues.returnDate,
+      //   pickupLocation,
+      // }).unwrap();
+
+      // const pendingCheckout = {
+      //   vehicleId,
+      //   pickupDate: values.pickupDate,
+      //   returnDate: values.returnDate,
+      //   streetAddress: values.street,
+      //   city: values.city,
+      //   state: values.state,
+      //   postalCode: values.zipCode,
+      //   pickupLocation: `${values.street}, ${values.city}, ${values.state}, ${values.zipCode}`,
+      //   insuranceProvider: values.insuranceProvider,
+      //   policyNumber: values.policyNumber,
+      //   insuranceExpiry: values.insuranceExpiry,
+      //   insuranceFeePerDay: values.insuranceFee,
+      //   hostProvidingCoverage: values.hostProvidingCoverage,
+      //   subtotal: values.subtotal ?? 0,
+      //   tax: values.tax ?? 0,
+      //   taxRate: values.taxRate ?? 0.08,
+      //   totalAmount: values.totalAmount ?? 0,
+      //   totalDays: values.totalDays ?? 0,
+      //   pickupTime,
+      //   returnTime,
+      // };
+
+      // writeDraftToStorage(vehicleId, pendingCheckout);
+
+      // window.sessionStorage.setItem(
+      //   getPendingCheckoutStorageKey(vehicleId),
+      //   JSON.stringify(pendingCheckout),
+      // );
+      toast.success("Processing checkout");
+      // router.push(`/checkout/${vehicleId}`);
+
       onClose();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to update booking";
+      toast.error("Failed to start checkout");
+      console.error("Failed to start checkout:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update booking";
       toast.error(errorMessage);
       console.error("Failed to update booking:", error);
     }
@@ -206,8 +245,9 @@ export default function ModifyBookingForm({
               <div className="p-4 bg-indigo-50 rounded-[10px] flex flex-col justify-start items-start gap-1">
                 <div className="flex gap-3 justify-between items-center w-full">
                   <span className="flex text-blue-700 text-sm font-normal font-text leading-5">
-                    {`New Duration: ${pluralize(summary.days, "day")}${summary.breakdown ? ` (${summary.breakdown})` : ""
-                      }`}
+                    {`New Duration: ${pluralize(summary.days, "day")}${
+                      summary.breakdown ? ` (${summary.breakdown})` : ""
+                    }`}
                   </span>
                   <span className="flex text-blue-700 text-base font-medium font-text leading-6 text-nowrap">
                     {`New Total: ${formatCurrency(summary.total)}`}
