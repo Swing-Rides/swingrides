@@ -257,6 +257,15 @@ export const getManageBookingButtons = (
           className: contactStyle,
         },
       ];
+    case "Overdue":
+      return [
+        {
+          icon: <PhoneCall className="size-4" />,
+          label: "Contact Host",
+          href: `tel:${contactNumber}`,
+          className: contactStyle,
+        },
+      ];
     default:
       return [];
   }
