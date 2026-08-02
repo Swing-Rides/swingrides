@@ -26,9 +26,6 @@ import { shareContent } from "./util";
 import { writeDraftToStorage } from "@/lib/checkout-helpers";
 import { toast } from "sonner";
 
-// const getPendingCheckoutStorageKey = (vehicleId: string) =>
-//   `swingrides:pending-checkout:${vehicleId}`;
-
 export default function CarPageComponent({
   carName,
   gallery,
@@ -218,7 +215,7 @@ const RightContent = memo(
           insuranceProvider: values.insuranceProvider,
           policyNumber: values.policyNumber,
           insuranceExpiry: values.insuranceExpiry,
-          insuranceFeePerDay: values.insuranceFee,
+          insuranceFeePerDay: values.insuranceFee ?? 0,
           hostProvidingCoverage: values.hostProvidingCoverage,
           subtotal: values.subtotal ?? 0,
           tax: values.tax ?? 0,
@@ -231,10 +228,6 @@ const RightContent = memo(
 
         writeDraftToStorage(vehicleId, pendingCheckout);
 
-        // window.sessionStorage.setItem(
-        //   getPendingCheckoutStorageKey(vehicleId),
-        //   JSON.stringify(pendingCheckout),
-        // );
         toast.success("Processing checkout");
         router.push(`/checkout/${vehicleId}`);
       } catch (error) {
