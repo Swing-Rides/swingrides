@@ -119,7 +119,7 @@ export default function MainContent({ rentals }: MainContentProps) {
                       <PaginationLink
                         href={createHref(currentTab, page)}
                         isActive={page === currentPage}
-                        className={`border ${page === currentPage ? "bg-[#1A56DB] text-white border-[#1A56DB] hover:bg-white" : "border-[#D1D5DB] hover:bg-[#6B7280] hover:text-white transition-colors duration-300"}`}
+                        className={`border ${page === currentPage ? "bg-blue-700 text-white border-blue-700 hover:bg-white" : "border-[#D1D5DB] hover:bg-[#6B7280] hover:text-white transition-colors duration-300"}`}
                       >
                         {page}
                       </PaginationLink>

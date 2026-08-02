@@ -1,4 +1,4 @@
-import { User, TripStatus, ButtonConfig, Rentals } from "./types";
+import { User, TripStatus, ButtonConfig } from "./types";
 
 export const getInitials = (fullName?: string) => {
   if (!fullName) return "";
@@ -91,5 +91,7 @@ export const statusBadgeClass: Record<TripStatus, string> = {
   Upcoming: "bg-[#E3EEFF] text-[#3B82F6] border-transparent",
   Active: "bg-[#DAFFF3] text-[#10B981] border-transparent",
   Completed: "bg-[#E5E7EB] text-[#6B7280] border-transparent",
-  Cancelled: "bg-[#FFE9E9] text-[#EF4444] border-transparent",
+  Cancelled: "bg-red-500 text-red-50 border-transparent",
+  Overdue: "bg-red-100 text-red-500 border-transparent",
+  "Running Late": "bg-red-100 text-red-500 border-transparent",
 };

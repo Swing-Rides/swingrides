@@ -146,6 +146,7 @@ export default function RentalDetailPage({
             currentMileage={resolvedCurrentMileage}
             fuelLevelAtPickup={resolvedFuelLevelAtPickup}
             tripId={tripId}
+            status={rentals?.status}
           />
           <RightContent rentals={rentals} />
         </div>
@@ -203,6 +204,7 @@ PageTitleSection.displayName = "PageTitleSection";
 
 const LeftContent = memo(
   ({
+    status,
     pickUpDate,
     returnDate,
     pickupTime,
@@ -228,7 +230,7 @@ const LeftContent = memo(
     vehicleConditionImages,
     currentMileage,
     fuelLevelAtPickup,
-  }: TripSummaryCardProps &
+  }: {status: TripStatus;} & TripSummaryCardProps &
     VechicleCardProps &
     DocumentVerificationCardProps &
     VehicleConditionPhotosCardProps) => {
@@ -258,19 +260,23 @@ const LeftContent = memo(
             averageRating={averageRating}
             reviews={reviews}
           />
-          <DocumentVerificationCard
-            verificationDriverLicenseImageSrc={
-              verificationDriverLicenseImageSrc
-            }
-            verificationSelfieImageSrc={verificationSelfieImageSrc}
-            tripId={tripId}
-          />
-          <VehicleConditionPhotosCard
-            vehicleConditionImages={vehicleConditionImages}
-            tripId={tripId}
-            currentMileage={currentMileage}
-            fuelLevelAtPickup={fuelLevelAtPickup}
-          />
+          {status !== "Overdue" && (
+            <>
+              <DocumentVerificationCard
+                verificationDriverLicenseImageSrc={
+                  verificationDriverLicenseImageSrc
+                }
+                verificationSelfieImageSrc={verificationSelfieImageSrc}
+                tripId={tripId}
+              />
+              <VehicleConditionPhotosCard
+                vehicleConditionImages={vehicleConditionImages}
+                tripId={tripId}
+                currentMileage={currentMileage}
+                fuelLevelAtPickup={fuelLevelAtPickup}
+              />
+            </>
+          )}
         </div>
       </div>
     );

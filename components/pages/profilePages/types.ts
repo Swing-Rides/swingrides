@@ -148,7 +148,7 @@ export type TripCardProps = {
 };
 
 export type TripStatus =
-  "Upcoming" | "Active" | "Completed" | "Cancelled" | "Running Late";
+  "Upcoming" | "Active" | "Completed" | "Cancelled" | "Running Late" | "Overdue";
 
 export type ButtonConfig = {
   label: string;
