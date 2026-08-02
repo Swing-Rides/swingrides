@@ -146,7 +146,7 @@ export default function RentalDetailPage({
             currentMileage={resolvedCurrentMileage}
             fuelLevelAtPickup={resolvedFuelLevelAtPickup}
             tripId={tripId}
-            status={rentals?.status}
+            status={rentals?.status || "Running Late"}
           />
           <RightContent rentals={rentals} />
         </div>
