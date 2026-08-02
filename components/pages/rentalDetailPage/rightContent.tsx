@@ -21,6 +21,7 @@ import { Rentals } from "../profilePages/types";
 import StartVehicleCheckIn from "@/components/startVehicleCheckInModal";
 import RequestReimbursementModal from "@/components/modals/requestReimbursementModal";
 import ReportVehicleDamageModal from "@/components/modals/reportVehicleDamageModal";
+import ModifyCheckout from "@/components/modifyTripModal/modify-checkout";
 
 export default function RightContent({
   rentals: initialRentals,
@@ -44,7 +45,6 @@ export default function RightContent({
   const isActive = status === "Active";
   const isCompleted = status === "Completed";
 
-
   return (
     <div className="col-span-1 md:col-span-5 w-full space-y-3 md:space-y-6">
       <div className="w-full">
@@ -62,7 +62,10 @@ export default function RightContent({
       {isUpcoming && (
         <>
           <Suspense>
-            <StartVehicleCheckIn rentals={rentalsAsArray} onComplete={handleCheckIn} />
+            <StartVehicleCheckIn
+              rentals={rentalsAsArray}
+              onComplete={handleCheckIn}
+            />
           </Suspense>
 
           <Suspense>
@@ -72,27 +75,32 @@ export default function RightContent({
           <Suspense>
             <CancelTripDialog rentals={rentalsAsArray} />
           </Suspense>
+
+          <Suspense>
+            <ModifyCheckout />
+          </Suspense>
         </>
       )}
 
       {isActive && (
         <Suspense>
-          <CompleteVehicleReturnModal rentals={rentalsAsArray} onComplete={handleComplete} />
+          <CompleteVehicleReturnModal
+            rentals={rentalsAsArray}
+            onComplete={handleComplete}
+          />
         </Suspense>
       )}
 
       {(isActive || isCompleted) && (
-          <Suspense>
-            <RequestReimbursementModal rentals={rentalsAsArray} />
-          </Suspense>
+        <Suspense>
+          <RequestReimbursementModal rentals={rentalsAsArray} />
+        </Suspense>
       )}
 
       {(isActive || isCompleted) && (
         <>
           <Suspense>
-            <ReportVehicleDamageModal
-              rentals={rentalsAsArray} 
-            />
+            <ReportVehicleDamageModal rentals={rentalsAsArray} />
           </Suspense>
         </>
       )}
@@ -107,7 +115,6 @@ export const getManageBookingButtons = (
   contactNumber: string,
   vehicleId?: string,
 ): ManageBookingButtonConfig[] => {
-
   const checkInParams = new URLSearchParams(currentParams);
   checkInParams.set("checkIn", rentId);
 
@@ -216,6 +223,31 @@ export const getManageBookingButtons = (
           className: contactStyle,
         },
       ];
+    case "Running Late":
+      return [
+        {
+          icon: <PenLine className="w-4" />,
+          label: "Modify",
+          href: `?${modifyParams.toString()}`,
+          className: modifyStyle,
+        },
+        {
+          icon: <PhoneCall className="w-4" />,
+          label: "Contact Host",
+          href: `tel:${contactNumber}`,
+          className: contactStyle,
+        },
+        {
+          icon: <X className="w-4" />,
+          label: "Cancel",
+          href: `?${(() => {
+            const p = new URLSearchParams(currentParams);
+            p.set("cancel", rentId);
+            return p.toString();
+          })()}`,
+          className: cancelStyle,
+        },
+      ];
     case "Cancelled":
       return [
         {
@@ -240,7 +272,7 @@ const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
     rentals.id,
     searchParams.toString(),
     rentals.host.contactNumber,
-    rentals.vehicleId
+    rentals.vehicleId,
   );
 
   return (
@@ -289,10 +321,9 @@ const ManageBookingButton = memo(
 ManageBookingButton.displayName = "ManageBookingButton";
 
 const ReportVehicleDamageCard = memo(({ rentals }: ManageBookingCardProps) => {
-
   if (!rentals) return null;
 
-  const tripId = rentals.id
+  const tripId = rentals.id;
 
   return (
     <div className="p-4 md:p-6 bg-white rounded-[10px] border border-gray-200">
@@ -305,14 +336,12 @@ const ReportVehicleDamageCard = memo(({ rentals }: ManageBookingCardProps) => {
         </span>
       </div>
 
-      <Link 
+      <Link
         href={`?reportVehicleDamage=${tripId}`}
         className="flex gap-2 justify-center items-center w-full px-6 py-2.5 rounded-xs border bg-black text-white border-black hover:bg-black/80 hover:border-black/80 duration-300 transition-colors"
       >
-        <PhoneCall className="size-4 text-white"/>
-        <span>
-          Report Damage
-        </span>
+        <PhoneCall className="size-4 text-white" />
+        <span>Report Damage</span>
       </Link>
     </div>
   );

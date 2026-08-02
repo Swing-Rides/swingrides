@@ -108,9 +108,14 @@ export type SingleRent = {
     transmission?: string;
     seats?: number;
     averageRating?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reviews?: any[];
-    mileage: number
+    mileage: number;
+    insuranceProvider: string | null;
+    policyNumber: string | null;
+    insuranceExpiry: string | null;
+    dailyInsuranceFee: string | null;
+    hostProvidingCoverage: boolean;
   };
 };
 
@@ -142,7 +147,8 @@ export type TripCardProps = {
   rentals: Rentals;
 };
 
-export type TripStatus = "Upcoming" | "Active" | "Completed" | "Cancelled";
+export type TripStatus =
+  "Upcoming" | "Active" | "Completed" | "Cancelled" | "Running Late";
 
 export type ButtonConfig = {
   label: string;

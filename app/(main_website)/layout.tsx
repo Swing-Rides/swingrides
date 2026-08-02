@@ -16,12 +16,10 @@ export default function WebsiteLayout({
 }>) {
   return (
     <>
-        <HeaderNav/>
-        <main className="overflow-x-clip">
-          {children}
-        </main>
-        <Footer/>
-        <GuestSignUpModal/>
+      <HeaderNav />
+      <main className="overflow-x-clip">{children}</main>
+      <Footer />
+      <GuestSignUpModal />
     </>
   );
 }

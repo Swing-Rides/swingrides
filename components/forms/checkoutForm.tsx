@@ -98,6 +98,16 @@ type CheckoutFormProps = {
   taxFee: string;
   /** Insurance fee shown in the order summary. Defaults to "$0.00" when not provided. */
   insuranceFee?: number;
+  /**
+   * The amount that will actually be charged by Stripe (e.g. the price
+   * difference on a modification). Shown on the Pay button. When omitted,
+   * falls back to totalPrice.
+   */
+  chargeAmount?: string;
+  /** Full new booking total after modification — shown as informational context in the summary. */
+  newBookingTotal?: number;
+  /** Original booking amount before modification — shown alongside newBookingTotal. */
+  originalAmount?: number;
   /** Checkout session length. Defaults to 20 minutes. */
   durationSeconds?: number;
   /** Called once, when the countdown reaches zero. */
@@ -113,11 +123,6 @@ type CheckoutFormProps = {
   /** End date of booking */
   endDate?: Date;
   /** Checks vehicle availability for the given period. */
-  checkAvailability?: (
-    vehicleId: string,
-    startDate: Date,
-    endDate: Date,
-  ) => Promise<boolean>;
   /** Gives the parent a chance to persist contact data before Stripe redirects. */
   onBeforeConfirm?: (values: CheckoutContact) => void | Promise<void>;
   /** Fires after Stripe confirms the payment client-side. The parent owns everything after this — creating the order record, redirecting, etc. */
@@ -209,7 +214,6 @@ function CheckoutFormInner({
   returnUrl,
   startDate,
   endDate,
-  checkAvailability,
   onBeforeConfirm,
   onSubmit,
   onCancel,
@@ -224,6 +228,9 @@ function CheckoutFormInner({
   taxPercentageRate,
   taxFee,
   insuranceFee = 0,
+  chargeAmount,
+  newBookingTotal,
+  originalAmount,
 }: CheckoutFormProps) {
   const isLoggedIn = !!user;
 
@@ -580,7 +587,7 @@ function CheckoutFormInner({
                   Processing payment...
                 </span>
               ) : (
-                `Pay ${totalPrice}`
+                `Pay $${Number(chargeAmount ?? totalPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               )}
             </Button>
           </div>
@@ -612,7 +619,7 @@ function CheckoutFormInner({
                 </span>
               </div>
               <span className="text-[#1F2937] text-sm font-medium font-text shrink-0">
-                {duration} for {totalPrice}
+                {duration} days
               </span>
             </div>
           </div>
@@ -622,18 +629,34 @@ function CheckoutFormInner({
           <div className="flex flex-col gap-2 w-full">
             <SummaryRow label="Subtotal" value={subTotalFee} />
             <SummaryRow label={`Tax (${taxPercentageRate})`} value={taxFee} />
-            <SummaryRow label={`Insurance Fee`} value={`$${insuranceFee}`} />
+            {insuranceFee > 0 && (
+              <SummaryRow label="Insurance Fee" value={`$${insuranceFee}`} />
+            )}
           </div>
 
           <Separator />
 
-          <div className="flex items-center justify-between w-full">
-            <span className="text-gray-800 text-base font-bold font-text leading-6">
-              Total Amount
-            </span>
-            <span className="text-blue-700 text-xl font-medium font-text leading-7">
-              {totalPrice}
-            </span>
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex items-center justify-between w-full">
+              <span className="text-gray-800 text-base font-bold font-text leading-6">
+                {newBookingTotal ? "Amount Due" : "Total Amount"}
+              </span>
+              <span className="text-blue-700 text-xl font-medium font-text leading-7">
+                ${Number(chargeAmount ?? totalPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+            {newBookingTotal && originalAmount !== undefined && (
+              <div className="flex flex-col gap-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-500">
+                <div className="flex justify-between">
+                  <span>Original booking total</span>
+                  <span>${originalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between font-medium text-gray-700">
+                  <span>New booking total</span>
+                  <span>${newBookingTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -168,7 +168,6 @@ export const renterApi = createApi({
     updateBooking: builder.mutation<
       {
         success: boolean;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: any;
       },
       {
@@ -176,6 +175,10 @@ export const renterApi = createApi({
         pickupDate?: string;
         returnDate?: string;
         pickupLocation?: string;
+        insuranceProvider?: string;
+        policyNumber?: string;
+        insuranceExpiry?: string;
+        hostProvidingCoverage?: boolean;
       }
     >({
       query: ({ id, ...body }) => ({
@@ -282,6 +285,59 @@ export const renterApi = createApi({
       }),
       invalidatesTags: (_result, _error, { id }) => [{ type: "Bookings", id }],
     }),
+
+    createBookingUpdatePaymentIntent: builder.mutation<
+      {
+        success: boolean;
+        message: string;
+        data: {
+          id: string;
+          amount: number;
+          currency: string;
+          clientSecret: string;
+          status: string;
+          totalAmount: number;
+          metadata?: Record<string, string>;
+        };
+      },
+      {
+        bookingId: string;
+        pickupDate?: string;
+        returnDate?: string;
+      }
+    >({
+      query: ({ bookingId, ...body }) => ({
+        url: `/api/payments/booking-update-payment-intent/${bookingId}`,
+        method: "POST",
+        body,
+      }),
+    }),
+
+    confirmBookingDateChange: builder.mutation<
+      {
+        success: boolean;
+        data: any;
+      },
+      {
+        id: string;
+        pickupDate?: string;
+        returnDate?: string;
+        pickupLocation?: string;
+        paymentIntentId?: string;
+      }
+    >({
+      query: ({ id, paymentIntentId, pickupDate, returnDate, pickupLocation }) => ({
+        url: `/api/auth/renter/bookings/${id}/confirm-date-change`,
+        method: "POST",
+        body: {
+          paymentIntentId,
+          ...(pickupDate ? { pickupDate } : {}),
+          ...(returnDate ? { returnDate } : {}),
+          ...(pickupLocation ? { pickupLocation } : {}),
+        },
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "Bookings", id }],
+    }),
   }),
 });
 
@@ -296,6 +352,8 @@ export const {
   useCompleteVehicleReturnMutation,
   useStartVehicleCheckInMutation,
   useSubmitTripReviewMutation,
+  useCreateBookingUpdatePaymentIntentMutation,
+  useConfirmBookingDateChangeMutation,
 } = renterApi;
 
 export { normalizeRentalDetail };
