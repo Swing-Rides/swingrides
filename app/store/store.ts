@@ -12,6 +12,9 @@ import { dashboardApi } from "./services/dashboardApi";
 import { notificationApi } from "./services/notificationApi";
 import { renterApi } from "./services/renterApi";
 
+import publicReducer from "./reducers/public.reducer";
+import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+
 export const store = configureStore({
   reducer: {
     [adminApi.reducerPath]: adminApi.reducer,
@@ -26,6 +29,7 @@ export const store = configureStore({
     [dashboardApi.reducerPath]: dashboardApi.reducer,
     [notificationApi.reducerPath]: notificationApi.reducer,
     [renterApi.reducerPath]: renterApi.reducer,
+    publicReducer: publicReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -46,3 +50,5 @@ export const store = configureStore({
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
