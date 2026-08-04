@@ -94,7 +94,7 @@ type CheckoutFormProps = {
   duration: string;
   totalPrice: string;
   subTotalFee: string;
-  taxPercentageRate: string;
+  taxPercentageRate: number;
   taxFee: string;
   /** Insurance fee shown in the order summary. Defaults to "$0.00" when not provided. */
   insuranceFee?: number;
@@ -412,18 +412,6 @@ function CheckoutFormInner({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 items-start">
         {/* ── Left: contact + payment ─────────────────────────── */}
         <div className="order-2 lg:order-1 flex flex-col gap-4 w-full">
-          {/* Availability notice */}
-          {/* <Suspense fallback={<AvailabilityPlaceholder />}>
-            <AvailabilityNotice
-              vehicleId={id}
-              vehicleName={vehicleName}
-              startDate={startDate}
-              endDate={endDate}
-              checkAvailability={checkAvailability}
-              onResolved={setVehicleAvailable}
-            />
-          </Suspense> */}
-          {/* Contact information */}
           <div className="p-4 rounded-[10px] border border-gray-200 bg-white flex flex-col gap-4 w-full">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <span className="text-neutral-950 text-base font-semibold font-text">
@@ -586,8 +574,10 @@ function CheckoutFormInner({
                   <Loader2 className="animate-spin w-4 h-4" />
                   Processing payment...
                 </span>
+              ) : chargeAmount !== undefined ? (
+                `Pay $${Number(chargeAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               ) : (
-                `Pay $${Number(chargeAmount ?? totalPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                `Pay ${totalPrice}`
               )}
             </Button>
           </div>
@@ -642,18 +632,36 @@ function CheckoutFormInner({
                 {newBookingTotal ? "Amount Due" : "Total Amount"}
               </span>
               <span className="text-blue-700 text-xl font-medium font-text leading-7">
-                ${Number(chargeAmount ?? totalPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                
+                {chargeAmount
+                  ? Number(chargeAmount).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : totalPrice}
               </span>
             </div>
             {newBookingTotal && originalAmount !== undefined && (
               <div className="flex flex-col gap-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-500">
                 <div className="flex justify-between">
                   <span>Original booking total</span>
-                  <span>${originalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>
+                    $
+                    {originalAmount.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
                 </div>
                 <div className="flex justify-between font-medium text-gray-700">
                   <span>New booking total</span>
-                  <span>${newBookingTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>
+                    $
+                    {newBookingTotal.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
                 </div>
               </div>
             )}
