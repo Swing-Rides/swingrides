@@ -315,7 +315,7 @@ export default function CheckoutPage() {
       duration: `${draft.totalDays || 1} day${draft.totalDays === 1 ? "" : "s"}`,
       totalPrice: formatCurrency(totalAmount),
       subTotalFee: formatCurrency(subtotal),
-      taxPercentageRate: `${taxRate * 100}%`,
+      taxPercentageRate: taxRate,
       taxFee: formatCurrency(tax),
     };
   }, [draft, pricingSummary, vehicle]);
