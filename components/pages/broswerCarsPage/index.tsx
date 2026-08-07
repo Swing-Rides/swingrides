@@ -61,7 +61,7 @@ import { useGetPublicBrowseVehiclesQuery } from "@/app/store/services/publicApi"
 import { PublicBrowseVehicleRow } from "@/types/public-vehicles.type";
 import { motion, AnimatePresence } from 'motion/react'
 
-const CARS_PER_PAGE = 5;
+const CARS_PER_PAGE = 12;
 
 export default function BrowseCarsComponentPage() {
   const searchParams = useSearchParams();
