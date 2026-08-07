@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { PriBtn } from "../buttons";
+import Link from "next/link";
 
 export type Content = {
   id: string;
@@ -39,7 +40,7 @@ export type CarCardProps = {
 };
 
 export default function CarCard({
-  slug,
+  // slug,
   featuredImage,
   carName,
   specifications,
@@ -52,7 +53,7 @@ export default function CarCard({
 
   return (
     <div className="bg-white">
-      <div>
+      <Link href={`/browse-cars/${carUrl}`}>
         <Image
           src={featuredImage?.src}
           alt={featuredImage.alt}
@@ -61,7 +62,7 @@ export default function CarCard({
           height={215}
           className="w-full aspect-420/215 object-cover"
         />
-      </div>
+      </Link>
       <div className="flex flex-col gap-3 p-2.5 md:p-5 border border-[#E5E7EB]">
         <div className="flex items-center gap-1">
           <StarIcon />
@@ -70,11 +71,11 @@ export default function CarCard({
           </span>
           <span className="text-sm text-[#6B7280] font-normal">{`(${totalRatings})`}</span>
         </div>
-        <div>
+        <Link href={`/browse-cars/${carUrl}`} className="hover:underline">
           <h4 className="text-lg text-[#1F2937] font-bold font-text">
             {carName}
           </h4>
-        </div>
+        </Link>
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-1">
             <PassengersIcon />
