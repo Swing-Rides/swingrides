@@ -1,8 +1,6 @@
 "use client";
 
 import React, {
-  Suspense,
-  use,
   useEffect,
   useMemo,
   useRef,
@@ -24,7 +22,6 @@ import {
   Building2,
   Map as MapIcon,
   Hash,
-  CheckCircle2,
 } from "lucide-react";
 import {
   PaymentElement,
@@ -44,7 +41,6 @@ import { FormField } from "@/components/forms/MainForm";
 import { FormFieldConfig } from "@/components/forms/types";
 import { validators } from "@/components/forms/form.validators";
 import { US_STATES } from "@/constants/addressState";
-import { format } from "date-fns";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -205,15 +201,15 @@ export default function CheckoutForm(props: CheckoutFormProps) {
 }
 
 function CheckoutFormInner({
-  id,
+  // id,
   formId = "checkout-form",
   user,
   durationSeconds = 20 * 60,
   onExpire,
   onLogin,
   returnUrl,
-  startDate,
-  endDate,
+  // startDate,
+  // endDate,
   onBeforeConfirm,
   onSubmit,
   onCancel,
@@ -237,7 +233,7 @@ function CheckoutFormInner({
   const [isProcessing, setIsProcessing] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
-  const [vehicleAvailable, setVehicleAvailable] = useState(true);
+  // const [vehicleAvailable, setVehicleAvailable] = useState(true);
 
   const stripe = useStripe();
   const elements = useElements();
@@ -564,8 +560,8 @@ function CheckoutFormInner({
                 !hasContactInfo ||
                 !stripe ||
                 !elements ||
-                expired ||
-                !vehicleAvailable
+                expired
+                // !vehicleAvailable
               }
               className="flex-1 px-6 py-2 border-blue-500 bg-blue-700 rounded-xs text-center text-white text-sm font-semibold font-text hover:bg-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
             >
@@ -618,7 +614,10 @@ function CheckoutFormInner({
 
           <div className="flex flex-col gap-2 w-full">
             <SummaryRow label="Subtotal" value={subTotalFee} />
-            <SummaryRow label={`Tax (${taxPercentageRate})`} value={taxFee} />
+            <SummaryRow
+              label={`Tax (${taxPercentageRate as number}%)`}
+              value={taxFee}
+            />
             {insuranceFee > 0 && (
               <SummaryRow label="Insurance Fee" value={`$${insuranceFee}`} />
             )}
