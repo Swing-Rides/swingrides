@@ -220,7 +220,7 @@ const NotificationBar = () => {
                 Want to see your favourite host
               </span>
               <span className="font-normal text-base text-[#333]">
-                Connect your phone number and see their fleet first.
+                Connect their phone number and see their fleet first.
               </span>
             </div>
             <div className="flex justify-start items-center gap-3 mt-2 md:mt-0">
