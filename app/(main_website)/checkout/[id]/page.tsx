@@ -297,7 +297,7 @@ export default function CheckoutPage() {
 
     const subtotal = pricingSummary?.subtotal ?? draft.subtotal ?? 0;
     const tax = pricingSummary?.tax ?? draft.tax ?? 0;
-    const taxRate = pricingSummary?.taxRate ?? draft.taxRate ?? 0.0;
+    const taxRate = Number(pricingSummary?.taxRate ?? draft.taxRate ?? 0.0);
     const totalAmount = pricingSummary?.totalAmount ?? draft.totalAmount ?? 0;
 
     const totalInsuranceFee = computeInsuranceFee(
@@ -308,8 +308,8 @@ export default function CheckoutPage() {
 
     return {
       imageUrl: vehicle.featuredImage?.src || DEFAULT_IMAGE_SRC,
-      vehicleName: vehicle.carName || "Vehicle",
-      vehicleType: vehicle.vehicleType || "Vehicle",
+      vehicleName: vehicle.carName || "Vehicle Name",
+      vehicleType: vehicle.vehicleType || "Vehicle Type",
       vehicleGearType: vehicle.specifications?.transmission || "Automatic",
       insuranceFee: totalInsuranceFee,
       duration: `${draft.totalDays || 1} day${draft.totalDays === 1 ? "" : "s"}`,

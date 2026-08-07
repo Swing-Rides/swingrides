@@ -58,18 +58,33 @@ export default function ModifyCheckout() {
   useEffect(() => {
     if (!bookingId || !pendingCheckoutData) return;
 
-    setPaymentIntent(null);
-    setNoPaymentRequired(false);
+    let isMounted = true;
 
-    createPaymentIntent({
-      bookingId,
-      pickupDate: pendingCheckoutData.pickupDate,
-      returnDate: pendingCheckoutData.returnDate,
-    })
-      .unwrap()
-      .then((res) => setPaymentIntent(res.data as any))
-      .catch(() => setNoPaymentRequired(true));
-  }, [bookingId, pendingCheckoutData]);
+    const fetchPaymentIntent = async () => {
+      setPaymentIntent(null);
+      setNoPaymentRequired(false);
+
+      try {
+        const res = await createPaymentIntent({
+          bookingId,
+          pickupDate: pendingCheckoutData.pickupDate,
+          returnDate: pendingCheckoutData.returnDate,
+        }).unwrap();
+
+        if (!isMounted) return;
+        setPaymentIntent(res.data as PaymentIntentData);
+      } catch {
+        if (!isMounted) return;
+        setNoPaymentRequired(true);
+      }
+    };
+
+    fetchPaymentIntent();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [bookingId, pendingCheckoutData, createPaymentIntent]);
 
   if (!pendingCheckoutData || !bookingId) return null;
   if (!paymentIntent && !noPaymentRequired) return null;
@@ -132,7 +147,7 @@ export default function ModifyCheckout() {
           returnUrl=""
           subTotalFee={String(chargeSubtotal)}
           taxFee={String(chargeTax)}
-          taxPercentageRate={String(chargeTaxRate)}
+          taxPercentageRate={chargeTaxRate}
           insuranceFee={chargeInsuranceFee}
           totalPrice={String(
             noPaymentRequired ? pendingCheckoutData.totalAmount : chargeAmount,

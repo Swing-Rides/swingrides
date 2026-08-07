@@ -327,7 +327,7 @@ export default function HostBookingCheckoutPage() {
       duration: `${draft.totalDays || 1} day${draft.totalDays === 1 ? "" : "s"}`,
       totalPrice: formatCurrency(totalAmount),
       subTotalFee: formatCurrency(subtotal),
-      taxPercentageRate: `${taxRate * 100}%`,
+      taxPercentageRate: taxRate * 100,
       taxFee: formatCurrency(tax),
       insuranceFee,
     };
