@@ -29,6 +29,8 @@ export default function MainContent({ rentals }: MainContentProps) {
     "Upcoming",
     "Active",
     "Completed",
+    "Running Late",
+    "Overdue",
     "Cancelled",
   ];
 

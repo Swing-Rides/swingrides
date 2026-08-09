@@ -31,7 +31,16 @@ import { US_STATES } from "@/constants/addressState";
 import { useGetPublicVehicleByIdQuery } from "@/app/store/services/publicApi";
 import CarPageLoading from "@/components/pages/broswerCarsPage/carPageLoading";
 import VehicleNotFound from "@/components/pages/broswerCarsPage/vehicleNotFound";
-import { VehicleSchedule } from "@/types/public-vehicles.type";
+import {
+  VehicleSchedule,
+} from "@/types/public-vehicles.type";
+import {
+  BUFFER_TIME,
+  doesRentalPeriodOverlapSchedule as checkRentalPeriodOverlapSchedule,
+  isPickupDateTimeAvailable as checkPickupDateTimeAvailable,
+  isReturnDateTimeAvailable as checkReturnDateTimeAvailable,
+  isScheduleDateDisabled as checkScheduleDateDisabled,
+} from "@/lib/vehicleBookingHelpers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -77,7 +86,6 @@ type PaymentSectionProps = {
 };
 
 const THIRTY_DAYS_FROM_NOW = addDays(new Date(), 30);
-const BUFFER_TIME = 2; // Hours to buffer after return time for vehicle preparation
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -106,76 +114,30 @@ export const PaymentSection = memo(
       [data?.data.vehicleSchedule]
     );
 
-    // Check if a specific pickup datetime conflicts with any scheduled booking
-    // Allows same-day pickup after buffered return time
     const isPickupDateTimeAvailable = useMemo(() => {
-      return (pickupDateTime: Date) => {
-        return !vehicleSchedule.some((schedule: VehicleSchedule) => {
-          const schedPickupDate = new Date(schedule.pickupDate);
-          const schedReturnDate = new Date(schedule.returnDate);
-          // Add buffer time after return time for cleaning/preparation (using UTC)
-          const schedReturnDateWithBuffer = new Date(schedReturnDate);
-          schedReturnDateWithBuffer.setUTCHours(schedReturnDateWithBuffer.getUTCHours() + BUFFER_TIME);
-
-          // Conflict: pickup is during or after a booking starts but before it's fully ready
-          return pickupDateTime >= schedPickupDate && pickupDateTime < schedReturnDateWithBuffer;
-        });
-      };
+      return (pickupDateTime: Date) =>
+        checkPickupDateTimeAvailable(vehicleSchedule, pickupDateTime, BUFFER_TIME);
     }, [vehicleSchedule]);
 
-    // Check if a specific return datetime conflicts with any scheduled booking
-    // Allows same-day return before next pickup
     const isReturnDateTimeAvailable = useMemo(() => {
-      return (returnDateTime: Date) => {
-        return !vehicleSchedule.some((schedule: VehicleSchedule) => {
-          const schedPickupDate = new Date(schedule.pickupDate);
-          const schedReturnDate = new Date(schedule.returnDate);
-          // Add buffer time after return time for cleaning/preparation (using UTC)
-          const schedReturnDateWithBuffer = new Date(schedReturnDate);
-          schedReturnDateWithBuffer.setUTCHours(schedReturnDateWithBuffer.getUTCHours() + BUFFER_TIME);
-
-          // Conflict: return is during or after a booking starts but before it's fully ready
-          return returnDateTime >= schedPickupDate && returnDateTime < schedReturnDateWithBuffer;
-        });
-      };
+      return (returnDateTime: Date) =>
+        checkReturnDateTimeAvailable(vehicleSchedule, returnDateTime, BUFFER_TIME);
     }, [vehicleSchedule]);
 
-    // Check if a rental period (pickup to return) overlaps with any scheduled booking
-    // Adds buffer time after return time for vehicle preparation
     const doesRentalPeriodOverlapSchedule = useMemo(() => {
-      return (pickupDateTime: Date, returnDateTime: Date) => {
-        return vehicleSchedule.some((schedule: VehicleSchedule) => {
-          const schedPickupDate = new Date(schedule.pickupDate);
-          const schedReturnDate = new Date(schedule.returnDate);
-          // Add buffer time after return time for cleaning/preparation (using UTC)
-          const schedReturnDateWithBuffer = new Date(schedReturnDate);
-          schedReturnDateWithBuffer.setUTCHours(schedReturnDateWithBuffer.getUTCHours() + BUFFER_TIME);
-
-          // Check if ranges overlap: pickup < schedEnd+buffer AND return > schedStart
-          return pickupDateTime < schedReturnDateWithBuffer && returnDateTime > schedPickupDate;
-        });
-      };
+      return (pickupDateTime: Date, returnDateTime: Date) =>
+        checkRentalPeriodOverlapSchedule(
+          vehicleSchedule,
+          pickupDateTime,
+          returnDateTime,
+          BUFFER_TIME,
+        );
     }, [vehicleSchedule]);
 
     const isScheduleDateDisabled = useMemo(() => {
-      return (date: Date) => {
-        const dayStart = new Date(date);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(dayStart);
-        dayEnd.setHours(23, 59, 59, 999);
-        return vehicleSchedule.some((schedule: VehicleSchedule) => {
-          const schedPickupDate = new Date(schedule.pickupDate);
-          const schedReturnDate = new Date(schedule.returnDate);
-          const schedReturnDateWithBuffer = new Date(schedReturnDate);
-          schedReturnDateWithBuffer.setUTCHours(schedReturnDateWithBuffer.getUTCHours() + BUFFER_TIME);
-
-          return dayStart < schedReturnDateWithBuffer && dayEnd >= schedPickupDate;
-        });
-      };
+      return (date: Date) =>
+        checkScheduleDateDisabled(vehicleSchedule, date, BUFFER_TIME);
     }, [vehicleSchedule]);
-
-    // console.log("Booking data:", {
-    // });
 
     const today = useMemo(() => {
       const d = new Date();

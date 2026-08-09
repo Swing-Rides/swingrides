@@ -26,15 +26,25 @@ import {
   PriceConfig,
 } from "@/lib/pricing";
 import {
+  BUFFER_TIME,
+  doesRentalPeriodOverlapSchedule,
+  isPickupDateTimeAvailable,
+  isReturnDateTimeAvailable,
+  isScheduleDateDisabled,
+} from "@/lib/vehicleBookingHelpers";
+import { useGetPublicVehicleByIdQuery } from "@/app/store/services/publicApi";
+import { VehicleSchedule } from "@/types/public-vehicles.type";
+import {
   PendingCheckoutDraft,
   writeDraftToStorage,
 } from "@/lib/checkout-helpers";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import ModifyRentalFormFooter from "../modifyTripModal/formFooter";
 import ModifyTripRefundDialog from "../modifyTripModal/refundDialog";
-import ModifyCheckout from "../modifyTripModal/modify-checkout";
+// import ModifyCheckout from "../modifyTripModal/modify-checkout";
 import { useAppDispatch } from "@/app/store/store";
 import { setPendingCheckoutData } from "@/app/store/reducers/public.reducer";
+import { Spinner } from "../ui/spinner";
 
 /** Combine a server-format date + time pair into one ISO datetime for the form. */
 const combineDateAndTime = (dateLabel?: string, timeLabel?: string): string => {
@@ -83,12 +93,32 @@ export default function ModifyBookingForm({
   onClose,
 }: ModifyFormProps) {
   const [updateBooking, { isLoading }] = useUpdateBookingMutation();
-  const router = useRouter();
-  const { data, isError } = useGetBookingByIdQuery({ id: rental.id });
+  // const router = useRouter();
+  const { data, isError, isLoading: rawLoading } = useGetBookingByIdQuery({ id: rental.id });
+  const bookingDataLoading = rawLoading as boolean;
+
+  const { data: vehicleData } = useGetPublicVehicleByIdQuery(
+    { id: rental.vehicleId as string },
+    { skip: !rental.vehicleId },
+  );
   const dispatch = useAppDispatch();
+
+  const vehicleSchedule = useMemo<VehicleSchedule[]>(
+    () => vehicleData?.data.vehicleSchedule ?? [],
+    [vehicleData?.data.vehicleSchedule],
+  );
+
+  const otherBookingsSchedule = useMemo<VehicleSchedule[]>(
+    () =>
+      vehicleSchedule.filter(
+        (schedule) => schedule.bookingId !== rental.id,
+      ),
+    [vehicleSchedule, rental.id],
+  );
 
   const [summary, setSummary] = useState<ExtraDaysSummary | null>(null);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const today = useMemo(() => {
     const d = new Date();
@@ -113,7 +143,28 @@ export default function ModifyBookingForm({
       placeholder: "Pick date & time",
       minDate: today,
       defaultValue: originalPickupISO || undefined,
-      validation: validators.required("Pickup date"),
+      isDateDisabled: (date: Date) =>
+        isScheduleDateDisabled(otherBookingsSchedule, date, BUFFER_TIME),
+      validation: {
+        required: "Pickup date is required",
+        validate: (value) => {
+          if (!value) return true;
+
+          const selectedPickup = new Date(value as string);
+
+          if (
+            !isPickupDateTimeAvailable(
+              otherBookingsSchedule,
+              selectedPickup,
+              BUFFER_TIME,
+            )
+          ) {
+            return "This vehicle is unavailable at the selected pickup time.";
+          }
+
+          return true;
+        },
+      },
     },
     {
       name: "returnDate",
@@ -122,15 +173,43 @@ export default function ModifyBookingForm({
       placeholder: "Pick date & time",
       minDate: addDays(today, 1),
       defaultValue: originalReturnISO || undefined,
+      isDateDisabled: (date: Date) =>
+        isScheduleDateDisabled(otherBookingsSchedule, date, BUFFER_TIME),
       validation: {
         required: "Return date is required",
         validate: (value, formValues) => {
           const { pickupDate } = formValues as ModifyBookingFormValues;
           if (!pickupDate || !value) return true;
-          return (
-            new Date(value as string) > new Date(pickupDate) ||
-            "Must be after pickup date"
-          );
+
+          const selectedPickup = new Date(pickupDate);
+          const selectedReturn = new Date(value as string);
+
+          if (selectedReturn.getTime() <= selectedPickup.getTime()) {
+            return "Must be after pickup date";
+          }
+
+          if (
+            doesRentalPeriodOverlapSchedule(
+              otherBookingsSchedule,
+              selectedPickup,
+              selectedReturn,
+              BUFFER_TIME,
+            )
+          ) {
+            return "This vehicle is already booked during part of your requested dates.";
+          }
+
+          if (
+            !isReturnDateTimeAvailable(
+              otherBookingsSchedule,
+              selectedReturn,
+              BUFFER_TIME,
+            )
+          ) {
+            return "This vehicle is unavailable at the selected return time.";
+          }
+
+          return true;
         },
       },
     },
@@ -281,6 +360,8 @@ export default function ModifyBookingForm({
       formValues.returnDate,
     );
 
+    setIsProcessing(true);
+
     try {
       if (extraDays === 0) {
         // Case 1: same duration — only the times (or an equal date shift) changed.
@@ -303,7 +384,7 @@ export default function ModifyBookingForm({
         rental.rentalRate as PriceConfig,
         extraDays,
       );
-      const taxRate = data?.data.taxRate ?? 0.08;
+      const taxRate = data?.data.taxRate ?? 0;
       const extraDaysTotalAmount = computeTotal(
         extraDaysPricing.total,
         Number(data?.data.dailyInsuranceFee),
@@ -349,23 +430,90 @@ export default function ModifyBookingForm({
 
       writeDraftToStorage(rental.vehicleId as string, pendingCheckout);
       toast.success("Redirecting to checkout for the additional days");
-      onClose();
       dispatch(
         setPendingCheckoutData({
           pendingCheckoutData: pendingCheckout,
           bookingId: rental.id,
         }),
       );
+      onClose();
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to update booking";
       toast.error(errorMessage);
       console.error("Failed to update booking:", error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
+  if (bookingDataLoading) {
+    return (
+      <div className="flex flex-col gap-4 p-6 rounded-[10px] border border-gray-200 bg-gray-50">
+        <div className="flex items-start gap-3">
+          <div className="shrink-0 mt-0.5">
+            <Spinner className="size-5 text-gray-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-gray-800 text-sm font-semibold">
+              Loading Booking Details
+            </h3>
+            <p className="text-gray-700 text-sm mt-1">
+              Please wait while we retrieve your booking information.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !data?.data) {
+    return (
+      <div className="flex flex-col gap-4 p-6 rounded-[10px] border border-red-200 bg-red-50">
+        <div className="flex items-start gap-3">
+          <div className="shrink-0 mt-0.5">
+            <svg
+              className="h-5 w-5 text-red-600"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-red-800 font-text text-sm font-semibold">
+              Unable to Load Booking
+            </h3>
+            <p className="text-red-700 text-sm mt-1">
+              We couldn&apos;t retrieve your booking details. Please try again later or contact support.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
+      {isProcessing && (
+        <div className="fixed inset-0 z-100 bg-white flex flex-col items-center justify-center gap-4">
+          <Spinner className="size-8 text-blue-700" />
+          <div className="flex flex-col items-center gap-1 text-center px-6">
+            <h3 className="text-gray-800 text-base font-semibold font-text">
+              Processing your changes
+            </h3>
+            <p className="text-gray-500 text-sm font-text max-w-xs">
+              This can take a few moments. Please don&apos;t close or refresh
+              this window.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4">
         <span className="text-gray-500 text-xs font-semibold font-text uppercase leading-5">
           New Booking Details
@@ -379,7 +527,7 @@ export default function ModifyBookingForm({
             ["pickupState", "pickupZipcode"],
           ]}
           onSubmit={handleSubmit}
-          isLoading={isLoading}
+          isLoading={isLoading || isProcessing}
           submitLabel="Confirm Changes"
           footerSlot={(values) => (
             <ModifyRentalFormFooter

@@ -14,6 +14,7 @@ import { useRenterLogoutMutation } from "@/app/store/services/renterApi";
 import { renterApi } from "@/app/store/services/renterApi";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
+import ModifyCheckout from "@/components/modifyTripModal/modify-checkout";
 
 export default function GuestProfilePage({
   userAvaterUrl,
@@ -54,6 +55,10 @@ export default function GuestProfilePage({
 
       <Suspense>
         <ModifyTripModal rentals={initialRentals} />
+      </Suspense>
+
+      <Suspense>
+        <ModifyCheckout />
       </Suspense>
 
       <Suspense>

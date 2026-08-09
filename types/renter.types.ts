@@ -1,3 +1,5 @@
+import { TripStatus } from "@/components/pages/profilePages/types";
+
 export interface CreateUserRequest {
   firstName: string;
   lastName: string;
@@ -58,7 +60,7 @@ export interface RenterProfileResponse {
   rentals: Array<{
     id: string;
     rentId: string;
-    status: "Upcoming" | "Active" | "Completed" | "Cancelled";
+    status: TripStatus;
     hostRatingForGuest: number | string;
     pickUpDate: string;
     returnDate: string;
