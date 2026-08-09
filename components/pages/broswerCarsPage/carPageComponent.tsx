@@ -266,6 +266,9 @@ const CarDetailCard = memo(
     specifications,
     overview,
   }: CarDetailCardProps) => {
+
+    const notAvailable = status === "unlisted" || status === "maintenance";
+
     return (
       <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
         <div className="flex flex-col gap-2">
@@ -274,9 +277,9 @@ const CarDetailCard = memo(
               {carName}
             </h3>
             <div
-              className={`px-3 py-0.5 capitalize text-xs font-medium font-text leading-5 rounded-full ${status === "available" ? "text-green-500 bg-green-100" : "text-red-500 bg-red-100"}`}
+              className={`px-3 py-0.5 capitalize text-xs font-medium font-text leading-5 rounded-full ${notAvailable ? "text-red-500 bg-red-100" : "text-green-500 bg-green-100"}`}
             >
-              <span>{status}</span>
+              <span>{notAvailable ? "unavailable" : "available"}</span>
             </div>
           </div>
 
@@ -408,10 +411,14 @@ const SpecificationsTab = memo(({ specifications }: SpecificationsTabProps) => {
   ];
 
   return (
-    <div className="divide-[#6B7280] divide-y">
-      {rows.map(({ title, content }) => (
-        <SpecificationsContent key={title} title={title} content={content} />
-      ))}
+    <div className="divide-gray-300 divide-y">
+      {rows.map(({ title, content }) => {
+        if (content === undefined || content === null || content === "") {
+          return null;
+        }
+
+        return <SpecificationsContent key={title} title={title} content={content} />;
+      })}
     </div>
   );
 });

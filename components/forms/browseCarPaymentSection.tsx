@@ -331,7 +331,7 @@ export const PaymentSection = memo(
     return (
       <form
         onSubmit={handleSubmit(onFormSubmit)}
-        className="space-y-6"
+        className="space-y-6 @container"
         noValidate
       >
         {/* ── Main booking card ───────────────────────────── */}
@@ -357,7 +357,7 @@ export const PaymentSection = memo(
           {/* ── Form fields ─────────────────────────── */}
           <div className="flex flex-col gap-4">
             {/* Row 1: Pickup + Return dates */}
-            <div className="grid lg:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 @[420px]:grid-cols-2 gap-3">
               <FormRow
                 label="Pick-up Date & Time"
                 htmlFor="pickupDate"

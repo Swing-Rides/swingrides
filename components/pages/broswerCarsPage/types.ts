@@ -48,7 +48,7 @@ export type ImagesSectionProps = {
 
 export type CarDetailCardProps = {
   carName: string;
-  status: string;
+  status: FleetStatus;
   reviewsAndRatings: ReviewsAndRatingsType;
   specifications: CarSpecificationsType;
   overview: string;
