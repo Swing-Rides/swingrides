@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Logo from './logo'
 import { navLinks } from '@/constants/header'
 import { PriBtn } from '../buttons'
-import { UserCircle } from 'lucide-react'
+import { ChevronDown, UserCircle } from 'lucide-react'
 import { useGetProfileQuery } from "@/app/store/services/renterApi"
 import { Skeleton } from '../ui/skeleton'
 
@@ -74,10 +74,11 @@ const LoginButtons = ({ isLoggedIn, username }: LoginButtonsProps) => {
                                 type='button'
                                 className='flex justify-start items-center gap-2 text-sm font-medium text-neutral-950 group-hover:text-blue-700 duration-300 transition-colors cursor-pointer py-2 max-w-32 truncate'
                         >
-                                <UserCircle className='size-4 shrink-0' />
+                                {isLoggedIn && (<UserCircle className='size-4 shrink-0' />)}
                                 <span className='truncate'>
                                         {isLoggedIn ? username : "My Account"}
                                 </span>
+                                {!isLoggedIn && (<ChevronDown className='size-4 shrink-0' />)}
                         </button>
 
                         {/* Invisible bridge so the popup stays open while moving the cursor from button to popup */}

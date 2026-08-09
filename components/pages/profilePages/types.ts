@@ -72,7 +72,7 @@ export type SingleRent = {
     tax: number;
     taxRate: number;
     bookingType: "daily" | "weekly" | "monthly";
-    status: "Upcoming" | "Active" | "Completed" | "Cancelled";
+    status: TripStatus;
     createdAt: Date;
     licensePlate?: string;
     price: string;

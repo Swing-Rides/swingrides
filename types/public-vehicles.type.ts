@@ -130,11 +130,21 @@ export interface VehicleDetails {
   driverType: string;
   fuelEfficiency: string;
   doors: string;
+  vehicleSchedule?: VehicleSchedule[];
   bookingStartDate?: string | Date | null;
   bookingReturnDate?: string | Date | null;
   bookingStartTime?: string | null;
   bookingReturnTime?: string | null;
 }
+
+export type VehicleSchedule = {
+  pickupDate: string;
+  returnDate: string;
+  pickupTime: string;
+  returnTime: string;
+  status: string;
+  bookingId: string;
+};
 
 export interface RenterBookingDetailResponse {
   id: string;

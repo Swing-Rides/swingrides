@@ -61,6 +61,33 @@ export const getTripButtons = (
           })()}`,
         },
       ];
+    case "Running Late":
+      return [
+        { label: "View Details", href: `/trip/${rentId}` },
+        { label: "Contact Host", href: `tel:${contactNumber}` },
+        { label: "Modify", href: `?${modifyParams.toString()}` },
+        {
+          label: "Cancel",
+          href: `?${(() => {
+            const p = new URLSearchParams(currentParams);
+            p.set("cancel", rentId);
+            return p.toString();
+          })()}`,
+        },
+      ];
+    case "Overdue":
+      return [
+        { label: "View Details", href: `/trip/${rentId}` },
+        {
+          label: "Cancel",
+          href: `?${(() => {
+            const p = new URLSearchParams(currentParams);
+            p.set("cancel", rentId);
+            return p.toString();
+          })()}`,
+        },
+        { label: "Contact Host", href: `tel:${contactNumber}` },
+      ];
     case "Active":
       return [
         { label: "View Details", href: `/trip/${rentId}` },

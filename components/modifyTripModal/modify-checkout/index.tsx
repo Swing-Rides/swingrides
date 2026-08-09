@@ -9,10 +9,10 @@ import { useAppDispatch, useAppSelector } from "@/app/store/store";
 import CheckoutForm, {
   CheckoutFormValues,
 } from "@/components/forms/checkoutForm";
-import ModalWrapper from "@/components/modals/modalWrapper";
+import ModalWrapper from "./wrapper";
 import { stripePromise } from "@/lib/stripe";
 import { Elements } from "@stripe/react-stripe-js";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type PaymentIntentData = {
   id: string;
@@ -168,9 +168,9 @@ export default function ModifyCheckout() {
             firstName: firstName as string,
             lastName: rest.join(" ") as string,
             phoneNumber: userprofile?.renter.phoneNumber as string,
-            postalCode: "DAMI",
-            state: "DAMIAN",
-            streetAddress: "DAMOLA",
+            postalCode: "",
+            state: "",
+            streetAddress: "",
           }}
         />
       </Elements>

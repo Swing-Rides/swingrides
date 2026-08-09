@@ -42,8 +42,9 @@ export default function RightContent({
 
   const status = rental.status;
   const isUpcoming = status === "Upcoming";
-  const isActive = status === "Active";
+  const isActive = status === "Active" || status === "Running Late" ;
   const isCompleted = status === "Completed";
+  const isOverDue = status === "Overdue";
 
   return (
     <div className="col-span-1 md:col-span-5 w-full space-y-3 md:space-y-6">
@@ -54,9 +55,17 @@ export default function RightContent({
       </div>
 
       {(isActive || isCompleted) && (
-        <div>
+        <>
           <ReportVehicleDamageCard rentals={rental} />
-        </div>
+
+          <Suspense>
+            <RequestReimbursementModal rentals={rentalsAsArray} />
+          </Suspense>
+
+          <Suspense>
+            <ReportVehicleDamageModal rentals={rentalsAsArray} />
+          </Suspense>
+        </>
       )}
 
       {isUpcoming && (
@@ -67,13 +76,28 @@ export default function RightContent({
               onComplete={handleCheckIn}
             />
           </Suspense>
+        </>
+      )}
 
+      {isActive && (
+        <>
           <Suspense>
-            <ModifyTripModal rentals={rentalsAsArray} />
+            <CompleteVehicleReturnModal
+              rentals={rentalsAsArray}
+              onComplete={handleComplete}
+            />
+          </Suspense> 
+        </>
+      )}
+
+      {(isActive || isUpcoming) && (
+        <>
+          <Suspense>
+            <CancelTripDialog rentals={rentalsAsArray} />
           </Suspense>
 
           <Suspense>
-            <CancelTripDialog rentals={rentalsAsArray} />
+            <ModifyTripModal rentals={rentalsAsArray} />
           </Suspense>
 
           <Suspense>
@@ -82,27 +106,10 @@ export default function RightContent({
         </>
       )}
 
-      {isActive && (
+      {isOverDue && (
         <Suspense>
-          <CompleteVehicleReturnModal
-            rentals={rentalsAsArray}
-            onComplete={handleComplete}
-          />
+          <CancelTripDialog rentals={rentalsAsArray} />
         </Suspense>
-      )}
-
-      {(isActive || isCompleted) && (
-        <Suspense>
-          <RequestReimbursementModal rentals={rentalsAsArray} />
-        </Suspense>
-      )}
-
-      {(isActive || isCompleted) && (
-        <>
-          <Suspense>
-            <ReportVehicleDamageModal rentals={rentalsAsArray} />
-          </Suspense>
-        </>
       )}
     </div>
   );
@@ -115,6 +122,7 @@ export const getManageBookingButtons = (
   contactNumber: string,
   vehicleId?: string,
 ): ManageBookingButtonConfig[] => {
+
   const checkInParams = new URLSearchParams(currentParams);
   checkInParams.set("checkIn", rentId);
 
@@ -175,8 +183,45 @@ export const getManageBookingButtons = (
           className: contactStyle,
         },
       ];
+    case "Running Late":
+      return [
+        {
+          icon: <Car className="w-4" />,
+          label: "Start Check-In",
+          href: `?${checkInParams.toString()}`,
+          className: checkInStyle,
+        },
+        {
+          icon: <PenLine className="w-4" />,
+          label: "Modify",
+          href: `?${modifyParams.toString()}`,
+          className: modifyStyle,
+        },
+        {
+          icon: <X className="w-4" />,
+          label: "Cancel",
+          href: `?${(() => {
+            const p = new URLSearchParams(currentParams);
+            p.set("cancel", rentId);
+            return p.toString();
+          })()}`,
+          className: cancelStyle,
+        },
+        {
+          icon: <PhoneCall className="w-4" />,
+          label: "Contact Host",
+          href: `tel:${contactNumber}`,
+          className: contactStyle,
+        },
+      ];
     case "Active":
       return [
+        {
+          icon: <PenLine className="w-4" />,
+          label: "Extend Trip",
+          href: `?${modifyParams.toString()}`,
+          className: modifyStyle,
+        },
         {
           icon: <Car className="w-4" />,
           label: "Complete Vehicle Return",
@@ -259,6 +304,16 @@ export const getManageBookingButtons = (
       ];
     case "Overdue":
       return [
+        {
+          icon: <X className="w-4" />,
+          label: "Cancel",
+          href: `?${(() => {
+            const p = new URLSearchParams(currentParams);
+            p.set("cancel", rentId);
+            return p.toString();
+          })()}`,
+          className: cancelStyle,
+        },
         {
           icon: <PhoneCall className="size-4" />,
           label: "Contact Host",

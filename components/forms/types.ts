@@ -39,6 +39,7 @@ export type FormFieldConfig = {
         max?: number | string
         step?: number
         minDate?: Date | string     // for date/datetime — disables earlier dates
+        isDateDisabled?: (date: Date) => boolean
         autoComplete?: string
         validation?: RegisterOptions
         defaultValue?: string | number | boolean

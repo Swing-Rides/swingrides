@@ -26,7 +26,7 @@ export default function CancelTrip() {
         }
         
         const rental = data.data;
-        const upcomingTrip = rental.status === "Upcoming"
+        const upcomingTrip = rental.status === "Upcoming" || rental.status === 'Running Late' || rental.status === 'Overdue';
         
         if (!upcomingTrip) {
                 return (

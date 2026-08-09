@@ -168,6 +168,7 @@ export const renterApi = createApi({
     updateBooking: builder.mutation<
       {
         success: boolean;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: any;
       },
       {
@@ -316,6 +317,7 @@ export const renterApi = createApi({
     confirmBookingDateChange: builder.mutation<
       {
         success: boolean;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: any;
       },
       {

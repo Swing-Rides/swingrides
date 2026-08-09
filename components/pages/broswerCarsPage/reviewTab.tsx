@@ -23,6 +23,18 @@ export default function ReviewTab({ reviewsAndRatings }: ReviewTabProps) {
                 return `${pathname}?${params.toString()}`
         })()
 
+        if (reviewsAndRatings.averageRating === 0) {
+                return (
+                        <div className="space-y-6 p-6 rounded-[10px] border border-gray-200 bg-white text-center">
+                                <span className="text-[#1A56DB] text-2xl font-semibold font-text leading-8">
+                                        No reviews yet
+                                </span>
+                                <p className="text-gray-500 text-sm font-normal font-text leading-6">
+                                        This vehicle is yet to have any reviews. Be the first to leave feedback and help others know what to expect.
+                                </p>
+                        </div>
+                )
+        }
 
         return (
                 <div className="space-y-8">
@@ -56,7 +68,7 @@ export default function ReviewTab({ reviewsAndRatings }: ReviewTabProps) {
                         </div>
                         <div className="flex justify-center items-center">
                                 {reviewsAndRatings.reviews.length > 2 &&
-                                        <Link 
+                                        <Link
                                                 href={reviewsHref}
                                         >
                                                 <button className="text-center text-[#1A56DB] text-base font-medium font-text leading-6 cursor-pointer">

@@ -29,6 +29,18 @@ import {
 import { readDraftFromStorage } from "@/lib/checkout-helpers";
 import { US_STATES } from "@/constants/addressState";
 import { useGetPublicVehicleByIdQuery } from "@/app/store/services/publicApi";
+import CarPageLoading from "@/components/pages/broswerCarsPage/carPageLoading";
+import VehicleNotFound from "@/components/pages/broswerCarsPage/vehicleNotFound";
+import {
+  VehicleSchedule,
+} from "@/types/public-vehicles.type";
+import {
+  BUFFER_TIME,
+  doesRentalPeriodOverlapSchedule as checkRentalPeriodOverlapSchedule,
+  isPickupDateTimeAvailable as checkPickupDateTimeAvailable,
+  isReturnDateTimeAvailable as checkReturnDateTimeAvailable,
+  isScheduleDateDisabled as checkScheduleDateDisabled,
+} from "@/lib/vehicleBookingHelpers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,30 +108,36 @@ export const PaymentSection = memo(
       id: vehicleId as string,
     });
 
-    const bookingStartDate = data?.data.bookingStartDate;
-    const bookingEndDate = data?.data.bookingReturnDate;
-    const bookingStartTime = data?.data.bookingStartTime;
-    const bookingEndTime = data?.data.bookingReturnTime;
+    // Memoize vehicleSchedule to avoid creating new array reference on every render
+    const vehicleSchedule = useMemo<VehicleSchedule[]>(
+      () => data?.data.vehicleSchedule ?? [],
+      [data?.data.vehicleSchedule]
+    );
 
-    // The booking dates are already full ISO datetime strings with time included
-    // bookingStartDate = when current booking starts (vehicle unavailable from this point)
-    // bookingEndDate = when current booking ends (vehicle available after this point)
-    const unavailableFrom = useMemo(() => {
-      if (!bookingStartDate) return null;
-      return new Date(bookingStartDate);
-    }, [bookingStartDate]);
+    const isPickupDateTimeAvailable = useMemo(() => {
+      return (pickupDateTime: Date) =>
+        checkPickupDateTimeAvailable(vehicleSchedule, pickupDateTime, BUFFER_TIME);
+    }, [vehicleSchedule]);
 
-    const unavailableUntil = useMemo(() => {
-      if (!bookingEndDate) return null;
-      return new Date(bookingEndDate);
-    }, [bookingEndDate]);
+    const isReturnDateTimeAvailable = useMemo(() => {
+      return (returnDateTime: Date) =>
+        checkReturnDateTimeAvailable(vehicleSchedule, returnDateTime, BUFFER_TIME);
+    }, [vehicleSchedule]);
 
-    console.log("Booking data:", {
-      bookingStartDate,
-      bookingEndDate,
-      unavailableFrom,
-      unavailableUntil,
-    });
+    const doesRentalPeriodOverlapSchedule = useMemo(() => {
+      return (pickupDateTime: Date, returnDateTime: Date) =>
+        checkRentalPeriodOverlapSchedule(
+          vehicleSchedule,
+          pickupDateTime,
+          returnDateTime,
+          BUFFER_TIME,
+        );
+    }, [vehicleSchedule]);
+
+    const isScheduleDateDisabled = useMemo(() => {
+      return (date: Date) =>
+        checkScheduleDateDisabled(vehicleSchedule, date, BUFFER_TIME);
+    }, [vehicleSchedule]);
 
     const today = useMemo(() => {
       const d = new Date();
@@ -174,6 +192,14 @@ export const PaymentSection = memo(
       control,
       name: "hostProvidingCoverage",
     });
+
+    if (isLoading) {
+      return <CarPageLoading />;
+    }
+
+    if (isError || !data?.data) {
+      return <VehicleNotFound />;
+    }
 
     // Whether the user has started filling insurance fields
     const hasInsuranceInput = !!(
@@ -264,12 +290,10 @@ export const PaymentSection = memo(
       });
     };
 
-    console.log({bookingEndDate, bookingEndTime, bookingStartDate, bookingStartTime})
-
     return (
       <form
         onSubmit={handleSubmit(onFormSubmit)}
-        className="space-y-6"
+        className="space-y-6 @container"
         noValidate
       >
         {/* ── Main booking card ───────────────────────────── */}
@@ -295,7 +319,7 @@ export const PaymentSection = memo(
           {/* ── Form fields ─────────────────────────── */}
           <div className="flex flex-col gap-4">
             {/* Row 1: Pickup + Return dates */}
-            <div className="grid lg:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 @[420px]:grid-cols-2 gap-3">
               <FormRow
                 label="Pick-up Date & Time"
                 htmlFor="pickupDate"
@@ -307,6 +331,7 @@ export const PaymentSection = memo(
                     type: "datetime",
                     placeholder: "Pick a date & time",
                     minDate: today,
+                    isDateDisabled: isScheduleDateDisabled,
                     validation: {
                       required: "Pick-up date is required",
                       validate: (value: string) => {
@@ -314,25 +339,9 @@ export const PaymentSection = memo(
 
                         const selected = new Date(value);
 
-                        console.log("Pickup validation:", {
-                          selected,
-                          unavailableFrom,
-                          unavailableUntil,
-                          selectedTime: selected.getTime(),
-                          unavailableFromTime: unavailableFrom?.getTime(),
-                          unavailableUntilTime: unavailableUntil?.getTime(),
-                        });
-
-                        // Check if selected pickup time falls within existing booking
-                        if (unavailableFrom && unavailableUntil) {
-                          if (selected.getTime() >= unavailableFrom.getTime() && selected.getTime() < unavailableUntil.getTime()) {
-                            return `This vehicle is booked from ${format(unavailableFrom, "MMM d, yyyy 'at' h:mm a")} to ${format(unavailableUntil, "MMM d, yyyy 'at' h:mm a")}`;
-                          }
-                        }
-
-                        // Also check if pickup is before the booking ends (would overlap)
-                        if (unavailableUntil && selected.getTime() < unavailableUntil.getTime()) {
-                          return `This vehicle is unavailable until ${format(unavailableUntil, "MMM d, yyyy 'at' h:mm a")}`;
+                        // Check if selected pickup datetime conflicts with any scheduled booking
+                        if (!isPickupDateTimeAvailable(selected)) {
+                          return `This vehicle is unavailable at this time. Please select another date or time.`;
                         }
 
                         return true;
@@ -357,6 +366,7 @@ export const PaymentSection = memo(
                     minDate: pickupDate
                       ? addDays(new Date(pickupDate), 1)
                       : today,
+                    isDateDisabled: isScheduleDateDisabled,
                     validation: {
                       required: "Return date is required",
                       validate: (value: string) => {
@@ -370,16 +380,14 @@ export const PaymentSection = memo(
                           return "Must be after pick-up date";
                         }
 
-                        // Check if return time falls within existing booking
-                        if (unavailableFrom && unavailableUntil) {
-                          if (selected.getTime() > unavailableFrom.getTime() && selected.getTime() <= unavailableUntil.getTime()) {
-                            return `This vehicle is booked from ${format(unavailableFrom, "MMM d, yyyy 'at' h:mm a")} to ${format(unavailableUntil, "MMM d, yyyy 'at' h:mm a")}`;
-                          }
+                        // Check if the entire rental period overlaps with any scheduled booking
+                        if (doesRentalPeriodOverlapSchedule(pickup, selected)) {
+                          return `This vehicle is already booked during part of your requested dates. Please select different dates.`;
                         }
 
-                        // Also check if return overlaps with booking (pickup before booking starts, return during/after booking)
-                        if (unavailableFrom && pickup.getTime() < unavailableFrom.getTime() && selected.getTime() >= unavailableFrom.getTime()) {
-                          return `Return must be before next booking on ${format(unavailableFrom, "MMM d, yyyy 'at' h:mm a")}`;
+                        // Check if selected return datetime conflicts with any scheduled booking
+                        if (!isReturnDateTimeAvailable(selected)) {
+                          return `This vehicle is unavailable at this return time. Please select another date or time.`;
                         }
 
                         return true;

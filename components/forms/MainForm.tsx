@@ -375,6 +375,7 @@ export const DateInput = <T extends FieldValues = FieldValues>({ field, control,
 
   const isDateDisabled = (date: Date) => {
     if (field.disabled) return true;
+    if (field.isDateDisabled && field.isDateDisabled(date)) return true;
     if (minDate) return date < new Date(new Date(minDate).setHours(0, 0, 0, 0));
     return false;
   };
@@ -407,6 +408,9 @@ export const DateInput = <T extends FieldValues = FieldValues>({ field, control,
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
+              captionLayout="dropdown"
+              fromYear={1950}
+              toYear={new Date().getFullYear() + 20}
               selected={ctrl.value ? new Date(ctrl.value) : undefined}
               onSelect={(date: Date | undefined) => ctrl.onChange(date?.toISOString() ?? "")}
               disabled={isDateDisabled}
@@ -427,6 +431,7 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
 
   const isDateDisabled = (date: Date) => {
     if (field.disabled) return true;
+    if (field.isDateDisabled && field.isDateDisabled(date)) return true;
     if (minDate) return date < new Date(new Date(minDate).setHours(0, 0, 0, 0));
     return false;
   };
@@ -529,8 +534,8 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
                     </button>
                   </div>
 
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-end gap-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-end gap-2">
                       {/* Hour */}
                       <div className="flex flex-col gap-1 flex-1">
                         <label className="text-[10px] text-[#9CA3AF] font-text uppercase">
@@ -565,14 +570,14 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
                         </label>
                         <input
                           type="number"
-                          min={1}
+                          min={0}
                           max={59}
                           list={`${field.name}-minute-list`}
                           value={minute}
                           onChange={(e) => {
                             const raw = parseInt(e.target.value, 10);
                             if (Number.isNaN(raw)) return;
-                            applyTime(hour12, Math.min(59, Math.max(1, raw)), period);
+                            applyTime(hour12, Math.min(59, Math.max(0, raw)), period);
                           }}
                           className="w-full border border-[#E5E7EB] rounded-md px-2 py-2 text-sm font-text text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent"
                         />

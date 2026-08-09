@@ -32,7 +32,7 @@ export default function ModifyTripModal({ rentals }: ModifyTripModalProps) {
       onClick={handleClose}
     >
       <div
-        className="relative bg-white rounded-[10px] shadow-xl w-full max-w-2xl mx-4 p-6 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
+        className="relative bg-white rounded-[10px] shadow-xl w-full max-w-2xl mx-4 p-6 flex flex-col gap-5 max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -85,7 +85,9 @@ export default function ModifyTripModal({ rentals }: ModifyTripModalProps) {
         </div>
 
         {/* ── Modify form ──────────────────────────── */}
-        <ModifyBookingForm rental={rental} onClose={handleClose} />
+        <div className=" overflow-y-auto">
+          <ModifyBookingForm rental={rental} onClose={handleClose} />
+        </div>
       </div>
     </div>
   );

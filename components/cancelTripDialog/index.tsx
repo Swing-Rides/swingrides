@@ -28,8 +28,8 @@ export default function CancelTripDialog({ rentals }: CancelTripDialogProps) {
 
         const cancelId = searchParams.get('cancel')
 
-        const rental = rentals?.find(r => r.id === cancelId && r.status === 'Upcoming')
-        const isUpcoming = rental?.status === "Upcoming"
+        const rental = rentals?.find(r => r.id === cancelId && r.status === 'Upcoming' || r.status === 'Running Late' || r.status === 'Overdue')
+        const canCancel = rental?.status === "Upcoming" || rental?.status === 'Running Late' || rental?.status === 'Overdue'
 
         const handleClose = useCallback(() => {
                 const params = new URLSearchParams(searchParams.toString())
@@ -39,7 +39,7 @@ export default function CancelTripDialog({ rentals }: CancelTripDialogProps) {
         }, [searchParams, router, pathname])
 
         const handleConfirm = useCallback(async () => {
-                if (!isUpcoming) {
+                if (!canCancel) {
                         toast.error("This booking cannot be cancelled");
                         return;
                 }
@@ -55,7 +55,7 @@ export default function CancelTripDialog({ rentals }: CancelTripDialogProps) {
                         toast.dismiss(toastId);
                         toast.error("Failed to redirect. Please try again.");
                 }
-        }, [cancelId, isUpcoming]);
+        }, [cancelId, canCancel]);
 
         // Only Upcoming rentals can be cancelled — if rental not found or not Upcoming, silently dismiss
         if (!cancelId || !rental) return null

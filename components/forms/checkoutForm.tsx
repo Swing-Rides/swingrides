@@ -128,69 +128,6 @@ type CheckoutFormProps = {
   submitError?: string | null;
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// type AvailabilityNoticeProps = {
-//   vehicleId: string;
-//   vehicleName: string;
-//   startDate: Date;
-//   endDate: Date;
-//   checkAvailability: (
-//     vehicleId: string,
-//     startDate: Date,
-//     endDate: Date,
-//   ) => Promise<boolean>;
-//   onResolved?: (available: boolean) => void;
-// };
-
-// const AvailabilityNotice = ({
-//   vehicleId,
-//   vehicleName,
-//   startDate,
-//   endDate,
-//   checkAvailability,
-//   onResolved,
-// }: AvailabilityNoticeProps) => {
-//   const startTime = startDate.getTime();
-//   const endTime = endDate.getTime();
-
-//   const availabilityPromise = useMemo(
-//     () => checkAvailability(vehicleId, new Date(startTime), new Date(endTime)),
-//     [vehicleId, startTime, endTime, checkAvailability],
-//   );
-
-//   const isAvailable = use(availabilityPromise);
-//   React.useEffect(() => {
-//     onResolved?.(isAvailable);
-//   }, [isAvailable, onResolved]);
-//   const rangeLabel = `${format(startDate, "MMM d")} – ${format(endDate, "MMM d, yyyy")}`;
-
-//   return isAvailable ? (
-//     <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-md text-emerald-700">
-//       <CheckCircle2 className="w-4 h-4 shrink-0" />
-//       <span className="text-sm font-medium font-text">
-//         {vehicleName} is available for {rangeLabel}
-//       </span>
-//     </div>
-//   ) : (
-//     <div className="flex items-center gap-2 p-3 bg-red-50 rounded-md text-red-600">
-//       <AlertTriangle className="w-4 h-4 shrink-0" />
-//       <span className="text-sm font-medium font-text">
-//         {vehicleName} is not available for {rangeLabel}
-//       </span>
-//     </div>
-//   );
-// };
-
-// const AvailabilityPlaceholder = () => (
-//   <div className="flex items-center gap-2 p-3 bg-[#F9FAFB] rounded-md text-[#9CA3AF]">
-//     <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-//     <span className="text-sm font-medium font-text">
-//       Checking availability...
-//     </span>
-//   </div>
-// );
-
 const pad = (n: number) => n.toString().padStart(2, "0");
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -233,7 +170,6 @@ function CheckoutFormInner({
   const [isProcessing, setIsProcessing] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
-  // const [vehicleAvailable, setVehicleAvailable] = useState(true);
 
   const stripe = useStripe();
   const elements = useElements();
