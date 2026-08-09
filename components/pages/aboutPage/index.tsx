@@ -223,7 +223,7 @@ const OurStorySection = () => {
                                         </div>
                                         <div>
                                                 <Image 
-                                                        src={'/images/SwingRides-our_story.png'}
+                                                        src={'/images/SwingRides-our_story.webp'}
                                                         alt={`Built from real experiences. Driven by a simple idea.`}
                                                         title={`Built from real experiences. Driven by a simple idea.`}
                                                         width={1536}
