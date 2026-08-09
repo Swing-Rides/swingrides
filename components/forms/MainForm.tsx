@@ -407,6 +407,9 @@ export const DateInput = <T extends FieldValues = FieldValues>({ field, control,
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
+              captionLayout="dropdown"
+              fromYear={1950}
+              toYear={new Date().getFullYear() + 20}
               selected={ctrl.value ? new Date(ctrl.value) : undefined}
               onSelect={(date: Date | undefined) => ctrl.onChange(date?.toISOString() ?? "")}
               disabled={isDateDisabled}
