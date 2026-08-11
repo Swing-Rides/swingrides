@@ -269,8 +269,10 @@ export default function ModifyBookingForm({
 
     await updateBooking({
       id: rental.id,
-      pickupDate,
-      returnDate,
+      pickupDate: toISODate(pickupDate),
+      returnDate: toISODate(returnDate),
+      pickupTime,
+      returnTime,
       pickupLocation,
     }).unwrap();
   };

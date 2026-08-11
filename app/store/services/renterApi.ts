@@ -175,6 +175,8 @@ export const renterApi = createApi({
         id: string;
         pickupDate?: string;
         returnDate?: string;
+        pickupTime?: string;
+        returnTime?: string;
         pickupLocation?: string;
         insuranceProvider?: string;
         policyNumber?: string;
@@ -324,17 +326,29 @@ export const renterApi = createApi({
         id: string;
         pickupDate?: string;
         returnDate?: string;
+        pickupTime?: string;
+        returnTime?: string;
         pickupLocation?: string;
         paymentIntentId?: string;
       }
     >({
-      query: ({ id, paymentIntentId, pickupDate, returnDate, pickupLocation }) => ({
+      query: ({
+        id,
+        paymentIntentId,
+        pickupDate,
+        returnDate,
+        pickupTime,
+        returnTime,
+        pickupLocation,
+      }) => ({
         url: `/api/auth/renter/bookings/${id}/confirm-date-change`,
         method: "POST",
         body: {
           paymentIntentId,
           ...(pickupDate ? { pickupDate } : {}),
           ...(returnDate ? { returnDate } : {}),
+          ...(pickupTime ? { pickupTime } : {}),
+          ...(returnTime ? { returnTime } : {}),
           ...(pickupLocation ? { pickupLocation } : {}),
         },
       }),
