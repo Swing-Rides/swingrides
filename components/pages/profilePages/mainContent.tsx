@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useGetBookingByIdQuery } from "@/app/store/services/renterApi";
 import {
   Pagination,
   PaginationContent,
@@ -159,6 +160,12 @@ const TripCard = ({ rentals }: TripCardProps) => {
     rentals.host.contactNumber,
   );
 
+  const canModify =
+    rentals.status === "Upcoming" || rentals.status === "Running Late";
+
+  const { isLoading: isModifyLoading, isError: isModifyError } =
+    useGetBookingByIdQuery({ id: rentals.id }, { skip: !canModify });
+
   return (
     <div className="p-2.5 md:p-6 flex flex-col md:flex-row gap-6 bg-white rounded-[10px] shadow-[0px_1px_3px_1px_rgba(0,0,0,0.30)] overflow-clip">
       <div className="aspect-3/2 min-w-30 md:max-w-60 size-full object-center object-cover overflow-clip rounded-[10px]">
@@ -207,6 +214,10 @@ const TripCard = ({ rentals }: TripCardProps) => {
               label={btn.label}
               href={btn.href}
               status={rentals.status}
+              disabled={
+                btn.label === "Modify" &&
+                (isModifyLoading || isModifyError)
+              }
             />
           ))}
         </div>
@@ -215,8 +226,12 @@ const TripCard = ({ rentals }: TripCardProps) => {
   );
 };
 
-const TripCardButton = ({ label, href, status }: TripCardButtonProps) => {
-  console.log(status, "status");
+const TripCardButton = ({
+  label,
+  href,
+  status,
+  disabled,
+}: TripCardButtonProps) => {
   const isCancel = label === "Cancel";
   const isCancelled = status === "Cancelled";
 
@@ -225,6 +240,18 @@ const TripCardButton = ({ label, href, status }: TripCardButtonProps) => {
     : isCancel
       ? "border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444]"
       : "border-[#1A56DB] text-[#1A56DB] hover:bg-[#1A56DB]";
+
+  if (disabled) {
+    return (
+      <button
+        disabled
+        title={label}
+        className={`text-sm w-full md:w-fit text-nowrap font-medium font-text leading-5 border rounded-xs py-2 px-4.25 bg-transparent ${colorClass} opacity-50 cursor-not-allowed`}
+      >
+        {label}
+      </button>
+    );
+  }
 
   return (
     <Link href={href} title={label}>

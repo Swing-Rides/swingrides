@@ -159,4 +159,5 @@ export type TripCardButtonProps = {
   label: string;
   href: string;
   status: TripStatus;
+  disabled?: boolean;
 };
