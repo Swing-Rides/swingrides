@@ -3,6 +3,9 @@ export type PendingCheckoutDraft = {
   pickupDate: string;
   returnDate: string;
   pickupLocation: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
   insuranceProvider?: string;
   policyNumber?: string;
   insuranceExpiry?: string;

@@ -105,6 +105,11 @@ export default function ModifyCheckout() {
       returnDate: pendingCheckoutData.returnDate,
       pickupTime: pendingCheckoutData.pickupTime,
       returnTime: pendingCheckoutData.returnTime,
+      pickupLocation: pendingCheckoutData.pickupLocation,
+      streetAddress: pendingCheckoutData.streetAddress,
+      city: pendingCheckoutData.city,
+      state: pendingCheckoutData.state,
+      postalCode: pendingCheckoutData.postalCode,
       paymentIntentId: values.paymentIntentId,
     }).unwrap();
     handleClose();

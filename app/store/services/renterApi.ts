@@ -178,6 +178,10 @@ export const renterApi = createApi({
         pickupTime?: string;
         returnTime?: string;
         pickupLocation?: string;
+        streetAddress?: string;
+        city?: string;
+        state?: string;
+        postalCode?: string;
         insuranceProvider?: string;
         policyNumber?: string;
         insuranceExpiry?: string;
@@ -329,6 +333,10 @@ export const renterApi = createApi({
         pickupTime?: string;
         returnTime?: string;
         pickupLocation?: string;
+        streetAddress?: string;
+        city?: string;
+        state?: string;
+        postalCode?: string;
         paymentIntentId?: string;
       }
     >({
@@ -340,6 +348,10 @@ export const renterApi = createApi({
         pickupTime,
         returnTime,
         pickupLocation,
+        streetAddress,
+        city,
+        state,
+        postalCode,
       }) => ({
         url: `/api/auth/renter/bookings/${id}/confirm-date-change`,
         method: "POST",
@@ -350,6 +362,10 @@ export const renterApi = createApi({
           ...(pickupTime ? { pickupTime } : {}),
           ...(returnTime ? { returnTime } : {}),
           ...(pickupLocation ? { pickupLocation } : {}),
+          ...(streetAddress ? { streetAddress } : {}),
+          ...(city ? { city } : {}),
+          ...(state ? { state } : {}),
+          ...(postalCode ? { postalCode } : {}),
         },
       }),
       invalidatesTags: (_result, _error, { id }) => [{ type: "Bookings", id }],

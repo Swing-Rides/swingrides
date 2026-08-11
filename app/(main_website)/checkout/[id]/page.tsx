@@ -136,6 +136,10 @@ export default function CheckoutPage() {
           city: checkoutValues?.city || draft.city || "",
           state: checkoutValues?.state || draft.state || "",
           postalCode: checkoutValues?.postalCode || draft.postalCode || "",
+          firstName: checkoutValues?.firstName || draft.firstName || "",
+          lastName: checkoutValues?.lastName || draft.lastName || "",
+          phoneNumber:
+            checkoutValues?.phoneNumber || draft.phoneNumber || "",
           pickupTime: draft.pickupTime,
           returnTime: draft.returnTime,
           insuranceProvider: draft.insuranceProvider,
@@ -191,6 +195,9 @@ export default function CheckoutPage() {
       city: draft.city,
       state: draft.state,
       postalCode: draft.postalCode,
+      firstName: draft.firstName,
+      lastName: draft.lastName,
+      phoneNumber: draft.phoneNumber,
     });
   }, [draft, finalizeBooking, redirectStatus, redirectedPaymentIntentId]);
 

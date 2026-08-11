@@ -274,6 +274,10 @@ export default function ModifyBookingForm({
       pickupTime,
       returnTime,
       pickupLocation,
+      streetAddress: formValues.pickupStreet,
+      city: formValues.pickupCity,
+      state: formValues.pickupState,
+      postalCode: formValues.pickupZipcode,
     }).unwrap();
   };
 
