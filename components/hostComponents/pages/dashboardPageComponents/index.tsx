@@ -22,6 +22,7 @@ import RecentBookingsTable from "./recentBookingsTable";
 import {
   useGetHostDashboardQuery,
   DashboardDuration,
+  BookingLifecycleStatus,
 } from "@/app/store/services/dashboardApi";
 import { useGetProfileCompanySettingsQuery } from "@/app/store/services/settingsApi";
 import HostPackageModal from "@/components/hostComponents/modals/hostPackageModal";
@@ -36,12 +37,23 @@ const DURATION_MAP: Record<FilterType, DashboardDuration> = {
   "90D": "90d",
 };
 
-const DONUT_COLORS: Record<string, string> = {
-  active: "#1A56DB",
-  pending: "#F59E0B",
-  completed: "#10B981",
-  cancelled: "#EF4444",
+const DONUT_COLORS: Record<BookingLifecycleStatus, string> = {
+  Upcoming: "#1A56DB",
+  "Running Late": "#F59E0B",
+  Overdue: "#EF4444",
+  Active: "#0EA5E9",
+  Completed: "#10B981",
+  Cancelled: "#6B7280",
 };
+
+const DONUT_STATUS_ORDER: BookingLifecycleStatus[] = [
+  "Upcoming",
+  "Running Late",
+  "Overdue",
+  "Active",
+  "Completed",
+  "Cancelled",
+];
 
 export default function DashboardPageComponent() {
   const [duration, setDuration] = useState<DashboardDuration>("30d");
@@ -78,13 +90,11 @@ export default function DashboardPageComponent() {
 
   const donutData = useMemo(() => {
     if (!bookingStatus) return [];
-    return (["active", "pending", "completed", "cancelled"] as const).map(
-      (key) => ({
-        bookingStatus: key.charAt(0).toUpperCase() + key.slice(1),
-        bookingCount: bookingStatus[key],
-        color: DONUT_COLORS[key],
-      }),
-    );
+    return DONUT_STATUS_ORDER.map((key) => ({
+      bookingStatus: key,
+      bookingCount: bookingStatus[key],
+      color: DONUT_COLORS[key],
+    }));
   }, [bookingStatus]);
 
   const handleFilterChange = (filter: FilterType) =>
