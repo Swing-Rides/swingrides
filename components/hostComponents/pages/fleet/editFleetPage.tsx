@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  useGetVehicleQuery,
+  useLazyGetVehicleQuery,
   useUpdateVehicleMutation,
 } from "@/app/store/services/hostApi";
 import FleetForm, {
@@ -10,6 +10,7 @@ import FleetForm, {
 import { Spinner } from "@/components/ui/spinner";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 type EditFleetComponentsProps = {
   fleetId: string;
@@ -80,7 +81,14 @@ export default function EditFleetComponents({
 }: EditFleetComponentsProps) {
   const router = useRouter();
 
-  const { data: vehicleResponse, isFetching } = useGetVehicleQuery(fleetId);
+  // const { data: vehicleResponse } = useGetVehicleQuery(fleetId);
+  const [fetchVehicleByID, { isFetching, data: vehicleResponse }] =
+    useLazyGetVehicleQuery();
+
+  useEffect(() => {
+    fetchVehicleByID(fleetId);
+  }, [fleetId]);
+
   const [updateVehicle, { isLoading: isUpdating }] = useUpdateVehicleMutation();
 
   const vehicle = vehicleResponse?.data;
@@ -157,9 +165,11 @@ export default function EditFleetComponents({
       engine: values.engine,
       driveType: values.driveType.toLowerCase(),
       horsePower: Number(values.horsePower),
+      images: values.vehicleImageUrls ?? [],
     };
 
     await updateVehicle({ vehicleId: fleetId, data: payload }).unwrap();
+    fetchVehicleByID(fleetId);
     router.push(`${HOST_DASHBOARD_PATH}fleet`);
   };
 
