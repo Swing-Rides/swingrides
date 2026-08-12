@@ -97,9 +97,13 @@ export default function ModifyBookingForm({
   const { data, isError, isLoading: rawLoading } = useGetBookingByIdQuery({ id: rental.id });
   const bookingDataLoading = rawLoading as boolean;
 
+  // The renter profile list doesn't include `vehicleId` per rental — only the
+  // full booking fetched above does — so prefer that over the prop.
+  const vehicleId = data?.data.vehicleId ?? rental.vehicleId;
+
   const { data: vehicleData } = useGetPublicVehicleByIdQuery(
-    { id: rental.vehicleId as string },
-    { skip: !rental.vehicleId },
+    { id: vehicleId as string },
+    { skip: !vehicleId },
   );
   const dispatch = useAppDispatch();
 
@@ -265,9 +269,15 @@ export default function ModifyBookingForm({
 
     await updateBooking({
       id: rental.id,
-      pickupDate,
-      returnDate,
+      pickupDate: toISODate(pickupDate),
+      returnDate: toISODate(returnDate),
+      pickupTime,
+      returnTime,
       pickupLocation,
+      streetAddress: formValues.pickupStreet,
+      city: formValues.pickupCity,
+      state: formValues.pickupState,
+      postalCode: formValues.pickupZipcode,
     }).unwrap();
   };
 
@@ -402,7 +412,7 @@ export default function ModifyBookingForm({
 
       const pendingCheckout: PendingCheckoutDraft = {
         // DATA SOURCE
-        vehicleId: rental.vehicleId as string,
+        vehicleId: vehicleId as string,
 
         // NEW DATA
         pickupDate: toISODate(pickupDate),
@@ -428,7 +438,7 @@ export default function ModifyBookingForm({
         taxRate,
       };
 
-      writeDraftToStorage(rental.vehicleId as string, pendingCheckout);
+      writeDraftToStorage(vehicleId as string, pendingCheckout);
       toast.success("Redirecting to checkout for the additional days");
       dispatch(
         setPendingCheckoutData({

@@ -103,6 +103,13 @@ export default function ModifyCheckout() {
       id: bookingId,
       pickupDate: pendingCheckoutData.pickupDate,
       returnDate: pendingCheckoutData.returnDate,
+      pickupTime: pendingCheckoutData.pickupTime,
+      returnTime: pendingCheckoutData.returnTime,
+      pickupLocation: pendingCheckoutData.pickupLocation,
+      streetAddress: pendingCheckoutData.streetAddress,
+      city: pendingCheckoutData.city,
+      state: pendingCheckoutData.state,
+      postalCode: pendingCheckoutData.postalCode,
       paymentIntentId: values.paymentIntentId,
     }).unwrap();
     handleClose();
@@ -110,9 +117,6 @@ export default function ModifyCheckout() {
 
   const meta = paymentIntent?.metadata;
 
-  // paymentIntent top-level fields = the actual charge amounts (price difference only).
-  // metadata fields = full new booking totals (for reference).
-  // The summary and Pay button must both reflect what Stripe is charging: the difference.
   const chargeAmount =
     paymentIntent?.totalAmount ?? pendingCheckoutData.totalAmount;
   const chargeSubtotal =

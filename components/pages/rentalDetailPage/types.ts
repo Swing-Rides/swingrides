@@ -10,4 +10,5 @@ export type ManageBookingButtonConfig = {
         label: string;
         href: string;
         className: string;
+        disabled?: boolean;
 }

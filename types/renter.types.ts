@@ -56,14 +56,21 @@ export interface RenterProfileResponse {
   email: string;
   memberSince: string;
   phoneNumber: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
   totalSpentByUser: string;
   rentals: Array<{
     id: string;
+    vehicleId: string;
     rentId: string;
     status: TripStatus;
     hostRatingForGuest: number | string;
     pickUpDate: string;
     returnDate: string;
+    pickupTime?: string;
+    returnTime?: string;
     pickupLocation: string;
     price: string;
     tripDurationDays: string;
@@ -71,6 +78,8 @@ export interface RenterProfileResponse {
     totalPaid: string;
     pickupStreet?: string;
     pickupCity?: string;
+    state?: string;
+    postalCode?: string;
     rentalRate: {
       daily: number;
       weekly: number;

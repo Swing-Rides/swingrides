@@ -162,6 +162,9 @@ export const publicApi = createApi({
         postalCode: string;
         pickupTime: string;
         returnTime: string;
+        firstName?: string;
+        lastName?: string;
+        phoneNumber?: string;
         insuranceProvider?: string;
         policyNumber?: string;
         insuranceExpiry?: string;

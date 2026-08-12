@@ -22,6 +22,7 @@ import StartVehicleCheckIn from "@/components/startVehicleCheckInModal";
 import RequestReimbursementModal from "@/components/modals/requestReimbursementModal";
 import ReportVehicleDamageModal from "@/components/modals/reportVehicleDamageModal";
 import ModifyCheckout from "@/components/modifyTripModal/modify-checkout";
+import { useGetBookingByIdQuery } from "@/app/store/services/renterApi";
 
 export default function RightContent({
   rentals: initialRentals,
@@ -329,6 +330,17 @@ export const getManageBookingButtons = (
 const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
   const searchParams = useSearchParams();
 
+  const canModify =
+    rentals?.status === "Upcoming" ||
+    rentals?.status === "Running Late" ||
+    rentals?.status === "Active";
+
+  const { isLoading: isModifyLoading, isError: isModifyError } =
+    useGetBookingByIdQuery(
+      { id: rentals?.id as string },
+      { skip: !rentals || !canModify },
+    );
+
   if (!rentals) return null;
 
   const buttons = getManageBookingButtons(
@@ -359,6 +371,10 @@ const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
               href={item.href}
               className={item.className}
               label={item.label}
+              disabled={
+                (item.label === "Modify" || item.label === "Extend Trip") &&
+                (isModifyLoading || isModifyError)
+              }
             />
           ))}
         </div>
@@ -369,7 +385,19 @@ const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
 ManageBookingCard.displayName = "ManageBookingCard";
 
 const ManageBookingButton = memo(
-  ({ href, className, label, icon }: ManageBookingButtonConfig) => {
+  ({ href, className, label, icon, disabled }: ManageBookingButtonConfig) => {
+    if (disabled) {
+      return (
+        <button
+          disabled
+          className={`flex gap-2 justify-center items-center w-full px-6 py-2.5 rounded-xs border opacity-50 cursor-not-allowed ${className}`}
+        >
+          {icon}
+          <span>{label}</span>
+        </button>
+      );
+    }
+
     return (
       <Link href={href}>
         <button
