@@ -32,11 +32,15 @@ export type DashboardSummary = {
 
 export type RevenuePoint = { label: string; revenue: number };
 
-export type BookingStatusSummary = {
-	active: number;
-	pending: number;
-	completed: number;
-	cancelled: number;
+export type BookingLifecycleStatus =
+	| "Upcoming"
+	| "Running Late"
+	| "Overdue"
+	| "Active"
+	| "Completed"
+	| "Cancelled";
+
+export type BookingStatusSummary = Record<BookingLifecycleStatus, number> & {
 	total: number;
 };
 
@@ -52,7 +56,7 @@ export type RecentBooking = {
 	bookingId: string;
 	vehicle: string;
 	customer: string;
-	status: "active" | "pending" | "completed" | "cancelled";
+	status: BookingLifecycleStatus;
 	amount: number;
 	amountFormatted: string;
 	date: string;

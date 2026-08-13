@@ -111,14 +111,15 @@ export default function RecentBookingsTable({
 
 function StatusBadge({ status }: { status: string }) {
         const styles: Record<string, string> = {
-                pending: "bg-orange-50 text-amber-500",
-                active: "bg-sky-100 text-blue-500",
-                completed: "bg-green-100 text-emerald-500",
-                cancelled: "bg-red-100 text-red-500",
-                inactive: "bg-gray-100 text-gray-500",
+                Upcoming: "bg-orange-50 text-amber-500",
+                "Running Late": "bg-yellow-100 text-yellow-600",
+                Overdue: "bg-red-100 text-red-500",
+                Active: "bg-sky-100 text-blue-500",
+                Completed: "bg-green-100 text-emerald-500",
+                Cancelled: "bg-gray-100 text-gray-500",
         };
         return (
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${styles[status] ?? styles.inactive}`}>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${styles[status] ?? styles.Cancelled}`}>
                         {status}
                 </span>
         );
