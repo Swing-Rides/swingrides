@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
 import { Separator } from "@/components/ui/separator";
 import { X } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 import ExtendTripForm, { type ExtendTripFormValues } from "@/components/forms/extendTripForm";
 import { Rentals } from "@/components/pages/profilePages/types";
@@ -12,7 +11,7 @@ import { useGetBookingByIdQuery } from "@/app/store/services/renterApi";
 import { useAppDispatch } from "@/app/store/store";
 import { setPendingCheckoutData } from "@/app/store/reducers/public.reducer";
 import { PendingCheckoutDraft, writeDraftToStorage } from "@/lib/checkout-helpers";
-import { computePricing, computeTotal, PriceConfig } from "@/lib/pricing";
+import { computeInsuranceFee, computePricing, computeTotal, PriceConfig } from "@/lib/pricing";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type ExtendTripModalProps = {
@@ -22,6 +21,34 @@ type ExtendTripModalProps = {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+const combineDateAndTime = (dateLabel?: string, timeLabel?: string): string => {
+    if (!dateLabel) return "";
+
+    const parsedDate = parse(dateLabel, "MMM d, yyyy", new Date());
+    if (Number.isNaN(parsedDate.getTime())) {
+        const d = new Date(dateLabel);
+        if (!Number.isNaN(d.getTime())) return d.toISOString();
+        return "";
+    }
+
+    const timeMatch = timeLabel?.match(
+        /^(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z?$/,
+    );
+    const [, hh = "0", mm = "0", ss = "0", ms = "0"] = timeMatch ?? [];
+
+    return new Date(
+        Date.UTC(
+            parsedDate.getFullYear(),
+            parsedDate.getMonth(),
+            parsedDate.getDate(),
+            Number(hh),
+            Number(mm),
+            Number(ss),
+            Number(ms.padEnd(3, "0")),
+        ),
+    ).toISOString();
+};
+
 const splitDateAndTime = (iso: string): { date: string; time: string } => {
     if (!iso) return { date: "", time: "" };
     const d = new Date(iso);
@@ -46,25 +73,22 @@ export default function ExtendTripModal({ rental, isOpen, onClose }: ExtendTripM
     );
 
     const vehicleId = data?.data.vehicleId ?? rental.vehicleId;
+    const taxRate = data?.data.taxRate ?? 0;
+    const insuranceFeePerDay = Number(data?.data?.dailyInsuranceFee ?? 0);
+    const hostProvidingCoverage = Boolean(data?.data?.hostProvidingCoverage);
 
-    const dailyRate = useMemo(
-        () => rental?.rentalRate?.daily ?? 0,
-        [rental?.rentalRate?.daily],
+    const parsedTotal = parseFloat(
+        rental.totalPaid?.replace(/[^0-9.]/g, "") ?? "0",
+    );
+    const currentTotal = Number.isFinite(parsedTotal) ? parsedTotal : 0;
+
+    const originalReturnISO = combineDateAndTime(
+        rental?.returnDate,
+        rental?.returnTime,
     );
 
-    const currentTotal = useMemo(() => {
-        if (!rental) return 0;
-        const parsed = parseFloat(
-            rental.totalPaid?.replace(/[^0-9.]/g, "") ?? "0",
-        );
-        return Number.isFinite(parsed) ? parsed : 0;
-    }, [rental]);
-
     // Only allow this modal for Active trips
-    if (!isOpen || rental.status !== "Active") {
-        toast.error("Only Active trips can be extended");
-        return null
-    };
+    if (!isOpen || rental.status !== "Active") return null;
 
     const handleSubmit = async (values: ExtendTripFormValues) => {
         try {
@@ -88,9 +112,14 @@ export default function ExtendTripModal({ rental, isOpen, onClose }: ExtendTripM
                 extraDays,
             );
             const taxRate = data?.data.taxRate ?? 0;
+            const insuranceFee = computeInsuranceFee(
+                extraDays,
+                Number(data?.data?.dailyInsuranceFee ?? 0),
+                Boolean(data?.data?.hostProvidingCoverage),
+            );
             const extraDaysTotalAmount = computeTotal(
                 extraDaysPricing.total,
-                Number(data?.data.dailyInsuranceFee ?? 0),
+                insuranceFee,
                 taxRate,
             );
 
@@ -180,10 +209,13 @@ export default function ExtendTripModal({ rental, isOpen, onClose }: ExtendTripM
 
                 <div className="overflow-y-auto">
                     <ExtendTripForm
-                        currentReturnDate={rental.returnDate}
-                        dailyRate={dailyRate}
+                        currentReturnDate={originalReturnISO || rental.returnDate}
+                        rentalRate={rental.rentalRate as PriceConfig}
                         currentTotal={currentTotal}
                         vehicleId={vehicleId ?? rental.car.carId}
+                        insuranceFeePerDay={insuranceFeePerDay}
+                        hostProvidingCoverage={hostProvidingCoverage}
+                        taxRate={taxRate}
                         onSubmit={handleSubmit}
                         onClose={onClose}
                     />

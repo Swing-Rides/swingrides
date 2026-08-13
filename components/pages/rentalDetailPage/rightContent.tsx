@@ -22,12 +22,14 @@ import StartVehicleCheckIn from "@/components/startVehicleCheckInModal";
 import RequestReimbursementModal from "@/components/modals/requestReimbursementModal";
 import ReportVehicleDamageModal from "@/components/modals/reportVehicleDamageModal";
 import ModifyCheckout from "@/components/modifyTripModal/modify-checkout";
+import ExtendTripModal from "@/components/modifyTripModal/extendTripModal";
 import { useGetBookingByIdQuery } from "@/app/store/services/renterApi";
 
 export default function RightContent({
   rentals: initialRentals,
 }: ManageBookingCardProps) {
   const [rental, setRental] = useState<Rentals | undefined>(initialRentals);
+  const [showExtendModal, setShowExtendModal] = useState(false);
 
   const rentalsAsArray = rental ? [rental] : undefined;
 
@@ -51,7 +53,7 @@ export default function RightContent({
     <div className="col-span-1 md:col-span-5 w-full space-y-3 md:space-y-6">
       <div className="w-full">
         <Suspense>
-          <ManageBookingCard rentals={rental} />
+          <ManageBookingCard rentals={rental} onExtendTrip={() => setShowExtendModal(true)} />
         </Suspense>
       </div>
 
@@ -87,7 +89,13 @@ export default function RightContent({
               rentals={rentalsAsArray}
               onComplete={handleComplete}
             />
-          </Suspense> 
+          </Suspense>
+
+          <ExtendTripModal
+            rental={rental}
+            isOpen={showExtendModal}
+            onClose={() => setShowExtendModal(false)}
+          />
         </>
       )}
 
@@ -122,6 +130,7 @@ export const getManageBookingButtons = (
   currentParams: string,
   contactNumber: string,
   vehicleId?: string,
+  onExtendTrip?: () => void,
 ): ManageBookingButtonConfig[] => {
 
   const checkInParams = new URLSearchParams(currentParams);
@@ -220,8 +229,9 @@ export const getManageBookingButtons = (
         {
           icon: <PenLine className="w-4" />,
           label: "Extend Trip",
-          href: `?${modifyParams.toString()}`,
+          href: "#",
           className: modifyStyle,
+          onClick: onExtendTrip,
         },
         {
           icon: <Car className="w-4" />,
@@ -327,7 +337,7 @@ export const getManageBookingButtons = (
   }
 };
 
-const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
+const ManageBookingCard = memo(({ rentals, onExtendTrip }: ManageBookingCardProps & { onExtendTrip?: () => void }) => {
   const searchParams = useSearchParams();
 
   const canModify =
@@ -349,6 +359,7 @@ const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
     searchParams.toString(),
     rentals.host.contactNumber,
     rentals.vehicleId,
+    onExtendTrip,
   );
 
   return (
@@ -375,6 +386,7 @@ const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
                 (item.label === "Modify" || item.label === "Extend Trip") &&
                 (isModifyLoading || isModifyError)
               }
+              onClick={item.onClick}
             />
           ))}
         </div>
@@ -385,12 +397,25 @@ const ManageBookingCard = memo(({ rentals }: ManageBookingCardProps) => {
 ManageBookingCard.displayName = "ManageBookingCard";
 
 const ManageBookingButton = memo(
-  ({ href, className, label, icon, disabled }: ManageBookingButtonConfig) => {
+  ({ href, className, label, icon, disabled, onClick }: ManageBookingButtonConfig) => {
     if (disabled) {
       return (
         <button
           disabled
           className={`flex gap-2 justify-center items-center w-full px-6 py-2.5 rounded-xs border opacity-50 cursor-not-allowed ${className}`}
+        >
+          {icon}
+          <span>{label}</span>
+        </button>
+      );
+    }
+
+    if (onClick) {
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          className={`flex gap-2 justify-center items-center w-full px-6 py-2.5 rounded-xs border cursor-pointer duration-300 transition-colors ${className}`}
         >
           {icon}
           <span>{label}</span>

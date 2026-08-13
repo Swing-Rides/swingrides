@@ -14,6 +14,15 @@ import { stripePromise } from "@/lib/stripe";
 import { Elements } from "@stripe/react-stripe-js";
 import { useCallback, useEffect, useState } from "react";
 
+import { Spinner } from "@/components/ui/spinner";
+
+import {
+  computePricing,
+  computeInsuranceFee,
+  computeTotal,
+  type PriceConfig,
+} from "@/lib/pricing";
+
 type PaymentIntentData = {
   id: string;
   amount: number;
@@ -87,7 +96,27 @@ export default function ModifyCheckout() {
   }, [bookingId, pendingCheckoutData, createPaymentIntent]);
 
   if (!pendingCheckoutData || !bookingId) return null;
-  if (!paymentIntent && !noPaymentRequired) return null;
+
+  if (!paymentIntent && !noPaymentRequired) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md transition-all animate-in fade-in duration-200">
+        <div className="bg-white rounded-[16px] shadow-2xl p-6 sm:p-8 max-w-sm w-full mx-4 flex flex-col items-center text-center gap-4 animate-in zoom-in-95 duration-200">
+          <div className="size-14 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center">
+            <Spinner className="size-7 text-blue-700 animate-spin" />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <h3 className="text-neutral-950 text-lg font-bold font-text">
+              Preparing Checkout
+            </h3>
+            <p className="text-gray-500 text-xs sm:text-sm font-normal font-text leading-relaxed">
+              Please hold on while we calculate your updated pricing and initialize your secure payment session...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const vehicleImage = data?.data.car.imageUrl as string;
   const vehicleName = data?.data.car.carName as string;
@@ -115,23 +144,53 @@ export default function ModifyCheckout() {
     handleClose();
   };
 
-  const meta = paymentIntent?.metadata;
+  // ── Pricing calculation strictly using lib/pricing.ts and renter booking data ──
+  const extraDays = Number(pendingCheckoutData.totalDays ?? 1);
+  const rentalRate: PriceConfig = data?.data?.rentalRate ?? {
+    daily: 0,
+    weekly: 0,
+    monthly: 0,
+  };
 
-  const chargeAmount =
-    paymentIntent?.totalAmount ?? pendingCheckoutData.totalAmount;
-  const chargeSubtotal =
-    paymentIntent?.subtotal ?? Number(meta?.priceDifference ?? chargeAmount);
-  const chargeTax = paymentIntent?.taxRate ?? 0;
-  const chargeTaxRate =
-    paymentIntent?.taxRate ??
-    Number(meta?.taxRate ?? pendingCheckoutData.taxRate);
-  const chargeInsuranceFee = paymentIntent?.insuranceFee ?? 0;
-
-  // Full new booking total — shown as an informational line only
-  const newBookingTotal = Number(
-    meta?.totalAmount ?? pendingCheckoutData.totalAmount,
+  const pricing = computePricing(rentalRate, extraDays);
+  const isHostCoverage = Boolean(
+    pendingCheckoutData.hostProvidingCoverage ?? data?.data?.hostProvidingCoverage,
   );
-  const originalAmount = Number(meta?.originalAmount ?? 0);
+  const insuranceFeePerDay = Number(
+    pendingCheckoutData.insuranceFeePerDay ?? data?.data?.dailyInsuranceFee ?? 0,
+  );
+  const calculatedInsuranceFee = computeInsuranceFee(
+    extraDays,
+    insuranceFeePerDay,
+    isHostCoverage,
+  );
+  const taxRate = Number(
+    pendingCheckoutData.taxRate ?? data?.data?.taxRate ?? 0,
+  );
+
+  const totalBreakdown = computeTotal(
+    pendingCheckoutData.subtotal ?? pricing.total,
+    calculatedInsuranceFee,
+    taxRate,
+  );
+
+  const chargeSubtotal = totalBreakdown.subtotal;
+  const chargeInsuranceFee = totalBreakdown.insuranceFee;
+  const chargeTax = totalBreakdown.tax;
+  const chargeTaxRate = taxRate;
+  const chargeAmount =
+    paymentIntent?.totalAmount && Number(paymentIntent.totalAmount) > 0
+      ? Number(paymentIntent.totalAmount)
+      : totalBreakdown.totalAmount;
+
+  // Original booking amount (from booking details or totalPaid)
+  const originalParsed = data?.data?.totalAmount
+    ? Number(data.data.totalAmount)
+    : data?.data?.totalPaid
+    ? parseFloat(data.data.totalPaid.replace(/[^0-9.]/g, ""))
+    : 0;
+  const originalAmount = Number.isFinite(originalParsed) ? originalParsed : 0;
+  const newBookingTotal = originalAmount > 0 ? originalAmount + chargeAmount : undefined;
 
   const clientSecret = paymentIntent?.clientSecret ?? "";
   const stripeOptions = clientSecret ? { clientSecret } : {};
@@ -149,14 +208,18 @@ export default function ModifyCheckout() {
           id={pendingCheckoutData.vehicleId}
           imageUrl={vehicleImage}
           returnUrl=""
-          subTotalFee={String(chargeSubtotal)}
-          taxFee={String(chargeTax)}
+          subTotalFee={Number(chargeSubtotal).toFixed(2)}
+          taxFee={Number(chargeTax).toFixed(2)}
           taxPercentageRate={chargeTaxRate}
-          insuranceFee={chargeInsuranceFee}
+          insuranceFee={Number(chargeInsuranceFee)}
           totalPrice={String(
-            noPaymentRequired ? pendingCheckoutData.totalAmount : chargeAmount,
+            Number(
+              noPaymentRequired ? pendingCheckoutData.totalAmount : chargeAmount,
+            ).toFixed(2),
           )}
-          chargeAmount={String(noPaymentRequired ? 0 : chargeAmount)}
+          chargeAmount={String(
+            Number(noPaymentRequired ? 0 : chargeAmount).toFixed(2),
+          )}
           newBookingTotal={noPaymentRequired ? undefined : newBookingTotal}
           originalAmount={originalAmount > 0 ? originalAmount : undefined}
           vehicleGearType={gearType}
@@ -167,14 +230,14 @@ export default function ModifyCheckout() {
           onCancel={handleClose}
           onSubmit={handleSubmit}
           user={{
-            city: "",
+            city: userprofile?.renter.city as string,
             email: userprofile?.renter.email as string,
             firstName: firstName as string,
             lastName: rest.join(" ") as string,
             phoneNumber: userprofile?.renter.phoneNumber as string,
-            postalCode: "",
-            state: "",
-            streetAddress: "",
+            postalCode: userprofile?.renter.postalCode as string,
+            state: userprofile?.renter.state as string,
+            streetAddress: userprofile?.renter.streetAddress as string,
           }}
         />
       </Elements>
