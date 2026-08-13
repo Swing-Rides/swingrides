@@ -219,6 +219,7 @@ export type ControllerProps<T extends FieldValues = FieldValues> = {
   field: FormFieldConfig;
   control: Control<T>;
   error?: string;
+  onValueChange?: (value: string) => void;
 };
 
 export const inputClass = (error?: string) =>
@@ -305,7 +306,7 @@ export const TextareaInput = <T extends FieldValues = FieldValues>({ field, regi
 }
 
 // Select
-export const AsyncSelectInput = <T extends FieldValues = FieldValues>({ field, control, error }: ControllerProps<T>) => {
+export const AsyncSelectInput = <T extends FieldValues = FieldValues>({ field, control, error, onValueChange }: ControllerProps<T>) => {
   // useMemo keeps the promise stable across re-renders as long as
   // field.loadOptions keeps the same reference — no effect, no setState
   const optionsPromise = useMemo(() => field.loadOptions!(), [field.loadOptions])
@@ -318,11 +319,18 @@ export const AsyncSelectInput = <T extends FieldValues = FieldValues>({ field, c
       defaultValue={(field.defaultValue ?? '') as PathValue<T, Path<T>>}
       rules={field.validation as RegisterOptions<T, Path<T>>}
       render={({ field: ctrl }) => (
-        <Select onValueChange={ctrl.onChange} value={ctrl.value} disabled={field.disabled}>
+        <Select
+          onValueChange={(val) => {
+            ctrl.onChange(val);
+            onValueChange?.(val);
+          }}
+          value={ctrl.value}
+          disabled={field.disabled}
+        >
           <SelectTrigger id={field.name} className={cn(inputClass(error), 'w-full')}>
             <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper">
             {options.map((opt) => (
               <SelectItem key={opt.value} value={opt.value} className='font-text text-sm'>
                 {opt.label}
@@ -335,12 +343,12 @@ export const AsyncSelectInput = <T extends FieldValues = FieldValues>({ field, c
   )
 }
 
-export const SelectInput = <T extends FieldValues = FieldValues>({ field, control, error }: ControllerProps<T>) => {
+export const SelectInput = <T extends FieldValues = FieldValues>({ field, control, error, onValueChange }: ControllerProps<T>) => {
 
   if (field.loadOptions) {
     return (
       <Suspense fallback={<Skeleton className='h-10 w-full rounded-md' />}>
-        <AsyncSelectInput field={field} control={control} error={error} />
+        <AsyncSelectInput field={field} control={control} error={error} onValueChange={onValueChange} />
       </Suspense>
     )
   }
@@ -352,11 +360,18 @@ export const SelectInput = <T extends FieldValues = FieldValues>({ field, contro
       defaultValue={(field.defaultValue ?? '') as PathValue<T, Path<T>>}
       rules={field.validation as RegisterOptions<T, Path<T>>}
       render={({ field: ctrl }) => (
-        <Select onValueChange={ctrl.onChange} value={ctrl.value} disabled={field.disabled}>
+        <Select
+          onValueChange={(val) => {
+            ctrl.onChange(val);
+            onValueChange?.(val);
+          }}
+          value={ctrl.value}
+          disabled={field.disabled}
+        >
           <SelectTrigger id={field.name} className={cn(inputClass(error), 'w-full')}>
             <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper">
             {(field.options ?? []).map((opt) => (
               <SelectItem key={opt.value} value={opt.value} className='font-text text-sm'>
                 {opt.label}
