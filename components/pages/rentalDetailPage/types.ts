@@ -11,4 +11,5 @@ export type ManageBookingButtonConfig = {
         href: string;
         className: string;
         disabled?: boolean;
+        onClick?: () => void;
 }
