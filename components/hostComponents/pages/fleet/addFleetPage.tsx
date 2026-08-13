@@ -22,11 +22,7 @@ export default function AddFleetPage() {
       dailyInsuranceFee: Number(values.dailyInsuranceFee),
       description: values.description,
       doors: Number(values.doors),
-      driveType: values.driveType.toLowerCase(),
-      engine: values.engine,
-      fuelEfficiency: values.fuelEfficiency,
       fuelType: values.fuelType.toLowerCase(),
-      horsePower: Number(values.horsePower),
       images: values.vehicleImageUrls ?? [],
       instantlyAvailable: values.instantlyAvailable,
       licensePlate: values.licensePlate,
@@ -39,7 +35,6 @@ export default function AddFleetPage() {
       pickupLocation: values.pickupAddressStreet,
       pickupAddressState: values.pickupAddressState,
       pickupInstructions: values.pickupInstructions,
-      vehicleRegistrationUrl: values.vehicleRegistrationUrl,
       zipCode: values.zipCode,
       seats: Number(values.seats),
       name: values.vehicleName,
@@ -83,7 +78,7 @@ export default function AddFleetPage() {
             className="py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer"
           >
             {isLoading ? (
-              <span className="flex items-center gap-2 justify-start">
+              <span className="flex items-center gap-2 justify-center">
                 <Spinner /> Adding...
               </span>
             ) : (
@@ -110,7 +105,7 @@ export default function AddFleetPage() {
           className="flex-1 py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer"
         >
           {isLoading ? (
-            <span className="flex items-center gap-2 justify-start">
+            <span className="flex items-center gap-2 justify-center">
               <Spinner /> Adding...
             </span>
           ) : (

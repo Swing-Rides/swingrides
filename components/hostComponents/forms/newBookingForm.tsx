@@ -2,62 +2,60 @@
 
 import { useMemo, useState, use, Suspense } from "react";
 import Image from "next/image";
-import { useForm, Controller, useWatch } from "react-hook-form";
-import type { FieldPath } from "react-hook-form";
-import { format, differenceInCalendarDays } from "date-fns";
+import { useForm, useWatch } from "react-hook-form";
+import { addDays, format, differenceInCalendarDays } from "date-fns";
 import {
-  Car,
   User,
   Mail,
   Phone,
   MapPin,
   CalendarIcon,
-  Clock,
-  Bell,
   Hash,
-  AlertTriangle,
-  CheckCircle2,
   Loader2,
   ShieldCheck,
   Building2,
   FileText,
+  Bell,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  TextInput,
+  DateTimeInput,
+  SelectInput,
+  CheckboxInput,
+  DateInput,
+} from "@/components/forms/MainForm";
+import { FormRow } from "@/components/helpers/browseCarPaymentSection.helpers";
+import { validators } from "@/components/forms/form.validators";
+import { US_STATES } from "@/constants/addressState";
+import { useGetPublicVehicleByIdQuery } from "@/app/store/services/publicApi";
+import { VehicleSchedule } from "@/types/public-vehicles.type";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import {
-  computePricing as computeSharedPricing,
-  computeInsuranceFee,
-} from "@/lib/pricing";
+  BUFFER_TIME,
+  doesRentalPeriodOverlapSchedule as checkRentalPeriodOverlapSchedule,
+  isPickupDateTimeAvailable as checkPickupDateTimeAvailable,
+  isReturnDateTimeAvailable as checkReturnDateTimeAvailable,
+  isScheduleDateDisabled as checkScheduleDateDisabled,
+} from "@/lib/vehicleBookingHelpers";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import {
+  VehicleOption,
+  TaxResult,
+  computePricing,
+  formatCurrency,
+  pluralize,
+  AvailabilityNotice,
+  AvailabilityPlaceholder,
+  TaxAndTotal,
+  TaxPlaceholder,
+  FormSection,
+  SummaryRow,
+  EmptySummaryNotice,
+  NewBookingFormSkeleton,
+} from "../pages/bookingsPageComponents/newBookingFormComponents";
 
-type VehicleOption = {
-  id: string;
-  name: string;
-  imageUrl: string;
-  dailyPrice: number;
-  weeklyPrice: number;
-  monthlyPrice: number;
-  insuranceDailyRate: number;
-};
+// ─── Form Types ───────────────────────────────────────────────────────────────
 
 export type NewBookingFormValues = {
   vehicleId: string;
@@ -71,20 +69,13 @@ export type NewBookingFormValues = {
   pickupCity: string;
   pickupState: string;
   postalCode: string;
-  pickupTime: string;
-  returnTime: string;
   hostProvidesInsurance: boolean;
   insuranceProvider: string;
   insurancePolicyNumber: string;
   insuranceExpiryDate: string;
 };
 
-type TaxResult = {
-  amount: number;
-  rate: number;
-};
-
-type NewBookingFormProps = {
+export type NewBookingFormProps = {
   formId?: string;
   bookingId?: string;
   fetchVehicles: () => Promise<VehicleOption[]>;
@@ -96,112 +87,6 @@ type NewBookingFormProps = {
   fetchTax: (subtotal: number) => Promise<TaxResult>;
   onCancel?: () => void;
   onSubmit: (values: NewBookingFormValues) => void | Promise<void>;
-};
-
-type PricingLineItem = {
-  label: string;
-  total: number;
-};
-
-type PricingBreakdown = {
-  durationLabel: string;
-  displayPriceTier: "day" | "week" | "month";
-  baseLineItems: PricingLineItem[];
-  baseTotal: number;
-  insuranceFee: number;
-  subtotal: number;
-};
-
-// ─── Pricing helpers ───────────────────────────────────────────────────────────
-
-const pluralize = (count: number, noun: string) =>
-  `${count} ${noun}${count !== 1 ? "s" : ""}`;
-
-/**
- * Wraps the shared mixed-unit billing helper (month → week → day cascade)
- * and reshapes it into the label/line-item format this form's summary
- * panel renders.
- */
-const computePricing = (
-  vehicle: VehicleOption,
-  days: number,
-  hostProvidesInsurance: boolean,
-): PricingBreakdown => {
-  const {
-    lineItems,
-    total: baseTotal,
-    displayPriceTier,
-  } = computeSharedPricing(
-    {
-      daily: vehicle.dailyPrice,
-      weekly: vehicle.weeklyPrice,
-      monthly: vehicle.monthlyPrice,
-    },
-    days,
-  );
-
-  // computeSharedPricing's line-item labels already include the rate
-  // (e.g. "3 weeks @ $60.00/wk") — reformat the leading count into the
-  // "N week(s) (@ $rate/wk)" shape this form displays.
-  const baseLineItems: PricingLineItem[] = lineItems.map((item) => ({
-    label: item.label.replace(/^(.*?) @ (.*)$/, "$1 (@ $2)"),
-    total: item.total,
-  }));
-
-  const durationParts: string[] = [];
-  let remaining = days;
-  const months = Math.floor(remaining / 30);
-  if (months > 0) {
-    durationParts.push(pluralize(months, "month"));
-    remaining -= months * 30;
-  }
-  const weeks = Math.floor(remaining / 7);
-  if (weeks > 0) {
-    durationParts.push(pluralize(weeks, "week"));
-    remaining -= weeks * 7;
-  }
-  if (remaining > 0) {
-    durationParts.push(pluralize(remaining, "day"));
-  }
-
-  // Insurance is always billed as the exact number of days times the flat
-  // daily rate — never rolled up into weekly/monthly units like the base
-  // rental rate is (e.g. 21 days of insurance = 21 × rate, not 3 weeks).
-  const insuranceFee = computeInsuranceFee(
-    days,
-    vehicle.insuranceDailyRate,
-    hostProvidesInsurance,
-  );
-
-  return {
-    durationLabel: durationParts.join(", "),
-    displayPriceTier,
-    baseLineItems,
-    baseTotal,
-    insuranceFee,
-    subtotal: baseTotal + insuranceFee,
-  };
-};
-
-const formatCurrency = (amount: number) =>
-  amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
-
-const formatPercent = (rate: number) =>
-  `${(rate * 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}%`;
-
-const formatDateValue = (date: Date) => format(date, "yyyy-MM-dd");
-
-const parseDateValue = (value?: string) => {
-  if (!value) return undefined;
-
-  const normalized = value.trim();
-  if (!normalized) return undefined;
-
-  const dateOnly = normalized.slice(0, 10);
-  const [year, month, day] = dateOnly.split("-").map(Number);
-  if (!year || !month || !day) return undefined;
-
-  return new Date(year, month - 1, day, 12, 0, 0, 0);
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -248,8 +133,6 @@ function NewBookingFormInner({
     pickupCity: "",
     pickupState: "",
     postalCode: "",
-    pickupTime: "",
-    returnTime: "",
     hostProvidesInsurance: false,
     insuranceProvider: "",
     insurancePolicyNumber: "",
@@ -261,6 +144,7 @@ function NewBookingFormInner({
     handleSubmit,
     control,
     reset,
+    setValue,
     clearErrors,
     trigger,
     formState: { errors, isSubmitting },
@@ -278,7 +162,69 @@ function NewBookingFormInner({
     name: "hostProvidesInsurance",
   });
 
+  const { data: publicVehicleData } = useGetPublicVehicleByIdQuery(
+    { id: vehicleId as string },
+    { skip: !vehicleId },
+  );
+
+  const vehicleSchedule = useMemo<VehicleSchedule[]>(
+    () => publicVehicleData?.data?.vehicleSchedule ?? [],
+    [publicVehicleData?.data?.vehicleSchedule],
+  );
+
+  const isPickupDateTimeAvailable = useMemo(() => {
+    return (pickupDateTime: Date) =>
+      checkPickupDateTimeAvailable(vehicleSchedule, pickupDateTime, BUFFER_TIME);
+  }, [vehicleSchedule]);
+
+  const isReturnDateTimeAvailable = useMemo(() => {
+    return (returnDateTime: Date) =>
+      checkReturnDateTimeAvailable(vehicleSchedule, returnDateTime, BUFFER_TIME);
+  }, [vehicleSchedule]);
+
+  const doesRentalPeriodOverlapSchedule = useMemo(() => {
+    return (pickupDateTime: Date, returnDateTime: Date) =>
+      checkRentalPeriodOverlapSchedule(
+        vehicleSchedule,
+        pickupDateTime,
+        returnDateTime,
+        BUFFER_TIME,
+      );
+  }, [vehicleSchedule]);
+
+  const isScheduleDateDisabled = useMemo(() => {
+    return (date: Date) =>
+      checkScheduleDateDisabled(vehicleSchedule, date, BUFFER_TIME);
+  }, [vehicleSchedule]);
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const isSelectedPeriodAvailable = useMemo(() => {
+    if (!pickupDate || !returnDate) return false;
+    const pickup = new Date(pickupDate);
+    const returnD = new Date(returnDate);
+    if (returnD.getTime() <= pickup.getTime()) return false;
+
+    return (
+      isPickupDateTimeAvailable(pickup) &&
+      isReturnDateTimeAvailable(returnD) &&
+      !doesRentalPeriodOverlapSchedule(pickup, returnD)
+    );
+  }, [
+    pickupDate,
+    returnDate,
+    isPickupDateTimeAvailable,
+    isReturnDateTimeAvailable,
+    doesRentalPeriodOverlapSchedule,
+  ]);
+
   const selectedVehicle = vehicles.find((v) => v.id === vehicleId);
+
+
 
   const days =
     pickupDate && returnDate
@@ -321,34 +267,44 @@ function NewBookingFormInner({
                 htmlFor="vehicleId"
                 error={errors.vehicleId?.message}
               >
-                <Controller
-                  name="vehicleId"
+                <SelectInput
+                  field={{
+                    name: "vehicleId",
+                    type: "select",
+                    placeholder: "Select a vehicle",
+                    options: vehicles.map((v) => ({
+                      value: v.id,
+                      label: v.name,
+                    })),
+                    validation: { required: "Please select a vehicle" },
+                  }}
                   control={control}
-                  rules={{ required: "Please select a vehicle" }}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger
-                        id="vehicleId"
-                        className={inputCn(!!errors.vehicleId)}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <Car className="w-4 h-4 text-[#9CA3AF] shrink-0" />
-                          <SelectValue placeholder="Select a vehicle" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vehicles.map((v) => (
-                          <SelectItem
-                            key={v.id}
-                            value={v.id}
-                            className="font-text text-sm"
-                          >
-                            {v.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  error={errors.vehicleId?.message}
+                  onValueChange={(selectedId) => {
+                    const selected = vehicles.find((v) => v.id === selectedId);
+                    if (selected) {
+                      if (selected.streetAddress !== undefined) {
+                        setValue("streetAddress", selected.streetAddress, {
+                          shouldValidate: true,
+                        });
+                      }
+                      if (selected.pickupCity !== undefined) {
+                        setValue("pickupCity", selected.pickupCity, {
+                          shouldValidate: true,
+                        });
+                      }
+                      if (selected.pickupState !== undefined) {
+                        setValue("pickupState", selected.pickupState, {
+                          shouldValidate: true,
+                        });
+                      }
+                      if (selected.postalCode !== undefined) {
+                        setValue("postalCode", selected.postalCode, {
+                          shouldValidate: true,
+                        });
+                      }
+                    }
+                  }}
                 />
               </FormRow>
             </FormSection>
@@ -363,14 +319,16 @@ function NewBookingFormInner({
                   htmlFor="firstName"
                   error={errors.firstName?.message}
                 >
-                  <IconInput
-                    id="firstName"
-                    icon={<User className="w-4 h-4" />}
-                    placeholder="John"
-                    hasError={!!errors.firstName}
-                    {...register("firstName", {
-                      required: "First name is required",
-                    })}
+                  <TextInput
+                    field={{
+                      name: "firstName",
+                      type: "text",
+                      placeholder: "John",
+                      icon: <User className="w-4 h-4" />,
+                      validation: validators.name("First name"),
+                    }}
+                    register={register}
+                    error={errors.firstName?.message}
                   />
                 </FormRow>
                 <FormRow
@@ -378,14 +336,16 @@ function NewBookingFormInner({
                   htmlFor="lastName"
                   error={errors.lastName?.message}
                 >
-                  <IconInput
-                    id="lastName"
-                    icon={<User className="w-4 h-4" />}
-                    placeholder="Smith"
-                    hasError={!!errors.lastName}
-                    {...register("lastName", {
-                      required: "Last name is required",
-                    })}
+                  <TextInput
+                    field={{
+                      name: "lastName",
+                      type: "text",
+                      placeholder: "Smith",
+                      icon: <User className="w-4 h-4" />,
+                      validation: validators.name("Last name"),
+                    }}
+                    register={register}
+                    error={errors.lastName?.message}
                   />
                 </FormRow>
               </div>
@@ -395,19 +355,16 @@ function NewBookingFormInner({
                   htmlFor="email"
                   error={errors.email?.message}
                 >
-                  <IconInput
-                    id="email"
-                    type="email"
-                    icon={<Mail className="w-4 h-4" />}
-                    placeholder="john@email.com"
-                    hasError={!!errors.email}
-                    {...register("email", {
-                      required: "Email is required",
-                      pattern: {
-                        value: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,8}$/i,
-                        message: "Enter a valid email address",
-                      },
-                    })}
+                  <TextInput
+                    field={{
+                      name: "email",
+                      type: "email",
+                      placeholder: "john@email.com",
+                      icon: <Mail className="w-4 h-4" />,
+                      validation: validators.email(),
+                    }}
+                    register={register}
+                    error={errors.email?.message}
                   />
                 </FormRow>
                 <FormRow
@@ -415,15 +372,16 @@ function NewBookingFormInner({
                   htmlFor="phoneNumber"
                   error={errors.phoneNumber?.message}
                 >
-                  <IconInput
-                    id="phoneNumber"
-                    type="tel"
-                    icon={<Phone className="w-4 h-4" />}
-                    placeholder="+1 555-123-4567"
-                    hasError={!!errors.phoneNumber}
-                    {...register("phoneNumber", {
-                      required: "Phone number is required",
-                    })}
+                  <TextInput
+                    field={{
+                      name: "phoneNumber",
+                      type: "tel",
+                      placeholder: "+1 555-123-4567",
+                      icon: <Phone className="w-4 h-4" />,
+                      validation: validators.phone(),
+                    }}
+                    register={register}
+                    error={errors.phoneNumber?.message}
                   />
                 </FormRow>
               </div>
@@ -431,93 +389,118 @@ function NewBookingFormInner({
 
             <Separator />
 
-            {/* Section 3: Booking Dates & Location */}
-            <FormSection title="Booking Dates & Location">
+            {/* Section 3: Booking Dates */}
+            <FormSection title="Booking Dates">
               <div className="grid grid-cols-2 gap-3">
                 <FormRow
-                  label="Pickup Date"
+                  label="Pick-up Date & Time"
                   htmlFor="pickupDate"
                   error={errors.pickupDate?.message}
                 >
-                  <DatePickerField
-                    name="pickupDate"
-                    control={control}
-                    placeholder="Pick a date"
-                    error={errors.pickupDate?.message}
-                    rules={{ required: "Pickup date is required" }}
-                  />
-                </FormRow>
-                <FormRow
-                  label="Pickup Time"
-                  htmlFor="pickupTime"
-                  error={errors.pickupTime?.message}
-                >
-                  <TimePickerField
-                    name="pickupTime"
-                    control={control}
-                    clearErrors={clearErrors}
-                    trigger={trigger}
-                    placeholder="Select pickup time"
-                    error={errors.pickupTime?.message}
-                    rules={{ required: "Pickup time is required" }}
-                  />
-                </FormRow>
-              </div>
+                  <DateTimeInput
+                    field={{
+                      name: "pickupDate",
+                      type: "datetime",
+                      placeholder: "Pick a date & time",
+                      minDate: today,
+                      isDateDisabled: isScheduleDateDisabled,
+                      validation: {
+                        required: "Pick-up date is required",
+                        validate: (value: string) => {
+                          if (!value) return true;
 
-              <div className="grid grid-cols-2 gap-3">
+                          const selected = new Date(value);
+
+                          // Check if selected pickup datetime conflicts with any scheduled booking
+                          if (!isPickupDateTimeAvailable(selected)) {
+                            return `This vehicle is unavailable at this time. Please select another date or time.`;
+                          }
+
+                          return true;
+                        },
+                      },
+                    }}
+                    control={control}
+                    error={errors.pickupDate?.message}
+                  />
+                </FormRow>
                 <FormRow
-                  label="Return Date"
+                  label="Return Date & Time"
                   htmlFor="returnDate"
                   error={errors.returnDate?.message}
                 >
-                  <DatePickerField
-                    name="returnDate"
-                    control={control}
-                    placeholder="Pick a date"
-                    error={errors.returnDate?.message}
-                    minDate={pickupDate ? new Date(pickupDate) : undefined}
-                    rules={{
-                      required: "Return date is required",
-                      validate: (value: string) => {
-                        if (!pickupDate || !value) return true;
-                        return (
-                          new Date(value) > new Date(pickupDate) ||
-                          "Must be after pickup date"
-                        );
+                  <DateTimeInput
+                    field={{
+                      name: "returnDate",
+                      type: "datetime",
+                      placeholder: "Pick a date & time",
+                      minDate: pickupDate
+                        ? addDays(new Date(pickupDate), 1)
+                        : today,
+                      isDateDisabled: isScheduleDateDisabled,
+                      validation: {
+                        required: "Return date is required",
+                        validate: (value: string) => {
+                          if (!pickupDate || !value) return true;
+
+                          const selected = new Date(value);
+                          const pickup = new Date(pickupDate);
+
+                          // Must be after pick-up date
+                          if (selected.getTime() <= pickup.getTime()) {
+                            return "Must be after pick-up date";
+                          }
+
+                          // Check if the entire rental period overlaps with any scheduled booking
+                          if (doesRentalPeriodOverlapSchedule(pickup, selected)) {
+                            return `This vehicle is already booked during part of your requested dates. Please select different dates.`;
+                          }
+
+                          // Check if selected return datetime conflicts with any scheduled booking
+                          if (!isReturnDateTimeAvailable(selected)) {
+                            return `This vehicle is unavailable at this return time. Please select another date or time.`;
+                          }
+
+                          return true;
+                        },
                       },
                     }}
-                  />
-                </FormRow>
-                <FormRow
-                  label="Return Time"
-                  htmlFor="returnTime"
-                  error={errors.returnTime?.message}
-                >
-                  <TimePickerField
-                    name="returnTime"
                     control={control}
-                    clearErrors={clearErrors}
-                    trigger={trigger}
-                    placeholder="Select return time"
-                    error={errors.returnTime?.message}
-                    rules={{ required: "Return time is required" }}
+                    error={errors.returnDate?.message}
                   />
                 </FormRow>
               </div>
 
+              {/* Live availability notice */}
+              {selectedVehicle && pickupDate && returnDate && days > 0 && (
+                <AvailabilityNotice
+                  vehicleName={selectedVehicle.name}
+                  startDate={new Date(pickupDate)}
+                  endDate={new Date(returnDate)}
+                  isAvailable={isSelectedPeriodAvailable}
+                />
+              )}
+            </FormSection>
+
+            <Separator />
+
+            {/* Section 4: Pickup Location */}
+            <FormSection title="Pickup Location">
               <FormRow
                 label="Street Address"
                 htmlFor="streetAddress"
                 error={errors.streetAddress?.message}
               >
-                <IconInput
-                  id="streetAddress"
-                  icon={<MapPin className="w-4 h-4" />}
-                  placeholder="e.g. 123 Main Street"
-                  hasError={!!errors.streetAddress}
-                  {...register("streetAddress", {
-                    required: "Street address is required",
-                  })}
+                <TextInput
+                  field={{
+                    name: "streetAddress",
+                    type: "text",
+                    placeholder: "e.g. 123 Main Street",
+                    icon: <MapPin className="w-4 h-4" />,
+                    validation: validators.required("Street address"),
+                  }}
+                  register={register}
+                  error={errors.streetAddress?.message}
                 />
               </FormRow>
 
@@ -527,14 +510,15 @@ function NewBookingFormInner({
                   htmlFor="pickupCity"
                   error={errors.pickupCity?.message}
                 >
-                  <Input
-                    id="pickupCity"
-                    type="text"
-                    placeholder="e.g. Austin"
-                    className={inputCn(!!errors.pickupCity)}
-                    {...register("pickupCity", {
-                      required: "City is required",
-                    })}
+                  <TextInput
+                    field={{
+                      name: "pickupCity",
+                      type: "text",
+                      placeholder: "e.g. Austin",
+                      validation: validators.required("City"),
+                    }}
+                    register={register}
+                    error={errors.pickupCity?.message}
                   />
                 </FormRow>
                 <FormRow
@@ -542,14 +526,16 @@ function NewBookingFormInner({
                   htmlFor="pickupState"
                   error={errors.pickupState?.message}
                 >
-                  <Input
-                    id="pickupState"
-                    type="text"
-                    placeholder="e.g. TX"
-                    className={inputCn(!!errors.pickupState)}
-                    {...register("pickupState", {
-                      required: "State is required",
-                    })}
+                  <SelectInput
+                    field={{
+                      name: "pickupState",
+                      type: "select",
+                      placeholder: "Select state",
+                      options: US_STATES,
+                      validation: validators.required("State"),
+                    }}
+                    control={control}
+                    error={errors.pickupState?.message}
                   />
                 </FormRow>
                 <FormRow
@@ -557,80 +543,62 @@ function NewBookingFormInner({
                   htmlFor="postalCode"
                   error={errors.postalCode?.message}
                 >
-                  <Input
-                    id="postalCode"
-                    type="text"
-                    placeholder="e.g. 73301"
-                    className={inputCn(!!errors.postalCode)}
-                    {...register("postalCode", {
-                      required: "Postal code is required",
-                    })}
+                  <TextInput
+                    field={{
+                      name: "postalCode",
+                      type: "text",
+                      placeholder: "e.g. 73301",
+                      validation: validators.required("Postal code"),
+                    }}
+                    register={register}
+                    error={errors.postalCode?.message}
                   />
                 </FormRow>
               </div>
-
-              {/* Live availability notice */}
-              {selectedVehicle && pickupDate && returnDate && days > 0 && (
-                <Suspense fallback={<AvailabilityPlaceholder />}>
-                  <AvailabilityNotice
-                    vehicleId={selectedVehicle.id}
-                    vehicleName={selectedVehicle.name}
-                    startDate={new Date(pickupDate)}
-                    endDate={new Date(returnDate)}
-                    checkAvailability={checkAvailability}
-                  />
-                </Suspense>
-              )}
             </FormSection>
 
             <Separator />
 
-            {/* Section 4: Insurance */}
+            {/* Section 5: Insurance */}
             <FormSection title="Insurance">
-              <label
-                htmlFor="hostProvidesInsurance"
-                className="flex items-start gap-2.5 p-3 rounded-[10px] border border-gray-200 cursor-pointer"
-              >
-                <Controller
-                  name="hostProvidesInsurance"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      id="hostProvidesInsurance"
-                      checked={field.value}
-                      onCheckedChange={async (checked) => {
-                        const isChecked = checked === true;
-                        field.onChange(isChecked);
-                        if (isChecked) {
-                          clearErrors([
-                            "insuranceProvider",
-                            "insurancePolicyNumber",
-                            "insuranceExpiryDate",
-                          ]);
-                        } else {
-                          await trigger([
-                            "insuranceProvider",
-                            "insurancePolicyNumber",
-                            "insuranceExpiryDate",
-                          ]);
-                        }
-                      }}
-                      className="mt-0.5"
-                    />
-                  )}
-                />
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[#1F2937] text-sm font-medium font-text flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-blue-700" />
-                    The host provides the insurance
-                  </span>
-                  <span className="text-[#6B7280] text-xs font-normal font-text">
-                    {selectedVehicle
-                      ? `Adds a flat insurance fee of ${formatCurrency(selectedVehicle.insuranceDailyRate)}/day for the exact rental duration.`
-                      : "If left unchecked, the renter's own insurance details are required below."}
-                  </span>
-                </div>
-              </label>
+              <CheckboxInput
+                field={{
+                  name: "hostProvidesInsurance",
+                  type: "checkbox",
+                  className:
+                    "p-3 rounded-[10px] border border-gray-200 cursor-pointer gap-2.5",
+                  label: (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[#1F2937] text-sm font-medium font-text flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-blue-700" />
+                        The host provides the insurance
+                      </span>
+                      <span className="text-[#6B7280] text-xs font-normal font-text">
+                        {selectedVehicle
+                          ? `Adds a flat insurance fee of ${formatCurrency(selectedVehicle.insuranceDailyRate)}/day for the exact rental duration.`
+                          : "If left unchecked, the renter's own insurance details are required below."}
+                      </span>
+                    </div>
+                  ),
+                }}
+                control={control}
+                onCheckedChange={async (checked) => {
+                  setValue("hostProvidesInsurance", checked);
+                  if (checked) {
+                    clearErrors([
+                      "insuranceProvider",
+                      "insurancePolicyNumber",
+                      "insuranceExpiryDate",
+                    ]);
+                  } else {
+                    await trigger([
+                      "insuranceProvider",
+                      "insurancePolicyNumber",
+                      "insuranceExpiryDate",
+                    ]);
+                  }
+                }}
+              />
 
               {!hostProvidesInsurance && (
                 <>
@@ -639,16 +607,20 @@ function NewBookingFormInner({
                     htmlFor="insuranceProvider"
                     error={errors.insuranceProvider?.message}
                   >
-                    <IconInput
-                      id="insuranceProvider"
-                      icon={<Building2 className="w-4 h-4" />}
-                      placeholder="e.g. State Farm"
-                      hasError={!!errors.insuranceProvider}
-                      {...register("insuranceProvider", {
-                        required: !hostProvidesInsurance
-                          ? "Insurance provider is required"
-                          : false,
-                      })}
+                    <TextInput
+                      field={{
+                        name: "insuranceProvider",
+                        type: "text",
+                        placeholder: "e.g. State Farm",
+                        icon: <Building2 className="w-4 h-4" />,
+                        validation: {
+                          required: !hostProvidesInsurance
+                            ? "Insurance provider is required"
+                            : false,
+                        },
+                      }}
+                      register={register}
+                      error={errors.insuranceProvider?.message}
                     />
                   </FormRow>
 
@@ -658,16 +630,23 @@ function NewBookingFormInner({
                       htmlFor="insurancePolicyNumber"
                       error={errors.insurancePolicyNumber?.message}
                     >
-                      <IconInput
-                        id="insurancePolicyNumber"
-                        icon={<FileText className="w-4 h-4" />}
-                        placeholder="e.g. POL-123456"
-                        hasError={!!errors.insurancePolicyNumber}
-                        {...register("insurancePolicyNumber", {
-                          required: !hostProvidesInsurance
-                            ? "Policy number is required"
-                            : false,
-                        })}
+                      <TextInput
+                        field={{
+                          name: "insurancePolicyNumber",
+                          type: "text",
+                          placeholder: "e.g. POL-123456",
+                          className: "uppercase",
+                          icon: <FileText className="w-4 h-4" />,
+                          validation: {
+                            required: !hostProvidesInsurance
+                              ? "Policy number is required"
+                              : false,
+                            setValueAs: (v: string) =>
+                              typeof v === "string" ? v.toUpperCase() : v,
+                          },
+                        }}
+                        register={register}
+                        error={errors.insurancePolicyNumber?.message}
                       />
                     </FormRow>
                     <FormRow
@@ -675,29 +654,32 @@ function NewBookingFormInner({
                       htmlFor="insuranceExpiryDate"
                       error={errors.insuranceExpiryDate?.message}
                     >
-                      <DatePickerField
-                        name="insuranceExpiryDate"
-                        control={control}
-                        placeholder="Pick a date"
-                        error={errors.insuranceExpiryDate?.message}
-                        rules={{
-                          required: !hostProvidesInsurance
-                            ? "Expiry date is required"
-                            : false,
-                          validate: (value: string) => {
-                            if (hostProvidesInsurance) return true;
-                            if (!value) return true;
-                            const minValidDate = new Date();
-                            minValidDate.setHours(0, 0, 0, 0);
-                            minValidDate.setDate(
-                              minValidDate.getDate() + 30,
-                            );
-                            return (
-                              new Date(value) > minValidDate ||
-                              "Expiry date must be more than 30 days from today"
-                            );
+                      <DateInput
+                        field={{
+                          name: "insuranceExpiryDate",
+                          type: "date",
+                          placeholder: "Pick a date",
+                          validation: {
+                            required: !hostProvidesInsurance
+                              ? "Expiry date is required"
+                              : false,
+                            validate: (value: string) => {
+                              if (hostProvidesInsurance) return true;
+                              if (!value) return true;
+                              const minValidDate = new Date();
+                              minValidDate.setHours(0, 0, 0, 0);
+                              minValidDate.setDate(
+                                minValidDate.getDate() + 30,
+                              );
+                              return (
+                                new Date(value) > minValidDate ||
+                                "Expiry date must be more than 30 days from today"
+                              );
+                            },
                           },
                         }}
+                        control={control}
+                        error={errors.insuranceExpiryDate?.message}
                       />
                     </FormRow>
                   </div>
@@ -828,7 +810,7 @@ function NewBookingFormInner({
         </div>
       </div>
 
-      {/* ── Cancel + Create Booking (bottom) — top button lives in pageButton, wired via formId ── */}
+      {/* ── Cancel + Create Booking (bottom) ── */}
       <div className="flex gap-3 justify-end">
         <Button
           type="button"
@@ -857,356 +839,3 @@ function NewBookingFormInner({
     </form>
   );
 }
-
-// ─── Availability notice (reactive, own Suspense boundary) ───────────────────
-
-type AvailabilityNoticeProps = {
-  vehicleId: string;
-  vehicleName: string;
-  startDate: Date;
-  endDate: Date;
-  checkAvailability: (
-    vehicleId: string,
-    startDate: Date,
-    endDate: Date,
-  ) => Promise<boolean>;
-};
-
-const AvailabilityNotice = ({
-  vehicleId,
-  vehicleName,
-  startDate,
-  endDate,
-  checkAvailability,
-}: AvailabilityNoticeProps) => {
-  // Precompute timestamps — primitives are what the memo should actually
-  // depend on, and rebuilding Date objects inside the callback keeps the
-  // dependency array and the callback's real inputs in sync
-  const startTime = startDate.getTime();
-  const endTime = endDate.getTime();
-
-  const availabilityPromise = useMemo(
-    () => checkAvailability(vehicleId, new Date(startTime), new Date(endTime)),
-    [vehicleId, startTime, endTime, checkAvailability],
-  );
-
-  const isAvailable = use(availabilityPromise);
-  const rangeLabel = `${format(startDate, "MMM d")} – ${format(endDate, "MMM d, yyyy")}`;
-
-  return isAvailable ? (
-    <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-md text-emerald-700">
-      <CheckCircle2 className="w-4 h-4 shrink-0" />
-      <span className="text-sm font-medium font-text">
-        {vehicleName} is available for {rangeLabel}
-      </span>
-    </div>
-  ) : (
-    <div className="flex items-center gap-2 p-3 bg-red-50 rounded-md text-red-600">
-      <AlertTriangle className="w-4 h-4 shrink-0" />
-      <span className="text-sm font-medium font-text">
-        {vehicleName} is not available for {rangeLabel}
-      </span>
-    </div>
-  );
-};
-
-const AvailabilityPlaceholder = () => (
-  <div className="flex items-center gap-2 p-3 bg-[#F9FAFB] rounded-md text-[#9CA3AF]">
-    <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-    <span className="text-sm font-medium font-text">
-      Checking availability...
-    </span>
-  </div>
-);
-
-// ─── Tax + total (reactive, own Suspense boundary) ────────────────────────────
-
-type TaxAndTotalProps = {
-  subtotal: number;
-  fetchTax: (subtotal: number) => Promise<TaxResult>;
-};
-
-const TaxAndTotal = ({ subtotal, fetchTax }: TaxAndTotalProps) => {
-  const taxPromise = useMemo(() => fetchTax(subtotal), [subtotal, fetchTax]);
-  const tax = use(taxPromise);
-  const total = subtotal + tax.amount;
-
-  return (
-    <>
-      <div className="flex flex-col gap-2 w-full">
-        <SummaryRow label="Subtotal" value={formatCurrency(subtotal)} />
-        <SummaryRow
-          label={`Tax (${formatPercent(tax.rate)})`}
-          value={formatCurrency(tax.amount)}
-        />
-      </div>
-
-      <Separator />
-
-      <div className="flex items-center justify-between w-full">
-        <span className="text-gray-800 text-base font-bold font-text leading-6">
-          Total Amount
-        </span>
-        <span className="text-blue-700 text-xl font-medium font-text leading-7">
-          {formatCurrency(total)}
-        </span>
-      </div>
-    </>
-  );
-};
-
-const TaxPlaceholder = ({ subtotal }: { subtotal: number }) => (
-  <div className="flex flex-col gap-2 w-full">
-    <SummaryRow label="Subtotal" value={formatCurrency(subtotal)} />
-    <div className="flex items-center justify-between">
-      <span className="text-[#6B7280] text-sm font-normal font-text">Tax</span>
-      <Skeleton className="h-4 w-16" />
-    </div>
-  </div>
-);
-
-// ─── Shared bits ───────────────────────────────────────────────────────────────
-
-const FormSection = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <div className="flex flex-col gap-3 w-full">
-    <span className="text-neutral-950 text-base font-semibold font-text">
-      {title}
-    </span>
-    <div className="flex flex-col gap-3 w-full">{children}</div>
-  </div>
-);
-
-type FormRowProps = {
-  label: string;
-  htmlFor: string;
-  error?: string;
-  children: React.ReactNode;
-};
-
-const FormRow = ({ label, htmlFor, error, children }: FormRowProps) => (
-  <div className="flex flex-col gap-1.5">
-    <Label
-      htmlFor={htmlFor}
-      className="text-gray-500 text-xs font-semibold font-text uppercase"
-    >
-      {label}
-    </Label>
-    {children}
-    {error && (
-      <span className="text-[#EF4444] text-xs font-normal font-text flex items-center gap-1">
-        <AlertTriangle className="w-3 h-3 shrink-0" />
-        {error}
-      </span>
-    )}
-  </div>
-);
-
-const IconInput = ({
-  icon,
-  hasError,
-  className,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & {
-  icon: React.ReactNode;
-  hasError?: boolean;
-}) => (
-  <div className="relative flex items-center">
-    <span className="absolute left-3 text-[#9CA3AF] pointer-events-none">
-      {icon}
-    </span>
-    <Input className={cn(inputCn(!!hasError), "pl-9", className)} {...props} />
-  </div>
-);
-
-const inputCn = (hasError: boolean) =>
-  cn(
-    "rounded-xs border-[#E5E7EB] focus-visible:ring-blue-700 font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF] w-full",
-    hasError && "border-[#EF4444] focus-visible:ring-[#EF4444]",
-  );
-
-const SummaryRow = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-center justify-between gap-3">
-    <span className="text-[#6B7280] text-sm font-normal font-text">
-      {label}
-    </span>
-    <span className="text-[#1F2937] text-sm font-medium font-text text-right">
-      {value}
-    </span>
-  </div>
-);
-
-const EmptySummaryNotice = ({ message }: { message: string }) => (
-  <span className="text-[#9CA3AF] text-sm font-normal font-text">
-    {message}
-  </span>
-);
-
-// ─── Generic date picker (reused pattern) ─────────────────────────────────────
-
-type DatePickerFieldProps = {
-  name: keyof NewBookingFormValues;
-  control: ReturnType<typeof useForm<NewBookingFormValues>>["control"];
-  placeholder?: string;
-  error?: string;
-  minDate?: Date;
-  rules?: object;
-};
-
-type TimeFieldName = "pickupTime" | "returnTime";
-
-type TimePickerFieldProps = {
-  name: TimeFieldName;
-  control: ReturnType<typeof useForm<NewBookingFormValues>>["control"];
-  clearErrors: ReturnType<typeof useForm<NewBookingFormValues>>["clearErrors"];
-  trigger: ReturnType<typeof useForm<NewBookingFormValues>>["trigger"];
-  placeholder?: string;
-  error?: string;
-  rules?: object;
-};
-
-const TIME_OPTIONS = Array.from({ length: 48 }, (_, index) => {
-  const hour = Math.floor(index / 2);
-  const minute = index % 2 === 0 ? 0 : 30;
-  const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-  const date = new Date();
-  date.setHours(hour, minute, 0, 0);
-
-  return {
-    value,
-    label: format(date, "h:mm a"),
-  };
-});
-
-const TimePickerField = ({
-  name,
-  control,
-  clearErrors,
-  trigger,
-  placeholder,
-  error,
-  rules,
-}: TimePickerFieldProps) => (
-  <Controller
-    name={name}
-    control={control}
-    rules={rules}
-    render={({ field }) => (
-      <Select
-        onValueChange={async (value) => {
-          field.onChange(value);
-          clearErrors(name as FieldPath<NewBookingFormValues>);
-          await trigger(name as FieldPath<NewBookingFormValues>);
-        }}
-        value={field.value}
-      >
-        <SelectTrigger id={name} className={inputCn(!!error)}>
-          <div className="flex items-center gap-2 truncate">
-            <Clock className="w-4 h-4 text-[#9CA3AF] shrink-0" />
-            <SelectValue placeholder={placeholder ?? "Select time"} />
-          </div>
-        </SelectTrigger>
-        <SelectContent className="max-h-72">
-          {TIME_OPTIONS.map((option) => (
-            <SelectItem
-              key={option.value}
-              value={option.value}
-              className="font-text text-sm"
-            >
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    )}
-  />
-);
-
-const DatePickerField = ({
-  name,
-  control,
-  placeholder,
-  error,
-  minDate,
-  rules,
-}: DatePickerFieldProps) => (
-  <Controller
-    name={name}
-    control={control}
-    rules={rules}
-    render={({ field }) => {
-      const parsed = parseDateValue(field.value as string | undefined);
-
-      return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal rounded-xs font-text text-sm",
-                !parsed && "text-[#9CA3AF]",
-                error
-                  ? "border-[#EF4444] focus-visible:ring-[#EF4444]"
-                  : "border-[#E5E7EB] focus-visible:ring-blue-700",
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF] shrink-0" />
-              {parsed
-                ? format(parsed, "MMM d, yyyy")
-                : (placeholder ?? "Pick a date")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={parsed}
-              onSelect={(date) => field.onChange(date ? formatDateValue(date) : "")}
-              disabled={(date) => {
-                const today = new Date(new Date().setHours(0, 0, 0, 0));
-                if (minDate) {
-                  const minDay = new Date(
-                    new Date(minDate).setHours(0, 0, 0, 0),
-                  );
-                  return date < today || date < minDay;
-                }
-                return date < today;
-              }}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-      );
-    }}
-  />
-);
-
-// ─── Skeleton (top-level Suspense fallback) ───────────────────────────────────
-
-const NewBookingFormSkeleton = () => (
-  <div className="flex flex-col gap-6">
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {Array.from({ length: 2 }, (_, i) => (
-        <div
-          key={i}
-          className="p-4 rounded-[10px] border border-gray-200 flex flex-col gap-5"
-        >
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-      ))}
-    </div>
-    <div className="flex justify-end gap-3">
-      <Skeleton className="h-10 w-24" />
-      <Skeleton className="h-10 w-36" />
-    </div>
-  </div>
-);

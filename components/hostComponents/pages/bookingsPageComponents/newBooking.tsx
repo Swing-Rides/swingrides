@@ -19,6 +19,8 @@ import {
   computeInsuranceFee,
   computeTotal,
 } from "@/lib/pricing";
+import NewBookingLoadingState from "./newBookingLoadingState";
+import NewBookingErrorState from "./newBookingErrorState";
 
 const FORM_ID = "new-booking-form";
 const getPendingHostCheckoutStorageKey = (vehicleId: string) =>
@@ -90,18 +92,19 @@ export default function NewBookingPageComponent() {
     data: vehiclesResponse,
     isLoading: isVehiclesLoading,
     isError: isVehiclesError,
+    refetch: refetchVehicles,
   } = useListVehcleQuery({ limit: 100 });
   const {
     data: bookingsResponse,
     isLoading: isBookingsLoading,
     isError: isBookingsError,
+    refetch: refetchBookings,
   } = useListBookingsQuery();
 
-  const availableVehicles = useMemo(() => {
-    return (vehiclesResponse?.data ?? []).filter(
-      (vehicle) => vehicle.status === "active" && vehicle.instantlyAvailable,
-    );
-  }, [vehiclesResponse]);
+  const availableVehicles = useMemo(
+    () => vehiclesResponse?.data ?? [],
+    [vehiclesResponse?.data],
+  );
 
   const bookingRows = useMemo(
     () => bookingsResponse?.data ?? [],
@@ -124,6 +127,10 @@ export default function NewBookingPageComponent() {
       weeklyPrice: vehicle.weeklyPrice,
       monthlyPrice: vehicle.monthlyPrice,
       insuranceDailyRate: vehicle.dailyInsuranceFee ?? 0,
+      streetAddress: vehicle.pickupLocation || "",
+      pickupCity: vehicle.city || "",
+      pickupState: vehicle.pickupAddressState || "",
+      postalCode: vehicle.zipCode || "",
     }));
   }, [availableVehicles]);
 
@@ -141,9 +148,10 @@ export default function NewBookingPageComponent() {
 
   // Returns both the tax amount and the rate so the UI can display "Tax (8%)"
   const fetchTax = useCallback(async (subtotal: number) => {
-    const rate = data?.data.taxFee as number;
+    const taxFee = data?.data?.taxFee ?? 0;
+    const rate = taxFee / 100;
     return { amount: subtotal * rate, rate };
-  }, [data?.data.taxFee]);
+  }, [data?.data?.taxFee]);
 
   const handleSubmit = useCallback(
     async (values: NewBookingFormValues) => {
@@ -211,8 +219,6 @@ export default function NewBookingPageComponent() {
           city: values.pickupCity,
           state: values.pickupState,
           postalCode: values.postalCode,
-          pickupTime: values.pickupTime,
-          returnTime: values.returnTime,
           subtotal: pricing.subtotal,
           tax: pricing.tax,
           taxRate: pricing.taxRate,
@@ -282,13 +288,14 @@ export default function NewBookingPageComponent() {
     >
       <div className="mt-4 md:mt-6">
         {hasPageError ? (
-          <p className="text-sm font-medium text-red-600">
-            Unable to load booking setup data. Please refresh and try again.
-          </p>
+          <NewBookingErrorState
+            onRetry={() => {
+              refetchVehicles();
+              refetchBookings();
+            }}
+          />
         ) : isPageLoading ? (
-          <p className="text-sm font-medium text-gray-500">
-            Loading available vehicles...
-          </p>
+          <NewBookingLoadingState />
         ) : (
           <>
             {submitError ? (
