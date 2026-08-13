@@ -249,7 +249,7 @@ export const TextInput = <T extends FieldValues = FieldValues>({ field, register
         max={field.max}
         step={field.step}
         defaultValue={field.defaultValue as string}
-        className={cn(inputClass(error), hasIcon && "pl-9")}
+        className={cn(inputClass(error), hasIcon && "pl-9", field.className)}
         {...register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>)}
       />
     </div>
@@ -649,15 +649,17 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
 // File / Image upload
 export const FileInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => {
   const [files, setFiles] = useState<File[]>([]);
+  const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
+  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const { ref, ...rest } = register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>);
 
   const defaultIcon =
     field.type === "image" ? (
-      <ImageIcon className="w-5 h-5 text-[#9CA3AF]" />
+      <ImageIcon className="size-5 text-[#9CA3AF]" />
     ) : (
-      <UploadIcon className="w-5 h-5 text-[#9CA3AF]" />
+      <UploadIcon className="size-5 text-[#9CA3AF]" />
     );
 
   const icon = field.uploadIcon ?? defaultIcon;
@@ -666,6 +668,40 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
   // avoids accidental duplicates if a user reselects the same file twice.
   const isSameFile = (a: File, b: File) =>
     a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
+
+  const getFileKey = (file: File) => `${file.name}-${file.size}-${file.lastModified}`;
+
+  const validateFile = (file: File): string | null => {
+    const maxSizeMB = field.maxSizeMB ?? 5;
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > maxSizeMB) {
+      return `Exceeds ${maxSizeMB}MB limit (${sizeMB.toFixed(1)}MB)`;
+    }
+
+    const acceptStr = field.accept ?? (field.type === "image" ? "image/*" : undefined);
+    if (acceptStr) {
+      const tokens = acceptStr.split(",").map((t) => t.trim().toLowerCase());
+      const fileMime = file.type.toLowerCase();
+      const fileName = file.name.toLowerCase();
+
+      const matches = tokens.some((token) => {
+        if (token.startsWith(".")) {
+          return fileName.endsWith(token);
+        }
+        if (token.endsWith("/*")) {
+          const prefix = token.slice(0, -2);
+          return fileMime.startsWith(prefix);
+        }
+        return fileMime === token;
+      });
+
+      if (!matches) {
+        return `Unsupported format (${file.type || "file"})`;
+      }
+    }
+
+    return null;
+  };
 
   const syncInputFiles = (updated: File[]) => {
     if (!inputRef.current) return;
@@ -677,19 +713,91 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
     rest.onChange({ target: inputRef.current } as unknown as Event);
   };
 
+  const handleFilesSelected = (newlySelected: File[]) => {
+    if (!newlySelected.length) return;
+
+    const newErrors: Record<string, string> = {};
+
+    newlySelected.forEach((file) => {
+      const err = validateFile(file);
+      if (err) {
+        newErrors[getFileKey(file)] = err;
+      }
+    });
+
+    let combined = field.multiple
+      ? [
+          ...files,
+          ...newlySelected.filter(
+            (nf) => !files.some((existing) => isSameFile(existing, nf))
+          ),
+        ]
+      : newlySelected;
+
+    if (field.maxFiles) {
+      combined = combined.slice(0, field.maxFiles);
+    }
+
+    setFileErrors((prev) => ({ ...prev, ...newErrors }));
+    setFiles(combined);
+
+    const validFiles = combined.filter((f) => {
+      const key = getFileKey(f);
+      return !newErrors[key] && !fileErrors[key];
+    });
+    syncInputFiles(validFiles);
+  };
+
   const removeFile = (index: number) => {
+    const fileToRemove = files[index];
+    const nextErrors = { ...fileErrors };
+    if (fileToRemove) {
+      const key = getFileKey(fileToRemove);
+      delete nextErrors[key];
+      setFileErrors(nextErrors);
+    }
+
     const updated = files.filter((_, i) => i !== index);
     setFiles(updated);
-    syncInputFiles(updated);
+
+    const validFiles = updated.filter((f) => {
+      const key = getFileKey(f);
+      return !nextErrors[key];
+    });
+    syncInputFiles(validFiles);
   };
+
+  const hasFileErrors = Object.keys(fileErrors).length > 0;
+  const activeError = hasFileErrors
+    ? "Some uploaded files have errors. Please remove the highlighted files below."
+    : error;
 
   return (
     <div className="flex flex-col gap-3">
       <label
         htmlFor={field.name}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(false);
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFilesSelected(Array.from(e.dataTransfer.files));
+          }
+        }}
         className={cn(
           "flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-5 cursor-pointer transition-colors duration-200 group",
-          error
+          isDragging && "border-blue-700 bg-blue-50/50",
+          activeError
             ? "border-[#EF4444] bg-[#FFF5F5]"
             : "border-[#E5E7EB] hover:border-blue-700"
         )}
@@ -700,7 +808,7 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
           <span
             className={cn(
               "text-sm font-medium font-text",
-              error ? "text-[#EF4444]" : "text-blue-700 group-hover:underline"
+              activeError ? "text-[#EF4444]" : "text-blue-700 group-hover:underline"
             )}
           >
             Click to upload
@@ -728,9 +836,6 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
           id={field.name}
           type="file"
           accept={field.accept}
-          // Only forward `capture` if the field explicitly opts into camera-only capture.
-          // Leaving it unset lets mobile browsers show their native chooser
-          // (camera OR photo library) instead of jumping straight to the camera.
           capture={field.capture}
           multiple={field.multiple}
           disabled={field.disabled}
@@ -742,69 +847,86 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
           }}
           onChange={(e) => {
             const newlySelected = Array.from(e.target.files ?? []);
-
-            // Merge with whatever was already picked, rather than replacing it.
-            // For single-file fields (multiple=false) the new pick still replaces,
-            // since there's only ever one slot.
-            let combined = field.multiple
-              ? [
-                ...files,
-                ...newlySelected.filter(
-                  (nf) => !files.some((existing) => isSameFile(existing, nf))
-                ),
-              ]
-              : newlySelected;
-
-            if (field.maxFiles) {
-              combined = combined.slice(0, field.maxFiles);
-            }
-
-            setFiles(combined);
-            syncInputFiles(combined);
+            handleFilesSelected(newlySelected);
           }}
         />
       </label>
 
+      {activeError && (
+        <span className="text-[#EF4444] text-xs font-normal font-text flex items-center gap-1">
+          <ErrorIcon />
+          {activeError}
+        </span>
+      )}
+
       {files.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {files.map((file, index) => {
+            const fileKey = getFileKey(file);
+            const fileErr = fileErrors[fileKey];
             const isImage = file.type.startsWith("image/");
             const preview = isImage ? URL.createObjectURL(file) : null;
 
             return (
               <div
                 key={`${file.name}-${file.lastModified}-${index}`}
-                className="relative rounded-lg border border-[#E5E7EB] overflow-hidden bg-white"
+                className={cn(
+                  "relative rounded-lg border overflow-hidden bg-white transition-all duration-200 flex flex-col justify-between",
+                  fileErr
+                    ? "border-red-500 ring-2 ring-red-500 bg-[#FFF5F5]"
+                    : "border-gray-300"
+                )}
               >
                 {isImage && field.showPreview !== false ? (
-                  <Image
-                    src={preview!}
-                    alt={file.name}
-                    title={file.name}
-                    width={250}
-                    height={250}
-                    className="w-full aspect-square object-cover"
-                  />
+                  <div className="relative w-full aspect-square bg-gray-100">
+                    <Image
+                      src={preview!}
+                      alt={file.name}
+                      title={file.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
-                  <div className="flex items-center justify-center h-28 bg-[#F9FAFB]">
+                  <div className="flex items-center justify-center h-28 bg-zinc-200">
                     {icon}
                   </div>
                 )}
 
                 <div className="p-2">
-                  <p className="text-xs font-text truncate text-[#1F2937]">
+                  <p
+                    className={cn(
+                      "text-xs font-text truncate",
+                      fileErr ? "text-[#EF4444] font-semibold" : "text-[#1F2937]"
+                    )}
+                  >
                     {file.name}
                   </p>
 
                   <p className="text-[11px] text-[#9CA3AF]">
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
+
+                  {fileErr && (
+                    <p className="text-[11px] text-[#EF4444] font-medium font-text mt-1 flex items-center gap-1">
+                      <ErrorIcon />
+                      <span className="truncate" title={fileErr}>
+                        {fileErr}
+                      </span>
+                    </p>
+                  )}
                 </div>
 
                 <button
                   type="button"
                   onClick={() => removeFile(index)}
-                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white shadow flex items-center justify-center text-red-500 hover:bg-red-50"
+                  className={cn(
+                    "absolute top-2 right-2 w-6 h-6 rounded-full shadow flex items-center justify-center transition-colors",
+                    fileErr
+                      ? "bg-[#EF4444] text-white hover:bg-red-700"
+                      : "bg-white text-red-500 hover:bg-red-50"
+                  )}
+                  title="Remove file"
                 >
                   ×
                 </button>

@@ -635,11 +635,14 @@ function NewBookingFormInner({
                           name: "insurancePolicyNumber",
                           type: "text",
                           placeholder: "e.g. POL-123456",
+                          className: "uppercase",
                           icon: <FileText className="w-4 h-4" />,
                           validation: {
                             required: !hostProvidesInsurance
                               ? "Policy number is required"
                               : false,
+                            setValueAs: (v: string) =>
+                              typeof v === "string" ? v.toUpperCase() : v,
                           },
                         }}
                         register={register}

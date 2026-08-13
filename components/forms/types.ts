@@ -47,6 +47,7 @@ export type FormFieldConfig = {
         disabled?: boolean
         capture?: "user" | "environment"
         maxFiles?: number
+        maxSizeMB?: number
         showPreview?: boolean
 }
 
