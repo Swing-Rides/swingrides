@@ -56,16 +56,16 @@ const normalizeFuelType = (value?: string): string => {
   return labels[normalized] ?? value;
 };
 
-const normalizeDriveType = (value?: string): string => {
+import { US_STATES } from "@/constants/addressState";
+
+const normalizeState = (value?: string): string => {
   if (!value) return "";
-  const normalized = value.toLowerCase();
-  const labels: Record<string, string> = {
-    "all wheel drive (awd)": "All Wheel Drive (AWD)",
-    "four wheel drive (4wd)": "Four Wheel Drive (4WD)",
-    "front wheel drive (fwd)": "Front Wheel Drive (FWD)",
-    "rear wheel drive (rwd)": "Rear Wheel Drive (RWD)",
-  };
-  return labels[normalized] ?? value;
+  const found = US_STATES.find(
+    (s) =>
+      s.value.toLowerCase() === value.toLowerCase() ||
+      s.label.toLowerCase() === value.toLowerCase()
+  );
+  return found ? found.value : value;
 };
 
 const normalizeStatus = (value?: string): string => {
@@ -113,21 +113,16 @@ export default function EditFleetComponents({
         seats: vehicle.seats,
         transmission: normalizeTransmission(vehicle.transmission),
         vehicleName: vehicle.name,
-        vehicleRegistrationUrl: vehicle.vehicleRegistrationUrl,
         vehicleType: normalizeVehicleType(vehicle.vehicleType),
         vin: vehicle.vin,
         year: vehicle.year,
         vehicleImageUrls: vehicle.images ?? [],
         pickupAddressStreet: vehicle.pickupLocation,
-        pickupAddressState: vehicle.pickupAddressState,
+        pickupAddressState: normalizeState(vehicle.pickupAddressState),
         dailyInsuranceFee: vehicle.dailyInsuranceFee,
         zipCode: vehicle.zipCode,
         fuelType: normalizeFuelType(vehicle.fuelType),
         doors: vehicle.doors,
-        fuelEfficiency: vehicle.fuelEfficiency,
-        engine: vehicle.engine,
-        driveType: normalizeDriveType(vehicle.driveType),
-        horsePower: vehicle.horsePower,
       }
     : {};
 
@@ -148,7 +143,6 @@ export default function EditFleetComponents({
       insuranceCarrier: values.insuranceCarrier,
       insurancePolicyNumber: values.insurancePolicyNumber,
       insuranceExpiration: values.insuranceExpiration || undefined,
-      vehicleRegistrationUrl: values.vehicleRegistrationUrl,
       transmission: values.transmission.toLowerCase(),
       vehicleModel: values.model,
       vehicleType: values.vehicleType.toLowerCase(),
@@ -161,10 +155,6 @@ export default function EditFleetComponents({
       dailyInsuranceFee: Number(values.dailyInsuranceFee),
       fuelType: values.fuelType.toLowerCase(),
       doors: Number(values.doors),
-      fuelEfficiency: values.fuelEfficiency,
-      engine: values.engine,
-      driveType: values.driveType.toLowerCase(),
-      horsePower: Number(values.horsePower),
       images: values.vehicleImageUrls ?? [],
     };
 

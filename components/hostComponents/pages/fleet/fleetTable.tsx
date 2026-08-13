@@ -27,6 +27,7 @@ import {
   IListVehiclesDatum,
   IListVehiclesResponse,
 } from "@/types/vehicle.type";
+import Image from "next/image";
 
 type FleetTableRow = IListVehiclesDatum & { id: string };
 
@@ -187,14 +188,15 @@ const fleetColumns: ColumnDef<FleetTableRow>[] = [
     cell: (row) => (
       <div className="flex items-center gap-3">
         {row.images?.[0] ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={row.images[0]}
             alt={row.name}
-            className="h-12 w-12 shrink-0 rounded-md object-cover border border-gray-200"
+            width={60}
+            height={60}
+            className="size-12 aspect-square shrink-0 rounded-md object-cover border border-gray-200"
           />
         ) : (
-          <div className="h-12 w-12 shrink-0 rounded-md border border-gray-200 bg-slate-50 flex items-center justify-center text-gray-400">
+          <div className="size-12 aspect-square shrink-0 rounded-md border border-gray-200 bg-slate-50 flex items-center justify-center text-gray-400">
             <ImageOff className="size-4" />
           </div>
         )}
@@ -220,7 +222,9 @@ const fleetColumns: ColumnDef<FleetTableRow>[] = [
     key: "Type",
     header: "Type",
     cell: (row) => (
-      <span className="text-gray-500 font-normal">{row.vehicleType}</span>
+      <span className="text-gray-500 font-normal capitalize">
+        {row.vehicleType}
+      </span>
     ),
   },
   {
@@ -604,8 +608,8 @@ export default function FleetTable({
               title: "All Status",
               paramKey: "status",
               items: [
-                { label: "Available", value: "available" },
-                { label: "Rented", value: "rented" },
+                { label: "Available", value: "inactive" },
+                { label: "Rented", value: "active" },
                 { label: "Unlisted", value: "unlisted" },
                 { label: "Snoozed", value: "snoozed" },
                 { label: "Maintenance", value: "maintenance" },
@@ -739,17 +743,25 @@ export default function FleetTable({
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     available: "bg-green-100 text-emerald-500",
-    rented: "bg-sky-100 text-blue-700",
-    unlisted: "bg-gray-200 text-gray-500",
+    active: "bg-sky-100 text-blue-700",
     snoozed: "bg-amber-50 text-amber-700",
     maintenance: "bg-orange-50 text-amber-500",
-    inactive: "bg-gray-100 text-gray-500",
+    unlisted: "bg-gray-200 text-gray-500",
+    inactive: "bg-emerald-100 text-emerald-700",
   };
+
+  const displayLabels: Record<string, string> = {
+    inactive: "Available",
+    active: "Rented",
+  };
+
+  const label = displayLabels[status] ?? status;
+
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${styles[status] ?? styles.inactive}`}
     >
-      {status}
+      {label}
     </span>
   );
 }
