@@ -549,21 +549,14 @@ function CheckoutFormInner({
           <Separator />
 
           <div className="flex flex-col gap-2 w-full">
+            <SummaryRow label="Subtotal" value={subTotalFee} />
             <SummaryRow
-              label={newBookingTotal ? "Additional Days Fee" : "Subtotal"}
-              value={subTotalFee}
-            />
-            {insuranceFee !== undefined && insuranceFee > 0 && (
-              <SummaryRow label="Insurance Fee" value={insuranceFee} />
-            )}
-            <SummaryRow
-              label={
-                taxPercentageRate && Number(taxPercentageRate) > 0
-                  ? `Tax (${taxPercentageRate}%)`
-                  : "Tax"
-              }
+              label={`Tax (${taxPercentageRate as number}%)`}
               value={taxFee}
             />
+            {insuranceFee > 0 && (
+              <SummaryRow label="Insurance Fee" value={`$${insuranceFee}`} />
+            )}
           </div>
 
           <Separator />
@@ -574,15 +567,13 @@ function CheckoutFormInner({
                 {newBookingTotal ? "Amount Due" : "Total Amount"}
               </span>
               <span className="text-blue-700 text-xl font-medium font-text leading-7">
+                
                 {chargeAmount
-                  ? `$${Number(chargeAmount).toLocaleString("en-US", {
+                  ? Number(chargeAmount).toLocaleString("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    })}`
-                  : `$${Number(totalPrice).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}`}
+                    })
+                  : totalPrice}
               </span>
             </div>
             {newBookingTotal && originalAmount !== undefined && (
@@ -675,32 +666,16 @@ const CheckoutCountdown = ({
 
 // ─── Order summary row ─────────────────────────────────────────────────────────
 
-const SummaryRow = ({ label, value }: { label: string; value: string | number }) => {
-  const formatDisplayValue = (val: string | number) => {
-    if (val === undefined || val === null || val === "") return "$0.00";
-    const strVal = String(val);
-    const cleaned = strVal.replace(/[^0-9.-]/g, "");
-    const num = parseFloat(cleaned);
-    if (!isNaN(num)) {
-      return `$${num.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
-    }
-    return strVal;
-  };
-
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-[#6B7280] text-sm font-normal font-text">
-        {label}
-      </span>
-      <span className="text-[#1F2937] text-sm font-medium font-text text-right">
-        {formatDisplayValue(value)}
-      </span>
-    </div>
-  );
-};
+const SummaryRow = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex items-center justify-between gap-3">
+    <span className="text-[#6B7280] text-sm font-normal font-text">
+      {label}
+    </span>
+    <span className="text-[#1F2937] text-sm font-medium font-text text-right">
+      {value}
+    </span>
+  </div>
+);
 
 // ─── Skeleton (shown while the parent is still fetching the order summary) ────
 
