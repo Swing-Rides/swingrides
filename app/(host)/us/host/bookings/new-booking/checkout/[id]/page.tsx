@@ -19,6 +19,7 @@ import {
 } from "@/constants/constant";
 import { stripePromise } from "@/lib/stripe";
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
+import { computeTotal } from "@/lib/pricing";
 
 type PendingHostCheckoutDraft = {
   vehicleId: string;
@@ -262,8 +263,6 @@ export default function HostBookingCheckoutPage() {
           subtotal: response.data.subtotal,
           tax: response.data.tax,
           taxRate: response.data.taxRate,
-          // Server doesn't echo back the insurance fee at all, so this is
-          // always the draft's own (already mixed-tier-correct) value.
           insuranceFee: draft.insuranceFee ?? 0,
           totalAmount: response.data.totalAmount,
         });
@@ -301,21 +300,14 @@ export default function HostBookingCheckoutPage() {
     };
   }, [draft]);
 
-  // The draft was computed on the previous page using the shared mixed-unit
-  // pricing calculator (month → week → day + insurance + tax), so it's
-  // already correct. The payment-intent response is only used as a
-  // fallback for any field the draft happens to be missing — never the
-  // other way around, since we don't know that the backend applies the
-  // same tiered-billing rules.
   const summary = useMemo(() => {
     if (!draft) return null;
 
     const subtotal = draft.subtotal ?? pricingSummary?.subtotal ?? 0;
-    const tax = draft.tax ?? pricingSummary?.tax ?? 0;
     const taxRate = draft.taxRate ?? pricingSummary?.taxRate ?? 0.08;
     const insuranceFee =
       draft.insuranceFee ?? pricingSummary?.insuranceFee ?? 0;
-    const totalAmount = draft.totalAmount ?? pricingSummary?.totalAmount ?? 0;
+    const res = computeTotal(subtotal, insuranceFee, taxRate);
 
     return {
       imageUrl: draft.vehicleImageUrl || DEFAULT_IMAGE_SRC,
@@ -325,10 +317,10 @@ export default function HostBookingCheckoutPage() {
         : "Renter-provided insurance",
       vehicleGearType: `${draft.pickupTime} - ${draft.returnTime}`,
       duration: `${draft.totalDays || 1} day${draft.totalDays === 1 ? "" : "s"}`,
-      totalPrice: formatCurrency(totalAmount),
-      subTotalFee: formatCurrency(subtotal),
-      taxPercentageRate: taxRate * 100,
-      taxFee: formatCurrency(tax),
+      totalPrice: String(res.totalAmount),
+      subTotalFee: formatCurrency(res.subtotal),
+      taxPercentageRate: taxRate,
+      taxFee: formatCurrency(res.tax),
       insuranceFee,
     };
   }, [draft, pricingSummary]);

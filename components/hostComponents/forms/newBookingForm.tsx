@@ -65,6 +65,8 @@ export type NewBookingFormValues = {
   phoneNumber: string;
   pickupDate: string;
   returnDate: string;
+  pickupTime: string;
+  returnTime: string;
   streetAddress: string;
   pickupCity: string;
   pickupState: string;
@@ -127,6 +129,8 @@ function NewBookingFormInner({
     lastName: "",
     email: "",
     phoneNumber: "",
+    pickupTime: "",
+    returnTime: "",
     pickupDate: "",
     returnDate: "",
     streetAddress: "",
@@ -174,12 +178,20 @@ function NewBookingFormInner({
 
   const isPickupDateTimeAvailable = useMemo(() => {
     return (pickupDateTime: Date) =>
-      checkPickupDateTimeAvailable(vehicleSchedule, pickupDateTime, BUFFER_TIME);
+      checkPickupDateTimeAvailable(
+        vehicleSchedule,
+        pickupDateTime,
+        BUFFER_TIME,
+      );
   }, [vehicleSchedule]);
 
   const isReturnDateTimeAvailable = useMemo(() => {
     return (returnDateTime: Date) =>
-      checkReturnDateTimeAvailable(vehicleSchedule, returnDateTime, BUFFER_TIME);
+      checkReturnDateTimeAvailable(
+        vehicleSchedule,
+        returnDateTime,
+        BUFFER_TIME,
+      );
   }, [vehicleSchedule]);
 
   const doesRentalPeriodOverlapSchedule = useMemo(() => {
@@ -207,6 +219,7 @@ function NewBookingFormInner({
     if (!pickupDate || !returnDate) return false;
     const pickup = new Date(pickupDate);
     const returnD = new Date(returnDate);
+
     if (returnD.getTime() <= pickup.getTime()) return false;
 
     return (
@@ -224,14 +237,12 @@ function NewBookingFormInner({
 
   const selectedVehicle = vehicles.find((v) => v.id === vehicleId);
 
-
-
   const days =
     pickupDate && returnDate
       ? Math.max(
-        differenceInCalendarDays(new Date(returnDate), new Date(pickupDate)),
-        0,
-      )
+          differenceInCalendarDays(new Date(returnDate), new Date(pickupDate)),
+          0,
+        )
       : 0;
 
   const pricing =
@@ -452,7 +463,9 @@ function NewBookingFormInner({
                           }
 
                           // Check if the entire rental period overlaps with any scheduled booking
-                          if (doesRentalPeriodOverlapSchedule(pickup, selected)) {
+                          if (
+                            doesRentalPeriodOverlapSchedule(pickup, selected)
+                          ) {
                             return `This vehicle is already booked during part of your requested dates. Please select different dates.`;
                           }
 
@@ -668,9 +681,7 @@ function NewBookingFormInner({
                               if (!value) return true;
                               const minValidDate = new Date();
                               minValidDate.setHours(0, 0, 0, 0);
-                              minValidDate.setDate(
-                                minValidDate.getDate() + 30,
-                              );
+                              minValidDate.setDate(minValidDate.getDate() + 30);
                               return (
                                 new Date(value) > minValidDate ||
                                 "Expiry date must be more than 30 days from today"
@@ -800,7 +811,8 @@ function NewBookingFormInner({
                   <div className="flex items-center gap-2">
                     <CalendarIcon className="w-4 h-4 text-[#6B7280] shrink-0" />
                     <span className="text-[#6B7280] text-xs font-normal font-text">
-                      You will continue to checkout before the booking is created.
+                      You will continue to checkout before the booking is
+                      created.
                     </span>
                   </div>
                 </div>
