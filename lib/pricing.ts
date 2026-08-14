@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type PriceConfig = {
@@ -28,6 +30,25 @@ export const formatCurrency = (amount?: number | null) => {
 
 export const pluralize = (n: number, word: string) =>
   `${n} ${word}${n !== 1 ? "s" : ""}`;
+
+// ─── Date helpers ───────────────────────────────────────────────────────────────
+
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+/**
+ * Whole-day difference between two dates, floored at 0.
+ * Normalizes both dates to start-of-day to ensure consistent day counting.
+ * Used e.g. to compute extra rental days when a return date is extended.
+ */
+export const daysDifference = (
+  laterDate: Date | string,
+  earlierDate: Date | string,
+): number => {
+  const later = dayjs(laterDate).startOf("day");
+  const earlier = dayjs(earlierDate).startOf("day");
+
+  return Math.max(later.diff(earlier, "day"), 0);
+};
 
 // ─── Rental pricing ────────────────────────────────────────────────────────────
 

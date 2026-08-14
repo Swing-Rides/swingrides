@@ -116,8 +116,6 @@ export default function NewBookingPageComponent() {
     [bookingRows],
   );
 
-  // Stable references — required so NewBookingForm's use()-backed promises
-  // don't get recreated (and re-suspended) on every render
   const fetchVehicles = useCallback(async () => {
     return availableVehicles.map((vehicle) => ({
       id: vehicle._id,
@@ -147,11 +145,14 @@ export default function NewBookingPageComponent() {
   );
 
   // Returns both the tax amount and the rate so the UI can display "Tax (8%)"
-  const fetchTax = useCallback(async (subtotal: number) => {
-    const taxFee = data?.data?.taxFee ?? 0;
-    const rate = taxFee / 100;
-    return { amount: subtotal * rate, rate };
-  }, [data?.data?.taxFee]);
+  const fetchTax = useCallback(
+    async (subtotal: number) => {
+      const taxFee = data?.data?.taxFee ?? 0;
+      const rate = taxFee / 100;
+      return { amount: subtotal * rate, rate };
+    },
+    [data?.data?.taxFee],
+  );
 
   const handleSubmit = useCallback(
     async (values: NewBookingFormValues) => {
@@ -168,19 +169,6 @@ export default function NewBookingPageComponent() {
         .join(", ");
 
       try {
-        const isAvailable = await checkAvailability(
-          values.vehicleId,
-          new Date(values.pickupDate),
-          new Date(values.returnDate),
-        );
-
-        if (!isAvailable) {
-          setSubmitError(
-            "The selected vehicle is not available for the chosen dates.",
-          );
-          return;
-        }
-
         const vehicle = availableVehicles.find(
           (item) => item._id === values.vehicleId,
         );
@@ -207,6 +195,13 @@ export default function NewBookingPageComponent() {
           return;
         }
 
+        const pickupTime = new Date(values.pickupDate)
+          .toISOString()
+          .split("T")[1];
+        const returnTime = new Date(values.returnDate)
+          .toISOString()
+          .split("T")[1];
+
         const pendingCheckout = {
           vehicleId: values.vehicleId,
           renterName,
@@ -214,14 +209,16 @@ export default function NewBookingPageComponent() {
           renterPhone: values.phoneNumber,
           pickupDate: values.pickupDate,
           returnDate: values.returnDate,
+          pickupTime: pickupTime,
+          returnTime: returnTime,
           location,
           streetAddress: values.streetAddress,
           city: values.pickupCity,
           state: values.pickupState,
           postalCode: values.postalCode,
           subtotal: pricing.subtotal,
-          tax: pricing.tax,
-          taxRate: pricing.taxRate,
+          tax: data?.data?.taxFee,
+          taxRate: data?.data?.taxFee ?? 0,
           insuranceFee: pricing.insuranceFee,
           totalAmount: pricing.totalAmount,
           totalDays: pricing.totalDays,
@@ -241,7 +238,6 @@ export default function NewBookingPageComponent() {
             ? undefined
             : values.insuranceExpiryDate,
         };
-
         window.sessionStorage.setItem(
           getPendingHostCheckoutStorageKey(values.vehicleId),
           JSON.stringify(pendingCheckout),
@@ -254,19 +250,19 @@ export default function NewBookingPageComponent() {
         const fallbackMessage = "Unable to create booking. Please try again.";
         const errorMessage =
           typeof error === "object" &&
-            error !== null &&
-            "data" in error &&
-            typeof error.data === "object" &&
-            error.data !== null &&
-            "message" in error.data &&
-            typeof error.data.message === "string"
+          error !== null &&
+          "data" in error &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "message" in error.data &&
+          typeof error.data.message === "string"
             ? error.data.message
             : fallbackMessage;
 
         setSubmitError(errorMessage);
       }
     },
-    [availableVehicles, checkAvailability, router],
+    [availableVehicles, router],
   );
 
   const isPageLoading = isVehiclesLoading || isBookingsLoading;
