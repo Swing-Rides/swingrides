@@ -1,5 +1,4 @@
 import { 
-        AddonAndExtraCard, 
         BookingPageWrapper, 
         BookingSummaryCard, 
         BookingTimeline, 
@@ -23,7 +22,6 @@ export default function CompletedBookingPage({
         bookingSummary,
         payment,
         id,
-        extras,
         checkIn,
         checkOut,
         damageReport,
@@ -54,9 +52,6 @@ export default function CompletedBookingPage({
                                                 ReturnDateTime={trip.ReturnDateTime}
                                                 PickUpLocation={trip.PickUpLocation}
                                                 ReturnLocation={trip.ReturnLocation}
-                                        />
-                                        <AddonAndExtraCard
-                                                extras={extras}
                                         />
                                         <CheckInCheckOutCard
                                                 checkIn={checkIn}

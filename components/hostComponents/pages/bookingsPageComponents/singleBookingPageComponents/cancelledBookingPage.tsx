@@ -1,5 +1,4 @@
 import { 
-        AddonAndExtraCard, 
         BookingPageWrapper, 
         BookingSummaryCard, 
         BookingTimeline, 
@@ -10,7 +9,6 @@ import {
 import { BookingPageProps } from "./types";
 
 export default function CancelledBookingPage({
-        extras,
         bookingCreated,
         checkInCompleted,
         checkOutCompleted,
@@ -43,9 +41,6 @@ export default function CancelledBookingPage({
                                                 ReturnDateTime={trip.ReturnDateTime}
                                                 PickUpLocation={trip.PickUpLocation}
                                                 ReturnLocation={trip.ReturnLocation}
-                                        />
-                                        <AddonAndExtraCard
-                                                extras={extras}
                                         />
                                 </div>
                         }

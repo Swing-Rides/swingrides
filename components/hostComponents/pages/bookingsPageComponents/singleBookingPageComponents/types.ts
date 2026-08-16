@@ -12,6 +12,15 @@ export interface ExtraItem {
         totalfee: string;
 }
 
+export type BookingsStatus =
+  | "active"
+  | "reserved"
+  | "confirmed"
+  | "completed"
+  | "cancelled"
+  | "overdue"
+  | "runningLate";
+
 export type CheckType = "checkIn" | "checkOut";
 
 export type PreCheckStatusType = "verified" | "pending" | "notVerified";
