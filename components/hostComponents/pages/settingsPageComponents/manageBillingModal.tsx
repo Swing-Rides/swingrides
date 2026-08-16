@@ -170,6 +170,7 @@ const PaymentForm = ({ upgradeData, onBack, onSuccess }: PaymentStepProps) => {
   const elements = useElements();
   const [completePayment] = useCompleteHostPlanPaymentMutation();
   const [isConfirming, setIsConfirming] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const planLabel =
@@ -179,24 +180,35 @@ const PaymentForm = ({ upgradeData, onBack, onSuccess }: PaymentStepProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
+    if (!upgradeData.paymentIntentId) {
+      setError("Payment details are unavailable. Please try again.");
+      return;
+    }
 
     setIsConfirming(true);
     setError(null);
 
-    // Confirm the payment with Stripe Elements
-    const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: { return_url: window.location.href },
-      redirect: "if_required",
-    });
+    let hasSuccessfulPayment = paymentConfirmed;
+    if (!hasSuccessfulPayment) {
+      const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: { return_url: window.location.href },
+        redirect: "if_required",
+      });
 
-    if (stripeError) {
-      setError(stripeError.message ?? "Payment failed. Please try again.");
-      setIsConfirming(false);
-      return;
+      if (stripeError) {
+        setError(stripeError.message ?? "Payment failed. Please try again.");
+        setIsConfirming(false);
+        return;
+      }
+
+      hasSuccessfulPayment = paymentIntent?.status === "succeeded";
+      if (hasSuccessfulPayment) {
+        setPaymentConfirmed(true);
+      }
     }
 
-    if (paymentIntent?.status === "succeeded") {
+    if (hasSuccessfulPayment) {
       try {
         await completePayment({
           paymentIntentId: upgradeData.paymentIntentId,
@@ -206,7 +218,7 @@ const PaymentForm = ({ upgradeData, onBack, onSuccess }: PaymentStepProps) => {
         onSuccess();
       } catch {
         setError(
-          "Payment confirmed but activation failed. Please contact support.",
+          "Payment succeeded, but scheduling failed. Click Retry Scheduling; you will not be charged again.",
         );
       }
     } else {
@@ -230,6 +242,12 @@ const PaymentForm = ({ upgradeData, onBack, onSuccess }: PaymentStepProps) => {
               (${upgradeData.discount.toLocaleString()} discount applied)
             </span>
           )}
+        </p>
+        <p className="text-xs text-blue-600 pt-1">
+          Charged today. Your new plan begins on{" "}
+          {new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
+            new Date(upgradeData.effectiveAt),
+          )}.
         </p>
       </div>
 
@@ -257,7 +275,11 @@ const PaymentForm = ({ upgradeData, onBack, onSuccess }: PaymentStepProps) => {
           className="flex-1 py-3 bg-blue-700 text-white rounded-xs text-sm hover:bg-blue-900 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isConfirming && <Loader2 className="size-4 animate-spin" />}
-          {isConfirming ? "Processing…" : "Confirm Payment"}
+          {isConfirming
+            ? "Processing…"
+            : paymentConfirmed
+              ? "Retry Scheduling"
+              : "Confirm Payment"}
         </button>
       </div>
     </form>
@@ -268,12 +290,19 @@ const PaymentForm = ({ upgradeData, onBack, onSuccess }: PaymentStepProps) => {
 
 const SuccessStep = ({
   plan,
+  effectiveAt,
   onClose,
 }: {
   plan: HostPlanType;
+  effectiveAt?: string;
   onClose: () => void;
 }) => {
   const planLabel = plans.find((p) => p.id === plan)?.name ?? plan;
+  const effectiveDate = effectiveAt
+    ? new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
+        new Date(effectiveAt),
+      )
+    : undefined;
 
   return (
     <div className="flex flex-col items-center gap-4 py-4 text-center">
@@ -282,12 +311,22 @@ const SuccessStep = ({
       </div>
       <div className="space-y-1">
         <h4 className="font-semibold text-lg text-neutral-900 font-text">
-          Plan Upgraded!
+          {effectiveDate ? "Plan Upgrade Scheduled!" : "Plan Upgraded!"}
         </h4>
         <p className="text-sm text-gray-500">
-          You&apos;re now on the{" "}
-          <span className="font-medium text-blue-700">{planLabel} Plan</span>.
-          Your new subscription is active.
+          {effectiveDate ? (
+            <>
+              Your{" "}
+              <span className="font-medium text-blue-700">{planLabel} Plan</span>{" "}
+              will begin on {effectiveDate}, when your current plan expires.
+            </>
+          ) : (
+            <>
+              You&apos;re now on the{" "}
+              <span className="font-medium text-blue-700">{planLabel} Plan</span>.
+              Your new subscription is active.
+            </>
+          )}
         </p>
       </div>
       <button
@@ -324,7 +363,12 @@ export default function ManageBillingModal({
       const data = await onSelect(plan, billingCycle);
       if (data) {
         setUpgradeData(data);
-        setStep("payment");
+        if (data.scheduled) {
+          setStep("success");
+          onUpgradeComplete();
+        } else {
+          setStep("payment");
+        }
       }
     } finally {
       setIsLoadingIntent(false);
@@ -370,7 +414,7 @@ export default function ManageBillingModal({
         <Elements
           stripe={stripePromise}
           options={{
-            clientSecret: upgradeData.clientSecret,
+            clientSecret: upgradeData.clientSecret ?? "",
             appearance: { theme: "stripe" },
           }}
         >
@@ -383,7 +427,11 @@ export default function ManageBillingModal({
       )}
 
       {step === "success" && upgradeData && (
-        <SuccessStep plan={upgradeData.plan} onClose={onClose} />
+        <SuccessStep
+          plan={upgradeData.plan}
+          effectiveAt={upgradeData.effectiveAt}
+          onClose={onClose}
+        />
       )}
     </PopupWrapper>
   );
