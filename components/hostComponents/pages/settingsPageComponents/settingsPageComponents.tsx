@@ -27,6 +27,7 @@ import {
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 import { toast } from "sonner";
 import ManageBillingModal from "./manageBillingModal";
+import UnlinkStripeDialog from "./unlinkStripeDialog";
 
 // ─── Tab nav config ─────────────────────────────────────────────────────────
 
@@ -215,6 +216,7 @@ const SettingsPageContent = () => {
   }, [settingsData]);
 
   const [showBillingModal, setShowBillingModal] = useState(false);
+  const [showUnlinkStripeDialog, setShowUnlinkStripeDialog] = useState(false);
 
   const handleProfileSubmit = async (values: ProfileCompanyFormValues) => {
     const fullName = `${values.firstName} ${values.lastName}`.trim();
@@ -270,9 +272,10 @@ const SettingsPageContent = () => {
     console.log("WithdrawFund stripe clicked");
   };
 
-  const onUnlinkStripe = async () => {
+  const confirmUnlinkStripe = async () => {
     try {
       await unlinkStripeConnect().unwrap();
+      setShowUnlinkStripeDialog(false);
       toast.success("Stripe disconnected", {
         description: "Your Stripe Connect account has been unlinked.",
       });
@@ -322,7 +325,7 @@ const SettingsPageContent = () => {
             onManageBilling={handleManageBilling}
             paymentHistory={paymentHistory}
             onWithdrawFund={onWithdrawFund}
-            onUnlinkStripe={onUnlinkStripe}
+            onUnlinkStripe={() => setShowUnlinkStripeDialog(true)}
             isUnlinkingStripe={isUnlinkingStripe}
             wallet={settingsData?.profileCompany.payment.wallet}
           />
@@ -342,6 +345,12 @@ const SettingsPageContent = () => {
           onUpgradeComplete={onUpgradeComplete}
         />
       )}
+      <UnlinkStripeDialog
+        open={showUnlinkStripeDialog}
+        isLoading={isUnlinkingStripe}
+        onOpenChange={setShowUnlinkStripeDialog}
+        onConfirm={confirmUnlinkStripe}
+      />
     </div>
   );
 };
