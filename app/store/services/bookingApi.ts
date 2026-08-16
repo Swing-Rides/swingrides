@@ -61,7 +61,7 @@ type BookingStatus =
   | "cancelled"
   | "completed";
 
-type BookingResponse = {
+export type BookingResponse = {
   id: string;
   referenceCode: string;
   paymentIntentId?: string;

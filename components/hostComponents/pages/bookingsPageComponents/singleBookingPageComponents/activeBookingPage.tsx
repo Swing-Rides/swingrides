@@ -1,5 +1,4 @@
 import { 
-        AddonAndExtraCard, 
         BookingPageWrapper, 
         BookingSummaryCard, 
         BookingTimeline, 
@@ -12,7 +11,6 @@ import { BookingPageProps } from "./types";
 
 export default function ActiveBookingPage({
         id,
-        extras,
         checkIn,
         checkOut,
         bookingCreated,
@@ -47,9 +45,6 @@ export default function ActiveBookingPage({
                                                 ReturnDateTime={trip.ReturnDateTime}
                                                 PickUpLocation={trip.PickUpLocation}
                                                 ReturnLocation={trip.ReturnLocation}
-                                        />
-                                        <AddonAndExtraCard
-                                                extras={extras}
                                         />
                                         <CheckInCheckOutCard
                                                 checkIn={checkIn}

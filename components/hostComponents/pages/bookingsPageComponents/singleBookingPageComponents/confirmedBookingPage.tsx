@@ -1,5 +1,4 @@
 import { 
-        AddonAndExtraCard, 
         BookingPageWrapper, 
         BookingSummaryCard, 
         BookingTimeline, 
@@ -20,7 +19,6 @@ export default function ConfirmedBookingPage({
         bookingSummary,
         payment,
         preCheckStatus,
-        extras,
 }: BookingPageProps) {
         return (
                 <BookingPageWrapper
@@ -45,9 +43,6 @@ export default function ConfirmedBookingPage({
                                                 ReturnDateTime={trip.ReturnDateTime}
                                                 PickUpLocation={trip.PickUpLocation}
                                                 ReturnLocation={trip.ReturnLocation}
-                                        />
-                                        <AddonAndExtraCard
-                                                extras={extras}
                                         />
                                         <PreCheckStatusCard
                                                 driverLicenseStatus={preCheckStatus.driverLicenseStatus}
