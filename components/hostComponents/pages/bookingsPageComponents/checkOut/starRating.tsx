@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { memo, useState } from "react"
 import { Star } from "lucide-react"
 import { cn } from '@/lib/utils'
 
@@ -11,7 +11,7 @@ type StarRatingProps = {
         size?: number
 }
 
-export default function StarRating ({ value, onChange, size = 24 }: StarRatingProps) {
+function StarRating ({ value, onChange, size = 24 }: StarRatingProps) {
 
         const [hovered, setHovered] = useState<number | null>(null)
         const interactive = !!onChange
@@ -48,3 +48,5 @@ export default function StarRating ({ value, onChange, size = 24 }: StarRatingPr
                 </div>
         )
 }
+
+export default memo(StarRating)

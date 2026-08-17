@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, use, Suspense, useMemo } from 'react'
-import { useForm, Controller, Control, UseFormRegister, FieldValues, Path, PathValue, RegisterOptions, FieldErrors, useWatch } from 'react-hook-form'
+import { useForm, Controller, Control, UseFormRegister, FieldValues, Path, PathValue, RegisterOptions, FieldErrors, useWatch, useFormContext } from 'react-hook-form'
 import { format } from 'date-fns'
 import { CalendarIcon, LockIcon, EyeIcon, EyeOffIcon, UploadIcon, ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -153,7 +153,7 @@ export type FormFieldProps<T extends FieldValues = FieldValues> = {
   errors: FieldErrors<T>;
 };
 
-export const FormField = <T extends FieldValues = FieldValues>({ field, register, control, errors }: FormFieldProps<T>) => {
+export const FormField = <T extends FieldValues = FieldValues>({ field, register, control, getValues, errors }: FormFieldProps<T>) => {
   const error = errors[field.name as Path<T>]?.message as string | undefined;
 
   const wrapper = (children: React.ReactNode) => (
@@ -197,7 +197,7 @@ export const FormField = <T extends FieldValues = FieldValues>({ field, register
       return wrapper(<TextareaInput field={field} register={register} error={error} />)
     case 'file':
     case 'image':
-      return wrapper(<FileInput field={field} register={register} error={error} />)
+      return wrapper(<FileInput field={field} register={register} error={error} getValues={getValues} />)
     case 'checkbox':
       return wrapper(<CheckboxInput field={field} control={control} error={error} />)
     case 'number-dollar':
@@ -647,8 +647,36 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
 };
 
 // File / Image upload
-export const FileInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => {
-  const [files, setFiles] = useState<File[]>([]);
+export type FileInputProps<T extends FieldValues = FieldValues> = InputProps<T> & {
+  control?: Control<T>;
+  getValues?: () => T;
+};
+
+export const FileInput = <T extends FieldValues = FieldValues>({ field, register, error, getValues }: FileInputProps<T>) => {
+  const formContext = useFormContext<T>();
+  const getValueFn = getValues ?? formContext?.getValues;
+
+  const getInitialFiles = (): File[] => {
+    if (!getValueFn) return [];
+    try {
+      const val = getValueFn()[field.name as Path<T>] as unknown;
+      if (!val) return [];
+      if (typeof FileList !== "undefined" && val instanceof FileList) {
+        return Array.from(val);
+      }
+      if (Array.isArray(val)) {
+        return val.filter((f: unknown): f is File => typeof File !== "undefined" && f instanceof File);
+      }
+      if (typeof File !== "undefined" && val instanceof File) {
+        return [val];
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  };
+
+  const [files, setFiles] = useState<File[]>(getInitialFiles);
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -843,6 +871,15 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
           {...rest}
           ref={(e) => {
             ref(e);
+            if (e && files.length > 0 && (!e.files || e.files.length === 0)) {
+              try {
+                const dt = new DataTransfer();
+                files.forEach((file) => dt.items.add(file));
+                e.files = dt.files;
+              } catch {
+                // ignore if environment blocks manual files assignment
+              }
+            }
             inputRef.current = e;
           }}
           onChange={(e) => {

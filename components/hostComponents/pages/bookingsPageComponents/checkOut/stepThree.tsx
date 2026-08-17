@@ -1,12 +1,10 @@
-import { Controller, useFormContext } from 'react-hook-form'
+import { memo } from 'react'
+import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import { CheckOutFormValues, DEFAULT_CATEGORY_RATINGS, RATING_CATEGORIES } from './checkOutPage'
 import { Separator } from '@/components/ui/separator'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import StarRating from './starRating'
-
-
+import { FormField } from '@/components/forms/MainForm'
 
 const MAX_REVIEW_CHARS = 500
 
@@ -15,16 +13,7 @@ const formatAverage = (avg: number) => {
         return `${display} out of 5`
 }
 
-export default function StepThree() {
-        const { control, register, watch } = useFormContext<CheckOutFormValues>()
-
-        const categoryRatings = watch('categoryRatings') ?? DEFAULT_CATEGORY_RATINGS
-        const reviewNotes = watch('reviewNotes') ?? ''
-
-        const ratingValues = RATING_CATEGORIES.map(c => categoryRatings[c.id] ?? 0)
-        const average = ratingValues.reduce((sum, v) => sum + v, 0) / RATING_CATEGORIES.length
-        const roundedAverage = Math.round(average)
-
+export default memo(function StepThree() {
         return (
                 <div className='shrink grow basis-132.5 p-4 bg-gray-50 rounded-[10px] border border-gray-200 flex flex-col justify-start items-start gap-4 w-full'>
                         <div className='flex flex-col gap-1'>
@@ -39,75 +28,121 @@ export default function StepThree() {
                         <Separator />
 
                         {/* Overall average — read-only, computed from category ratings below */}
-                        <div className='flex flex-col items-center gap-1 w-full'>
-                                <StarRating value={roundedAverage} size={28} />
-                                <span className='text-gray-500 text-sm font-normal font-text'>
-                                        {formatAverage(average)}
-                                </span>
-                        </div>
+                        <OverallRatingDisplay />
 
                         <Separator />
 
                         {/* Per-category ratings */}
-                        <Controller
-                                name='categoryRatings'
-                                control={control}
-                                render={({ field }) => (
-                                        <div className='flex flex-col gap-3 w-full'>
-                                                {RATING_CATEGORIES.map((category) => (
-                                                        <div
-                                                                key={category.id}
-                                                                className='flex items-center justify-between gap-3'
-                                                        >
-                                                                <span className='text-[#1F2937] text-sm font-medium font-text'>
-                                                                        {category.label}
-                                                                </span>
-                                                                <StarRating
-                                                                        value={field.value?.[category.id] ?? 0}
-                                                                        size={20}
-                                                                        onChange={(rating) =>
-                                                                                field.onChange({
-                                                                                        ...field.value,
-                                                                                        [category.id]: rating,
-                                                                                })
-                                                                        }
-                                                                />
-                                                        </div>
-                                                ))}
-                                        </div>
-                                )}
-                        />
+                        <CategoryRatingList />
 
                         <Separator />
 
                         {/* Review textarea */}
-                        <div className='flex flex-col gap-1.5 w-full'>
-                                <Label
-                                        htmlFor='reviewNotes'
-                                        className='text-gray-500 text-xs font-semibold font-text uppercase'
-                                >
-                                        Write a Review
-                                </Label>
-                                <Textarea
-                                        id='reviewNotes'
-                                        placeholder='Additional notes about renter (optional)'
-                                        rows={4}
-                                        maxLength={MAX_REVIEW_CHARS}
-                                        className='resize-none font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF] border-[#E5E7EB] focus-visible:ring-blue-700'
-                                        {...register('reviewNotes', {
+                        <ReviewSection />
+                </div>
+        )
+})
+
+const OverallRatingDisplay = memo(function OverallRatingDisplay() {
+        const categoryRatings = useWatch<CheckOutFormValues, 'categoryRatings'>({ name: 'categoryRatings' }) ?? DEFAULT_CATEGORY_RATINGS
+        const ratingValues = RATING_CATEGORIES.map(c => categoryRatings[c.id] ?? 0)
+        const average = ratingValues.reduce((sum, v) => sum + v, 0) / RATING_CATEGORIES.length
+        const roundedAverage = Math.round(average)
+
+        return (
+                <div className='flex flex-col items-center gap-1 w-full'>
+                        <StarRating value={roundedAverage} size={28} />
+                        <span className='text-gray-500 text-sm font-normal font-text'>
+                                {formatAverage(average)}
+                        </span>
+                </div>
+        )
+})
+
+const CategoryRatingList = memo(function CategoryRatingList() {
+        const { control } = useFormContext<CheckOutFormValues>()
+
+        return (
+                <Controller
+                        name='categoryRatings'
+                        control={control}
+                        render={({ field }) => (
+                                <div className='flex flex-col gap-3 w-full'>
+                                        {RATING_CATEGORIES.map((category) => (
+                                                <CategoryRatingItem
+                                                        key={category.id}
+                                                        label={category.label}
+                                                        value={field.value?.[category.id] ?? 0}
+                                                        onChange={(rating) =>
+                                                                field.onChange({
+                                                                        ...field.value,
+                                                                        [category.id]: rating,
+                                                                })
+                                                        }
+                                                />
+                                        ))}
+                                </div>
+                        )}
+                />
+        )
+})
+
+type CategoryRatingItemProps = {
+        label: string
+        value: number
+        onChange: (rating: number) => void
+}
+
+const CategoryRatingItem = memo(function CategoryRatingItem({
+        label,
+        value,
+        onChange,
+}: CategoryRatingItemProps) {
+        return (
+                <div className='flex items-center justify-between gap-3'>
+                        <span className='text-[#1F2937] text-sm font-medium font-text'>
+                                {label}
+                        </span>
+                        <StarRating
+                                value={value}
+                                size={20}
+                                onChange={onChange}
+                        />
+                </div>
+        )
+})
+
+const ReviewSection = memo(function ReviewSection() {
+        const { control, register, getValues, formState: { errors } } = useFormContext<CheckOutFormValues>()
+        const reviewNotes = useWatch<CheckOutFormValues, 'reviewNotes'>({ name: 'reviewNotes' }) ?? ''
+
+        return (
+                <div className='flex flex-col gap-1.5 w-full'>
+                        <FormField
+                                field={{
+                                        name: 'reviewNotes',
+                                        type: 'textarea',
+                                        label: 'Write a Review',
+                                        placeholder: 'Additional notes about renter (optional)',
+                                        height: 120,
+                                        validation: {
                                                 maxLength: {
                                                         value: MAX_REVIEW_CHARS,
                                                         message: `Review cannot exceed ${MAX_REVIEW_CHARS} characters`,
                                                 },
-                                        })}
-                                />
-                                <span className={cn(
-                                        'self-end text-xs font-normal font-text',
-                                        reviewNotes.length >= MAX_REVIEW_CHARS ? 'text-red-500' : 'text-gray-400'
-                                )}>
-                                        {reviewNotes.length} / {MAX_REVIEW_CHARS}
-                                </span>
-                        </div>
+                                        },
+                                }}
+                                register={register}
+                                control={control}
+                                getValues={getValues}
+                                errors={errors}
+                        />
+                        <span className={cn(
+                                'self-end text-xs font-normal font-text',
+                                reviewNotes.length >= MAX_REVIEW_CHARS ? 'text-red-500' : 'text-gray-400'
+                        )}>
+                                {reviewNotes.length} / {MAX_REVIEW_CHARS}
+                        </span>
                 </div>
         )
-}
+})

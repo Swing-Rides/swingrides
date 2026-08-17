@@ -1,7 +1,15 @@
 import CheckInPage from "@/components/hostComponents/pages/bookingsPageComponents/checkIn";
 
-export default function CompleteCheckInPage({ params }: { params: { id: string } }) {
+export default async function CompleteCheckInPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
   return (
-    <CheckInPage bookingId={params.id} />
-  )
+    <>
+      <CheckInPage bookingId={id} />
+    </>
+  );
 }

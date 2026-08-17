@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { memo, ReactNode } from 'react'
 import { Separator } from '@/components/ui/separator'
 import {
         CreditCard,
@@ -8,9 +8,9 @@ import {
         Phone,
         User,
 } from 'lucide-react'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Controller, useFormContext } from 'react-hook-form'
 import { CheckOutFormValues } from './checkOutPage'
+import { CheckboxInput } from '@/components/forms/MainForm'
 
 type StepOneProps = {
         renterName: string
@@ -31,7 +31,7 @@ const confirmReturn = [
         },
 ]
 
-export default function StepOne ({ renterName, phoneNumber, emailAddress, licenseNumber }: StepOneProps) {
+function StepOne ({ renterName, phoneNumber, emailAddress, licenseNumber }: StepOneProps) {
         const { control } = useFormContext<CheckOutFormValues>()
 
         return (
@@ -73,30 +73,32 @@ export default function StepOne ({ renterName, phoneNumber, emailAddress, licens
                                                                 const checked = field.value?.includes(item.id) ?? false
                                                                 const inputId = `confirmReturn-${item.id}`
                                                                 return (
-                                                                        <label
+                                                                        <div
                                                                                 key={item.id}
-                                                                                htmlFor={inputId}
-                                                                                className='flex items-center justify-between gap-3 p-3 rounded-md border border-[#E5E7EB] cursor-pointer hover:bg-[#F9FAFB] transition-colors duration-150'
+                                                                                className='flex items-center justify-between gap-3 p-3 rounded-md border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors duration-150'
                                                                         >
-                                                                                <div className='flex items-center gap-3'>
-                                                                                        <Checkbox
-                                                                                                id={inputId}
-                                                                                                checked={checked}
-                                                                                                onCheckedChange={(isChecked) => {
-                                                                                                        const current: string[] = field.value ?? []
-                                                                                                        field.onChange(
-                                                                                                                isChecked
-                                                                                                                        ? [...current, item.id]
-                                                                                                                        : current.filter((id: string) => id !== item.id)
-                                                                                                        )
-                                                                                                }}
-                                                                                                className='border-[#E5E7EB] data-[state=checked]:bg-[#1A56DB] data-[state=checked]:border-[#1A56DB]'
-                                                                                        />
-                                                                                        <span className='text-[#1F2937] text-sm font-medium font-text'>
-                                                                                                {item.label}
-                                                                                        </span>
-                                                                                </div>
-                                                                        </label>
+                                                                                <CheckboxInput
+                                                                                        field={{
+                                                                                                name: inputId,
+                                                                                                type: 'checkbox',
+                                                                                                label: (
+                                                                                                        <span className='text-[#1F2937] text-sm font-medium font-text'>
+                                                                                                                {item.label}
+                                                                                                        </span>
+                                                                                                ),
+                                                                                        }}
+                                                                                        control={control}
+                                                                                        checked={checked}
+                                                                                        onCheckedChange={(isChecked) => {
+                                                                                                const current: string[] = field.value ?? []
+                                                                                                field.onChange(
+                                                                                                        isChecked
+                                                                                                                ? [...current, item.id]
+                                                                                                                : current.filter((id: string) => id !== item.id)
+                                                                                                )
+                                                                                        }}
+                                                                                />
+                                                                        </div>
                                                                 )
                                                         })}
                                                 </div>
@@ -128,3 +130,5 @@ const RenterInfoCard = ({ icon, label, info }: RenterInfoCardProps) => {
                 </div>
         )
 }
+
+export default memo(StepOne)
