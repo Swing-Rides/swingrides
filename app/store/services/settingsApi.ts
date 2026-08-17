@@ -292,7 +292,8 @@ export type UpgradePlanRequest = {
 export type UpgradePlanResponse = {
   clientSecret: string;
   paymentIntentId: string;
-  subscriptionId: string;
+  subscriptionId?: string;
+  scheduleId?: string;
   plan: HostPlanType;
   billingCycle: HostBillingCycle;
   subtotal: number;
@@ -301,6 +302,8 @@ export type UpgradePlanResponse = {
   currency: string;
   couponCode?: string;
   isUpgrade: boolean;
+  scheduled: boolean;
+  effectiveAt: string;
 };
 
 export const settingsApi = createApi({
