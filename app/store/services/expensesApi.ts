@@ -1,6 +1,7 @@
 import { BaseQueryFn, createApi } from "@reduxjs/toolkit/query/react";
 import { AxiosError, Method } from "axios";
 import apiClient from "@/lib";
+import { analyticsApi } from "./analyticsApi";
 
 type AxiosBaseQueryArgs =
 	| string
@@ -238,6 +239,20 @@ export const expensesApi = createApi({
 				{ type: "Finance", id: "SUMMARY" },
 				{ type: "Finance", id: "EXPENSES" },
 			],
+			async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+				try {
+					await queryFulfilled;
+					dispatch(
+						analyticsApi.util.invalidateTags([
+							{ type: "Analytics", id: "KPIS" },
+							{ type: "Analytics", id: "EXPENSE_BREAKDOWN" },
+							{ type: "Analytics", id: "DASHBOARD" },
+						]),
+					);
+				} catch {
+					// The base query already surfaces mutation errors to the UI.
+				}
+			},
 		}),
 
 		logTollRecord: builder.mutation<
@@ -253,6 +268,20 @@ export const expensesApi = createApi({
 				{ type: "Finance", id: "SUMMARY" },
 				{ type: "Finance", id: "TOLL_RECORDS" },
 			],
+			async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+				try {
+					await queryFulfilled;
+					dispatch(
+						analyticsApi.util.invalidateTags([
+							{ type: "Analytics", id: "KPIS" },
+							{ type: "Analytics", id: "EXPENSE_BREAKDOWN" },
+							{ type: "Analytics", id: "DASHBOARD" },
+						]),
+					);
+				} catch {
+					// The base query already surfaces mutation errors to the UI.
+				}
+			},
 		}),
 	}),
 });

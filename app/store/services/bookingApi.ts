@@ -1,6 +1,8 @@
 import { createApi, BaseQueryFn } from "@reduxjs/toolkit/query/react";
 import { AxiosError, Method } from "axios";
 import apiClient from "@/lib";
+import { analyticsApi } from "./analyticsApi";
+import { hostApi } from "./hostApi";
 
 type AxiosBaseQueryArgs =
   | string
@@ -88,6 +90,48 @@ export type BookingResponse = {
   taxRate: number;
   totalAmount: number;
   status: BookingStatus;
+  vehicleImage?: string;
+  payment?: {
+    status: "paid" | "pending" | "failed" | "refunded" | "partially_refunded";
+    currency: string;
+    amountPaid: number;
+    paymentDate?: string;
+    platformCommission: number;
+    netToHost: number;
+    refundedAmount: number;
+    refundDate?: string;
+    paymentMethod?: string;
+    cardBrand?: string;
+    cardLast4?: string;
+    receiptPdfUrl?: string;
+  };
+  timeline?: Array<{
+    type: string;
+    label: string;
+    occurredAt: string;
+  }>;
+  checkOut?: {
+    completedAt: string;
+    completedBy: "host" | "renter";
+    returnConfirmation: {
+      renterReturned: boolean;
+      keysReturned: boolean;
+    };
+    vehicleInspection: {
+      mileage: number;
+      fuelLevel: string;
+      photoUrls: string[];
+      damageStatus: "none" | "damage";
+      damageType?: string;
+      damageDescription?: string;
+    };
+    renterRating?: {
+      categoryRatings: Record<string, number>;
+      notes?: string;
+    };
+    averageRenterRating?: number;
+    issueReportId?: string;
+  };
   checkIn?: {
     id?: string;
     bookingId?: string;
@@ -146,9 +190,6 @@ export type BookingResponse = {
   totalPrice?: number;
   pricing?: {
     total?: number;
-  };
-  payment?: {
-    totalPaidByRenter?: number;
   };
   trip?: {
     startDate?: string;
@@ -266,8 +307,8 @@ type CreateBookingPaymentIntentResponse = {
 
 type StartCheckInPayload = {
   bookingId: string;
-  driverLicenseNumber: string;
-  driverLicenseExpiry: string;
+  driverLicenseNumber?: string;
+  driverLicenseExpiry?: string;
   driverName: string;
   additionalDrivers?: string[];
   fuelLevel: number;
@@ -277,8 +318,8 @@ type StartCheckInPayload = {
     interior: string[];
     damages: string[];
   };
-  paymentMethod: "card" | "cash" | "bank_transfer";
-  securityDeposit: number;
+  paymentMethod?: "card" | "cash" | "bank_transfer";
+  securityDeposit?: number;
   notes?: string;
 };
 
@@ -310,6 +351,28 @@ type CompleteCheckInPayload = {
     };
     keysHandover: {
       keysHandedOver: boolean;
+    };
+  };
+};
+
+type CompleteCheckOutPayload = {
+  bookingId: string;
+  body: {
+    returnConfirmation: {
+      renterReturned: boolean;
+      keysReturned: boolean;
+    };
+    vehicleInspection: {
+      mileage: number;
+      fuelLevel: string;
+      photoUrls: string[];
+      damageStatus: "none" | "damage";
+      damageType?: string;
+      damageDescription?: string;
+    };
+    renterRating?: {
+      categoryRatings: Record<string, number>;
+      notes?: string;
     };
   };
 };
@@ -380,8 +443,28 @@ export const bookingApi = createApi({
       }),
       invalidatesTags: (result, error, bookingId) => [
         { type: "Bookings", id: bookingId },
+        { type: "Bookings", id: `REF-${bookingId}` },
+        ...(result?.data?.id
+          ? [{ type: "Bookings" as const, id: result.data.id }]
+          : []),
         { type: "Bookings", id: "LIST" },
       ],
+      async onQueryStarted(_bookingId, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            analyticsApi.util.invalidateTags([
+              { type: "Analytics", id: "KPIS" },
+              { type: "Analytics", id: "BOOKING_STATUS" },
+              { type: "Analytics", id: "REVENUE_TRENDS" },
+              { type: "Analytics", id: "VEHICLE_PERFORMANCE" },
+              { type: "Analytics", id: "DASHBOARD" },
+            ]),
+          );
+        } catch {
+          // The mutation error is handled by the calling UI.
+        }
+      },
     }),
 
     confirmBooking: builder.mutation<BookingEnvelope<BookingResponse>, string>({
@@ -437,6 +520,40 @@ export const bookingApi = createApi({
         { type: "Bookings", id: "LIST" },
       ],
     }),
+    completeCheckOut: builder.mutation<
+      BookingEnvelope<BookingResponse>,
+      CompleteCheckOutPayload
+    >({
+      query: ({ bookingId, body }) => ({
+        url: `/api/host/bookings/${bookingId}/checkout/complete`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (result, _error, { bookingId }) => [
+        { type: "Bookings", id: bookingId },
+        { type: "Bookings", id: `REF-${bookingId}` },
+        ...(result?.data?.id
+          ? [{ type: "Bookings" as const, id: result.data.id }]
+          : []),
+        { type: "Bookings", id: "LIST" },
+      ],
+      async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(hostApi.util.invalidateTags([{ type: "Fleet", id: "LIST" }]));
+          dispatch(
+            analyticsApi.util.invalidateTags([
+              { type: "Analytics", id: "KPIS" },
+              { type: "Analytics", id: "BOOKING_STATUS" },
+              { type: "Analytics", id: "VEHICLE_PERFORMANCE" },
+              { type: "Analytics", id: "DASHBOARD" },
+            ]),
+          );
+        } catch {
+          // The checkout page displays the mutation error.
+        }
+      },
+    }),
   }),
 });
 
@@ -454,4 +571,5 @@ export const {
   useCompleteBookingMutation,
   useStartCheckInMutation,
   useCompleteCheckInMutation,
+  useCompleteCheckOutMutation,
 } = bookingApi;

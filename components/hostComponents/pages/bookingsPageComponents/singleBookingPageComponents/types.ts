@@ -4,6 +4,12 @@ export type TimelineEvent =
         | { completed: true; date: string; time: string }
         | { completed: false; date?: undefined; time?: undefined };
 
+export interface BookingTimelineItem {
+        type: string;
+        label: string;
+        occurredAt: string;
+}
+
 export interface ExtraItem {
         title: string;
         pricingRate: string;
@@ -70,7 +76,7 @@ export interface PreCheckStatusInfo {
         paymentStatus: PreCheckStatusType;
 }
 
-export type PaymentStatusType = "paid" | "pending" | "refunded" | "failed";
+export type PaymentStatusType = "paid" | "pending" | "refunded" | "partially_refunded" | "failed";
 
 export interface PaymentInfo {
         paymentStatus: PaymentStatusType;
@@ -80,6 +86,7 @@ export interface PaymentInfo {
         refund: boolean;
         refundAmount: string;
         cancellationFeeAppliedDate: string;
+        paymentMethod?: string;
 }
 
 export interface DamageReportInfo {
@@ -123,6 +130,7 @@ export interface BookingPageProps {
         bookingCreated: TimelineEvent;
         checkInCompleted: TimelineEvent;
         checkOutCompleted: TimelineEvent;
+        timeline?: BookingTimelineItem[];
         renter: RenterInfo;
         vehicle: VehicleInfo;
         trip: TripInfo;

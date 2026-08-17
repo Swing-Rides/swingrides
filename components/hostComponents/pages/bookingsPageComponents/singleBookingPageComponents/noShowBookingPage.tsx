@@ -15,6 +15,7 @@ export default function NoShowBookingPage({
         bookingCreated,
         checkInCompleted,
         checkOutCompleted,
+        timeline,
         renter,
         vehicle,
         trip,
@@ -70,11 +71,13 @@ export default function NoShowBookingPage({
                                                 refund={payment.refund}
                                                 refundAmount={payment.refundAmount}
                                                 cancellationFeeAppliedDate={payment.cancellationFeeAppliedDate}
+                                                paymentMethod={payment.paymentMethod}
                                         />
                                         <BookingTimeline
                                                 bookingCreated={bookingCreated}
                                                 checkInCompleted={checkInCompleted}
                                                 checkOutCompleted={checkOutCompleted}
+                                                timeline={timeline}
                                         />
                                 </div>
                         }

@@ -81,7 +81,7 @@ export default function AddTollRecordForm({
                         name: 'linkedRental',
                         type: 'select',
                         label: 'Linked Rental',
-                        placeholder: 'Select an invoice',
+                        placeholder: 'Select a booking',
                         loadOptions: fetchRentals,
                         validation: { required: 'Please select a linked rental' } as RegisterOptions,
                 },

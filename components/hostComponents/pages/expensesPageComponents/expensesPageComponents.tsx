@@ -32,6 +32,7 @@ import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import { ExpenseBarSegment } from "../../dashboard/dynamicImport";
 import { ExpensesBarSegmentDataType } from "../../charts/expensesBarSegment";
 import { toast } from "sonner";
+import { useListBookingsQuery } from "@/app/store/services/bookingApi";
 
 // ─── Vehicle options — stable async fetcher ───────────────────────────────────
 
@@ -86,6 +87,8 @@ export default function ExpensesPageComponents() {
   const [logExpense] = useLogExpenseMutation();
   const [logTollRecord] = useLogTollRecordMutation();
   const { data: vehiclesResponse } = useListVehcleQuery({ page: 1, limit: 100 });
+  const { data: bookingsResponse, isLoading: isBookingsLoading } =
+    useListBookingsQuery();
 
   const { data: summaryResponse, isLoading: isSummaryLoading } =
     useGetFinanceSummaryQuery();
@@ -189,20 +192,18 @@ export default function ExpensesPageComponents() {
   ]);
 
   const rentalOptions = useMemo<SelectOption[]>(() => {
-    const invoiceItems = invoicesResponse?.data.table.items;
+    const bookings = bookingsResponse?.data ?? [];
 
-    if (!invoiceItems || invoiceItems.length === 0) {
-      return invoiceRecordsData.map((invoice) => ({
-        label: invoice.id,
-        value: invoice.id,
+    return [...bookings]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+      .map((booking) => ({
+        label: `${booking.referenceCode} · ${booking.renterName} · ${booking.vehicleName} · ${new Date(booking.pickupDate).toLocaleDateString()}–${new Date(booking.returnDate).toLocaleDateString()}`,
+        value: booking.referenceCode,
       }));
-    }
-
-    return invoiceItems.map((invoice) => ({
-      label: invoice.invoiceNumber,
-      value: invoice.invoiceNumber,
-    }));
-  }, [invoicesResponse?.data.table.items, invoiceRecordsData]);
+  }, [bookingsResponse?.data]);
 
   // Stable reference — required so MainForm's useMemo-wrapped use() promise
   // doesn't get recreated (and re-suspended) on every render
@@ -245,7 +246,8 @@ export default function ExpensesPageComponents() {
     isSummaryLoading &&
     isExpensesLoading &&
     isInvoicesLoading &&
-    isTollRecordsLoading;
+    isTollRecordsLoading &&
+    isBookingsLoading;
 
   if (isInitialLoading) {
     return (

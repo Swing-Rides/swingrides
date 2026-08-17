@@ -139,6 +139,19 @@ export interface IListVehiclesDatum {
   totalRevenue?: number;
   totalExpenses?: number;
   netEarnings?: number;
+  vehicleSchedule?: VehicleScheduleEntry[];
+}
+
+export interface VehicleScheduleEntry {
+  pickupDate: string;
+  returnDate: string;
+  pickupTime: string;
+  returnTime: string;
+  status: string;
+  bookingId?: string;
+  maintenanceId?: string;
+  source: "booking" | "maintenance";
+  serviceType?: string;
 }
 
 export interface Pagination {

@@ -96,13 +96,23 @@ export default function SingleBookingPageComponent({
   const formatDateTime = (value: string) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toISOString();
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   };
 
   const vehicleDetails = booking
     ? getVehicleDetails(booking.vehicleDetails)
     : { plateNumber: "", vehicleType: "", gearType: "" };
-  const checkInTimestamp = booking?.checkIn?.checkInTime || booking?.updatedAt || booking?.createdAt;
+  const checkInTimestamp = booking?.checkInCompletion?.completedAt || booking?.checkIn?.checkInTime;
+  const checkOutTimestamp = booking?.checkOut?.completedAt;
+  const hasValidCheckOutTimestamp = Boolean(
+    checkOutTimestamp && !Number.isNaN(new Date(checkOutTimestamp).getTime()),
+  );
 
   const bookingProps: BookingPageProps = useMemo(() => {
     return booking
@@ -126,7 +136,19 @@ export default function SingleBookingPageComponent({
                 notes: booking.checkIn.notes,
               }
             : undefined,
-          checkOut: undefined,
+          checkOut: booking.checkOut
+            ? {
+                checkedDateTime: formatDateTime(booking.checkOut.completedAt),
+                bookingId: booking.referenceCode,
+                checkType: "checkOut",
+                mileage: String(booking.checkOut.vehicleInspection.mileage),
+                fuelLevel: booking.checkOut.vehicleInspection.fuelLevel,
+                condition: booking.checkOut.vehicleInspection.damageStatus === "damage"
+                  ? booking.checkOut.vehicleInspection.damageType || "Damage reported"
+                  : "No damage reported",
+                notes: booking.checkOut.vehicleInspection.damageDescription,
+              }
+            : undefined,
           bookingCreated: {
             completed: true,
             date: new Date(booking.createdAt).toLocaleDateString("en-US", {
@@ -139,29 +161,29 @@ export default function SingleBookingPageComponent({
               minute: "2-digit",
             }),
           },
-          checkInCompleted: booking.checkIn
+          checkInCompleted: checkInTimestamp
             ? {
                 completed: true,
-                date: new Date(checkInTimestamp || booking.createdAt).toLocaleDateString("en-US", {
+                date: new Date(checkInTimestamp).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
                 }),
-                time: new Date(checkInTimestamp || booking.createdAt).toLocaleTimeString("en-US", {
+                time: new Date(checkInTimestamp).toLocaleTimeString("en-US", {
                   hour: "numeric",
                   minute: "2-digit",
                 }),
               }
             : { completed: false },
-          checkOutCompleted: booking.status === "completed"
+          checkOutCompleted: hasValidCheckOutTimestamp
             ? {
                 completed: true,
-                date: new Date(booking.updatedAt).toLocaleDateString("en-US", {
+                date: new Date(checkOutTimestamp!).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
                 }),
-                time: new Date(booking.updatedAt).toLocaleTimeString("en-US", {
+                time: new Date(checkOutTimestamp!).toLocaleTimeString("en-US", {
                   hour: "numeric",
                   minute: "2-digit",
                 }),
@@ -171,12 +193,12 @@ export default function SingleBookingPageComponent({
             renterFullname: booking.renterName,
             renterPhone: booking.renterPhone,
             renterEmail: booking.renterEmail,
-            renterLicenseNumber: "Not provided",
+            renterLicenseNumber: booking.checkIn?.driverLicenseNumber || "Not provided",
           },
           vehicle: {
             vechicleId: booking.vehicleId,
             vehicleGearType: vehicleDetails.gearType,
-            vehicleImageSrc: "/images/swingrides-default-img.webp",
+            vehicleImageSrc: booking.vehicleImage || "/images/swingrides-default-img.webp",
             vehicleName: booking.vehicleName,
             vehiclePlateNumber: vehicleDetails.plateNumber,
             vehicleType: vehicleDetails.vehicleType,
@@ -188,38 +210,58 @@ export default function SingleBookingPageComponent({
             ReturnLocation: booking.location,
           },
           bookingSummary: {
-            totalPaidByRenter: toCurrency(booking.totalAmount),
-            platformCommission: toCurrency(booking.totalAmount * 0.15),
-            netToHost: toCurrency(booking.totalAmount * 0.85),
+            totalPaidByRenter: toCurrency(booking.payment?.amountPaid ?? 0),
+            platformCommission: toCurrency(booking.payment?.platformCommission ?? 0),
+            netToHost: toCurrency(booking.payment?.netToHost ?? 0),
           },
           payment: {
-            paymentStatus:
-              booking.status === "cancelled"
-                ? "refunded"
-                : booking.status === "pending"
-                  ? "pending"
-                  : "paid",
-            totalPaidByRenter: toCurrency(booking.totalAmount),
-            paymentDate: formatDateTime(booking.createdAt),
-            paymentReciptSrc: "",
-            refund: booking.status === "cancelled",
-            refundAmount:
-              booking.status === "cancelled" ? toCurrency(booking.totalAmount) : "0",
-            cancellationFeeAppliedDate: "",
+            paymentStatus: booking.payment?.status ?? "pending",
+            totalPaidByRenter: toCurrency(booking.payment?.amountPaid ?? 0),
+            paymentDate: booking.payment?.paymentDate
+              ? formatDateTime(booking.payment.paymentDate)
+              : "Not available",
+            paymentReciptSrc: booking.payment?.receiptPdfUrl
+              ? `/backend${booking.payment.receiptPdfUrl}`
+              : "",
+            refund: (booking.payment?.refundedAmount ?? 0) > 0,
+            refundAmount: toCurrency(booking.payment?.refundedAmount ?? 0),
+            cancellationFeeAppliedDate: booking.payment?.refundDate
+              ? formatDateTime(booking.payment.refundDate)
+              : "",
+            paymentMethod: booking.payment?.cardLast4
+              ? `${booking.payment.cardBrand || "Card"} ending in ${booking.payment.cardLast4}`
+              : booking.payment?.paymentMethod,
           },
+          timeline: booking.timeline,
           preCheckStatus: {
             driverLicenseStatus: booking.checkIn ? "verified" : "pending",
             insuranceStatus: booking.checkInCompletion ? "verified" : "pending",
-            paymentStatus:
-              booking.status === "pending" ? "pending" : "verified",
+            paymentStatus: booking.payment?.status === "paid" ||
+              booking.payment?.status === "refunded" ||
+              booking.payment?.status === "partially_refunded"
+              ? "verified"
+              : booking.payment?.status === "failed"
+                ? "notVerified"
+                : "pending",
           },
           damageReport: {
             damageType:
-              booking.checkIn?.vehicleCondition?.damages?.join(", ") || "No reported damage",
+              booking.checkOut?.vehicleInspection.damageType ||
+              booking.checkIn?.vehicleCondition?.damages?.join(", ") ||
+              "No reported damage",
             damageUserFullname: booking.renterName,
             description:
-              booking.checkIn?.vehicleCondition?.damages?.join(", ") || "No damage report submitted",
-            uploadedProof: [],
+              booking.checkOut?.vehicleInspection.damageDescription ||
+              booking.checkIn?.vehicleCondition?.damages?.join(", ") ||
+              "No damage report submitted",
+            uploadedProof: (booking.checkOut?.vehicleInspection.photoUrls || []).map(
+              (url, index) => ({
+                id: `checkout-photo-${index}`,
+                name: `Checkout inspection photo ${index + 1}`,
+                url,
+                type: "image" as const,
+              }),
+            ),
             isAcknowledged: false,
           },
           incident: {
@@ -272,7 +314,7 @@ export default function SingleBookingPageComponent({
             console.log("damage report acknowledged");
           },
         };
-  }, [booking, checkInTimestamp, id, vehicleDetails.gearType, vehicleDetails.plateNumber, vehicleDetails.vehicleType]);
+  }, [booking, checkInTimestamp, checkOutTimestamp, hasValidCheckOutTimestamp, id, vehicleDetails.gearType, vehicleDetails.plateNumber, vehicleDetails.vehicleType]);
 
   const handleDamageReportAcknowledge = useCallback(async () => {
     // TODO: replace with real API call

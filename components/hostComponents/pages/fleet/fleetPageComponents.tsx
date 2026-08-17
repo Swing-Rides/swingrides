@@ -23,6 +23,7 @@ import {
   useDeleteVehicleMutation,
   useEndSnoozeEarlyMutation,
   useLazyListVehcleQuery,
+  useMarkUnavailableMutation,
   useRelistVehicleMutation,
   useSnoozeVehicleMutation,
   useUnlistVehicleMutation,
@@ -48,6 +49,8 @@ export default function FleetPageComponents() {
     useSnoozeVehicleMutation();
   const [endSnoozeEarly, { isLoading: isEndingSnoozeEarly }] =
     useEndSnoozeEarlyMutation();
+  const [markUnavailable, { isLoading: isMarkingMaintenance }] =
+    useMarkUnavailableMutation();
   const [deleteVehicle, { isLoading: isDeleting }] = useDeleteVehicleMutation();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [createBookingError, setCreateBookingError] = useState<string | null>(
@@ -158,6 +161,17 @@ export default function FleetPageComponents() {
       await endSnoozeEarly({ vehicleId: vehicle._id }).unwrap();
       loadVehicles();
       closePopup();
+    } catch (error) {
+      setVehicleActionError(getMutationErrorMessage(error));
+    }
+  };
+
+  const handleMarkMaintenance = async (vehicle: IListVehiclesDatum) => {
+    setVehicleActionError(null);
+
+    try {
+      await markUnavailable(vehicle._id).unwrap();
+      loadVehicles();
     } catch (error) {
       setVehicleActionError(getMutationErrorMessage(error));
     }
@@ -300,7 +314,8 @@ export default function FleetPageComponents() {
             isUnlisting ||
             isRelisting ||
             isSavingSnooze ||
-            isEndingSnoozeEarly
+            isEndingSnoozeEarly ||
+            isMarkingMaintenance
           }
           isError={isError}
           onDeleteVehicle={handleDeleteVehicle}
@@ -310,6 +325,7 @@ export default function FleetPageComponents() {
           onEditSnoozeVehicle={handleEditSnoozeVehicle}
           onCreateBooking={handleCreateBooking}
           onEndSnoozeEarly={handleEndSnoozeEarly}
+          onMarkMaintenance={handleMarkMaintenance}
         />
         {deleteError ? (
           <p className="mt-3 text-sm font-medium text-red-600">
