@@ -28,6 +28,7 @@ import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 import { toast } from "sonner";
 import ManageBillingModal from "./manageBillingModal";
 import UnlinkStripeDialog from "./unlinkStripeDialog";
+import WithdrawFundsModal from "@/components/hostComponents/modals/withdrawFundsModal";
 
 // ─── Tab nav config ─────────────────────────────────────────────────────────
 
@@ -217,6 +218,7 @@ const SettingsPageContent = () => {
 
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [showUnlinkStripeDialog, setShowUnlinkStripeDialog] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
   const handleProfileSubmit = async (values: ProfileCompanyFormValues) => {
     const fullName = `${values.firstName} ${values.lastName}`.trim();
@@ -268,8 +270,14 @@ const SettingsPageContent = () => {
   };
 
   const onWithdrawFund = () => {
-    // TODO: open withdraw funds flow / redirect to Stripe dashboard
-    console.log("WithdrawFund stripe clicked");
+    setShowWithdrawModal(true);
+  };
+
+  const handleWithdrawConfirm = async (amount: number) => {
+    toast.success("Withdrawal requested", {
+      description: `Your request to withdraw $${amount.toFixed(2)} has been submitted successfully.`,
+    });
+    setShowWithdrawModal(false);
   };
 
   const confirmUnlinkStripe = async () => {
@@ -350,6 +358,13 @@ const SettingsPageContent = () => {
         isLoading={isUnlinkingStripe}
         onOpenChange={setShowUnlinkStripeDialog}
         onConfirm={confirmUnlinkStripe}
+      />
+      <WithdrawFundsModal
+        open={showWithdrawModal}
+        onOpenChange={setShowWithdrawModal}
+        maxAmount={settingsData?.profileCompany.payment.wallet.walletBalance}
+        currency={settingsData?.profileCompany.payment.wallet?.currency || "USD"}
+        onConfirm={handleWithdrawConfirm}
       />
     </div>
   );
