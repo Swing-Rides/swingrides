@@ -121,6 +121,47 @@ export type BookingResponse = {
   };
   createdAt: string;
   updatedAt: string;
+  make?: string;
+  vehicle?: {
+    model?: string;
+    name?: string;
+    licensePlate?: string;
+    plateNumber?: string;
+    registrationNumber?: string;
+    photos?: Array<{ url?: string }>;
+    image?: string;
+    thumbnail?: string;
+  };
+  renter?: {
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
+    name?: string;
+    phone?: string;
+    phoneNumber?: string;
+    email?: string;
+  };
+  startDate?: string;
+  endDate?: string;
+  totalPrice?: number;
+  pricing?: {
+    total?: number;
+  };
+  payment?: {
+    totalPaidByRenter?: number;
+  };
+  trip?: {
+    startDate?: string;
+    PickUpDateTime?: string;
+    endDate?: string;
+    ReturnDateTime?: string;
+  };
+  insurance?: {
+    policyNumber?: string;
+    dailyRate?: number;
+    provider?: string;
+  };
+  insurancePolicyNumber?: string;
 };
 
 type BookingEnvelope<T> = {
