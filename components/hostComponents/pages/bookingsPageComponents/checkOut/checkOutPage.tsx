@@ -10,6 +10,15 @@ import { cn } from "@/lib/utils";
 import StepThree from "./stepThree";
 import StepTwo from "./stepTwo";
 import StepOne from "./stepOne";
+import { useParams, useRouter } from "next/navigation";
+import {
+  BookingResponse,
+  useCompleteCheckOutMutation,
+  useGetBookingByIdQuery,
+  useGetBookingByReferenceQuery,
+} from "@/app/store/services/bookingApi";
+import { HOST_DASHBOARD_PATH } from "@/constants/constant";
+import { toast } from "sonner";
 
 type CategoryRatingKey =
   | "vehicleCondition"
@@ -79,9 +88,22 @@ export function useIsStepOneComplete() {
 }
 
 export default function CheckOutPage() {
-  // TODO: replace with real data fetched/looked-up using `bookingId`
-  // (e.g. via an API route or server action). These are placeholders.
-  const bookingId = "SR-2026-0043";
+  const params = useParams<{ id: string }>();
+  const bookingId = decodeURIComponent(params.id);
+  const isReferenceCode = /^SR-/i.test(bookingId);
+  const bookingById = useGetBookingByIdQuery(bookingId, { skip: isReferenceCode });
+  const bookingByReference = useGetBookingByReferenceQuery(bookingId, {
+    skip: !isReferenceCode,
+  });
+  const booking = isReferenceCode
+    ? bookingByReference.data?.data
+    : bookingById.data?.data;
+  const isLoading = isReferenceCode
+    ? bookingByReference.isLoading
+    : bookingById.isLoading;
+  const isError = isReferenceCode
+    ? bookingByReference.isError
+    : bookingById.isError;
 
   const methods = useForm<CheckOutFormValues>({
     defaultValues: {
@@ -102,30 +124,61 @@ export default function CheckOutPage() {
       pageDescription={`Process vehicle return for booking ${bookingId}`}
       pageTitle="Complete Check-Out"
     >
-      <FormProvider {...methods}>
-        <CheckOutWizard bookingId={bookingId} />
-      </FormProvider>
+      {isLoading ? (
+        <div className="mt-6 rounded-lg border bg-white p-6 text-sm text-gray-500">
+          Loading booking checkout details...
+        </div>
+      ) : isError || !booking ? (
+        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          Unable to load this booking. Confirm that the booking belongs to your account.
+        </div>
+      ) : booking.status === "cancelled" ? (
+        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          A cancelled booking cannot be checked out.
+        </div>
+      ) : booking.status === "completed" ? (
+        <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-6 text-sm text-emerald-700">
+          This booking has already been checked out and completed.
+        </div>
+      ) : !["checked_in", "in_progress"].includes(booking.status) ? (
+        <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-6 text-sm text-amber-700">
+          Complete the booking check-in before starting checkout.
+        </div>
+      ) : (
+        <FormProvider {...methods}>
+          <CheckOutWizard booking={booking} />
+        </FormProvider>
+      )}
     </PageWrapper>
   );
 }
 
 const CheckOutWizard = memo(function CheckOutWizard({
-  bookingId,
+  booking,
 }: {
-  bookingId: string;
+  booking: BookingResponse;
 }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [isUploading, setIsUploading] = useState(false);
+  const router = useRouter();
+  const [completeCheckOut, { isLoading: isCompleting }] =
+    useCompleteCheckOutMutation();
 
   const { getValues, trigger, handleSubmit: formHandleSubmit } =
     useFormContext<CheckOutFormValues>();
 
   const fetchCheckInData = useCallback(async (): Promise<CheckInData> => {
+    const fuelPercent = Number(booking.checkIn?.fuelLevel ?? 100);
+    const eighths = Math.max(1, Math.min(8, Math.round(fuelPercent / 12.5)));
     return {
-      mileage: 24200,
-      fuelLevel: "6/8",
-      photoUrl: "/images/toyota-camry-2024.webp",
+      mileage: Number(booking.checkIn?.odometerReading ?? 0),
+      fuelLevel: eighths === 8 ? "8/8 (Full)" : `${eighths}/8` as FuelLevelValue,
+      photoUrl:
+        booking.checkIn?.vehicleCondition?.exterior?.[0] ||
+        booking.vehicleImage ||
+        "/images/swingrides-default-img.webp",
     };
-  }, []);
+  }, [booking]);
 
   const goBack = useCallback(() => {
     setStep((prev) => (prev > 1 ? ((prev - 1) as 1 | 2 | 3) : prev));
@@ -154,10 +207,75 @@ const CheckOutWizard = memo(function CheckOutWizard({
   }, [step, getValues, trigger]);
 
   const handleSubmit = useCallback(() => {
-    formHandleSubmit((data) => {
-      console.log("Check-out submitted", { bookingId, ...data });
+    formHandleSubmit(async (data) => {
+      const photo = data.checkoutPhoto?.[0];
+      if (!photo) {
+        toast.error("Please upload an after-checkout photo");
+        return;
+      }
+      if (!["image/jpeg", "image/png"].includes(photo.type)) {
+        toast.error("Checkout photos must be JPG or PNG files");
+        return;
+      }
+      if (photo.size > 10 * 1024 * 1024) {
+        toast.error("Checkout photos must be under 10MB");
+        return;
+      }
+
+      setIsUploading(true);
+      try {
+        const uploadData = new FormData();
+        uploadData.append("file", photo);
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadData,
+        });
+        if (!uploadResponse.ok) throw new Error("Checkout photo upload failed");
+        const uploaded = (await uploadResponse.json()) as { secure_url?: string };
+        if (!uploaded.secure_url) throw new Error("The upload did not return a photo URL");
+
+        const hasRating = Object.values(data.categoryRatings).some((rating) => rating > 0);
+        await completeCheckOut({
+          bookingId: booking.referenceCode,
+          body: {
+            returnConfirmation: {
+              renterReturned: data.confirmReturnIds.includes("vehicleReturned"),
+              keysReturned: data.confirmReturnIds.includes("vehicleKeyReturned"),
+            },
+            vehicleInspection: {
+              mileage: Number(data.checkoutMileage),
+              fuelLevel: data.checkoutFuelLevel,
+              photoUrls: [uploaded.secure_url],
+              damageStatus: data.damageStatus as "none" | "damage",
+              damageType: data.damageStatus === "damage" ? data.damageType : undefined,
+              damageDescription:
+                data.damageStatus === "damage" ? data.damageDescription : undefined,
+            },
+            renterRating: hasRating || data.reviewNotes.trim()
+              ? {
+                  categoryRatings: data.categoryRatings,
+                  notes: data.reviewNotes.trim() || undefined,
+                }
+              : undefined,
+          },
+        }).unwrap();
+
+        toast.success("Vehicle checkout completed successfully");
+        router.replace(`${HOST_DASHBOARD_PATH}bookings/${booking.referenceCode}`);
+      } catch (error) {
+        const message =
+          typeof error === "object" && error && "data" in error &&
+          typeof (error as { data?: { message?: string } }).data?.message === "string"
+            ? (error as { data: { message: string } }).data.message
+            : error instanceof Error
+              ? error.message
+              : "Failed to complete vehicle checkout";
+        toast.error(message);
+      } finally {
+        setIsUploading(false);
+      }
     })();
-  }, [formHandleSubmit, bookingId]);
+  }, [formHandleSubmit, completeCheckOut, booking, router]);
 
   return (
     <div className="mt-4 md:mt-6 space-y-4">
@@ -165,10 +283,10 @@ const CheckOutWizard = memo(function CheckOutWizard({
       <div className="flex gap-4 flex-col md:flex-row md:items-start w-full">
         {step === 1 && (
           <StepOne
-            renterName="John Smith"
-            phoneNumber="+1 555-0001"
-            emailAddress="john.smith@email.com"
-            licenseNumber="DL-123456789"
+            renterName={booking.renterName}
+            phoneNumber={booking.renterPhone}
+            emailAddress={booking.renterEmail}
+            licenseNumber={booking.checkIn?.driverLicenseNumber || "Not provided"}
           />
         )}
 
@@ -176,7 +294,7 @@ const CheckOutWizard = memo(function CheckOutWizard({
 
         {step === 3 && <StepThree />}
 
-        <BookingSummary />
+        <BookingSummary booking={booking} />
       </div>
       <Separator />
       <CheckOutFooter
@@ -184,6 +302,7 @@ const CheckOutWizard = memo(function CheckOutWizard({
         goBack={goBack}
         goNext={goNext}
         handleSubmit={handleSubmit}
+        isSubmitting={isUploading || isCompleting}
       />
     </div>
   );
@@ -268,6 +387,7 @@ type CheckOutFooterProps = {
   goBack: () => void;
   goNext: () => void;
   handleSubmit: () => void;
+  isSubmitting: boolean;
 };
 
 const CheckOutFooter = memo(function CheckOutFooter({
@@ -275,6 +395,7 @@ const CheckOutFooter = memo(function CheckOutFooter({
   goBack,
   goNext,
   handleSubmit,
+  isSubmitting,
 }: CheckOutFooterProps) {
   const isStepOneComplete = useIsStepOneComplete();
 
@@ -303,16 +424,31 @@ const CheckOutFooter = memo(function CheckOutFooter({
         <button
           type="button"
           onClick={handleSubmit}
-          className="text-sm py-2 px-6 border rounded-xs text-white bg-blue-700 hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
+          disabled={isSubmitting}
+          className="text-sm py-2 px-6 border rounded-xs text-white bg-blue-700 hover:bg-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span>Complete Check Out</span>
+          <span>{isSubmitting ? "Completing..." : "Complete Check Out"}</span>
         </button>
       )}
     </div>
   );
 });
 
-const BookingSummary = memo(function BookingSummary() {
+const BookingSummary = memo(function BookingSummary({ booking }: { booking: BookingResponse }) {
+  const rentalDays = Math.max(
+    1,
+    Math.ceil(
+      (new Date(booking.returnDate).getTime() - new Date(booking.pickupDate).getTime()) /
+        (1000 * 60 * 60 * 24),
+    ),
+  );
+  const [plateNumber = "N/A"] = booking.vehicleDetails.split(" - ");
+  const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   return (
     <div className="basis-85 grow-0 shrink w-full p-4 bg-gray-50 rounded-[10px] border border-gray-200 flex flex-col justify-start items-start gap-4">
       <h3 className="text-neutral-950 text-base font-semibold font-text leading-6">
@@ -321,26 +457,26 @@ const BookingSummary = memo(function BookingSummary() {
       <Separator />
       <div className="flex items-center gap-3">
         <Image
-          src={"/images/toyota-camry-2024.webp"}
-          alt={"Toyota Camry"}
+          src={booking.vehicleImage || "/images/swingrides-default-img.webp"}
+          alt={booking.vehicleName}
           width={480}
           height={320}
           className="max-w-12 object-cover aspect-480/320 w-full rounded-sm"
         />
         <div className="flex flex-col">
           <span className="text-neutral-950 text-sm font-semibold font-text leading-5">
-            {"Toyota Camry"}
+            {booking.vehicleName}
           </span>
           <span className="text-gray-500 text-xs font-normal font-text leading-4">
-            {"ABC-1234"}
+            {plateNumber}
           </span>
         </div>
       </div>
       <Separator />
       <div className="w-full space-y-2">
-        <StepOneDataList label="Rental Period" data={"3 days"} />
-        <StepOneDataList label="Check-In" data={"Mar 14, 2026"} />
-        <StepOneDataList label="Check-Out" data={"Mar 17, 2026"} />
+        <StepOneDataList label="Rental Period" data={`${rentalDays} day${rentalDays === 1 ? "" : "s"}`} />
+        <StepOneDataList label="Check-In" data={formatDate(booking.pickupDate)} />
+        <StepOneDataList label="Check-Out" data={formatDate(booking.returnDate)} />
       </div>
     </div>
   );

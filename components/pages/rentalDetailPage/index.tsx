@@ -98,7 +98,8 @@ export default function RentalDetailPage({
   );
   const resolvedVerificationDriverLicenseImageSrc =
     verificationDriverLicenseImageSrc ||
-    profileRental?.checkIn?.driverLicensePhotoUrl;
+    profileRental?.checkIn?.driverLicensePhotoUrl ||
+    profileRental?.checkInCompletion?.data?.identityVerification?.idDocumentUrl;
   const resolvedVerificationSelfieImageSrc =
     verificationSelfieImageSrc || profileRental?.checkIn?.selfiePhotoUrl;
   const resolvedVehicleConditionImages =

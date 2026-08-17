@@ -26,6 +26,8 @@ import {
   BillingPaymentStatus,
   HostBusinessVerificationStatus,
 } from "./settingsApi";
+import { analyticsApi } from "./analyticsApi";
+import { expensesApi } from "./expensesApi";
 
 type AxiosBaseQueryArgs =
   | string
@@ -355,7 +357,30 @@ export const hostApi = createApi({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: [{ type: "Maintainance", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Maintainance", id: "LIST" },
+        { type: "Fleet", id: "LIST" },
+      ],
+      async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            analyticsApi.util.invalidateTags([
+              { type: "Analytics", id: "KPIS" },
+              { type: "Analytics", id: "EXPENSE_BREAKDOWN" },
+              { type: "Analytics", id: "DASHBOARD" },
+            ]),
+          );
+          dispatch(
+            expensesApi.util.invalidateTags([
+              { type: "Finance", id: "SUMMARY" },
+              { type: "Finance", id: "EXPENSES" },
+            ]),
+          );
+        } catch {
+          // The base query already surfaces mutation errors to the UI.
+        }
+      },
     }),
 
     logServiceModal: builder.mutation<
@@ -371,7 +396,30 @@ export const hostApi = createApi({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: [{ type: "Maintainance", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Maintainance", id: "LIST" },
+        { type: "Fleet", id: "LIST" },
+      ],
+      async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            analyticsApi.util.invalidateTags([
+              { type: "Analytics", id: "KPIS" },
+              { type: "Analytics", id: "EXPENSE_BREAKDOWN" },
+              { type: "Analytics", id: "DASHBOARD" },
+            ]),
+          );
+          dispatch(
+            expensesApi.util.invalidateTags([
+              { type: "Finance", id: "SUMMARY" },
+              { type: "Finance", id: "EXPENSES" },
+            ]),
+          );
+        } catch {
+          // The base query already surfaces mutation errors to the UI.
+        }
+      },
     }),
     // maintenance endpoints
 

@@ -143,7 +143,10 @@ export type VehicleSchedule = {
   pickupTime: string;
   returnTime: string;
   status: string;
-  bookingId: string;
+  bookingId?: string;
+  maintenanceId?: string;
+  source?: "booking" | "maintenance";
+  serviceType?: string;
 };
 
 export interface RenterBookingDetailResponse {

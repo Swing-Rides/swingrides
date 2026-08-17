@@ -40,6 +40,8 @@ export default function SingleTripPage() {
     pickUpDate: rental.pickupDate,
   };
   const checkIn = rentalDetails.checkIn;
+  const hostVerifiedIdDocumentUrl =
+    rentalDetails.checkInCompletion?.data?.identityVerification?.idDocumentUrl;
 
   const formatTime = (value?: string) => {
     if (!value) return "";
@@ -89,7 +91,9 @@ export default function SingleTripPage() {
         averageRating={rentalDetails.averageRating}
         reviews={rentalDetails.reviews}
         rentals={rentalDetails}
-        verificationDriverLicenseImageSrc={checkIn?.driverLicensePhotoUrl}
+        verificationDriverLicenseImageSrc={
+          checkIn?.driverLicensePhotoUrl || hostVerifiedIdDocumentUrl
+        }
         verificationSelfieImageSrc={checkIn?.selfiePhotoUrl}
         vehicleConditionImages={checkIn?.vehicleConditionPhotoUrls ?? []}
         currentMileage={rentalDetails.car.mileage || checkIn?.mileage}

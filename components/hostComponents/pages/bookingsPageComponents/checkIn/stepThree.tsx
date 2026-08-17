@@ -17,14 +17,11 @@ type StepThreeProps = {
 };
 
 const fuelOptions = [
-  { label: "1/8", value: "1/8" },
-  { label: "2/8", value: "2/8" },
-  { label: "3/8", value: "3/8" },
-  { label: "4/8", value: "4/8" },
-  { label: "5/8", value: "5/8" },
-  { label: "6/8", value: "6/8" },
-  { label: "7/8", value: "7/8" },
-  { label: "Full (8/8)", value: "8/8" },
+  { label: "Empty", value: "empty" },
+  { label: "1/4", value: "quarter" },
+  { label: "1/2", value: "half" },
+  { label: "3/4", value: "three_quarter" },
+  { label: "Full", value: "full" },
 ];
 
 export default function StepThree({ data, onSubmitStep }: StepThreeProps) {
@@ -98,7 +95,7 @@ export default function StepThree({ data, onSubmitStep }: StepThreeProps) {
           onSubmitStep({
             vehiclePhotos: fileArray,
             mileage: String(values.mileage ?? ""),
-            fuelLevel: String(values.fuelLevel ?? "8/8"),
+            fuelLevel: String(values.fuelLevel ?? "full"),
             notes: (values.notes as string) || "",
           });
         }}

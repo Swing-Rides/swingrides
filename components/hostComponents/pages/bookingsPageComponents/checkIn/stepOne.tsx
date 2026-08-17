@@ -1,16 +1,19 @@
 "use client";
 
 import { User, Phone, Mail } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import MainForm from "@/components/forms/MainForm";
+import { FormFieldConfig } from "@/components/forms/types";
 
 export type StepOneData = {
   confirmed: boolean;
+  idType: string;
+  idDocument: File[];
+  driverName: string;
 };
 
 type StepOneProps = {
   data: StepOneData;
-  onChange: (data: Partial<StepOneData>) => void;
+  onSubmitStep: (data: StepOneData) => void;
   bookingData?: {
     renterName?: string;
     renterPhone?: string;
@@ -18,10 +21,69 @@ type StepOneProps = {
   };
 };
 
-export default function StepOne({ data, onChange, bookingData }: StepOneProps) {
+const idTypeOptions = [
+  { label: "Driver's License", value: "drivers_license" },
+  { label: "Passport", value: "passport" },
+  { label: "National ID", value: "national_id" },
+  { label: "State ID", value: "state_id" },
+];
+
+export default function StepOne({ data, onSubmitStep, bookingData }: StepOneProps) {
   const renterName = bookingData?.renterName || "John Smith";
   const renterPhone = bookingData?.renterPhone || "+1 555-0001";
   const renterEmail = bookingData?.renterEmail || "john.smith@email.com";
+
+  const fields: FormFieldConfig[] = [
+    {
+      name: "driverName",
+      type: "text",
+      label: "Driver Name",
+      placeholder: "Enter driver's full name",
+      defaultValue: data.driverName || renterName,
+      validation: {
+        required: "Driver name is required",
+        minLength: { value: 2, message: "Driver name must be at least 2 characters" },
+        maxLength: { value: 100, message: "Driver name must be under 100 characters" },
+      },
+    },
+    {
+      name: "idType",
+      type: "select",
+      label: "ID Type",
+      placeholder: "Select ID type",
+      defaultValue: data.idType,
+      options: idTypeOptions,
+      validation: {
+        required: "ID type is required",
+      },
+    },
+    {
+      name: "idDocument",
+      type: "image",
+      label: "ID Document",
+      description: "Upload a clear photo of the renter's ID document",
+      accept: "image/*",
+      multiple: false,
+      maxFiles: 1,
+      showPreview: true,
+      validation: {
+        validate: (files: FileList | File[]) => {
+          const len = files ? (files instanceof FileList ? files.length : files.length) : 0;
+          return len > 0 || "Please upload the renter's ID document";
+        },
+      },
+    },
+    {
+      name: "confirmed",
+      type: "checkbox",
+      label: "I confirm the renter's identity matches the provided document",
+      defaultValue: data.confirmed,
+      validation: {
+        validate: (value: boolean) =>
+          value === true || "You must confirm the renter's identity",
+      },
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -78,21 +140,21 @@ export default function StepOne({ data, onChange, bookingData }: StepOneProps) {
         </div>
       </div>
 
-      {/* Confirmation Checkbox */}
-      <div className="flex items-center gap-3 pt-2">
-        <Checkbox
-          id="step1-confirmed"
-          checked={data.confirmed}
-          onCheckedChange={(checked) => onChange({ confirmed: !!checked })}
-          className="border-[#E5E7EB] data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
-        />
-        <Label
-          htmlFor="step1-confirmed"
-          className="text-sm font-medium text-[#1F2937] font-text cursor-pointer select-none"
-        >
-          I confirm the renter&apos;s identity matches the provided document
-        </Label>
-      </div>
+      <MainForm
+        fields={fields}
+        onSubmit={(values) => {
+          const rawFiles = values.idDocument as FileList | File[];
+          const fileArray = rawFiles ? Array.from(rawFiles as Iterable<File>) : [];
+          onSubmitStep({
+            confirmed: !!values.confirmed,
+            idType: String(values.idType ?? ""),
+            idDocument: fileArray,
+            driverName: String(values.driverName ?? ""),
+          });
+        }}
+        submitLabel="Confirm Identity Verification"
+        className="gap-5"
+      />
     </div>
   );
 }

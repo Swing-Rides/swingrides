@@ -49,6 +49,21 @@ export type Rentals = {
     notes?: string;
     checkedInAt?: string;
   };
+  checkInCompletion?: {
+    completedAt?: string;
+    checklist?: {
+      identityVerified?: boolean;
+      insuranceConfirmed?: boolean;
+      vehicleInspected?: boolean;
+      agreementSigned?: boolean;
+      keysHandedOver?: boolean;
+    };
+    data?: {
+      identityVerification?: {
+        idDocumentUrl?: string;
+      };
+    };
+  };
 };
 
 export type SingleRent = {

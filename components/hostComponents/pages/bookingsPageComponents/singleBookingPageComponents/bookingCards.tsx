@@ -31,6 +31,7 @@ import {
   PreCheckStatusInfo,
   ReimbursementInfo,
   RenterInfo,
+  BookingTimelineItem,
   TimelineEvent,
   TripInfo,
   VehicleInfo,
@@ -573,26 +574,28 @@ export const PaymentStatusCard = ({
   refund,
   refundAmount,
   cancellationFeeAppliedDate,
+  paymentMethod,
 }: PaymentInfo) => {
   const statusColor =
-    paymentStatus === "paid"
+    paymentStatus === "paid" || paymentStatus === "refunded" || paymentStatus === "partially_refunded"
       ? "text-emerald-500 bg-emerald-100"
       : paymentStatus === "pending"
         ? "text-amber-500 bg-amber-100"
         : "text-red-500 bg-red-100";
-  const statusText =
-    paymentStatus === "paid"
-      ? "Paid"
-      : paymentStatus === "pending"
-        ? "Pending"
-        : "Failed";
+  const statusText: Record<PaymentInfo["paymentStatus"], string> = {
+    paid: "Paid",
+    pending: "Pending",
+    failed: "Failed",
+    refunded: "Refunded",
+    partially_refunded: "Partially Refunded",
+  };
 
   return (
     <CardWrapper cardTitle="Payment Status">
       <div className="flex flex-col gap-4">
         <InlineDataList
           label="Payment Status"
-          value={statusText}
+          value={statusText[paymentStatus]}
           valueStyle={`${statusColor} py-1 px-2 rounded-full`}
         />
         {paymentStatus === "pending" ? (
@@ -611,13 +614,20 @@ export const PaymentStatusCard = ({
                 valueStyle="text-emerald-500 text-sm leading-5"
               />
               <InlineDataList label="Payment Date" value={paymentDate} />
+              {paymentMethod && (
+                <InlineDataList label="Payment Method" value={paymentMethod} />
+              )}
             </div>
-            <Link
-              href={paymentReciptSrc}
-              className="py-2 px-4 text-center bg-transparent border border-blue-700 text-blue-700 rounded-xs hover:bg-blue-900 hover:text-white hover:border-blue-900 duration-300 transition-colors text-nowrap"
-            >
-              View Payment Receipt
-            </Link>
+            {paymentReciptSrc && (
+              <a
+                href={paymentReciptSrc}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2 px-4 text-center bg-transparent border border-blue-700 text-blue-700 rounded-xs hover:bg-blue-900 hover:text-white hover:border-blue-900 duration-300 transition-colors text-nowrap"
+              >
+                View Payment Receipt (PDF)
+              </a>
+            )}
           </>
         )}
         {refund && (
@@ -629,7 +639,7 @@ export const PaymentStatusCard = ({
               {refundAmount}
             </span>
             <span className="block text-amber-800 text-xs font-normal font-text leading-4">
-              50% cancellation fee applied on {cancellationFeeAppliedDate}
+              Processed on {cancellationFeeAppliedDate || "date unavailable"}
             </span>
           </div>
         )}
@@ -642,17 +652,51 @@ interface BookingTimelineProps {
   bookingCreated: TimelineEvent;
   checkInCompleted: TimelineEvent;
   checkOutCompleted: TimelineEvent;
+  timeline?: BookingTimelineItem[];
 }
 
 export const BookingTimeline = ({
   bookingCreated,
   checkInCompleted,
   checkOutCompleted,
+  timeline,
 }: BookingTimelineProps) => {
+  const validTimeline = timeline?.filter((event) => {
+    if (!event.occurredAt) return false;
+    return !Number.isNaN(new Date(event.occurredAt).getTime());
+  });
+
+  if (validTimeline?.length) {
+    return (
+      <CardWrapper cardTitle="Booking Timeline">
+        <div className="space-y-4">
+          {validTimeline.map((event) => {
+            const occurredAt = new Date(event.occurredAt);
+            const value = occurredAt.toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            });
+            return (
+              <div key={`${event.type}-${event.occurredAt}`} className="relative border-l-2 pl-4">
+                <div className="size-2 bg-blue-700 rounded-full absolute top-0 left-0 translate-x-[-60%]" />
+                <DataListReverse label={event.label} value={value} />
+              </div>
+            );
+          })}
+        </div>
+      </CardWrapper>
+    );
+  }
+
   return (
     <CardWrapper cardTitle="Booking Timeline">
       <div className="space-y-4">
-        {checkOutCompleted.completed && (
+        {checkOutCompleted.completed &&
+          !checkOutCompleted.date.includes("Invalid") &&
+          !checkOutCompleted.time.includes("Invalid") && (
           <div className="relative border-l-2 pl-4">
             <div className="size-2 bg-blue-700 rounded-full absolute top-0 left-0 translate-x-[-60%]" />
             <DataListReverse

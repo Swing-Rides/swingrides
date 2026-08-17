@@ -5,9 +5,10 @@ type CancelBookingModalProps = {
     bookingId: string;
     handleClose: () => void;
     handleCancelBooking: () => void;
+    isLoading?: boolean;
 };
 
-export default function CancelBookingModal({bookingId, handleClose, handleCancelBooking}: CancelBookingModalProps) {
+export default function CancelBookingModal({bookingId, handleClose, handleCancelBooking, isLoading = false}: CancelBookingModalProps) {
     
     if (!bookingId || bookingId === "") {
         return null;
@@ -28,20 +29,22 @@ export default function CancelBookingModal({bookingId, handleClose, handleCancel
                     </h3>
                 </div>
                 <span className='block text-zinc-700 text-sm font-normal font-text'>
-                    This action will cancel the booking, the renter will be notified via SMS and email and the vehicle will be available for booking immediately.
+                    This action will cancel the booking, notify the renter by email and in-app notification, and make the vehicle available for booking immediately.
                 </span>
                 <div className="flex justify-end items-center gap-3 pt-4">
                     <button
                         onClick={handleClose}
+                        disabled={isLoading}
                         className="px-6 py-2 border border-neutral-700 rounded-xs text-neutral-700 text-sm font-medium font-text hover:bg-neutral-700 hover:text-white transition-colors duration-300 cursor-pointer"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleCancelBooking}
-                        className="px-6 py-2 bg-red-500 text-white text-sm font-semibold font-text rounded-xs border border-red-500 hover:bg-red-900 transition-colors duration-300 cursor-pointer"
+                        disabled={isLoading}
+                        className="px-6 py-2 bg-red-500 text-white text-sm font-semibold font-text rounded-xs border border-red-500 hover:bg-red-900 transition-colors duration-300 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                        Confirm Cancel
+                        {isLoading ? "Cancelling..." : "Confirm Cancel"}
                     </button>
                 </div>
             </div>

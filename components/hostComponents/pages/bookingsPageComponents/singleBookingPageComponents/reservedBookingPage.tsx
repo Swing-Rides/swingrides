@@ -2,6 +2,7 @@ import {
         AddonAndExtraCard, 
         BookingPageWrapper, 
         BookingSummaryCard, 
+        BookingTimeline,
         PaymentStatusCard, 
         PreCheckStatusCard, 
         RenterCard, 
@@ -17,6 +18,10 @@ export default function ReservedBookingPage({
         bookingSummary,
         payment,
         preCheckStatus,
+        bookingCreated,
+        checkInCompleted,
+        checkOutCompleted,
+        timeline,
 }: BookingPageProps) {
         return (
                 <BookingPageWrapper
@@ -67,6 +72,13 @@ export default function ReservedBookingPage({
                                                 refund={payment.refund}
                                                 refundAmount={payment.refundAmount}
                                                 cancellationFeeAppliedDate={payment.cancellationFeeAppliedDate}
+                                                paymentMethod={payment.paymentMethod}
+                                        />
+                                        <BookingTimeline
+                                                bookingCreated={bookingCreated}
+                                                checkInCompleted={checkInCompleted}
+                                                checkOutCompleted={checkOutCompleted}
+                                                timeline={timeline}
                                         />
                                 </div>
                         }

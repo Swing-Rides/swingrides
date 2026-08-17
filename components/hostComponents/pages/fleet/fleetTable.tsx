@@ -38,6 +38,7 @@ function normalizeVehicleStatus(status: string): VehicleStatus {
   const normalized = status.trim().toLowerCase();
 
   if (normalized === "active") return "available";
+  if (normalized === "inactive") return "available";
   if (normalized === "unavailable") return "maintenance";
 
   if (
@@ -53,6 +54,19 @@ function normalizeVehicleStatus(status: string): VehicleStatus {
     return normalized as VehicleStatus;
   }
   return "unlisted";
+}
+
+function deriveVehicleStatus(
+  vehicle: Pick<IListVehiclesDatum, "status" | "instantlyAvailable">,
+): VehicleStatus {
+  if (
+    vehicle.status.trim().toLowerCase() === "active" &&
+    !vehicle.instantlyAvailable
+  ) {
+    return "rented";
+  }
+
+  return normalizeVehicleStatus(vehicle.status);
 }
 
 export interface VehicleInfo {
@@ -174,7 +188,9 @@ function deriveAvailabilityLabel(row: FleetTableRow): string {
     return formatDaysLeft(Math.max(0, dateDerivedDaysLeft));
   }
 
-  if (["maintenance", "unlisted"].includes(row.status)) return "In service";
+  if (["maintenance", "unavailable", "unlisted"].includes(row.status)) {
+    return "In service";
+  }
   if (row.status === "rented") return "Rented";
   if (row.status === "snoozed") return "Snoozed";
 
@@ -230,7 +246,7 @@ const fleetColumns: ColumnDef<FleetTableRow>[] = [
   {
     key: "status",
     header: "Status",
-    cell: (row) => <StatusBadge status={row.status} />,
+    cell: (row) => <StatusBadge status={deriveVehicleStatus(row)} />,
   },
   {
     key: "dailyPrice",
@@ -336,18 +352,18 @@ function VehicleGallery({ images }: { images?: string[] }) {
 
 type VehicleDetailSheetProps = {
   row: FleetRow;
-  onUnlistVehicle: () => void;
   onRelistVehicle: () => void;
   onCreateBooking?: () => void;
   onEndSnoozeEarly?: () => void;
+  onMarkMaintenance: () => void;
 };
 
 function VehicleDetailSheet({
   row,
-  onUnlistVehicle,
   onRelistVehicle,
   onCreateBooking,
   onEndSnoozeEarly,
+  onMarkMaintenance,
 }: VehicleDetailSheetProps) {
   const dailyRate = parsePrice(row.dailyPrice);
   const weeklyRate = row.weeklyPrice ?? formatPrice(dailyRate * 7 * 0.9);
@@ -506,10 +522,10 @@ function VehicleDetailSheet({
         {["available", "rented"].includes(row.status) && (
           <div className="flex flex-col gap-2 pt-3">
             <button
-              onClick={onUnlistVehicle}
+              onClick={onMarkMaintenance}
               className="py-3 px-5 text-gray-500 border text-sm font-semibold font-text leading-5 bg-transparent hover:text-white hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
             >
-              Mark as Unavailable
+              Put in Maintenance
             </button>
             <button
               onClick={onCreateBooking}
@@ -541,7 +557,9 @@ function VehicleDetailSheet({
               onClick={onEndSnoozeEarly}
               className="py-3 px-5 text-white border text-sm font-semibold font-text leading-5 bg-blue-700 hover:bg-blue-900 duration-300 transition-colors cursor-pointer"
             >
-              End Snooze Early
+              {row.status === "maintenance"
+                ? "Return to Service"
+                : "End Snooze Early"}
             </button>
           </div>
         )}
@@ -558,6 +576,7 @@ type FleetTableProps = {
   onEditSnoozeVehicle: (row: IListVehiclesDatum) => void;
   onCreateBooking?: (row: IListVehiclesDatum) => void;
   onEndSnoozeEarly?: (row: IListVehiclesDatum) => void;
+  onMarkMaintenance: (row: IListVehiclesDatum) => void | Promise<void>;
   data?: IListVehiclesResponse["data"];
   pagination?: IListVehiclesResponse["pagination"];
   rowsPerPage?: number;
@@ -574,6 +593,7 @@ export default function FleetTable({
   onEditSnoozeVehicle,
   onCreateBooking,
   onEndSnoozeEarly,
+  onMarkMaintenance,
   pagination,
   rowsPerPage = 10,
   isLoading = false,
@@ -665,7 +685,7 @@ export default function FleetTable({
             type={row.vehicleType}
             color={row.colour}
             year={String(row.year)}
-            status={row.status}
+            status={deriveVehicleStatus(row)}
             onUnlistVehicle={() => onUnlistVehicle(row)}
             onRelistVehicle={() => onRelistVehicle(row)}
             onEditSnoozeVehicle={() => onEditSnoozeVehicle(row)}
@@ -675,16 +695,14 @@ export default function FleetTable({
         content: (row) => (
           <VehicleDetailSheet
             row={{
-              availability: row.instantlyAvailable
-                ? "Instantly Available"
-                : "Not Instantly Available",
+              availability: deriveAvailabilityLabel(row),
               dailyPrice: String(row.dailyPrice),
               id: row._id,
               images: row.images,
               licensePlate: row.licensePlate,
               mileage: String(row.mileage),
               monthlyEarnings: String(row.monthlyPrice),
-              status: normalizeVehicleStatus(row.status),
+              status: deriveVehicleStatus(row),
               vehicleColor: row.colour,
               vehicleInfo: {
                 body: row.vehicleType,
@@ -706,10 +724,10 @@ export default function FleetTable({
               totalRevenue: String(row.totalRevenue ?? 0),
               totalExpenses: String(row.totalExpenses ?? 0),
             }}
-            onUnlistVehicle={() => onUnlistVehicle(row)}
             onRelistVehicle={() => onRelistVehicle(row)}
             onCreateBooking={() => onCreateBooking?.(row)}
             onEndSnoozeEarly={() => onEndSnoozeEarly?.(row)}
+            onMarkMaintenance={() => onMarkMaintenance(row)}
           />
         ),
       }}
@@ -746,6 +764,7 @@ function StatusBadge({ status }: { status: string }) {
     active: "bg-sky-100 text-blue-700",
     snoozed: "bg-amber-50 text-amber-700",
     maintenance: "bg-orange-50 text-amber-500",
+    unavailable: "bg-orange-50 text-amber-500",
     unlisted: "bg-gray-200 text-gray-500",
     inactive: "bg-emerald-100 text-emerald-700",
   };
@@ -753,6 +772,7 @@ function StatusBadge({ status }: { status: string }) {
   const displayLabels: Record<string, string> = {
     inactive: "Available",
     active: "Rented",
+    unavailable: "Maintenance",
   };
 
   const label = displayLabels[status] ?? status;
