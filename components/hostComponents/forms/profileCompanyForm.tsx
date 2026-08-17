@@ -20,6 +20,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { validators } from "@/components/forms/form.validators";
 import { RegisterOptions } from "react-hook-form";
+import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
+import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type ProfileCompanyFormValues = {
@@ -82,7 +86,13 @@ export default function ProfileCompanyForm({
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPhotoPreview(URL.createObjectURL(file));
+
+    const previewUrl = URL.createObjectURL(file);
+    setPhotoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev); // clean up the old preview blob
+      return previewUrl;
+    });
+
     setPhotoUploading(true);
     try {
       const formData = new FormData();
@@ -91,8 +101,19 @@ export default function ProfileCompanyForm({
         method: "POST",
         body: formData,
       });
+
+      if (!res.ok) {
+        throw new Error(`Upload failed with status ${res.status}`);
+      }
+
       const data = await res.json();
       setUploadedPhotoUrl(data.secure_url);
+      toast.success("Photo uploaded successfully");
+    } catch (error) {
+      console.error(error);
+      const message =
+        error instanceof Error ? error.message : "Please try again.";
+      toast.error("Failed to upload photo", { description: message });
     } finally {
       setPhotoUploading(false);
     }
@@ -150,6 +171,18 @@ export default function ProfileCompanyForm({
                 onChange={handlePhotoChange}
               />
             </label>
+          </div>
+
+          <Separator />
+
+          <div className="space-x-3">
+            <Link
+              href={`${HOST_DASHBOARD_PATH}host-complete-registration`}
+              target="_blank"
+              className="border border-blue-700 text-blue-700 bg-transparent text-xs py-2.5 px-5 rounded-xs hover:bg-blue-900 hover:text-white transition-colors duration-300 cursor-pointer"
+            >
+              Check verification status
+            </Link>
           </div>
         </Section>
 
