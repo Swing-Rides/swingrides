@@ -84,7 +84,7 @@ export function HostSidebar() {
 function NavItem({ item }: { item: MenuItem }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { toggleSidebar, state } = useSidebar();
+  const { toggleSidebar, state, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   const isActive = pathname === `/us/host${item.url}`;
@@ -100,7 +100,9 @@ function NavItem({ item }: { item: MenuItem }) {
   const itemPadding = isCollapsed ? "px-0 justify-center" : "px-3";
 
   const handleNavigation = (url: string) => {
-    toggleSidebar();
+    if (isMobile) {
+      toggleSidebar();
+    }
     router.push(url);
   };
 
