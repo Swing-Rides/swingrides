@@ -17,20 +17,20 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useState } from "react";
 import { sidebarContent } from "@/constants/hostSidebar";
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 import { AnimatePresence, motion } from "motion/react";
 import { HostBusinessVerificationStatus } from "@/app/store/services/settingsApi";
+import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 
 const linkBase = [
   "flex items-center gap-3 py-2 px-3 w-full rounded-[10px]",
-  "border-l-4 transition-all duration-200",
+  "border-l-4 transition-all duration-300 cursor-pointer",
   "text-sm font-medium leading-5",
-  "[&_svg]:transition-colors [&_svg]:duration-200 [&_svg]:size-5 [&_svg]:shrink-0",
+  "[&_svg]:transition-colors [&_svg]:duration-300 [&_svg]:size-5 [&_svg]:shrink-0",
 ].join(" ");
 
 const linkInactive = [
@@ -83,7 +83,8 @@ export function HostSidebar() {
 
 function NavItem({ item }: { item: MenuItem }) {
   const pathname = usePathname();
-  const { state } = useSidebar();
+  const router = useRouter();
+  const { toggleSidebar, state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   const isActive = pathname === `/us/host${item.url}`;
@@ -98,11 +99,16 @@ function NavItem({ item }: { item: MenuItem }) {
 
   const itemPadding = isCollapsed ? "px-0 justify-center" : "px-3";
 
+  const handleNavigation = (url: string) => {
+    toggleSidebar();
+    router.push(url);
+  };
+
   if (!hasSubMenu) {
     return (
       <SidebarMenuItem>
-        <Link
-          href={`/us/host${item.url}`}
+        <button
+          onClick={() => handleNavigation(`${HOST_DASHBOARD_PATH}${item.url}`)}
           className={[
             linkBase,
             itemPadding,
@@ -111,7 +117,7 @@ function NavItem({ item }: { item: MenuItem }) {
         >
           {item.icon}
           {!isCollapsed && <span>{item.label}</span>}
-        </Link>
+        </button>
       </SidebarMenuItem>
     );
   }
@@ -166,8 +172,8 @@ function NavItem({ item }: { item: MenuItem }) {
                         ease: "easeOut",
                       }}
                     >
-                      <Link
-                        href={subItem.url}
+                      <button
+                        onClick={() => handleNavigation(subItem.url)}
                         className={[
                           linkBase,
                           "px-3",
@@ -176,7 +182,7 @@ function NavItem({ item }: { item: MenuItem }) {
                       >
                         {subItem.icon}
                         <span>{subItem.label}</span>
-                      </Link>
+                      </button>
                     </motion.div>
                   </SidebarMenuSubItem>
                 );
