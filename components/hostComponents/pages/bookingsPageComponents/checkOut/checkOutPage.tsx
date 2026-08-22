@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction, useState, useCallback, memo } from "react";
+import { Dispatch, SetStateAction, useState, useCallback, useEffect, memo } from "react";
 import PageWrapper from "../../../dashboard/pageWrapper";
 import { Separator } from "@/components/ui/separator";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
@@ -49,6 +49,17 @@ export type CheckInData = {
   mileage: number;
   fuelLevel: FuelLevelValue;
   photoUrl: string;
+};
+
+// The renter's own self-checkout form uses a coarser quarter-based fuel scale
+// than the host wizard's eighths scale - map the values that translate cleanly.
+// "Empty" has no safe equivalent on the host's 1/8-8/8 scale, so it's left
+// unmapped and the host picks it themselves.
+const RENTER_TO_HOST_FUEL_LEVEL: Record<string, FuelLevelValue> = {
+  "1/4": "2/8",
+  "1/2": "4/8",
+  "3/4": "6/8",
+  "Full": "8/8 (Full)",
 };
 
 const confirmReturn = [
@@ -136,11 +147,11 @@ export default function CheckOutPage() {
         <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
           A cancelled booking cannot be checked out.
         </div>
-      ) : booking.status === "completed" ? (
+      ) : booking.status === "completed" && booking.checkOut?.completedBy !== "renter" ? (
         <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-6 text-sm text-emerald-700">
           This booking has already been checked out and completed.
         </div>
-      ) : !["checked_in", "in_progress"].includes(booking.status) ? (
+      ) : !["checked_in", "in_progress", "completed"].includes(booking.status) ? (
         <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-6 text-sm text-amber-700">
           Complete the booking check-in before starting checkout.
         </div>
@@ -164,8 +175,30 @@ const CheckOutWizard = memo(function CheckOutWizard({
   const [completeCheckOut, { isLoading: isCompleting }] =
     useCompleteCheckOutMutation();
 
-  const { getValues, trigger, handleSubmit: formHandleSubmit } =
+  const { getValues, trigger, handleSubmit: formHandleSubmit, reset } =
     useFormContext<CheckOutFormValues>();
+
+  const renterCheckOut =
+    booking.checkOut?.completedBy === "renter" ? booking.checkOut : undefined;
+
+  // The renter already submitted their own return - seed the host's form with
+  // it once on mount so the host reviews/overrides instead of starting blank.
+  // Deliberately runs only once: re-running on every `booking` refetch would
+  // stomp on whatever the host has already typed.
+  useEffect(() => {
+    if (!renterCheckOut) return;
+    reset((prev) => ({
+      ...prev,
+      confirmReturnIds: [
+        ...(renterCheckOut.returnConfirmation.renterReturned ? ["vehicleReturned"] : []),
+        ...(renterCheckOut.returnConfirmation.keysReturned ? ["vehicleKeyReturned"] : []),
+      ],
+      checkoutMileage: renterCheckOut.vehicleInspection.mileage,
+      checkoutFuelLevel:
+        RENTER_TO_HOST_FUEL_LEVEL[renterCheckOut.vehicleInspection.fuelLevel] || "",
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchCheckInData = useCallback(async (): Promise<CheckInData> => {
     const fuelPercent = Number(booking.checkIn?.fuelLevel ?? 100);
@@ -209,30 +242,35 @@ const CheckOutWizard = memo(function CheckOutWizard({
   const handleSubmit = useCallback(() => {
     formHandleSubmit(async (data) => {
       const photo = data.checkoutPhoto?.[0];
-      if (!photo) {
+      const renterPhotoUrls = renterCheckOut?.vehicleInspection.photoUrls || [];
+      if (!photo && renterPhotoUrls.length === 0) {
         toast.error("Please upload an after-checkout photo");
         return;
       }
-      if (!["image/jpeg", "image/png"].includes(photo.type)) {
+      if (photo && !["image/jpeg", "image/png"].includes(photo.type)) {
         toast.error("Checkout photos must be JPG or PNG files");
         return;
       }
-      if (photo.size > 10 * 1024 * 1024) {
+      if (photo && photo.size > 10 * 1024 * 1024) {
         toast.error("Checkout photos must be under 10MB");
         return;
       }
 
       setIsUploading(true);
       try {
-        const uploadData = new FormData();
-        uploadData.append("file", photo);
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          body: uploadData,
-        });
-        if (!uploadResponse.ok) throw new Error("Checkout photo upload failed");
-        const uploaded = (await uploadResponse.json()) as { secure_url?: string };
-        if (!uploaded.secure_url) throw new Error("The upload did not return a photo URL");
+        let photoUrls = renterPhotoUrls;
+        if (photo) {
+          const uploadData = new FormData();
+          uploadData.append("file", photo);
+          const uploadResponse = await fetch("/api/upload", {
+            method: "POST",
+            body: uploadData,
+          });
+          if (!uploadResponse.ok) throw new Error("Checkout photo upload failed");
+          const uploaded = (await uploadResponse.json()) as { secure_url?: string };
+          if (!uploaded.secure_url) throw new Error("The upload did not return a photo URL");
+          photoUrls = [uploaded.secure_url];
+        }
 
         const hasRating = Object.values(data.categoryRatings).some((rating) => rating > 0);
         await completeCheckOut({
@@ -245,7 +283,7 @@ const CheckOutWizard = memo(function CheckOutWizard({
             vehicleInspection: {
               mileage: Number(data.checkoutMileage),
               fuelLevel: data.checkoutFuelLevel,
-              photoUrls: [uploaded.secure_url],
+              photoUrls,
               damageStatus: data.damageStatus as "none" | "damage",
               damageType: data.damageStatus === "damage" ? data.damageType : undefined,
               damageDescription:
@@ -275,7 +313,7 @@ const CheckOutWizard = memo(function CheckOutWizard({
         setIsUploading(false);
       }
     })();
-  }, [formHandleSubmit, completeCheckOut, booking, router]);
+  }, [formHandleSubmit, completeCheckOut, booking, router, renterCheckOut]);
 
   return (
     <div className="mt-4 md:mt-6 space-y-4">
@@ -287,10 +325,16 @@ const CheckOutWizard = memo(function CheckOutWizard({
             phoneNumber={booking.renterPhone}
             emailAddress={booking.renterEmail}
             licenseNumber={booking.checkIn?.driverLicenseNumber || "Not provided"}
+            renterSelfReturnedAt={renterCheckOut?.completedAt}
           />
         )}
 
-        {step === 2 && <StepTwo fetchCheckInData={fetchCheckInData} />}
+        {step === 2 && (
+          <StepTwo
+            fetchCheckInData={fetchCheckInData}
+            renterCheckOut={renterCheckOut}
+          />
+        )}
 
         {step === 3 && <StepThree />}
 

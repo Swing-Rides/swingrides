@@ -44,10 +44,20 @@ export default function RightContent({
   if (!rental) return null;
 
   const status = rental.status;
+  // "Overdue" is a computed status shared between two very different moments
+  // in a trip's life: no-show for pickup (no check-in yet) vs. a renter who's
+  // already checked in and simply hasn't returned the vehicle yet. Only
+  // `checkIn` presence tells them apart - a checked-in trip must keep access
+  // to "Complete Vehicle Return" even once it's overdue, not fall back to the
+  // pre-pickup cancel/contact-only actions.
+  const hasCheckedIn = Boolean(rental.checkIn);
   const isUpcoming = status === "Upcoming";
-  const isActive = status === "Active" || status === "Running Late" ;
+  const isActive =
+    status === "Active" ||
+    status === "Running Late" ||
+    (hasCheckedIn && status === "Overdue");
   const isCompleted = status === "Completed";
-  const isOverDue = status === "Overdue";
+  const isOverDue = status === "Overdue" && !hasCheckedIn;
 
   return (
     <div className="col-span-1 md:col-span-5 w-full space-y-3 md:space-y-6">
@@ -131,6 +141,7 @@ export const getManageBookingButtons = (
   contactNumber: string,
   vehicleId?: string,
   onExtendTrip?: () => void,
+  hasCheckedIn?: boolean,
 ): ManageBookingButtonConfig[] => {
 
   const checkInParams = new URLSearchParams(currentParams);
@@ -160,6 +171,37 @@ export const getManageBookingButtons = (
     "bg-transparent text-zinc-800 border-zinc-800 hover:bg-zinc-800 hover:text-white";
   const reportStyle =
     "bg-red-500 text-white border-red-500 hover:bg-red-900 hover:border-red-900";
+
+  // Once a renter has checked in, "Running Late" / "Overdue" just mean the
+  // return is late - they should keep the same actions as an on-time active
+  // trip (most importantly, the ability to complete the vehicle return).
+  const checkedInLateReturnButtons: ManageBookingButtonConfig[] = [
+    {
+      icon: <PenLine className="w-4" />,
+      label: "Extend Trip",
+      href: "#",
+      className: modifyStyle,
+      onClick: onExtendTrip,
+    },
+    {
+      icon: <Car className="w-4" />,
+      label: "Complete Vehicle Return",
+      href: `?${returnParams.toString()}`,
+      className: completedStyle,
+    },
+    {
+      icon: <PhoneCall className="w-4" />,
+      label: "Contact Host",
+      href: `tel:${contactNumber}`,
+      className: contactStyle,
+    },
+    {
+      icon: <BanknoteArrowUp className="size-4" />,
+      label: "Request Reimbursement",
+      href: `?${reimbursementParams.toString()}`,
+      className: reportStyle,
+    },
+  ];
 
   switch (status) {
     case "Upcoming":
@@ -194,6 +236,9 @@ export const getManageBookingButtons = (
         },
       ];
     case "Running Late":
+      if (hasCheckedIn) {
+        return checkedInLateReturnButtons;
+      }
       return [
         {
           icon: <Car className="w-4" />,
@@ -225,33 +270,7 @@ export const getManageBookingButtons = (
         },
       ];
     case "Active":
-      return [
-        {
-          icon: <PenLine className="w-4" />,
-          label: "Extend Trip",
-          href: "#",
-          className: modifyStyle,
-          onClick: onExtendTrip,
-        },
-        {
-          icon: <Car className="w-4" />,
-          label: "Complete Vehicle Return",
-          href: `?${returnParams.toString()}`,
-          className: completedStyle,
-        },
-        {
-          icon: <PhoneCall className="w-4" />,
-          label: "Contact Host",
-          href: `tel:${contactNumber}`,
-          className: contactStyle,
-        },
-        {
-          icon: <BanknoteArrowUp className="size-4" />,
-          label: "Request Reimbursement",
-          href: `?${reimbursementParams.toString()}`,
-          className: reportStyle,
-        },
-      ];
+      return checkedInLateReturnButtons;
     case "Completed":
       return [
         {
@@ -279,31 +298,6 @@ export const getManageBookingButtons = (
           className: contactStyle,
         },
       ];
-    case "Running Late":
-      return [
-        {
-          icon: <PenLine className="w-4" />,
-          label: "Modify",
-          href: `?${modifyParams.toString()}`,
-          className: modifyStyle,
-        },
-        {
-          icon: <PhoneCall className="w-4" />,
-          label: "Contact Host",
-          href: `tel:${contactNumber}`,
-          className: contactStyle,
-        },
-        {
-          icon: <X className="w-4" />,
-          label: "Cancel",
-          href: `?${(() => {
-            const p = new URLSearchParams(currentParams);
-            p.set("cancel", rentId);
-            return p.toString();
-          })()}`,
-          className: cancelStyle,
-        },
-      ];
     case "Cancelled":
       return [
         {
@@ -314,6 +308,9 @@ export const getManageBookingButtons = (
         },
       ];
     case "Overdue":
+      if (hasCheckedIn) {
+        return checkedInLateReturnButtons;
+      }
       return [
         {
           icon: <X className="w-4" />,
@@ -343,7 +340,8 @@ const ManageBookingCard = memo(({ rentals, onExtendTrip }: ManageBookingCardProp
   const canModify =
     rentals?.status === "Upcoming" ||
     rentals?.status === "Running Late" ||
-    rentals?.status === "Active";
+    rentals?.status === "Active" ||
+    (rentals?.status === "Overdue" && Boolean(rentals?.checkIn));
 
   const { isLoading: isModifyLoading, isError: isModifyError } =
     useGetBookingByIdQuery(
@@ -360,6 +358,7 @@ const ManageBookingCard = memo(({ rentals, onExtendTrip }: ManageBookingCardProp
     rentals.host.contactNumber,
     rentals.vehicleId,
     onExtendTrip,
+    Boolean(rentals.checkIn),
   );
 
   return (

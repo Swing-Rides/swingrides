@@ -723,6 +723,7 @@ export default function FleetTable({
               netEarnings: String(row.netEarnings ?? 0),
               totalRevenue: String(row.totalRevenue ?? 0),
               totalExpenses: String(row.totalExpenses ?? 0),
+              maintenance: row.maintenance,
             }}
             onRelistVehicle={() => onRelistVehicle(row)}
             onCreateBooking={() => onCreateBooking?.(row)}

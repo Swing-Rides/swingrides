@@ -18,7 +18,11 @@ type StepTwoProps = {
   };
 };
 
-export default function StepTwo({ data, onChange, insuranceData }: StepTwoProps) {
+export default function StepTwo({
+  data,
+  onChange,
+  insuranceData,
+}: StepTwoProps) {
   const fullPolicyNumber = insuranceData?.policyNumber || "";
   const lastFourDigits = fullPolicyNumber.slice(-4);
   const maskedPolicyNumber = `••••-••••-${lastFourDigits}`;
@@ -64,7 +68,8 @@ export default function StepTwo({ data, onChange, insuranceData }: StepTwoProps)
           <div className="flex items-center justify-between text-sm">
             <span className="text-[#6B7280] font-text">Daily Rate</span>
             <span className="font-bold text-[#1F2937] font-text">
-              {'USD '}{dailyRate}/day
+              {"USD "}
+              {dailyRate}/day
             </span>
           </div>
         </div>

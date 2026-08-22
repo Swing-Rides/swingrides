@@ -21,26 +21,15 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 
-const FUEL_LEVEL_PERCENT: Record<string, number> = {
-  empty: 0,
-  quarter: 25,
-  half: 50,
-  three_quarter: 75,
-  full: 100,
+const toFuelLevelBucket = (
+  percent: number,
+): "empty" | "quarter" | "half" | "three_quarter" | "full" => {
+  if (percent <= 12.5) return "empty";
+  if (percent <= 37.5) return "quarter";
+  if (percent <= 62.5) return "half";
+  if (percent <= 87.5) return "three_quarter";
+  return "full";
 };
-
-async function uploadFile(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const response = await fetch("/api/upload", {
-    method: "POST",
-    body: formData,
-  });
-  if (!response.ok) throw new Error("File upload failed");
-  const uploaded = (await response.json()) as { secure_url?: string };
-  if (!uploaded.secure_url) throw new Error("The upload did not return a file URL");
-  return uploaded.secure_url;
-}
 
 type CheckInPageProps = {
   bookingId: string;
@@ -93,16 +82,10 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
   // Form states
   const [step1Data, setStep1Data] = useState<StepOneData>({
     confirmed: false,
-    idType: "",
-    idDocument: [],
-    driverName: "",
   });
   const [step2Data, setStep2Data] = useState<StepTwoData>({ confirmed: false });
   const [step3Data, setStep3Data] = useState<StepThreeData>({
-    vehiclePhotos: [],
-    mileage: "",
-    fuelLevel: "",
-    notes: "",
+    confirmed: false,
   });
   const [step4Data, setStep4Data] = useState<StepFourData>({
     confirmed: false,
@@ -113,15 +96,9 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
 
   // Map completion status per step
   const completedSteps: Record<number, boolean> = {
-    1:
-      step1Data.confirmed &&
-      step1Data.idType !== "" &&
-      step1Data.idDocument.length > 0,
+    1: step1Data.confirmed,
     2: step2Data.confirmed,
-    3:
-      step3Data.vehiclePhotos.length > 0 &&
-      step3Data.mileage.trim() !== "" &&
-      step3Data.fuelLevel !== "",
+    3: step3Data.confirmed,
     4: step4Data.confirmed,
     5: step5Data.confirmed,
   };
@@ -134,6 +111,12 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
   const renterName = booking?.renterName;
   const renterPhone = booking?.renterPhone;
   const renterEmail = booking?.renterEmail;
+  const driverLicensePhotoUrl = booking?.checkIn?.driverLicensePhotoUrl;
+  const selfiePhotoUrl = booking?.checkIn?.selfiePhotoUrl;
+  const vehiclePhotoUrls = booking?.checkIn?.vehicleCondition?.exterior || [];
+  const inspectionMileage = booking?.checkIn?.odometerReading;
+  const inspectionFuelLevel = booking?.checkIn?.fuelLevel;
+  const inspectionNotes = booking?.checkIn?.notes;
 
   const pickupDateTime = formatDisplayDate(
     booking?.pickupDate || booking?.trip?.PickUpDateTime,
@@ -153,19 +136,11 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
   const isStepValid = (step: number): boolean => {
     switch (step) {
       case 1:
-        return (
-          step1Data.confirmed &&
-          step1Data.idType !== "" &&
-          step1Data.idDocument.length > 0
-        );
+        return step1Data.confirmed;
       case 2:
         return step2Data.confirmed;
       case 3:
-        return (
-          step3Data.vehiclePhotos.length > 0 &&
-          step3Data.mileage.trim() !== "" &&
-          step3Data.fuelLevel !== ""
-        );
+        return step3Data.confirmed;
       case 4:
         return step4Data.confirmed;
       case 5:
@@ -190,33 +165,33 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
   };
 
   const handleFinalSubmit = async () => {
-    if (!isStepValid(5) || !booking) {
+    if (
+      !isStepValid(5) ||
+      !booking ||
+      !driverLicensePhotoUrl ||
+      vehiclePhotoUrls.length === 0
+    ) {
       toast.error("Please complete all steps");
       return;
     }
 
     setIsUploading(true);
     try {
-      const [idDocumentUrl, photoUrls] = await Promise.all([
-        uploadFile(step1Data.idDocument[0]),
-        Promise.all(step3Data.vehiclePhotos.map(uploadFile)),
-      ]);
-
-      const mileage = Number(step3Data.mileage);
-      const fuelPercent = FUEL_LEVEL_PERCENT[step3Data.fuelLevel] ?? 100;
+      const mileage = inspectionMileage ?? 0;
+      const fuelPercent = inspectionFuelLevel ?? 100;
 
       if (booking.status === "confirmed") {
         await startCheckIn({
           bookingId: booking.id,
-          driverName: step1Data.driverName,
+          driverName: renterName || booking.renterName,
           fuelLevel: fuelPercent,
           odometerReading: mileage,
           vehicleCondition: {
-            exterior: photoUrls,
+            exterior: vehiclePhotoUrls,
             interior: [],
             damages: [],
           },
-          notes: step3Data.notes || undefined,
+          notes: inspectionNotes || undefined,
         }).unwrap();
       } else if (booking.status !== "checked_in") {
         throw new Error(
@@ -228,8 +203,8 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
         bookingId: booking.id,
         body: {
           identityVerification: {
-            idType: step1Data.idType,
-            idDocumentUrl,
+            idType: "drivers_license",
+            idDocumentUrl: driverLicensePhotoUrl,
             identityMatched: step1Data.confirmed,
           },
           insuranceConfirmation: {
@@ -239,15 +214,10 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
             confirmed: step2Data.confirmed,
           },
           vehicleInspection: {
-            photoUrls,
+            photoUrls: vehiclePhotoUrls,
             currentMileageKm: mileage,
-            fuelLevel: step3Data.fuelLevel as
-              | "empty"
-              | "quarter"
-              | "half"
-              | "three_quarter"
-              | "full",
-            inspectionNotes: step3Data.notes || undefined,
+            fuelLevel: toFuelLevelBucket(fuelPercent),
+            inspectionNotes: inspectionNotes || undefined,
             confirmed: true,
           },
           agreementClosure: {
@@ -266,7 +236,8 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
         typeof error === "object" &&
         error &&
         "data" in error &&
-        typeof (error as { data?: { message?: string } }).data?.message === "string"
+        typeof (error as { data?: { message?: string } }).data?.message ===
+          "string"
           ? (error as { data: { message: string } }).data.message
           : error instanceof Error
             ? error.message
@@ -359,15 +330,15 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
             {currentStep === 1 && (
               <StepOne
                 data={step1Data}
-                onSubmitStep={(data) => {
-                  setStep1Data(data);
-                  setCurrentStep(2);
-                  setMaxStepReached((prev) => Math.max(prev, 2));
-                }}
+                onChange={(patch) =>
+                  setStep1Data((prev) => ({ ...prev, ...patch }))
+                }
                 bookingData={{
                   renterName,
                   renterPhone,
                   renterEmail,
+                  driverLicensePhotoUrl,
+                  selfiePhotoUrl,
                 }}
               />
             )}
@@ -387,10 +358,14 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
             {currentStep === 3 && (
               <StepThree
                 data={step3Data}
-                onSubmitStep={(data) => {
-                  setStep3Data(data);
-                  setCurrentStep(4);
-                  setMaxStepReached((prev) => Math.max(prev, 4));
+                onChange={(patch) =>
+                  setStep3Data((prev) => ({ ...prev, ...patch }))
+                }
+                bookingData={{
+                  vehiclePhotoUrls,
+                  mileage: inspectionMileage,
+                  fuelLevel: inspectionFuelLevel,
+                  notes: inspectionNotes,
                 }}
               />
             )}
@@ -425,17 +400,15 @@ export default function CheckInPage({ bookingId }: CheckInPageProps) {
               </Button>
 
               {currentStep < 5 ? (
-                currentStep !== 3 && currentStep !== 1 ? (
-                  <Button
-                    type="button"
-                    onClick={handleNext}
-                    disabled={!isStepValid(currentStep)}
-                    className="px-6 py-2 bg-blue-700 hover:bg-blue-900 text-white font-medium text-sm font-text rounded-xs transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center gap-1.5"
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                ) : null
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={!isStepValid(currentStep)}
+                  className="px-6 py-2 bg-blue-700 hover:bg-blue-900 text-white font-medium text-sm font-text rounded-xs transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center gap-1.5"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
               ) : (
                 <Button
                   type="button"

@@ -4,6 +4,7 @@ import { memo, useState, useCallback } from "react";
 import ChargeIncidentModal from "@/components/hostComponents/modals/chargeIncidentModal";
 import { BookingsStatus } from "./types";
 import { ChargeIncidentFormValues } from "@/components/hostComponents/forms/chargeIncidentForm";
+import { useChargeIncidentalsMutation } from "@/app/store/services/bookingApi";
 
 type IncidentActionProps = {
     id: string;
@@ -14,6 +15,20 @@ type IncidentActionProps = {
     status: BookingsStatus;
 };
 
+async function uploadFile(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+    });
+    if (!response.ok) throw new Error("File upload failed");
+    const uploaded = (await response.json()) as { secure_url?: string };
+    if (!uploaded.secure_url)
+        throw new Error("The upload did not return a file URL");
+    return uploaded.secure_url;
+}
+
 function IncidentAction({
     id,
     referenceCode,
@@ -23,16 +38,32 @@ function IncidentAction({
     status,
 }: IncidentActionProps) {
     const [incidentId, setIncidentId] = useState<string>("");
+    const [chargeIncidentals] = useChargeIncidentalsMutation();
 
     const handleOpen = useCallback(() => setIncidentId(id), [id]);
     const handleClose = useCallback(() => setIncidentId(""), []);
 
     const handleSubmitIncidentCharges = async (values: ChargeIncidentFormValues) => {
-        try {
-            console.log("Incident charges submitted successfully!", values);
-        } catch (error) {
-            console.error(error);
-        }
+        const incidents = await Promise.all(
+            values.incidents.map(async (incident) => {
+                const rawFiles = incident.evidenceDocs;
+                const fileArray = rawFiles ? Array.from(rawFiles as Iterable<File>) : [];
+                const evidenceUrls = await Promise.all(fileArray.map(uploadFile));
+                const amount =
+                    typeof incident.amount === "number"
+                        ? incident.amount
+                        : parseFloat(String(incident.amount || 0));
+
+                return {
+                    incidentType: incident.incidentType,
+                    amount,
+                    description: incident.description,
+                    evidenceUrls,
+                };
+            }),
+        );
+
+        await chargeIncidentals({ bookingId: id, body: { incidents } }).unwrap();
     };
 
     return (

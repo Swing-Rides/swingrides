@@ -1,10 +1,29 @@
 "use client";
 
-import { useState, useRef, use, Suspense, useMemo } from 'react'
-import { useForm, Controller, Control, UseFormRegister, FieldValues, Path, PathValue, RegisterOptions, FieldErrors, useWatch, useFormContext } from 'react-hook-form'
-import { format } from 'date-fns'
-import { CalendarIcon, LockIcon, EyeIcon, EyeOffIcon, UploadIcon, ImageIcon } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useState, useRef, use, Suspense, useMemo } from "react";
+import {
+  useForm,
+  Controller,
+  Control,
+  UseFormRegister,
+  FieldValues,
+  Path,
+  PathValue,
+  RegisterOptions,
+  FieldErrors,
+  useWatch,
+  useFormContext,
+} from "react-hook-form";
+import { format } from "date-fns";
+import {
+  CalendarIcon,
+  LockIcon,
+  EyeIcon,
+  EyeOffIcon,
+  UploadIcon,
+  ImageIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,11 +42,11 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
-import { Skeleton } from '@/components/ui/skeleton'
+} from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { FormFieldConfig, MainFormProps } from "./types";
-import Image from 'next/image';
+import Image from "next/image";
 
 export default function MainForm({
   title,
@@ -123,7 +142,9 @@ export default function MainForm({
         })}
       </div>
 
-      {typeof footerSlot === "function" ? footerSlot(watchedValues) : footerSlot}
+      {typeof footerSlot === "function"
+        ? footerSlot(watchedValues)
+        : footerSlot}
 
       <Button
         type="submit"
@@ -153,7 +174,13 @@ export type FormFieldProps<T extends FieldValues = FieldValues> = {
   errors: FieldErrors<T>;
 };
 
-export const FormField = <T extends FieldValues = FieldValues>({ field, register, control, getValues, errors }: FormFieldProps<T>) => {
+export const FormField = <T extends FieldValues = FieldValues>({
+  field,
+  register,
+  control,
+  getValues,
+  errors,
+}: FormFieldProps<T>) => {
   const error = errors[field.name as Path<T>]?.message as string | undefined;
 
   const wrapper = (children: React.ReactNode) => (
@@ -185,27 +212,50 @@ export const FormField = <T extends FieldValues = FieldValues>({ field, register
   );
 
   switch (field.type) {
-    case 'password':
-      return wrapper(<PasswordInput field={field} register={register} error={error} />)
-    case 'date':
-      return wrapper(<DateInput field={field} control={control} error={error} />)
-    case 'datetime':
-      return wrapper(<DateTimeInput field={field} control={control} error={error} />)
-    case 'select':
-      return wrapper(<SelectInput field={field} control={control} error={error} />)
-    case 'textarea':
-      return wrapper(<TextareaInput field={field} register={register} error={error} />)
-    case 'file':
-    case 'image':
-      return wrapper(<FileInput field={field} register={register} error={error} getValues={getValues} />)
-    case 'checkbox':
-      return wrapper(<CheckboxInput field={field} control={control} error={error} />)
-    case 'number-dollar':
-      return wrapper(<DollarInput field={field} register={register} error={error} />)
+    case "password":
+      return wrapper(
+        <PasswordInput field={field} register={register} error={error} />,
+      );
+    case "date":
+      return wrapper(
+        <DateInput field={field} control={control} error={error} />,
+      );
+    case "datetime":
+      return wrapper(
+        <DateTimeInput field={field} control={control} error={error} />,
+      );
+    case "select":
+      return wrapper(
+        <SelectInput field={field} control={control} error={error} />,
+      );
+    case "textarea":
+      return wrapper(
+        <TextareaInput field={field} register={register} error={error} />,
+      );
+    case "file":
+    case "image":
+      return wrapper(
+        <FileInput
+          field={field}
+          register={register}
+          error={error}
+          getValues={getValues}
+        />,
+      );
+    case "checkbox":
+      return wrapper(
+        <CheckboxInput field={field} control={control} error={error} />,
+      );
+    case "number-dollar":
+      return wrapper(
+        <DollarInput field={field} register={register} error={error} />,
+      );
     default:
-      return wrapper(<TextInput field={field} register={register} error={error} />)
+      return wrapper(
+        <TextInput field={field} register={register} error={error} />,
+      );
   }
-}
+};
 
 // ─── Input variants ───────────────────────────────────────────────────────────
 
@@ -229,7 +279,11 @@ export const inputClass = (error?: string) =>
   );
 
 // Text / email / tel / number
-export const TextInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => {
+export const TextInput = <T extends FieldValues = FieldValues>({
+  field,
+  register,
+  error,
+}: InputProps<T>) => {
   const hasIcon = !!field.icon;
 
   return (
@@ -250,14 +304,21 @@ export const TextInput = <T extends FieldValues = FieldValues>({ field, register
         step={field.step}
         defaultValue={field.defaultValue as string}
         className={cn(inputClass(error), hasIcon && "pl-9", field.className)}
-        {...register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>)}
+        {...register(
+          field.name as Path<T>,
+          field.validation as RegisterOptions<T, Path<T>>,
+        )}
       />
     </div>
   );
 };
 
 // Password — padlock leading + eye trailing
-const PasswordInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => {
+const PasswordInput = <T extends FieldValues = FieldValues>({
+  field,
+  register,
+  error,
+}: InputProps<T>) => {
   const [show, setShow] = useState(false);
 
   return (
@@ -272,7 +333,10 @@ const PasswordInput = <T extends FieldValues = FieldValues>({ field, register, e
         autoComplete={field.autoComplete ?? "current-password"}
         disabled={field.disabled}
         className={cn(inputClass(error), "pl-9 pr-10")}
-        {...register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>)}
+        {...register(
+          field.name as Path<T>,
+          field.validation as RegisterOptions<T, Path<T>>,
+        )}
       />
       <button
         type="button"
@@ -291,7 +355,11 @@ const PasswordInput = <T extends FieldValues = FieldValues>({ field, register, e
 };
 
 // Textarea
-export const TextareaInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => {
+export const TextareaInput = <T extends FieldValues = FieldValues>({
+  field,
+  register,
+  error,
+}: InputProps<T>) => {
   return (
     <Textarea
       id={field.name}
@@ -299,24 +367,35 @@ export const TextareaInput = <T extends FieldValues = FieldValues>({ field, regi
       disabled={field.disabled}
       rows={field.rows ?? 8}
       style={field.height ? { height: `${field.height}px` } : undefined}
-      className={cn(inputClass(error), 'resize-none')}
-      {...register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>)}
+      className={cn(inputClass(error), "resize-none")}
+      {...register(
+        field.name as Path<T>,
+        field.validation as RegisterOptions<T, Path<T>>,
+      )}
     />
-  )
-}
+  );
+};
 
 // Select
-export const AsyncSelectInput = <T extends FieldValues = FieldValues>({ field, control, error, onValueChange }: ControllerProps<T>) => {
+export const AsyncSelectInput = <T extends FieldValues = FieldValues>({
+  field,
+  control,
+  error,
+  onValueChange,
+}: ControllerProps<T>) => {
   // useMemo keeps the promise stable across re-renders as long as
   // field.loadOptions keeps the same reference — no effect, no setState
-  const optionsPromise = useMemo(() => field.loadOptions!(), [field.loadOptions])
-  const options = use(optionsPromise)
+  const optionsPromise = useMemo(
+    () => field.loadOptions!(),
+    [field.loadOptions],
+  );
+  const options = use(optionsPromise);
 
   return (
     <Controller
       name={field.name as Path<T>}
       control={control}
-      defaultValue={(field.defaultValue ?? '') as PathValue<T, Path<T>>}
+      defaultValue={(field.defaultValue ?? "") as PathValue<T, Path<T>>}
       rules={field.validation as RegisterOptions<T, Path<T>>}
       render={({ field: ctrl }) => (
         <Select
@@ -327,12 +406,21 @@ export const AsyncSelectInput = <T extends FieldValues = FieldValues>({ field, c
           value={ctrl.value}
           disabled={field.disabled}
         >
-          <SelectTrigger id={field.name} className={cn(inputClass(error), 'w-full')}>
-            <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
+          <SelectTrigger
+            id={field.name}
+            className={cn(inputClass(error), "w-full")}
+          >
+            <SelectValue
+              placeholder={field.placeholder ?? "Select an option"}
+            />
           </SelectTrigger>
           <SelectContent position="popper">
             {options.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value} className='font-text text-sm'>
+              <SelectItem
+                key={opt.value}
+                value={opt.value}
+                className="font-text text-sm"
+              >
                 {opt.label}
               </SelectItem>
             ))}
@@ -340,24 +428,33 @@ export const AsyncSelectInput = <T extends FieldValues = FieldValues>({ field, c
         </Select>
       )}
     />
-  )
-}
+  );
+};
 
-export const SelectInput = <T extends FieldValues = FieldValues>({ field, control, error, onValueChange }: ControllerProps<T>) => {
-
+export const SelectInput = <T extends FieldValues = FieldValues>({
+  field,
+  control,
+  error,
+  onValueChange,
+}: ControllerProps<T>) => {
   if (field.loadOptions) {
     return (
-      <Suspense fallback={<Skeleton className='h-10 w-full rounded-md' />}>
-        <AsyncSelectInput field={field} control={control} error={error} onValueChange={onValueChange} />
+      <Suspense fallback={<Skeleton className="h-10 w-full rounded-md" />}>
+        <AsyncSelectInput
+          field={field}
+          control={control}
+          error={error}
+          onValueChange={onValueChange}
+        />
       </Suspense>
-    )
+    );
   }
 
   return (
     <Controller
       name={field.name as Path<T>}
       control={control}
-      defaultValue={(field.defaultValue ?? '') as PathValue<T, Path<T>>}
+      defaultValue={(field.defaultValue ?? "") as PathValue<T, Path<T>>}
       rules={field.validation as RegisterOptions<T, Path<T>>}
       render={({ field: ctrl }) => (
         <Select
@@ -368,12 +465,21 @@ export const SelectInput = <T extends FieldValues = FieldValues>({ field, contro
           value={ctrl.value}
           disabled={field.disabled}
         >
-          <SelectTrigger id={field.name} className={cn(inputClass(error), 'w-full')}>
-            <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
+          <SelectTrigger
+            id={field.name}
+            className={cn(inputClass(error), "w-full")}
+          >
+            <SelectValue
+              placeholder={field.placeholder ?? "Select an option"}
+            />
           </SelectTrigger>
           <SelectContent position="popper">
             {(field.options ?? []).map((opt) => (
-              <SelectItem key={opt.value} value={opt.value} className='font-text text-sm'>
+              <SelectItem
+                key={opt.value}
+                value={opt.value}
+                className="font-text text-sm"
+              >
                 {opt.label}
               </SelectItem>
             ))}
@@ -381,11 +487,15 @@ export const SelectInput = <T extends FieldValues = FieldValues>({ field, contro
         </Select>
       )}
     />
-  )
-}
+  );
+};
 
 // Date picker
-export const DateInput = <T extends FieldValues = FieldValues>({ field, control, error }: ControllerProps<T>) => {
+export const DateInput = <T extends FieldValues = FieldValues>({
+  field,
+  control,
+  error,
+}: ControllerProps<T>) => {
   const minDate = field.minDate ? new Date(field.minDate) : undefined;
 
   const isDateDisabled = (date: Date) => {
@@ -427,7 +537,9 @@ export const DateInput = <T extends FieldValues = FieldValues>({ field, control,
               fromYear={1950}
               toYear={new Date().getFullYear() + 20}
               selected={ctrl.value ? new Date(ctrl.value) : undefined}
-              onSelect={(date: Date | undefined) => ctrl.onChange(date?.toISOString() ?? "")}
+              onSelect={(date: Date | undefined) =>
+                ctrl.onChange(date?.toISOString() ?? "")
+              }
               disabled={isDateDisabled}
               initialFocus
             />
@@ -439,7 +551,11 @@ export const DateInput = <T extends FieldValues = FieldValues>({ field, control,
 };
 
 // DateTime picker
-export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, control, error }: ControllerProps<T>) => {
+export const DateTimeInput = <T extends FieldValues = FieldValues>({
+  field,
+  control,
+  error,
+}: ControllerProps<T>) => {
   const minDate = field.minDate ? new Date(field.minDate) : undefined;
   const [step, setStep] = useState<"date" | "time">("date");
   const [open, setOpen] = useState(false);
@@ -565,7 +681,11 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
                           onChange={(e) => {
                             const raw = parseInt(e.target.value, 10);
                             if (Number.isNaN(raw)) return;
-                            applyTime(Math.min(12, Math.max(1, raw)), minute, period);
+                            applyTime(
+                              Math.min(12, Math.max(1, raw)),
+                              minute,
+                              period,
+                            );
                           }}
                           className="w-full border border-[#E5E7EB] rounded-md px-2 py-2 text-sm font-text text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent"
                         />
@@ -576,7 +696,9 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
                         </datalist>
                       </div>
 
-                      <span className="text-lg font-text text-[#6B7280] pb-2">:</span>
+                      <span className="text-lg font-text text-[#6B7280] pb-2">
+                        :
+                      </span>
 
                       {/* Minute */}
                       <div className="flex flex-col gap-1 flex-1">
@@ -592,7 +714,11 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
                           onChange={(e) => {
                             const raw = parseInt(e.target.value, 10);
                             if (Number.isNaN(raw)) return;
-                            applyTime(hour12, Math.min(59, Math.max(0, raw)), period);
+                            applyTime(
+                              hour12,
+                              Math.min(59, Math.max(0, raw)),
+                              period,
+                            );
                           }}
                           className="w-full border border-[#E5E7EB] rounded-md px-2 py-2 text-sm font-text text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent"
                         />
@@ -647,12 +773,18 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({ field, cont
 };
 
 // File / Image upload
-export type FileInputProps<T extends FieldValues = FieldValues> = InputProps<T> & {
-  control?: Control<T>;
-  getValues?: () => T;
-};
+export type FileInputProps<T extends FieldValues = FieldValues> =
+  InputProps<T> & {
+    control?: Control<T>;
+    getValues?: () => T;
+  };
 
-export const FileInput = <T extends FieldValues = FieldValues>({ field, register, error, getValues }: FileInputProps<T>) => {
+export const FileInput = <T extends FieldValues = FieldValues>({
+  field,
+  register,
+  error,
+  getValues,
+}: FileInputProps<T>) => {
   const formContext = useFormContext<T>();
   const getValueFn = getValues ?? formContext?.getValues;
 
@@ -665,7 +797,10 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
         return Array.from(val);
       }
       if (Array.isArray(val)) {
-        return val.filter((f: unknown): f is File => typeof File !== "undefined" && f instanceof File);
+        return val.filter(
+          (f: unknown): f is File =>
+            typeof File !== "undefined" && f instanceof File,
+        );
       }
       if (typeof File !== "undefined" && val instanceof File) {
         return [val];
@@ -681,7 +816,10 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const { ref, ...rest } = register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>);
+  const { ref, ...rest } = register(
+    field.name as Path<T>,
+    field.validation as RegisterOptions<T, Path<T>>,
+  );
 
   const defaultIcon =
     field.type === "image" ? (
@@ -697,7 +835,8 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
   const isSameFile = (a: File, b: File) =>
     a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
 
-  const getFileKey = (file: File) => `${file.name}-${file.size}-${file.lastModified}`;
+  const getFileKey = (file: File) =>
+    `${file.name}-${file.size}-${file.lastModified}`;
 
   const validateFile = (file: File): string | null => {
     const maxSizeMB = field.maxSizeMB ?? 5;
@@ -706,7 +845,8 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
       return `Exceeds ${maxSizeMB}MB limit (${sizeMB.toFixed(1)}MB)`;
     }
 
-    const acceptStr = field.accept ?? (field.type === "image" ? "image/*" : undefined);
+    const acceptStr =
+      field.accept ?? (field.type === "image" ? "image/*" : undefined);
     if (acceptStr) {
       const tokens = acceptStr.split(",").map((t) => t.trim().toLowerCase());
       const fileMime = file.type.toLowerCase();
@@ -757,7 +897,7 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
       ? [
           ...files,
           ...newlySelected.filter(
-            (nf) => !files.some((existing) => isSameFile(existing, nf))
+            (nf) => !files.some((existing) => isSameFile(existing, nf)),
           ),
         ]
       : newlySelected;
@@ -827,7 +967,7 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
           isDragging && "border-blue-700 bg-blue-50/50",
           activeError
             ? "border-[#EF4444] bg-[#FFF5F5]"
-            : "border-[#E5E7EB] hover:border-blue-700"
+            : "border-[#E5E7EB] hover:border-blue-700",
         )}
       >
         {icon}
@@ -836,7 +976,9 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
           <span
             className={cn(
               "text-sm font-medium font-text",
-              activeError ? "text-[#EF4444]" : "text-blue-700 group-hover:underline"
+              activeError
+                ? "text-[#EF4444]"
+                : "text-blue-700 group-hover:underline",
             )}
           >
             Click to upload
@@ -911,7 +1053,7 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
                   "relative rounded-lg border overflow-hidden bg-white transition-all duration-200 flex flex-col justify-between",
                   fileErr
                     ? "border-red-500 ring-2 ring-red-500 bg-[#FFF5F5]"
-                    : "border-gray-300"
+                    : "border-gray-300",
                 )}
               >
                 {isImage && field.showPreview !== false ? (
@@ -934,7 +1076,9 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
                   <p
                     className={cn(
                       "text-xs font-text truncate",
-                      fileErr ? "text-[#EF4444] font-semibold" : "text-[#1F2937]"
+                      fileErr
+                        ? "text-[#EF4444] font-semibold"
+                        : "text-[#1F2937]",
                     )}
                   >
                     {file.name}
@@ -961,7 +1105,7 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
                     "absolute top-2 right-2 w-6 h-6 rounded-full shadow flex items-center justify-center transition-colors",
                     fileErr
                       ? "bg-[#EF4444] text-white hover:bg-red-700"
-                      : "bg-white text-red-500 hover:bg-red-50"
+                      : "bg-white text-red-500 hover:bg-red-50",
                   )}
                   title="Remove file"
                 >
@@ -977,14 +1121,21 @@ export const FileInput = <T extends FieldValues = FieldValues>({ field, register
 };
 
 // Checkbox
-export type CheckboxInputProps<T extends FieldValues = FieldValues> = ControllerProps<T> & {
-  /** Override the checked state with a derived value instead of the raw field value. */
-  checked?: boolean
-  /** Override the change handler — e.g. to guard against re-checking, or to sync a related field. */
-  onCheckedChange?: (checked: boolean) => void
-}
+export type CheckboxInputProps<T extends FieldValues = FieldValues> =
+  ControllerProps<T> & {
+    /** Override the checked state with a derived value instead of the raw field value. */
+    checked?: boolean;
+    /** Override the change handler — e.g. to guard against re-checking, or to sync a related field. */
+    onCheckedChange?: (checked: boolean) => void;
+  };
 
-export const CheckboxInput = <T extends FieldValues = FieldValues>({ field, control, error, checked, onCheckedChange }: CheckboxInputProps<T>) => {
+export const CheckboxInput = <T extends FieldValues = FieldValues>({
+  field,
+  control,
+  error,
+  checked,
+  onCheckedChange,
+}: CheckboxInputProps<T>) => {
   return (
     <Controller
       name={field.name as Path<T>}
@@ -992,7 +1143,7 @@ export const CheckboxInput = <T extends FieldValues = FieldValues>({ field, cont
       defaultValue={(field.defaultValue ?? false) as PathValue<T, Path<T>>}
       rules={field.validation as RegisterOptions<T, Path<T>>}
       render={({ field: ctrl }) => (
-        <div className={cn('flex items-start gap-2', field.className)}>
+        <div className={cn("flex items-start gap-2", field.className)}>
           <Checkbox
             id={field.name}
             disabled={field.disabled}
@@ -1001,17 +1152,19 @@ export const CheckboxInput = <T extends FieldValues = FieldValues>({ field, cont
               onCheckedChange ? onCheckedChange(!!value) : ctrl.onChange(value)
             }
             className={cn(
-              'mt-0.5 border-[#E5E7EB] data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700',
-              error && 'border-[#EF4444]',
-              field.disabled && 'opacity-50 cursor-not-allowed'
+              "mt-0.5 border-[#E5E7EB] data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700",
+              error && "border-[#EF4444]",
+              field.disabled && "opacity-50 cursor-not-allowed",
             )}
           />
           {field.label && (
             <label
               htmlFor={field.name}
               className={cn(
-                'text-sm font-normal font-text leading-5 cursor-pointer select-none',
-                field.disabled ? 'text-[#9CA3AF] cursor-not-allowed' : 'text-[#6B7280]'
+                "text-sm font-normal font-text leading-5 cursor-pointer select-none",
+                field.disabled
+                  ? "text-[#9CA3AF] cursor-not-allowed"
+                  : "text-[#6B7280]",
               )}
             >
               {field.label}
@@ -1020,28 +1173,35 @@ export const CheckboxInput = <T extends FieldValues = FieldValues>({ field, cont
         </div>
       )}
     />
-  )
-}
+  );
+};
 
 // Money/Price Input
-export const DollarInput = <T extends FieldValues = FieldValues>({ field, register, error }: InputProps<T>) => (
-  <div className='relative flex items-center'>
-    <span className='absolute left-3 text-[#6B7280] text-sm font-medium pointer-events-none select-none'>
+export const DollarInput = <T extends FieldValues = FieldValues>({
+  field,
+  register,
+  error,
+}: InputProps<T>) => (
+  <div className="relative flex items-center">
+    <span className="absolute left-3 text-[#6B7280] text-sm font-medium pointer-events-none select-none">
       $
     </span>
     <Input
       id={field.name}
-      type='number'
+      type="number"
       placeholder={field.placeholder}
       disabled={field.disabled}
       min={field.min}
       max={field.max}
       step={field.step}
-      className={cn(inputClass(error), 'pl-7')}
-      {...register(field.name as Path<T>, field.validation as RegisterOptions<T, Path<T>>)}
+      className={cn(inputClass(error), "pl-7")}
+      {...register(
+        field.name as Path<T>,
+        field.validation as RegisterOptions<T, Path<T>>,
+      )}
     />
   </div>
-)
+);
 
 export const ErrorIcon = () => (
   <svg
