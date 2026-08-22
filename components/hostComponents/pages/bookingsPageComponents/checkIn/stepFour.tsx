@@ -33,7 +33,8 @@ export default function StepFour({ data, onChange }: StepFourProps) {
           htmlFor="step4-confirmed"
           className="text-sm font-medium text-[#1F2937] font-text cursor-pointer select-none leading-relaxed"
         >
-          I confirm the renter has reviewed and agreed to the rental terms and conditions.
+          I confirm the renter has reviewed and agreed to the rental terms and
+          conditions.
         </Label>
       </div>
     </div>

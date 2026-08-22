@@ -2,7 +2,7 @@ import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import { ColumnDef, DataTable, exportToCSV, TableToolbar, useTableRows } from "../../dashboard/customTable";
 import { Download } from "lucide-react";
 
-type BookingStatusType = "active" | "reserved" | "confirmed" | "completed" | 'noShow' 
+type BookingStatusType = "active" | "reserved" | "confirmed" | "completed" | 'noShow' | 'lateReturn'
 
 export interface BookingRecordsRow {
         id: string;
@@ -22,6 +22,7 @@ function StatusBadge({ status }: { status: string }) {
                 confirmed: "bg-blue-500/10 text-blue-500",
                 completed: "bg-cyan-600/10 text-cyan-600",
                 noShow: "bg-red-500/10 text-red-500",
+                lateReturn: "bg-red-500/10 text-red-500",
         };
         return (
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${styles[status] ?? "bg-black text-white"}`}>
@@ -145,6 +146,7 @@ export default function AllBookingsTable({ tableData }: AllBookingsTableProps ) 
                                                                 { label: 'Confirmed', value: 'confirmed' },
                                                                 { label: 'Completed', value: 'completed' },
                                                                 { label: 'No Show', value: 'noShow' },
+                                                                { label: 'Late Return', value: 'lateReturn' },
                                                         ],
                                                 },
                                         ]}

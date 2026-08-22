@@ -3,15 +3,19 @@
 import { memo, ReactNode, useMemo, use, Suspense } from 'react'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, BadgeCheck } from 'lucide-react'
 import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { CheckInData, CheckOutFormValues, FuelLevelValue } from './checkOutPage'
 import { FormField } from '@/components/forms/MainForm'
+import { BookingResponse } from '@/app/store/services/bookingApi'
+
+type RenterCheckOut = NonNullable<BookingResponse['checkOut']>
 
 type StepTwoProps = {
         fetchCheckInData: () => Promise<CheckInData>
+        renterCheckOut?: RenterCheckOut
 }
 
 const FUEL_LEVEL_OPTIONS: FuelLevelValue[] = [
@@ -33,21 +37,23 @@ const parseFuelEighths = (level: string): number => {
         return match ? Number(match[1]) : 0
 }
 
-export default memo(function StepTwo ({ fetchCheckInData }: StepTwoProps) {
+export default memo(function StepTwo ({ fetchCheckInData, renterCheckOut }: StepTwoProps) {
         return (
                 <Suspense fallback={<StepTwoSkeleton />}>
-                        <StepTwoInner fetchCheckInData={fetchCheckInData} />
+                        <StepTwoInner fetchCheckInData={fetchCheckInData} renterCheckOut={renterCheckOut} />
                 </Suspense>
         )
 })
 
-const StepTwoInner = memo(function StepTwoInner ({ fetchCheckInData }: StepTwoProps) {
+const StepTwoInner = memo(function StepTwoInner ({ fetchCheckInData, renterCheckOut }: StepTwoProps) {
         // Stable promise — fetched once per mount since fetchCheckInData is
         // expected to be a stable reference (useCallback) from the parent
         const checkInDataPromise = useMemo(() => fetchCheckInData(), [fetchCheckInData])
         const checkInData = use(checkInDataPromise)
 
         const { control, register, getValues, formState: { errors } } = useFormContext<CheckOutFormValues>()
+
+        const renterPhotoUrl = renterCheckOut?.vehicleInspection.photoUrls?.[0]
 
         return (
                 <div className='shrink grow basis-132.5 p-4 bg-gray-50 rounded-[10px] border border-gray-200 flex flex-col justify-start items-start gap-4 w-full'>
@@ -56,20 +62,49 @@ const StepTwoInner = memo(function StepTwoInner ({ fetchCheckInData }: StepTwoPr
                         </h3>
                         <Separator />
 
+                        {renterCheckOut && (
+                                <div className='flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-md text-blue-700 w-full'>
+                                        <BadgeCheck className='size-4 shrink-0 mt-0.5' />
+                                        <span className='text-sm font-medium font-text leading-5'>
+                                                The renter already submitted a return inspection below. Review it, then
+                                                confirm or override with your own photo, mileage, and fuel reading.
+                                                {renterCheckOut.vehicleInspection.damageDescription && (
+                                                        <>
+                                                                {' '}Renter&apos;s notes: &ldquo;{renterCheckOut.vehicleInspection.damageDescription}&rdquo;
+                                                        </>
+                                                )}
+                                        </span>
+                                </div>
+                        )}
+
                         {/* Section 1: Vehicle Condition Comparison */}
                         <FormSection title='Vehicle Condition Comparison'>
-                                <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 w-full items-start'>
+                                <div className={cn(
+                                        'grid grid-cols-1 gap-3 w-full items-start',
+                                        renterPhotoUrl ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
+                                )}>
                                         <PhotoDisplayBox
                                                 label='Before (Check-In)'
                                                 imageUrl={checkInData.photoUrl}
                                         />
+                                        {renterPhotoUrl && (
+                                                <PhotoDisplayBox
+                                                        label="Renter's Return Photo"
+                                                        imageUrl={renterPhotoUrl}
+                                                />
+                                        )}
                                         <FormField
                                                 field={{
                                                         name: 'checkoutPhoto',
                                                         type: 'image',
                                                         label: 'After (Check-Out)',
+                                                        description: renterPhotoUrl
+                                                                ? 'Optional — leave blank to use the renter\'s photo above'
+                                                                : undefined,
                                                         accept: 'image/png, image/jpeg',
-                                                        validation: { required: 'Please upload an after-checkout photo' },
+                                                        validation: renterPhotoUrl
+                                                                ? {}
+                                                                : { required: 'Please upload an after-checkout photo' },
                                                 }}
                                                 register={register}
                                                 control={control}
@@ -115,6 +150,11 @@ const StepTwoInner = memo(function StepTwoInner ({ fetchCheckInData }: StepTwoPr
 
                         {/* Section 3: Return Fuel Level */}
                         <FormSection title='Return Fuel Level'>
+                                {renterCheckOut && (
+                                        <span className='text-gray-500 text-xs font-normal font-text'>
+                                                Renter reported: {renterCheckOut.vehicleInspection.fuelLevel} · mileage {renterCheckOut.vehicleInspection.mileage.toLocaleString()} mi
+                                        </span>
+                                )}
                                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 w-full items-start'>
                                         <ReadOnlyField
                                                 label='Check-In Fuel Level'

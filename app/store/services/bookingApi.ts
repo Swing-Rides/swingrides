@@ -90,6 +90,13 @@ export type BookingResponse = {
   taxRate: number;
   totalAmount: number;
   status: BookingStatus;
+  displayStatus?:
+    | "Upcoming"
+    | "Running Late"
+    | "Overdue"
+    | "Active"
+    | "Completed"
+    | "Cancelled";
   vehicleImage?: string;
   payment?: {
     status: "paid" | "pending" | "failed" | "refunded" | "partially_refunded";
@@ -124,6 +131,8 @@ export type BookingResponse = {
       damageStatus: "none" | "damage";
       damageType?: string;
       damageDescription?: string;
+      damageAcknowledged?: boolean;
+      damageAcknowledgedAt?: string;
     };
     renterRating?: {
       categoryRatings: Record<string, number>;
@@ -132,12 +141,23 @@ export type BookingResponse = {
     averageRenterRating?: number;
     issueReportId?: string;
   };
+  incidentCharges?: Array<{
+    id: string;
+    incidentType: string;
+    amount: number;
+    description: string;
+    evidenceUrls: string[];
+    status: "pending" | "paid" | "waived";
+    createdAt: string;
+  }>;
   checkIn?: {
     id?: string;
     bookingId?: string;
     checkInTime?: string;
     driverLicenseNumber?: string;
     driverLicenseExpiry?: string;
+    driverLicensePhotoUrl?: string;
+    selfiePhotoUrl?: string;
     driverName?: string;
     additionalDrivers?: string[];
     fuelLevel?: number;
@@ -219,7 +239,7 @@ type AllBookingsRow = {
   returnDate: string;
   duration: string;
   amount: string;
-  status: "active" | "reserved" | "confirmed" | "completed" | "noShow";
+  status: "active" | "reserved" | "confirmed" | "completed" | "noShow" | "lateReturn";
 };
 
 type UpcomingRow = {
@@ -374,6 +394,18 @@ type CompleteCheckOutPayload = {
       categoryRatings: Record<string, number>;
       notes?: string;
     };
+  };
+};
+
+type ChargeIncidentalsPayload = {
+  bookingId: string;
+  body: {
+    incidents: Array<{
+      incidentType: string;
+      amount: number;
+      description: string;
+      evidenceUrls?: string[];
+    }>;
   };
 };
 
@@ -554,6 +586,41 @@ export const bookingApi = createApi({
         }
       },
     }),
+    chargeIncidentals: builder.mutation<
+      BookingEnvelope<BookingResponse>,
+      ChargeIncidentalsPayload
+    >({
+      query: ({ bookingId, body }) => ({
+        url: `/api/host/bookings/${bookingId}/incident-charges`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (result, _error, { bookingId }) => [
+        { type: "Bookings", id: bookingId },
+        { type: "Bookings", id: `REF-${bookingId}` },
+        ...(result?.data?.id
+          ? [{ type: "Bookings" as const, id: result.data.id }]
+          : []),
+        { type: "Bookings", id: "LIST" },
+      ],
+    }),
+    acknowledgeDamageReport: builder.mutation<
+      BookingEnvelope<BookingResponse>,
+      string
+    >({
+      query: (bookingId) => ({
+        url: `/api/host/bookings/${bookingId}/damage-report/acknowledge`,
+        method: "PUT",
+      }),
+      invalidatesTags: (result, _error, bookingId) => [
+        { type: "Bookings", id: bookingId },
+        { type: "Bookings", id: `REF-${bookingId}` },
+        ...(result?.data?.id
+          ? [{ type: "Bookings" as const, id: result.data.id }]
+          : []),
+        { type: "Bookings", id: "LIST" },
+      ],
+    }),
   }),
 });
 
@@ -572,4 +639,6 @@ export const {
   useStartCheckInMutation,
   useCompleteCheckInMutation,
   useCompleteCheckOutMutation,
+  useChargeIncidentalsMutation,
+  useAcknowledgeDamageReportMutation,
 } = bookingApi;

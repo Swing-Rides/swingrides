@@ -169,9 +169,7 @@ export const BillingTab = ({
       {/* Payment */}
       <div className="bg-white p-3 md:p-6 rounded-[10px] space-y-5">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-base font-text">
-            Payments
-          </h3>
+          <h3 className="font-semibold text-base font-text">Payments</h3>
           <div className="flex items-center justify-end gap-3">
             <button
               onClick={onWithdrawFund}
@@ -191,15 +189,23 @@ export const BillingTab = ({
         <div className="flex flex-wrap justify-start gap-10">
           <DataList
             label="Total Earnings"
-            value={wallet ? formatAmount(wallet.totalEarnings, wallet.currency) : "—"}
+            value={
+              wallet ? formatAmount(wallet.totalEarnings, wallet.currency) : "—"
+            }
           />
           <DataList
             label="Total Withdrawals"
-            value={wallet ? formatAmount(wallet.totalWithdrawals, wallet.currency) : "—"}
+            value={
+              wallet
+                ? formatAmount(wallet.totalWithdrawals, wallet.currency)
+                : "—"
+            }
           />
           <DataList
             label="Wallet Balance"
-            value={wallet ? formatAmount(wallet.walletBalance, wallet.currency) : "—"}
+            value={
+              wallet ? formatAmount(wallet.walletBalance, wallet.currency) : "—"
+            }
           />
         </div>
       </div>
@@ -415,6 +421,7 @@ const AgreementsCard = ({
     title === "Long-Term" ? "long-term" : "commercial-fleet";
 
   const [sendOpen, setSendOpen] = useState(false);
+  const [sendAgreementModal, setSendAgreementModal] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
   return (
@@ -430,17 +437,15 @@ const AgreementsCard = ({
           <span className="text-[#6B7280] text-sm font-normal">{label}</span>
         </div>
       </div>
+
       <div className="flex items-center gap-4">
         {previewLink ? (
-          <Link
-            href={previewLink}
-            className="w-full text-nowrap cursor-pointer"
-            target="_blank"
+          <button
+            className="py-3 px-6 w-full text-nowrap bg-transparent text-[#6B7280] border border-[#E5E7EB] rounded-xs hover:bg-blue-900 hover:text-blue-50 transition-colors duration-300 cursor-pointer"
+            onClick={() => setSendAgreementModal(true)}
           >
-            <button className="py-3 px-6 w-full bg-transparent text-[#6B7280] border border-[#E5E7EB] rounded-xs hover:bg-blue-900 hover:text-blue-50 transition-colors duration-300 cursor-pointer">
-              Preview PDF
-            </button>
-          </Link>
+            Send Agreement
+          </button>
         ) : (
           <button
             onClick={() => setUploadOpen(true)}

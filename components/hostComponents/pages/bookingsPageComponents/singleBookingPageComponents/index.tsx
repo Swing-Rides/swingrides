@@ -1,9 +1,11 @@
 "use client";
 
 import { ComponentType, useMemo, useCallback } from "react";
+import { toast } from "sonner";
 import {
   useGetBookingByIdQuery,
   useGetBookingByReferenceQuery,
+  useAcknowledgeDamageReportMutation,
 } from "@/app/store/services/bookingApi";
 import PageHeader from "./pageHeader";
 import ActiveBookingPage from "./activeBookingPage";
@@ -76,6 +78,10 @@ export default function SingleBookingPageComponent({
     if (apiStatus === "confirmed") return "confirmed";
     if (apiStatus === "completed") return "completed";
     if (apiStatus === "cancelled") return "cancelled";
+    // checked_in / in_progress always route to the active/checkout page -
+    // "overdue"/"runningLate" here would render the no-show/pre-pickup pages,
+    // which have no vehicle-return UI. A late return is still an active trip;
+    // lateness is surfaced via the booking's displayStatus badge elsewhere.
     return "active";
   };
 
@@ -234,8 +240,20 @@ export default function SingleBookingPageComponent({
           },
           timeline: booking.timeline,
           preCheckStatus: {
-            driverLicenseStatus: booking.checkIn ? "verified" : "pending",
-            insuranceStatus: booking.checkInCompletion ? "verified" : "pending",
+            // `booking.checkIn`/`checkInCompletion` merely existing doesn't mean
+            // anything was verified - Mongoose populates `checkIn`'s nested
+            // array fields with empty-array defaults even when check-in never
+            // ran, so testing its truthiness is always true. The checklist
+            // booleans set by the actual check-in-completion flow are the only
+            // reliable verification signal.
+            driverLicenseStatus: booking.checkInCompletion?.checklist
+              ?.identityVerified
+              ? "verified"
+              : "pending",
+            insuranceStatus: booking.checkInCompletion?.checklist
+              ?.insuranceConfirmed
+              ? "verified"
+              : "pending",
             paymentStatus: booking.payment?.status === "paid" ||
               booking.payment?.status === "refunded" ||
               booking.payment?.status === "partially_refunded"
@@ -262,14 +280,37 @@ export default function SingleBookingPageComponent({
                 type: "image" as const,
               }),
             ),
-            isAcknowledged: false,
+            isAcknowledged:
+              booking.checkOut?.vehicleInspection.damageAcknowledged || false,
           },
-          incident: {
-            incidentType: "No incident",
-            incidentDecription: "No incident recorded",
-            incidentFee: toCurrency(0),
-            incidentImages: [],
-          },
+          incident: (() => {
+            const incidentCharges = booking.incidentCharges || [];
+            if (incidentCharges.length === 0) {
+              return {
+                incidentType: "No incident",
+                incidentDecription: "No incident recorded",
+                incidentFee: toCurrency(0),
+                incidentImages: [],
+              };
+            }
+            const totalFee = incidentCharges.reduce(
+              (sum, charge) => sum + Number(charge.amount || 0),
+              0,
+            );
+            return {
+              incidentType:
+                incidentCharges.length === 1
+                  ? incidentCharges[0].incidentType
+                  : `${incidentCharges.length} incidents`,
+              incidentDecription: incidentCharges
+                .map((charge) => charge.description)
+                .join("; "),
+              incidentFee: toCurrency(totalFee),
+              incidentImages: incidentCharges.flatMap(
+                (charge) => charge.evidenceUrls || [],
+              ),
+            };
+          })(),
           reimbursement: {
             reimbursementType: "N/A",
             reimbursementDescription: "No reimbursement requested",
@@ -316,11 +357,24 @@ export default function SingleBookingPageComponent({
         };
   }, [booking, checkInTimestamp, checkOutTimestamp, hasValidCheckOutTimestamp, id, vehicleDetails.gearType, vehicleDetails.plateNumber, vehicleDetails.vehicleType]);
 
+  const [acknowledgeDamageReport] = useAcknowledgeDamageReportMutation();
+
   const handleDamageReportAcknowledge = useCallback(async () => {
-    // TODO: replace with real API call
-    // await fetch(`/api/damage-reports/${reportId}/acknowledge`, { method: 'POST' })
-    console.log("damage report acknowledged");
-  }, []);
+    try {
+      await acknowledgeDamageReport(id).unwrap();
+    } catch (error) {
+      const message =
+        typeof error === "object" &&
+        error &&
+        "data" in error &&
+        typeof (error as { data?: { message?: string } }).data?.message ===
+          "string"
+          ? (error as { data: { message: string } }).data.message
+          : "Failed to acknowledge damage report";
+      toast.error(message);
+      throw error;
+    }
+  }, [acknowledgeDamageReport, id]);
 
   const GetMappedComponent = BookingPageMap[status];
 
@@ -347,6 +401,7 @@ export default function SingleBookingPageComponent({
       <PageHeader
         id={id}
         status={status}
+        rawStatus={booking?.status}
         referenceCode={booking?.referenceCode || ""}
         renterName={booking?.renterName || ""}
         vehicleName={booking?.vehicleName || ""}

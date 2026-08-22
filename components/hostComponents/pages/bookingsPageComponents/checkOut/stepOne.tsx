@@ -7,6 +7,7 @@ import {
         Mail,
         Phone,
         User,
+        BadgeCheck,
 } from 'lucide-react'
 import { Controller, useFormContext } from 'react-hook-form'
 import { CheckOutFormValues } from './checkOutPage'
@@ -17,6 +18,7 @@ type StepOneProps = {
         phoneNumber: string
         emailAddress: string
         licenseNumber: string
+        renterSelfReturnedAt?: string
 }
 
 
@@ -31,7 +33,7 @@ const confirmReturn = [
         },
 ]
 
-function StepOne ({ renterName, phoneNumber, emailAddress, licenseNumber }: StepOneProps) {
+function StepOne ({ renterName, phoneNumber, emailAddress, licenseNumber, renterSelfReturnedAt }: StepOneProps) {
         const { control } = useFormContext<CheckOutFormValues>()
 
         return (
@@ -40,6 +42,21 @@ function StepOne ({ renterName, phoneNumber, emailAddress, licenseNumber }: Step
                                 Confirm Renter Identity
                         </h3>
                         <Separator />
+                        {renterSelfReturnedAt && (
+                                <div className='flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-md text-blue-700 w-full'>
+                                        <BadgeCheck className='size-4 shrink-0 mt-0.5' />
+                                        <span className='text-sm font-medium font-text leading-5'>
+                                                The renter already confirmed the vehicle and keys were returned on{' '}
+                                                {new Date(renterSelfReturnedAt).toLocaleString('en-US', {
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        year: 'numeric',
+                                                        hour: 'numeric',
+                                                        minute: '2-digit',
+                                                })}. Review and confirm below.
+                                        </span>
+                                </div>
+                        )}
                         <div className='space-y-4 w-full'>
                                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                                         <RenterInfoCard

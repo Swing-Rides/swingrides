@@ -52,7 +52,9 @@ export default function StepFive({ data, onChange }: StepFiveProps) {
               Ready to Complete Check-In
             </h4>
             <p className="text-emerald-700 text-xs font-text leading-relaxed">
-              All required information has been collected. Click &quot;Complete Check-In&quot; to finalize the pickup process and activate the rental.
+              All required information has been collected. Click &quot;Complete
+              Check-In&quot; to finalize the pickup process and activate the
+              rental.
             </p>
           </div>
         </div>

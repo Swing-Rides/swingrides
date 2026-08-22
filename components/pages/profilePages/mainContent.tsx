@@ -153,15 +153,19 @@ export default function MainContent({ rentals }: MainContentProps) {
 const TripCard = ({ rentals }: TripCardProps) => {
   const searchParams = useSearchParams();
 
+  const hasCheckedIn = Boolean(rentals.checkIn);
+
   const buttons = getTripButtons(
     rentals.status,
     rentals.id,
     searchParams.toString(),
     rentals.host.contactNumber,
+    hasCheckedIn,
   );
 
   const canModify =
-    rentals.status === "Upcoming" || rentals.status === "Running Late";
+    (rentals.status === "Upcoming" || rentals.status === "Running Late") &&
+    !hasCheckedIn;
 
   const { isLoading: isModifyLoading, isError: isModifyError } =
     useGetBookingByIdQuery({ id: rentals.id }, { skip: !canModify });

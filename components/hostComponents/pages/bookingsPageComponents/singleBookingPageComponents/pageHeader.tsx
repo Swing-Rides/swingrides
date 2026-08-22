@@ -11,6 +11,7 @@ import CancelBookingAction from "./cancelBookingAction";
 type PageHeaderProps = {
   id: string;
   status: BookingsStatus;
+  rawStatus?: string;
   referenceCode: string;
   renterName: string;
   vehicleName: string;
@@ -31,16 +32,21 @@ export const statusStyles: Record<BookingsStatus, string> = {
 function PageHeader({
   id,
   status,
+  rawStatus,
   referenceCode,
   renterName,
   vehicleName,
   renterEmail,
   renterPhoneNumber,
 }: PageHeaderProps) {
-
-  console.log(id)
-
   const statusStyle = statusStyles[status] || "text-amber-500 bg-amber-100";
+
+  // "active" covers both `checked_in` (checked in, but the check-in wizard
+  // hasn't been completed yet) and `in_progress` (check-in fully completed,
+  // now awaiting checkout) - the raw status is what tells those two apart.
+  const needsCheckIn =
+    status === "confirmed" || rawStatus === "checked_in";
+  const needsCheckOut = rawStatus === "in_progress";
 
   return (
     <>
@@ -89,7 +95,7 @@ function PageHeader({
                 id={id}
               />
             )}
-            {["active", "runningLate", "confirmed"].includes(status) && (
+            {needsCheckIn && (
               <Link
                 href={`${HOST_DASHBOARD_PATH}bookings/${id}/complete-check-in`}
                 className="bg-blue-700 text-white text-sm font-semibold font-text leading-5 px-6 py-2 rounded-xs border border-blue-700 hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
@@ -97,12 +103,12 @@ function PageHeader({
                 Complete Check-In
               </Link>
             )}
-            {["completed"].includes(status) && (
+            {needsCheckOut && (
               <Link
                 href={`${HOST_DASHBOARD_PATH}bookings/${id}/complete-check-out`}
                 className="bg-blue-700 text-white text-sm font-semibold font-text leading-5 px-6 py-2 rounded-xs border border-blue-700 hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
               >
-                Complete Check-Out
+                Complete Checkout
               </Link>
             )}
             {["overdue", "runningLate"].includes(status) && (

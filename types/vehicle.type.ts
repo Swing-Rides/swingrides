@@ -140,6 +140,7 @@ export interface IListVehiclesDatum {
   totalExpenses?: number;
   netEarnings?: number;
   vehicleSchedule?: VehicleScheduleEntry[];
+  maintenance?: MaintenanceInfo;
 }
 
 export interface VehicleScheduleEntry {
@@ -177,3 +178,11 @@ export type IVehicleDataFilters = {
   status?: string;
   vehicleType?: string;
 };
+
+export interface MaintenanceInfo {
+  lastService?: string;
+  maintenanceType?: string;
+  nextDue?: string;
+  remainDuration?: string;
+  status?: string;
+}

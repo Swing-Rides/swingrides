@@ -43,9 +43,19 @@ export const getTripButtons = (
   rentId: string,
   currentParams: string,
   contactNumber: string,
+  hasCheckedIn?: boolean,
 ): ButtonConfig[] => {
   const modifyParams = new URLSearchParams(currentParams);
   modifyParams.set("modify", rentId);
+
+  // Once the renter has already checked in, "Running Late"/"Overdue" mean the
+  // return is late, not that pickup is late - Cancel/Modify no longer apply
+  // since the vehicle is already with the renter. Treat it like "Active";
+  // the trip detail page (View Details) surfaces "Complete Vehicle Return".
+  const activeButtons: ButtonConfig[] = [
+    { label: "View Details", href: `/trip/${rentId}` },
+    { label: "Contact Host", href: `tel:${contactNumber}` },
+  ];
 
   switch (status) {
     case "Upcoming":
@@ -62,6 +72,9 @@ export const getTripButtons = (
         },
       ];
     case "Running Late":
+      if (hasCheckedIn) {
+        return activeButtons;
+      }
       return [
         { label: "View Details", href: `/trip/${rentId}` },
         { label: "Contact Host", href: `tel:${contactNumber}` },
@@ -76,6 +89,9 @@ export const getTripButtons = (
         },
       ];
     case "Overdue":
+      if (hasCheckedIn) {
+        return activeButtons;
+      }
       return [
         { label: "View Details", href: `/trip/${rentId}` },
         {
@@ -89,10 +105,7 @@ export const getTripButtons = (
         { label: "Contact Host", href: `tel:${contactNumber}` },
       ];
     case "Active":
-      return [
-        { label: "View Details", href: `/trip/${rentId}` },
-        { label: "Contact Host", href: `tel:${contactNumber}` },
-      ];
+      return activeButtons;
     case "Completed":
       return [
         { label: "View Details", href: `/trip/${rentId}` },

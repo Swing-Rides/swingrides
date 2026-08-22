@@ -1,89 +1,33 @@
 "use client";
 
-import { User, Phone, Mail } from "lucide-react";
-import MainForm from "@/components/forms/MainForm";
-import { FormFieldConfig } from "@/components/forms/types";
+import { User, Phone, Mail, ShieldAlert } from "lucide-react";
+import Image from "next/image";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export type StepOneData = {
   confirmed: boolean;
-  idType: string;
-  idDocument: File[];
-  driverName: string;
 };
 
 type StepOneProps = {
   data: StepOneData;
-  onSubmitStep: (data: StepOneData) => void;
+  onChange: (data: Partial<StepOneData>) => void;
   bookingData?: {
     renterName?: string;
     renterPhone?: string;
     renterEmail?: string;
+    driverLicensePhotoUrl?: string;
+    selfiePhotoUrl?: string;
   };
 };
 
-const idTypeOptions = [
-  { label: "Driver's License", value: "drivers_license" },
-  { label: "Passport", value: "passport" },
-  { label: "National ID", value: "national_id" },
-  { label: "State ID", value: "state_id" },
-];
-
-export default function StepOne({ data, onSubmitStep, bookingData }: StepOneProps) {
-  const renterName = bookingData?.renterName || "John Smith";
-  const renterPhone = bookingData?.renterPhone || "+1 555-0001";
-  const renterEmail = bookingData?.renterEmail || "john.smith@email.com";
-
-  const fields: FormFieldConfig[] = [
-    {
-      name: "driverName",
-      type: "text",
-      label: "Driver Name",
-      placeholder: "Enter driver's full name",
-      defaultValue: data.driverName || renterName,
-      validation: {
-        required: "Driver name is required",
-        minLength: { value: 2, message: "Driver name must be at least 2 characters" },
-        maxLength: { value: 100, message: "Driver name must be under 100 characters" },
-      },
-    },
-    {
-      name: "idType",
-      type: "select",
-      label: "ID Type",
-      placeholder: "Select ID type",
-      defaultValue: data.idType,
-      options: idTypeOptions,
-      validation: {
-        required: "ID type is required",
-      },
-    },
-    {
-      name: "idDocument",
-      type: "image",
-      label: "ID Document",
-      description: "Upload a clear photo of the renter's ID document",
-      accept: "image/*",
-      multiple: false,
-      maxFiles: 1,
-      showPreview: true,
-      validation: {
-        validate: (files: FileList | File[]) => {
-          const len = files ? (files instanceof FileList ? files.length : files.length) : 0;
-          return len > 0 || "Please upload the renter's ID document";
-        },
-      },
-    },
-    {
-      name: "confirmed",
-      type: "checkbox",
-      label: "I confirm the renter's identity matches the provided document",
-      defaultValue: data.confirmed,
-      validation: {
-        validate: (value: boolean) =>
-          value === true || "You must confirm the renter's identity",
-      },
-    },
-  ];
+export default function StepOne({ data, onChange, bookingData }: StepOneProps) {
+  const renterName = bookingData?.renterName || "Unknown Renter";
+  const renterPhone = bookingData?.renterPhone || "Not provided";
+  const renterEmail = bookingData?.renterEmail || "Not provided";
+  const driverLicensePhotoUrl = bookingData?.driverLicensePhotoUrl;
+  const selfiePhotoUrl = bookingData?.selfiePhotoUrl;
+  const hasDocuments = Boolean(driverLicensePhotoUrl);
 
   return (
     <div className="flex flex-col gap-6">
@@ -91,6 +35,10 @@ export default function StepOne({ data, onSubmitStep, bookingData }: StepOneProp
         <h3 className="text-[#1F2937] text-lg font-bold font-text">
           Verify Renter Identity
         </h3>
+        <p className="text-xs text-[#6B7280] font-text">
+          Review the ID document and selfie the renter uploaded during their
+          own check-in, then confirm they match.
+        </p>
       </div>
 
       {/* Renter Details Box */}
@@ -140,21 +88,59 @@ export default function StepOne({ data, onSubmitStep, bookingData }: StepOneProp
         </div>
       </div>
 
-      <MainForm
-        fields={fields}
-        onSubmit={(values) => {
-          const rawFiles = values.idDocument as FileList | File[];
-          const fileArray = rawFiles ? Array.from(rawFiles as Iterable<File>) : [];
-          onSubmitStep({
-            confirmed: !!values.confirmed,
-            idType: String(values.idType ?? ""),
-            idDocument: fileArray,
-            driverName: String(values.driverName ?? ""),
-          });
-        }}
-        submitLabel="Confirm Identity Verification"
-        className="gap-5"
-      />
+      {/* Renter-Submitted Documents */}
+      {hasDocuments ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <DocumentPreview label="ID Document" src={driverLicensePhotoUrl!} />
+          {selfiePhotoUrl && (
+            <DocumentPreview label="Renter Selfie" src={selfiePhotoUrl} />
+          )}
+        </div>
+      ) : (
+        <div className="border border-dashed border-[#E5E7EB] rounded-lg p-6 flex flex-col items-center gap-2 text-center">
+          <ShieldAlert className="size-6 text-amber-500" />
+          <p className="text-sm font-medium text-[#1F2937] font-text">
+            Renter hasn&apos;t uploaded their ID yet
+          </p>
+          <p className="text-xs text-[#6B7280] font-text max-w-sm">
+            Ask the renter to complete their own check-in step and upload
+            their driver&apos;s license and selfie before identity can be
+            verified here.
+          </p>
+        </div>
+      )}
+
+      {/* Confirmation Checkbox */}
+      <div className="flex items-center gap-3 pt-2">
+        <Checkbox
+          id="step1-confirmed"
+          checked={data.confirmed}
+          disabled={!hasDocuments}
+          onCheckedChange={(checked) => onChange({ confirmed: !!checked })}
+          className="border-[#E5E7EB] data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
+        />
+        <Label
+          htmlFor="step1-confirmed"
+          className={`text-sm font-medium font-text select-none ${
+            hasDocuments
+              ? "text-[#1F2937] cursor-pointer"
+              : "text-[#9CA3AF] cursor-not-allowed"
+          }`}
+        >
+          I confirm the renter&apos;s identity matches the uploaded document
+        </Label>
+      </div>
     </div>
   );
 }
+
+const DocumentPreview = ({ label, src }: { label: string; src: string }) => (
+  <div className="flex flex-col gap-2">
+    <span className="text-[11px] text-[#9CA3AF] font-medium font-text uppercase">
+      {label}
+    </span>
+    <div className="relative aspect-4/3 rounded-lg overflow-hidden border border-[#E5E7EB] bg-gray-50">
+      <Image src={src} alt={label} fill unoptimized className="object-cover" />
+    </div>
+  </div>
+);
