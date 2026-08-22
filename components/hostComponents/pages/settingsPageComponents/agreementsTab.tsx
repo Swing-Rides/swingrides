@@ -8,6 +8,36 @@ import {
 } from "../../forms/agreementForms";
 import { PopupWrapper } from "../../modals/popupWrapper";
 import type { AgreementType, AgreementData } from "./settingsTabs";
+import {
+  useUpdateAgreementTemplateMutation,
+  useSendAgreementForSignatureMutation,
+} from "@/app/store/services/settingsApi";
+import { toast } from "sonner";
+
+// ─── Upload helper ──────────────────────────────────────────────────────────
+// Same pattern used everywhere else in the app: upload to Cloudinary via the
+// existing /api/upload route, then persist the resulting URL through the
+// backend's own JSON endpoint.
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
+  if (!response.ok) throw new Error("File upload failed");
+  const uploaded = (await response.json()) as { secure_url?: string };
+  if (!uploaded.secure_url)
+    throw new Error("The upload did not return a file URL");
+  return uploaded.secure_url;
+}
+
+const AGREEMENT_TYPE_TO_API: Record<AgreementType, "longTerm" | "shortTerm" | "commercialFleet" | "custom"> = {
+  "long-term": "longTerm",
+  "short-term": "shortTerm",
+  "commercial-fleet": "commercialFleet",
+  custom: "custom",
+};
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -148,6 +178,48 @@ const AgreementModal = ({
   shareLink,
   onClose,
 }: AgreementModalProps) => {
+  const [updateAgreementTemplate] = useUpdateAgreementTemplateMutation();
+  const [sendAgreementForSignature] = useSendAgreementForSignatureMutation();
+
+  const handleSendAgreement = async (values: { email: string; message: string }) => {
+    try {
+      await sendAgreementForSignature({
+        agreementType: AGREEMENT_TYPE_TO_API[agreementType],
+        email: values.email,
+        message: values.message || undefined,
+      }).unwrap();
+    } catch (error) {
+      toast.error(getMutationErrorMessage(error, "Failed to send agreement"));
+      throw error;
+    }
+  };
+
+  const handleUploadCustomAgreement = async (values: { email: string; document: FileList }) => {
+    const file = values.document?.[0];
+    if (!file) {
+      toast.error("Please select a document to upload");
+      return;
+    }
+
+    try {
+      const pdfUrl = await uploadFile(file);
+      await updateAgreementTemplate({
+        agreementType: AGREEMENT_TYPE_TO_API[agreementType],
+        payload: { pdfUrl },
+      }).unwrap();
+
+      await sendAgreementForSignature({
+        agreementType: AGREEMENT_TYPE_TO_API[agreementType],
+        email: values.email,
+      }).unwrap();
+
+      toast.success("Custom agreement uploaded and sent successfully");
+    } catch (error) {
+      toast.error(getMutationErrorMessage(error, "Failed to upload agreement"));
+      throw error;
+    }
+  };
+
   // Custom type → always show upload form (with email + file)
   if (isCustom) {
     return (
@@ -156,7 +228,11 @@ const AgreementModal = ({
         popupTitle="Upload Custom Agreement"
         popupDescription="Upload your custom agreement and enter the renter's email to send it"
       >
-        <UploadDocumentForm agreementType={agreementType} onClose={onClose} />
+        <UploadDocumentForm
+          agreementType={agreementType}
+          onClose={onClose}
+          onSubmit={handleUploadCustomAgreement}
+        />
       </PopupWrapper>
     );
   }
@@ -186,10 +262,28 @@ const AgreementModal = ({
         shareLink={shareLink}
         previewLink={previewLink}
         onClose={onClose}
+        onSubmit={handleSendAgreement}
       />
     </PopupWrapper>
   );
 };
+
+// ─── Mutation error helper ───────────────────────────────────────────────────
+
+function getMutationErrorMessage(error: unknown, fallback: string) {
+  if (!error || typeof error !== "object") return fallback;
+
+  const data = "data" in error ? (error as { data?: unknown }).data : undefined;
+
+  if (typeof data === "string") return data;
+
+  if (data && typeof data === "object" && "message" in data) {
+    const message = (data as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+
+  return fallback;
+}
 
 // ─── Empty state when no document is loaded ─────────────────────────────────
 

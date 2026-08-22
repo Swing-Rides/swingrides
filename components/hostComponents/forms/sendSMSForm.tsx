@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { validators } from '@/components/forms/form.validators'
 import { RegisterOptions } from 'react-hook-form'
+import { useSendSettingsSmsMutation } from '@/app/store/services/settingsApi'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -29,16 +30,6 @@ type SendSmsFormProps = {
 
 // ─── Placeholder submit ───────────────────────────────────────────────────────
 
-const sendSms = async (values: SendSmsFormValues) => {
-        // TODO: replace with real API / SMS gateway call
-        // await fetch('/api/sms/send', {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify(values),
-        // })
-        console.log('sending SMS:', values)
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SendSmsForm({
@@ -46,11 +37,13 @@ export default function SendSmsForm({
         onSubmit: onSubmitProp,
 }: SendSmsFormProps) {
         const [charCount, setCharCount] = useState(0)
+        const [sendSettingsSms, { isLoading: isSending }] = useSendSettingsSmsMutation()
 
         const {
                 register,
                 handleSubmit,
                 formState: { errors, isSubmitting },
+                reset,
         } = useForm<SendSmsFormValues>({
                 mode: 'onTouched',
                 defaultValues: {
@@ -60,10 +53,24 @@ export default function SendSmsForm({
         })
 
         const onSubmit = async (values: SendSmsFormValues) => {
-                if (onSubmitProp) {
-                        await onSubmitProp(values)
-                } else {
-                        await sendSms(values)
+                try {
+                        if (onSubmitProp) {
+                                await onSubmitProp(values)
+                        } else {
+                                // Map form values to API request format
+                                await sendSettingsSms({
+                                        renterPhoneNumber: values.phoneNumber,
+                                        message: values.message,
+                                }).unwrap()
+                                // Reset form on successful send
+                                reset({
+                                        phoneNumber: defaultPhone,
+                                        message: '',
+                                })
+                                setCharCount(0)
+                        }
+                } catch (error) {
+                        console.error('Failed to send SMS:', error)
                 }
         }
 
@@ -166,10 +173,10 @@ export default function SendSmsForm({
                         <div className='flex justify-end'>
                                 <Button
                                         type='submit'
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || isSending}
                                         className='bg-blue-700 hover:bg-blue-950 py-2 px-5 text-xs text-white font-medium font-text rounded-xs cursor-pointer transition-colors duration-200 disabled:opacity-50 disabled:pointer-events-none'
                                 >
-                                        {isSubmitting
+                                        {isSubmitting || isSending
                                                 ? (
                                                         <span className='flex items-center gap-2'>
                                                                 <Loader2 className='animate-spin w-4 h-4' />
