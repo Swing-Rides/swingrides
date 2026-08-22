@@ -1,13 +1,7 @@
 "use client";
 
-import { ReactNode, useState } from "react";
-import { FileText, X, Download } from "lucide-react";
-import Link from "next/link";
+import { Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  SendAgreementForm,
-  UploadDocumentForm,
-} from "../../forms/agreementForms";
 import { Badge } from "@/components/ui/badge";
 import {
   ColumnDef,
@@ -24,7 +18,7 @@ import { DataList } from "../bookingsPageComponents/singleBookingPageComponents/
 
 // ─── Shared Types ───────────────────────────────────────────────────────────
 
-export type AgreementType = "long-term" | "short-term" | "commercial-fleet";
+export type AgreementType = "long-term" | "short-term" | "commercial-fleet" | "custom";
 
 export type PaymentHistoryStatusTypes = "paid" | "pending" | "failed";
 
@@ -46,6 +40,7 @@ export interface CommunicationLogRow {
 }
 
 export interface AgreementData {
+  type: AgreementType;
   title: string;
   label: string;
   previewLink?: string;
@@ -382,171 +377,3 @@ const CommunicationLogStatus = ({ status }: { status: string }) => {
   );
 };
 
-// ─── Agreements Tab ─────────────────────────────────────────────────────────
-
-export type AgreementsTabProps = {
-  agreements: AgreementData[];
-};
-
-export const AgreementsTab = ({ agreements }: AgreementsTabProps) => {
-  return (
-    <div className="flex gap-4 justify-start items-start">
-      {agreements.map((agreement) => (
-        <AgreementsCard
-          key={agreement.title}
-          title={agreement.title}
-          label={agreement.label}
-          previewLink={agreement.previewLink}
-          shareLink={agreement.shareLink}
-        />
-      ))}
-    </div>
-  );
-};
-
-type AgreementsCardProps = {
-  title: string;
-  label: string;
-  previewLink?: string;
-  shareLink: string;
-};
-
-const AgreementsCard = ({
-  title,
-  label,
-  previewLink,
-  shareLink,
-}: AgreementsCardProps) => {
-  const agreementType: AgreementType =
-    title === "Long-Term" ? "long-term" : "commercial-fleet";
-
-  const [sendOpen, setSendOpen] = useState(false);
-  const [sendAgreementModal, setSendAgreementModal] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
-
-  return (
-    <div className="grow shrink-0 p-3 md:p-6 bg-white rounded-[10px] space-y-4">
-      <div className="flex justify-start items-center gap-4">
-        <div className="bg-blue-200 p-3 rounded-[16px] aspect-square size-12">
-          <FileText className="max-w-6" />
-        </div>
-        <div className="flex flex-col gap-1 justify-start items-start">
-          <span className="font-bold text-base font-text text-[#0B0B0B]">
-            {title}
-          </span>
-          <span className="text-[#6B7280] text-sm font-normal">{label}</span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4">
-        {previewLink ? (
-          <button
-            className="py-3 px-6 w-full text-nowrap bg-transparent text-[#6B7280] border border-[#E5E7EB] rounded-xs hover:bg-blue-900 hover:text-blue-50 transition-colors duration-300 cursor-pointer"
-            onClick={() => setSendAgreementModal(true)}
-          >
-            Send Agreement
-          </button>
-        ) : (
-          <button
-            onClick={() => setUploadOpen(true)}
-            className="py-3 px-6 w-full bg-transparent text-[#6B7280] border border-[#E5E7EB] rounded-xs hover:bg-blue-900 hover:text-blue-50 transition-colors duration-300 cursor-pointer"
-          >
-            Upload Document
-          </button>
-        )}
-
-        {previewLink && (
-          <button
-            onClick={() => setSendOpen(true)}
-            className="py-3 px-6 w-full bg-blue-700 text-white border border-blue-700 rounded-xs hover:bg-blue-900 cursor-pointer transition-colors duration-300"
-          >
-            Send for Signature
-          </button>
-        )}
-      </div>
-
-      {/* Send Agreement popup */}
-      {sendOpen && (
-        <PopupWrapper
-          onClose={() => setSendOpen(false)}
-          popupTitle="Send Agreement"
-          popupDescription="Share this agreement with the renter for review and signature"
-        >
-          <SendAgreementForm
-            agreementType={agreementType}
-            shareLink={shareLink}
-            previewLink={previewLink}
-            onClose={() => setSendOpen(false)}
-          />
-        </PopupWrapper>
-      )}
-
-      {/* Upload Document popup */}
-      {uploadOpen && (
-        <PopupWrapper
-          onClose={() => setUploadOpen(false)}
-          popupTitle="Upload Document"
-          popupDescription="Upload your signed agreement document"
-        >
-          <UploadDocumentForm
-            agreementType={agreementType}
-            onClose={() => setUploadOpen(false)}
-          />
-        </PopupWrapper>
-      )}
-    </div>
-  );
-};
-
-// ─── Shared Popup Wrapper ───────────────────────────────────────────────────
-
-type PopupWrapperProps = {
-  onClose: () => void;
-  popupTitle: string;
-  popupDescription?: string;
-  children: ReactNode;
-};
-
-export const PopupWrapper = ({
-  onClose,
-  popupTitle,
-  popupDescription,
-  children,
-}: PopupWrapperProps) => {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="relative flex flex-col w-full max-w-lg max-h-[90vh] bg-white rounded-lg shadow-xl overflow-hidden">
-        {/* Sticky header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-5 pt-5 pb-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm md:text-[20px] font-semibold font-text text-neutral-900">
-                {popupTitle}
-              </h3>
-              {popupDescription && (
-                <span className="text-sm font-normal font-text text-gray-400 text-center block">
-                  {popupDescription}
-                </span>
-              )}
-            </div>
-            <button
-              onClick={onClose}
-              className="flex items-center justify-center size-7 rounded-full cursor-pointer hover:bg-gray-100 transition-colors"
-              aria-label="Close"
-            >
-              <X className="size-4 text-gray-500" />
-            </button>
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto px-3 md:px-5 py-4 flex flex-col gap-4">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-};

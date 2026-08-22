@@ -10,11 +10,11 @@ import {
   ProfileCompanyTab,
   BillingTab,
   CommunicateTab,
-  AgreementsTab,
   PaymentHistoryRow,
   CommunicationLogRow,
   AgreementData,
 } from "./settingsTabs";
+import { AgreementsTab } from "./agreementsTab";
 import {
   HostPlanType,
   HostBillingCycle,
@@ -203,13 +203,23 @@ const SettingsPageContent = () => {
   const agreements = useMemo<AgreementData[]>(() => {
     const templates = settingsData?.agreements.templates ?? [];
 
+    const typeMap: Record<string, import("./settingsTabs").AgreementType> = {
+      longTerm: "long-term",
+      shortTerm: "short-term",
+      commercialFleet: "commercial-fleet",
+      custom: "custom",
+    };
+
     return templates.map((item) => ({
+      type: typeMap[item.type] ?? "custom",
       title:
         item.type === "longTerm"
           ? "Long-Term"
           : item.type === "shortTerm"
             ? "Short-Term"
-            : "Commercial Fleet and Custom Agreement",
+            : item.type === "commercialFleet"
+              ? "Commercial Fleet"
+              : "Custom Agreement",
       label: item.description,
       previewLink: item.pdfUrl,
       shareLink: item.signatureRequestUrl || "",
