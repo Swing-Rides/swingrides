@@ -57,7 +57,11 @@ const axiosBaseQuery = (): BaseQueryFn<
 
 export type BillingPaymentStatus = "paid" | "pending" | "failed";
 export type CommunicationStatus = "delivered" | "pending" | "failed";
-export type AgreementType = "longTerm" | "shortTerm" | "commercialFleet";
+export type AgreementType =
+  | "longTerm"
+  | "shortTerm"
+  | "commercialFleet"
+  | "custom";
 export type HostBusinessVerificationStatus =
   | "not_submitted"
   | "pending"
@@ -188,6 +192,8 @@ export type UpdateAgreementTemplateRequest = {
 
 export type SendAgreementForSignatureRequest = {
   agreementType: AgreementType;
+  email: string;
+  message?: string;
   signatureRequestUrl?: string;
 };
 
@@ -447,10 +453,10 @@ export const settingsApi = createApi({
       ApiEnvelope<HostAgreementsSettings>,
       SendAgreementForSignatureRequest
     >({
-      query: ({ agreementType, signatureRequestUrl }) => ({
+      query: ({ agreementType, email, message, signatureRequestUrl }) => ({
         url: `/api/host/settings/agreements/${agreementType}/send-signature`,
         method: "POST",
-        body: { signatureRequestUrl },
+        body: { email, message, signatureRequestUrl },
       }),
       invalidatesTags: [
         { type: "HostSettings", id: "DASHBOARD" },

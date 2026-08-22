@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useForm,
   Controller,
@@ -72,6 +72,7 @@ export default function LogMaintenanceServiceForm({
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<LogMaintenanceFormValues>({
     mode: "onTouched",
@@ -91,6 +92,7 @@ export default function LogMaintenanceServiceForm({
 
   const mileageAtService = useWatch({ control, name: "mileageAtService" });
   const serviceDate = useWatch({ control, name: "serviceDate" });
+  const selectedVehicleName = useWatch({ control, name: "vehicleName" });
   const [addLogsToBackend, { isLoading }] = useLogServiceModalMutation();
   const {
     data,
@@ -100,6 +102,20 @@ export default function LogMaintenanceServiceForm({
     page: 1,
     limit: 40,
   });
+
+  // Auto-fill mileage when vehicle is selected
+  useEffect(() => {
+    if (selectedVehicleName && data?.data) {
+      const selectedVehicle = data.data.find(
+        (vehicle: IListVehiclesDatum) => vehicle.name === selectedVehicleName
+      );
+      if (selectedVehicle && selectedVehicle.mileage !== undefined) {
+        // Format mileage with commas
+        const formattedMileage = selectedVehicle.mileage.toLocaleString();
+        setValue("mileageAtService", formattedMileage);
+      }
+    }
+  }, [selectedVehicleName, data, setValue]);
 
   const onSubmit = async (values: LogMaintenanceFormValues) => {
     const payload: LogServiceModalRequest = {
@@ -243,6 +259,7 @@ export default function LogMaintenanceServiceForm({
               type="text"
               placeholder="e.g. 42,000"
               className={inputCn(!!errors.mileageAtService)}
+              disabled={!!selectedVehicleName}
               {...register("mileageAtService", {
                 required: "Mileage is required",
                 pattern: {
