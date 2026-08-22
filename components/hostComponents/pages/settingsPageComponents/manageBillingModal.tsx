@@ -9,7 +9,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { Badge } from "@/components/ui/badge";
-import { PopupWrapper } from "./settingsTabs";
+import { PopupWrapper } from "../../modals/popupWrapper";
 import {
   HostBillingCycle,
   HostPlanType,
