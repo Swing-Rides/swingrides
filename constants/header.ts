@@ -16,12 +16,7 @@ export const navLinks = [
         },
         {
                 id: 4,
-                label: 'For Hosts',
+                label: 'Become a host',
                 href: '/for-hosts',
-        },
-        {
-                id: 5,
-                label: 'My Profile',
-                href: '/profile',
         },
 ]

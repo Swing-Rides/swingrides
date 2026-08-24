@@ -233,55 +233,33 @@ export const reportsContent: TabContentProps = {
         ],
 };
 
+import { HOST_PLANS } from "./hostPlans";
+
 export const pricingContents: PriceCardProps[] = [
         {
-                cardTitle: 'Solo',
+                cardTitle: HOST_PLANS.solo.name,
                 planTier: 'solo',
-                price: 99,
-                vechileQuantity: '1 Vehicle',
-                description: 'Everything you need to list and manage a single rental vehicle.',
-                features: [
-                        'Booking management',
-                        'Mileage tracking',
-                        'Basic maintenance alerts',
-                        'Expense capture',
-                        'Toll records',
-                        'Basic reports'
-                ]
+                price: HOST_PLANS.solo.price,
+                vechileQuantity: HOST_PLANS.solo.vehicleLimit.display,
+                description: HOST_PLANS.solo.description,
+                features: HOST_PLANS.solo.features,
         },
         {
-                badge: 'Most Popular',
-                cardTitle: 'Flex',
+                badge: HOST_PLANS.flex.badge,
+                cardTitle: HOST_PLANS.flex.name,
                 planTier: 'flex',
-                price: 249,
-                vechileQuantity: '2 - 5 Vehicles',
-                description: 'Scale your rental business with advanced financial tools and a branded customer experience.',
-                features: [
-                        'Everything in Solo',
-                        'Expense capture + invoicing',
-                        'Toll record history',
-                        '10 custom fields',
-                        'Financial reports + audit export',
-                        'Customer portal',
-                        'White label branding'
-                ]
+                price: HOST_PLANS.flex.price,
+                vechileQuantity: HOST_PLANS.flex.vehicleLimit.display,
+                description: HOST_PLANS.flex.description,
+                features: HOST_PLANS.flex.features,
         },
         {
-                cardTitle: 'Fleet',
+                cardTitle: HOST_PLANS.fleet.name,
                 planTier: 'fleet',
-                price: 499,
-                vechileQuantity: '6 - 15 Vehicles',
-                description: 'Full operational control for serious fleet hosts with audit-ready exports and priority support.',
-                features: [
-                        'Everything in Flex',
-                        'Maintenance scheduling + vendor tracking',
-                        'MRR dashboard & revenue analytics',
-                        'Unlimited custom fields',
-                        'Full CSV export (all data for audit & tax)',
-                        'P/L statements & advanced reports',
-                        'Odometer history per vehicle',
-                        'Priority escalation support'
-                ]
+                price: HOST_PLANS.fleet.price,
+                vechileQuantity: HOST_PLANS.fleet.vehicleLimit.display,
+                description: HOST_PLANS.fleet.description,
+                features: HOST_PLANS.fleet.features,
         },
         {
                 cardTitle: 'Enterprise',

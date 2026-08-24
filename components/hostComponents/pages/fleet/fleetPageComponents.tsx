@@ -22,6 +22,7 @@ import {
   useCreateBookingMutation,
   useDeleteVehicleMutation,
   useEndSnoozeEarlyMutation,
+  useGetHostProfileQuery,
   useLazyListVehcleQuery,
   useMarkUnavailableMutation,
   useRelistVehicleMutation,
@@ -29,6 +30,8 @@ import {
   useUnlistVehicleMutation,
 } from "@/app/store/services/hostApi";
 import { IListVehiclesDatum } from "@/types/vehicle.type";
+import { checkVehicleUploadLimit, VehicleUploadLimitCheck } from "@/constants/hostPlans";
+import PlanLimitBanner from "./planLimitBanner";
 
 type PopupType = "relist" | "unlist" | "createSnooze" | "editSnooze" | null;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -276,7 +279,10 @@ export default function FleetPageComponents() {
     }
 
     return (
-      <div className="mt-4 md:mt-8">
+      <div className="mt-4 md:mt-8 space-y-4">
+        {limitCheck.isLimitReached && (
+          <PlanLimitBanner limitCheck={limitCheck} />
+        )}
         <div className="flex flex-wrap items-center gap-4">
           <OverviewCard
             title="Total Vehicles"
@@ -346,12 +352,25 @@ export default function FleetPageComponents() {
     );
   };
 
+  const { data: hostProfileResponse } = useGetHostProfileQuery();
+  const hostPlan = hostProfileResponse?.data?.payment?.plan;
+  const totalVehicles =
+    data?.summary?.totalVehicles ??
+    data?.pagination?.totalItems ??
+    data?.data?.length ??
+    0;
+
+  const limitCheck = checkVehicleUploadLimit({
+    plan: hostPlan,
+    currentVehicleCount: totalVehicles,
+  });
+
   return (
     <>
       <PageWrapper
         pageTitle="Fleet"
         pageDescription="Manage all your vehicles in one place"
-        pageButton={<PageButton />}
+        pageButton={<PageButton limitCheck={limitCheck} />}
       >
         {renderContent()}
       </PageWrapper>
@@ -419,14 +438,25 @@ export default function FleetPageComponents() {
   );
 }
 
-const PageButton = () => {
+const PageButton = ({ limitCheck }: { limitCheck: VehicleUploadLimitCheck }) => {
   return (
-    <Link
-      href={`${HOST_DASHBOARD_PATH}fleet/add-vehicle`}
-      className="px-6 py-2 bg-blue-700 rounded-xs text-center text-white text-sm font-semibold font-text capitalize hover:bg-blue-900 transition-colors duration-300"
-    >
-      Add Vehicle
-    </Link>
+    <div className="flex items-center gap-2">
+      {limitCheck.isLimitReached ? (
+        <span className="hidden sm:inline-flex text-xs font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full">
+          {limitCheck.currentCount}/{limitCheck.maxVehicles} limit ({limitCheck.planName})
+        </span>
+      ) : (
+        <span className="hidden sm:inline-flex text-xs font-medium text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full">
+          {limitCheck.currentCount}/{limitCheck.maxVehicles} vehicles ({limitCheck.planName})
+        </span>
+      )}
+      <Link
+        href={`${HOST_DASHBOARD_PATH}fleet/add-vehicle`}
+        className="px-6 py-2 bg-blue-700 rounded-xs text-center text-white text-sm font-semibold font-text capitalize hover:bg-blue-900 transition-colors duration-300"
+      >
+        Add Vehicle
+      </Link>
+    </div>
   );
 };
 
