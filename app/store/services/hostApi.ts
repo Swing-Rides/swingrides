@@ -22,10 +22,7 @@ import {
   ServiceHistoryItem,
 } from "@/types/logservice.type";
 import { toast } from "sonner";
-import {
-  BillingPaymentStatus,
-  HostBusinessVerificationStatus,
-} from "./settingsApi";
+import { HostProfileResponse } from "@/types/host-profile.type";
 import { analyticsApi } from "./analyticsApi";
 import { expensesApi } from "./expensesApi";
 
@@ -453,32 +450,7 @@ export const hostApi = createApi({
     }),
 
     // profile
-    getHostProfile: builder.query<
-      {
-        success: boolean;
-        data: {
-          fullName: string;
-          email: string;
-          companyName?: string;
-          profilePictureUrl?: string;
-          phoneNumber?: string;
-          taxFee?: number;
-          insurance?: {
-            fee: number;
-            provvider: string;
-            policyNumber: string;
-            expiryDate: string;
-          };
-          businessVerification: {
-            status: HostBusinessVerificationStatus;
-          };
-          payment: {
-            plan: BillingPaymentStatus;
-          };
-        };
-      },
-      void
-    >({
+    getHostProfile: builder.query<HostProfileResponse, void>({
       query: () => ({
         url: "/api/host/settings/profile-company",
         method: "GET",

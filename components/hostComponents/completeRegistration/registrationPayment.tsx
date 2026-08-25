@@ -57,44 +57,17 @@ interface RegistrationPaymentProps {
   package?: Package;
 }
 
-export const hostSubscriptionPackages: Package[] = [
-  {
-    id: "solo",
-    name: "Solo",
-    price: 99,
-    description: "For hosts just getting started",
-    features: [
-      "List only 1 vehicle",
-      "Booking management",
-      "Basic maintenance alerts",
-    ],
-  },
-  {
-    id: "flex",
-    name: "Flex",
-    price: 249,
-    description: "For hosts scaling their fleet",
-    features: [
-      "List up to 5 vehicles",
-      "Expense capture + invoicing",
-      "Toll record history",
-      "Financial reports + audit export",
-    ],
-  },
-  {
-    id: "fleet",
-    name: "Fleet",
-    price: 499,
-    description: "For established fleet operators",
-    features: [
-      "List up to 15 vehicles",
-      "Maintenance scheduling + vendor tracking",
-      "Odometer history per vehicle",
-      "Priority escalation support",
-      "MRR dashboard & revenue analytics",
-    ],
-  },
-];
+import { HOST_PLANS_LIST } from "@/constants/hostPlans";
+
+export const hostSubscriptionPackages: Package[] = HOST_PLANS_LIST.map(
+  (pkg) => ({
+    id: pkg.id,
+    name: pkg.name,
+    price: pkg.price,
+    description: pkg.description,
+    features: pkg.features,
+  })
+);
 
 const YEARLY_DISCOUNT = 0.17; // 17% off when billed annually
 
@@ -471,15 +444,21 @@ export default function RegistrationPayment({
           </span>
           <span className="text-sm text-gray-500">
             {isStripeOnboardingComplete
-              ? "Upload your business license to complete your host verification."
+              ? selectedPackage?.id === "solo"
+                ? "Your Solo plan is activated! You can now start adding and managing your vehicle."
+                : "Upload your business license to complete your host verification."
               : "Complete Stripe onboarding so you can receive booking payments."}
           </span>
           {isStripeOnboardingComplete ? (
             <Link
               className="py-2.5 px-6 rounded-xs border border-blue-700 text-white bg-blue-700 hover:bg-blue-950 transition-colors duration-300"
-              href={`${HOST_DASHBOARD_PATH}host-complete-registration/`}
+              href={
+                selectedPackage?.id === "solo"
+                  ? `${HOST_DASHBOARD_PATH}`
+                  : `${HOST_DASHBOARD_PATH}host-complete-registration/`
+              }
             >
-              Verify Now
+              {selectedPackage?.id === "solo" ? "Go to Dashboard" : "Verify Now"}
             </Link>
           ) : (
             <button
