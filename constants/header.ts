@@ -6,7 +6,7 @@ export const navLinks = [
         },
         {
                 id: 2,
-                label: 'How it works',
+                label: 'How it Works',
                 href: './#how-it-works',
         },
         {
@@ -16,7 +16,7 @@ export const navLinks = [
         },
         {
                 id: 4,
-                label: 'Become a host',
+                label: 'Become a Host',
                 href: '/for-hosts',
         },
 ]
