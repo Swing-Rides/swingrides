@@ -2,38 +2,57 @@
 
 import { useRef, useState } from "react";
 import { EllipsisVertical } from "lucide-react";
-import { HEADER_ACTIONS } from "./headerActions";
-import { HeaderActionId } from "./subscriberDetail.types";
+import { getHeaderActions } from "./headerActions";
+import { HeaderActionId, SubscriberPlanKey } from "./subscriberDetail.types";
 import SuspendAccountPopup from "./suspendAccountPopup";
+import ReactivateAccountPopup from "./reactivateAccountPopup";
 import UpgradePlanPopup from "./upgradePlanPopup";
-import CheckVerificationPopup from "./checkVerificationPopup";
 
 export default function HeaderActionsMenu({
         organisationName,
-        onSuspend,
+        currentPlan,
+        isSuspended,
+        onToggleSuspend,
         onUpgrade,
         onVerify,
+        suspendDisabled,
+        upgradeDisabled,
 }: {
         organisationName: string;
-        onSuspend?: () => void;
-        onUpgrade?: () => void;
+        currentPlan?: string;
+        isSuspended: boolean;
+        onToggleSuspend?: () => void | Promise<void>;
+        onUpgrade?: (plan: SubscriberPlanKey) => void | Promise<void>;
         onVerify?: () => void;
+        suspendDisabled?: boolean;
+        upgradeDisabled?: boolean;
 }) {
         const [menuOpen, setMenuOpen] = useState(false);
         const [activePopup, setActivePopup] = useState<HeaderActionId | null>(null);
         const menuRef = useRef<HTMLDivElement>(null);
+        const headerActions = getHeaderActions(isSuspended);
 
         const handleSelect = (id: HeaderActionId) => {
                 setMenuOpen(false);
+                // "verify" jumps straight to the Business Verification section —
+                // it's navigation, not a consequential action, so it skips the
+                // confirmation popup the other actions use.
+                if (id === "verify") {
+                        onVerify?.();
+                        return;
+                }
                 setActivePopup(id);
         };
 
         const closePopup = () => setActivePopup(null);
 
-        const handleConfirm = (id: HeaderActionId) => {
-                if (id === "suspend") onSuspend?.();
-                if (id === "upgrade") onUpgrade?.();
-                if (id === "verify") onVerify?.();
+        const handleSuspendConfirm = async () => {
+                await onToggleSuspend?.();
+                closePopup();
+        };
+
+        const handleUpgradeConfirm = async (plan: SubscriberPlanKey) => {
+                await onUpgrade?.(plan);
                 closePopup();
         };
 
@@ -56,7 +75,7 @@ export default function HeaderActionsMenu({
                                                 onClick={() => setMenuOpen(false)}
                                         />
                                         <div className="absolute right-0 mt-2 w-56 bg-white rounded-md border border-gray-200 shadow-lg z-50 py-1">
-                                                {HEADER_ACTIONS.map((action) => (
+                                                {headerActions.map((action) => (
                                                         <button
                                                                 key={action.id}
                                                                 type="button"
@@ -72,23 +91,30 @@ export default function HeaderActionsMenu({
                                 </>
                         )}
 
-                        <SuspendAccountPopup
-                                open={activePopup === "suspend"}
-                                onClose={closePopup}
-                                onConfirm={() => handleConfirm("suspend")}
-                                organisationName={organisationName}
-                        />
+                        {isSuspended ? (
+                                <ReactivateAccountPopup
+                                        open={activePopup === "suspend"}
+                                        onClose={closePopup}
+                                        onConfirm={handleSuspendConfirm}
+                                        organisationName={organisationName}
+                                        confirmDisabled={suspendDisabled}
+                                />
+                        ) : (
+                                <SuspendAccountPopup
+                                        open={activePopup === "suspend"}
+                                        onClose={closePopup}
+                                        onConfirm={handleSuspendConfirm}
+                                        organisationName={organisationName}
+                                        confirmDisabled={suspendDisabled}
+                                />
+                        )}
                         <UpgradePlanPopup
                                 open={activePopup === "upgrade"}
                                 onClose={closePopup}
-                                onConfirm={() => handleConfirm("upgrade")}
+                                onConfirm={handleUpgradeConfirm}
                                 organisationName={organisationName}
-                        />
-                        <CheckVerificationPopup
-                                open={activePopup === "verify"}
-                                onClose={closePopup}
-                                onConfirm={() => handleConfirm("verify")}
-                                organisationName={organisationName}
+                                currentPlan={currentPlan}
+                                confirmDisabled={upgradeDisabled}
                         />
                 </div>
         );

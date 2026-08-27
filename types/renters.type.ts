@@ -129,6 +129,8 @@ export interface AdminRenterByIdResponseBookings {
 }
 
 export interface AdminRenterByIdResponseBookingsRow {
+        id: string
+        hostId: string | null
         bookingRef: string
         vehicleName: string
         hostOrganisation: string

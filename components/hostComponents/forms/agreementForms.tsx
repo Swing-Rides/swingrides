@@ -12,6 +12,8 @@ import {
 	Copy,
 	Check,
 	FileText,
+	CalendarDays,
+	Car,
 	Mail,
 	MessageSquare,
 	Loader2,
@@ -19,15 +21,40 @@ import {
 import Link from "next/link";
 
 import {
-	TextInput,
 	TextareaInput,
+	SelectInput,
 	FileInput,
 	ErrorIcon,
 	inputClass,
 } from '@/components/forms/MainForm'
-import type { FormFieldConfig } from '@/components/forms/types'
+import type { FormFieldConfig, SelectOption } from '@/components/forms/types'
 import { AgreementType } from '../pages/settingsPageComponents/settingsTabs'
 import { toast } from 'sonner'
+
+// ─── Booking option (for the "which renter" selector) ─────────────────────────
+// Send/upload flows are always tied to a real booking - the recipient and the
+// filled-in agreement fields both come from it, rather than a free-typed email.
+
+export type AgreementBookingOption = {
+	id: string
+	referenceCode: string
+	renterName: string
+	renterEmail: string
+	vehicleName: string
+	pickupDate: string
+	returnDate: string
+}
+
+const formatBookingDateRange = (pickupDate: string, returnDate: string) => {
+	const format = (value: string) =>
+		new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+	return `${format(pickupDate)} – ${format(returnDate)}`
+}
+
+const bookingToOption = (booking: AgreementBookingOption): SelectOption => ({
+	label: `${booking.renterName} · ${booking.referenceCode}`,
+	value: booking.id,
+})
 
 // ─── Upload Document Form ─────────────────────────────────────────────────────
 
@@ -36,12 +63,12 @@ const MAX_DOC_SIZE_MB = 5
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type SendAgreementFormValues = {
-	email: string
+	bookingId: string
 	message: string
 }
 
 type UploadDocumentFormValues = {
-	email: string
+	bookingId: string
 	document: FileList
 }
 
@@ -54,12 +81,14 @@ type SendAgreementFormProps = {
 	agreementType: AgreementType
 	shareLink: string
 	previewLink?: string
+	bookings: AgreementBookingOption[]
 	onClose: () => void
 	onSubmit?: (values: SendAgreementFormValues) => void | Promise<void>
 }
 
 type UploadDocumentFormProps = {
 	agreementType: AgreementType
+	bookings: AgreementBookingOption[]
 	onClose: () => void
 	onSubmit?: (values: UploadDocumentFormValues) => void | Promise<void>
 }
@@ -75,14 +104,14 @@ const AGREEMENT_LABELS: Record<AgreementType, string> = {
 
 // ─── Field configs ────────────────────────────────────────────────────────────
 
-const emailFieldConfig: FormFieldConfig = {
-	name: 'email',
-	type: 'email',
-	placeholder: 'renter@email.com',
-	autoComplete: 'email',
-	icon: <Mail className='size-4' />,
-	validation: validators.email(),
-}
+const bookingFieldConfig = (bookings: AgreementBookingOption[]): FormFieldConfig => ({
+	name: 'bookingId',
+	type: 'select',
+	placeholder: bookings.length ? 'Select a booking' : 'No bookings available',
+	options: bookings.map(bookingToOption),
+	disabled: bookings.length === 0,
+	validation: { required: 'Please select a booking' },
+})
 
 const messageFieldConfig: FormFieldConfig = {
 	name: 'message',
@@ -111,6 +140,7 @@ export const SendAgreementForm = ({
 	agreementType,
 	shareLink,
 	previewLink,
+	bookings,
 	onClose,
 	onSubmit: onSubmitProp,
 }: SendAgreementFormProps) => {
@@ -118,9 +148,13 @@ export const SendAgreementForm = ({
 
 	const {
 		register,
+		control,
+		watch,
 		handleSubmit,
 		formState: { errors, isSubmitting },
 	} = useForm<SendAgreementFormValues>({ mode: 'onTouched' })
+
+	const selectedBooking = bookings.find((b) => b.id === watch('bookingId'))
 
 	const handleCopy = async () => {
 		try {
@@ -151,19 +185,22 @@ export const SendAgreementForm = ({
 			className='flex flex-col gap-4'
 			noValidate
 		>
-			{/* 1. Email */}
+			{/* 1. Booking */}
 			<FormRow
-				label='Email Address'
-				htmlFor='email'
+				label='Booking'
+				htmlFor='bookingId'
 				required
-				error={errors.email?.message}
+				error={errors.bookingId?.message}
+				description={bookings.length === 0 ? 'This renter has no bookings yet — an agreement can only be sent for an existing booking.' : undefined}
 			>
-				<TextInput
-					field={emailFieldConfig}
-					register={register as unknown as UseFormRegister<Record<string, unknown>>}
-					error={errors.email?.message}
+				<SelectInput
+					field={bookingFieldConfig(bookings)}
+					control={control}
+					error={errors.bookingId?.message}
 				/>
 			</FormRow>
+
+			{selectedBooking && <BookingSummaryCard booking={selectedBooking} />}
 
 			{/* 2. Share Via Link */}
 			<FormRow
@@ -249,15 +286,20 @@ export const SendAgreementForm = ({
 
 export const UploadDocumentForm = ({
 	agreementType,
+	bookings,
 	onClose,
 	onSubmit: onSubmitProp,
 }: UploadDocumentFormProps) => {
 	const {
 		register,
+		control,
+		watch,
 		handleSubmit,
 		getValues,
 		formState: { errors, isSubmitting },
 	} = useForm<UploadDocumentFormValues>({ mode: 'onTouched' })
+
+	const selectedBooking = bookings.find((b) => b.id === watch('bookingId'))
 
 	const onSubmit = async (values: UploadDocumentFormValues) => {
 		if (onSubmitProp) {
@@ -275,19 +317,22 @@ export const UploadDocumentForm = ({
 			className='flex flex-col gap-4'
 			noValidate
 		>
-			{/* 1. Email */}
+			{/* 1. Booking */}
 			<FormRow
-				label='Email Address'
-				htmlFor='email'
+				label='Booking'
+				htmlFor='bookingId'
 				required
-				error={errors.email?.message}
+				error={errors.bookingId?.message}
+				description={bookings.length === 0 ? 'This renter has no bookings yet — an agreement can only be sent for an existing booking.' : undefined}
 			>
-				<TextInput
-					field={emailFieldConfig}
-					register={register as unknown as UseFormRegister<Record<string, unknown>>}
-					error={errors.email?.message}
+				<SelectInput
+					field={bookingFieldConfig(bookings)}
+					control={control}
+					error={errors.bookingId?.message}
 				/>
 			</FormRow>
+
+			{selectedBooking && <BookingSummaryCard booking={selectedBooking} />}
 
 			{/* 2. File upload zone — uses shared FileInput from MainForm */}
 			<FormRow
@@ -352,6 +397,26 @@ const DocumentCard = ({ agreementType, previewLink }: DocumentCardProps) => (
 			</Link>
 		)}
 	</div >
+)
+
+// ─── Booking summary card (shared) ───────────────────────────────────────────
+// Confirms which booking's details will fill in the agreement before sending.
+
+const BookingSummaryCard = ({ booking }: { booking: AgreementBookingOption }) => (
+	<div className='flex flex-col gap-2 p-3 border border-[#E5E7EB] bg-[#F9FAFB] rounded-xs text-sm font-text'>
+		<div className='flex items-center gap-2 text-[#1F2937] font-semibold'>
+			<Mail className='size-3.5 text-[#6B7280]' />
+			{booking.renterName} · {booking.renterEmail}
+		</div>
+		<div className='flex items-center gap-2 text-[#6B7280]'>
+			<Car className='size-3.5' />
+			{booking.vehicleName}
+		</div>
+		<div className='flex items-center gap-2 text-[#6B7280]'>
+			<CalendarDays className='size-3.5' />
+			{formatBookingDateRange(booking.pickupDate, booking.returnDate)}
+		</div>
+	</div>
 )
 
 // ─── Shared form row ──────────────────────────────────────────────────────────

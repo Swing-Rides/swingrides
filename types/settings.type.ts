@@ -85,9 +85,9 @@ export interface SystemSettings {
   maxBookingDuration: number;
   cancellationPolicyWindow: number;
   plans: {
-    starter: PlanLimits;
-    professional: PlanLimits;
-    enterprise: PlanLimits;
+    flex: PlanLimits;
+    solo: PlanLimits;
+    fleet: PlanLimits;
   };
 }
 

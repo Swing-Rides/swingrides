@@ -37,7 +37,11 @@ export const MaintenanceStatusPill = ({ status }: MaintenanceStatusPillProps ) =
         const styleMap = MAINTENANCE_STATUS_STYLE
         const normalizedStatus = status.toLowerCase()
 
-        const { label, textColor, bgColor } = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+        const style = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        if (!style) return <span className="text-xs text-gray-400">{status}</span>
+
+        const { label, textColor, bgColor } = style
 
         return (
                 <span
@@ -54,7 +58,11 @@ export const SubscriptionPlanPill = ({ status }: SubscriptionPlanPillProps ) => 
         const styleMap = SUBSCRIPTION_PLAN_STYLE
         const normalizedStatus = status.toLowerCase()
 
-        const { label, textColor, bgColor } = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+        const style = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        if (!style) return <span className="text-xs text-gray-400 capitalize">{status}</span>
+
+        const { label, textColor, bgColor } = style
 
         return (
                 <span
@@ -71,7 +79,11 @@ export const SubscriptionBillingStatusPill = ({ status }: SubscriptionBillingSta
         const styleMap = SUBSCRIPTION_BILLING_STATUS_STYLE
         const normalizedStatus = status.toLowerCase() as SubscriberBillingStatus
 
-        const { label, textColor, bgColor } = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+        const style = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        if (!style) return <span className="text-xs text-gray-400 capitalize">{status}</span>
+
+        const { label, textColor, bgColor } = style
 
         return (
                 <span
@@ -88,7 +100,11 @@ export const BookingPaymentPill = ({ status }: BookingPaymentPillProps ) => {
         const styleMap = BOOKING_PAYMENT_STATUS_STYLE
         const normalizedStatus = status.toLowerCase()
 
-        const { label, textColor, bgColor } = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+        const style = (styleMap as Record<string, { label: string; textColor: string; bgColor: string }>)[normalizedStatus]
+
+        if (!style) return <span className="text-xs text-gray-400 capitalize">{status}</span>
+
+        const { label, textColor, bgColor } = style
 
         return (
                 <span

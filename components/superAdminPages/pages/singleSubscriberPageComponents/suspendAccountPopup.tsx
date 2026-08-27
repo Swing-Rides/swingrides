@@ -9,6 +9,7 @@ export default function SuspendAccountPopup({
         onClose,
         onConfirm,
         organisationName,
+        confirmDisabled,
 }: ActionPopupProps) {
         return (
                 <PopupWrapper
@@ -18,6 +19,7 @@ export default function SuspendAccountPopup({
                         onConfirm={onConfirm}
                         confirmLabel="Yes, suspend"
                         confirmVariant="danger"
+                        confirmDisabled={confirmDisabled}
                 >
                         <div className="flex gap-3">
                                 <div className="size-10 shrink-0 rounded-full bg-red-100 flex items-center justify-center">

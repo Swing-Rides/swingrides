@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 const TIMEZONES = Intl.supportedValuesOf("timeZone");
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type PlanKey = "starter" | "professional" | "enterprise";
+type PlanKey = "flex" | "solo" | "fleet";
 
 type PlanLimits = {
   maxVehicles: number | "";
@@ -42,9 +42,9 @@ type SystemSettingsFormProps = {
 };
 
 const PLANS: { key: PlanKey; label: string }[] = [
-  { key: "starter", label: "Starter" },
-  { key: "professional", label: "Professional" },
-  { key: "enterprise", label: "Enterprise" },
+  { key: "flex", label: "Flex" },
+  { key: "solo", label: "Solo" },
+  { key: "fleet", label: "Fleet" },
 ];
 
 const FALLBACK_DEFAULTS: SystemSettingsFormValues = {
@@ -55,9 +55,9 @@ const FALLBACK_DEFAULTS: SystemSettingsFormValues = {
   maxBookingDuration: "",
   cancellationPolicyWindow: "",
   plans: {
-    starter: { maxVehicles: "", monthlyPrice: "" },
-    professional: { maxVehicles: "", monthlyPrice: "" },
-    enterprise: { maxVehicles: "", monthlyPrice: "" },
+    flex: { maxVehicles: "", monthlyPrice: "" },
+    solo: { maxVehicles: "", monthlyPrice: "" },
+    fleet: { maxVehicles: "", monthlyPrice: "" },
   },
 };
 

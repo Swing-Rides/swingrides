@@ -102,9 +102,9 @@ type PageTabsProps = {
     maxBookingDuration: number;
     cancellationPolicyWindow: number;
     plans: {
-      starter: { maxVehicles: number; monthlyPrice: number };
-      professional: { maxVehicles: number; monthlyPrice: number };
-      enterprise: { maxVehicles: number; monthlyPrice: number };
+      flex: { maxVehicles: number; monthlyPrice: number };
+      solo: { maxVehicles: number; monthlyPrice: number };
+      fleet: { maxVehicles: number; monthlyPrice: number };
     };
   };
   communicationSettings?: {
@@ -200,17 +200,17 @@ export default function GeneralSettingsPageComponent() {
       maxBookingDuration: typeof values.maxBookingDuration === "string" ? parseInt(values.maxBookingDuration) || 30 : values.maxBookingDuration,
       cancellationPolicyWindow: typeof values.cancellationPolicyWindow === "string" ? parseInt(values.cancellationPolicyWindow) || 24 : values.cancellationPolicyWindow,
       plans: {
-        starter: {
-          maxVehicles: typeof values.plans.starter.maxVehicles === "string" ? parseInt(values.plans.starter.maxVehicles) || 5 : values.plans.starter.maxVehicles,
-          monthlyPrice: typeof values.plans.starter.monthlyPrice === "string" ? parseFloat(values.plans.starter.monthlyPrice) || 29 : values.plans.starter.monthlyPrice,
+        flex: {
+          maxVehicles: typeof values.plans.flex.maxVehicles === "string" ? parseInt(values.plans.flex.maxVehicles) || 5 : values.plans.flex.maxVehicles,
+          monthlyPrice: typeof values.plans.flex.monthlyPrice === "string" ? parseFloat(values.plans.flex.monthlyPrice) || 29 : values.plans.flex.monthlyPrice,
         },
-        professional: {
-          maxVehicles: typeof values.plans.professional.maxVehicles === "string" ? parseInt(values.plans.professional.maxVehicles) || 20 : values.plans.professional.maxVehicles,
-          monthlyPrice: typeof values.plans.professional.monthlyPrice === "string" ? parseFloat(values.plans.professional.monthlyPrice) || 79 : values.plans.professional.monthlyPrice,
+        solo: {
+          maxVehicles: typeof values.plans.solo.maxVehicles === "string" ? parseInt(values.plans.solo.maxVehicles) || 20 : values.plans.solo.maxVehicles,
+          monthlyPrice: typeof values.plans.solo.monthlyPrice === "string" ? parseFloat(values.plans.solo.monthlyPrice) || 79 : values.plans.solo.monthlyPrice,
         },
-        enterprise: {
-          maxVehicles: typeof values.plans.enterprise.maxVehicles === "string" ? parseInt(values.plans.enterprise.maxVehicles) || 100 : values.plans.enterprise.maxVehicles,
-          monthlyPrice: typeof values.plans.enterprise.monthlyPrice === "string" ? parseFloat(values.plans.enterprise.monthlyPrice) || 199 : values.plans.enterprise.monthlyPrice,
+        fleet: {
+          maxVehicles: typeof values.plans.fleet.maxVehicles === "string" ? parseInt(values.plans.fleet.maxVehicles) || 100 : values.plans.fleet.maxVehicles,
+          monthlyPrice: typeof values.plans.fleet.monthlyPrice === "string" ? parseFloat(values.plans.fleet.monthlyPrice) || 199 : values.plans.fleet.monthlyPrice,
         },
       },
     });
@@ -438,9 +438,9 @@ const DEFAULT_SYSTEM_SETTINGS = {
   maxBookingDuration: 30,
   cancellationPolicyWindow: 24,
   plans: {
-    starter: { maxVehicles: 5, monthlyPrice: 29 },
-    professional: { maxVehicles: 20, monthlyPrice: 79 },
-    enterprise: { maxVehicles: 100, monthlyPrice: 199 },
+    flex: { maxVehicles: 5, monthlyPrice: 29 },
+    solo: { maxVehicles: 20, monthlyPrice: 79 },
+    fleet: { maxVehicles: 100, monthlyPrice: 199 },
   },
 };
 

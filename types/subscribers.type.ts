@@ -1,3 +1,5 @@
+import { HostBusinessVerificationStatus } from "@/app/store/services/settingsApi";
+
 export interface ISubscribersResponse {
   success: boolean;
   data: AdminSubscribersListData;
@@ -32,7 +34,7 @@ export type SubscriberBillingStatus =
   | "failed"
   | "pending"
   | "refunded";
-export type SubscriberPlan = "enterprise" | "professional" | "starter";
+export type SubscriberPlan = "flex" | "solo" | "fleet";
 export type FleetStatus =
   | "available"
   | "rented"
@@ -188,9 +190,19 @@ export interface AdminSubscriberByIdData {
   trend: AdminSubscriberByIdDataTrend;
   subscriberDistribution: AdminSubscriberByIdDataSubscriberDistribution[];
   fleet: AdminSubscriberByIdDataFleet[];
+  bookings: BookingRow[];
   billingHistory: AdminSubscriberByIdDataBillingHistory[];
   activityLog: AdminSubscriberByIdDataActivityLog[];
   dataCoverage: AdminSubscriberByIdDataDataCoverage;
+  businessVerification: AdminSubscriberByIdDataBusinessVerification;
+}
+
+export interface AdminSubscriberByIdDataBusinessVerification {
+  status: HostBusinessVerificationStatus;
+  businessLicenseUrl?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  notes?: string;
 }
 
 export interface AdminSubscriberByIdDataSubscriber {
@@ -246,7 +258,7 @@ export interface AdminSubscriberByIdDataBillingHistory {
   amount: number;
   status: BillingStatus;
   createdAt: string;
-  vehicleName: string;
+  description: string;
 }
 
 export interface AdminSubscriberByIdDataActivityLog {

@@ -16,7 +16,14 @@ import PageIntro from "./pageIntro";
 import OverviewCard from "./overviewCard";
 import HeaderActionsMenu from "./headerActionsMenu";
 import DataTable from "./dataTable";
+import BusinessVerificationCard from "./businessVerificationCard";
 import { formatNumberToUSD } from "../../utils/formatNumbertoUSD";
+import {
+  useSuspendSubscriberMutation,
+  useReactivateSubscriberMutation,
+  useChangeSubscriberPlanMutation,
+} from "@/app/store/services/adminApi";
+import { SubscriberPlanKey } from "./subscriberDetail.types";
 
 export default function SubscriberDetailPage({
   organisation,
@@ -29,6 +36,8 @@ export default function SubscriberDetailPage({
   fleet,
   booking,
   billingHistory,
+  businessVerification,
+  plan,
   slug,
 }: SubscriberDetailPageProps & SlugType) {
   const revenueTrend: GraphDataType = {
@@ -47,6 +56,41 @@ export default function SubscriberDetailPage({
   const [billingRows, setBillingRows] = useState<BillingRow[]>(
     billingHistory ?? [],
   );
+
+  const [suspendSubscriber, { isLoading: suspending }] =
+    useSuspendSubscriberMutation();
+  const [reactivateSubscriber, { isLoading: reactivating }] =
+    useReactivateSubscriberMutation();
+  const [changeSubscriberPlan, { isLoading: changingPlan }] =
+    useChangeSubscriberPlanMutation();
+
+  const isSuspended = status.toLowerCase() === "cancelled";
+
+  const handleToggleSuspend = async () => {
+    try {
+      if (isSuspended) {
+        await reactivateSubscriber(slug).unwrap();
+      } else {
+        await suspendSubscriber(slug).unwrap();
+      }
+    } catch (error) {
+      console.error("Toggle subscriber suspension failed:", error);
+    }
+  };
+
+  const handleUpgrade = async (newPlan: SubscriberPlanKey) => {
+    try {
+      await changeSubscriberPlan({ subscriberId: slug, plan: newPlan }).unwrap();
+    } catch (error) {
+      console.error("Change subscriber plan failed:", error);
+    }
+  };
+
+  const handleVerify = () => {
+    document
+      .getElementById("business-verification")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <div className="p-3 md:p-8">
@@ -75,9 +119,13 @@ export default function SubscriberDetailPage({
         <div className="w-full md:w-fit flex items-center justify-end gap-3">
           <HeaderActionsMenu
             organisationName={organisation.name}
-            onSuspend={() => console.log("Suspend account confirmed")}
-            onUpgrade={() => console.log("Upgrade plan confirmed")}
-            onVerify={() => console.log("Verification check confirmed")}
+            currentPlan={plan}
+            isSuspended={isSuspended}
+            onToggleSuspend={handleToggleSuspend}
+            suspendDisabled={suspending || reactivating}
+            onUpgrade={handleUpgrade}
+            upgradeDisabled={changingPlan}
+            onVerify={handleVerify}
           />
         </div>
       </div>
@@ -119,6 +167,16 @@ export default function SubscriberDetailPage({
           }
           title="Total Revenue"
           number={formatNumberToUSD(totalEarning)}
+        />
+      </div>
+
+      {/* Business verification */}
+      <div id="business-verification" className="mb-4 md:mb-6 scroll-mt-4">
+        <BusinessVerificationCard
+          hostId={slug}
+          status={businessVerification.status}
+          businessLicenseUrl={businessVerification.businessLicenseUrl}
+          submittedAt={businessVerification.submittedAt}
         />
       </div>
 

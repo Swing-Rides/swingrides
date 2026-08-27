@@ -1,13 +1,10 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { 
-        useForm, 
-        Controller, 
-        RegisterOptions, 
-        UseFormRegister, 
-        FieldValues, 
-        Path 
+import { useState } from 'react'
+import {
+        useForm,
+        Controller,
+        RegisterOptions,
 } from 'react-hook-form'
 import { cn } from '@/lib/utils'
 
@@ -26,17 +23,10 @@ import {
 } from '@/components/ui/select'
 import { validators } from './form.validators'
 import Image from 'next/image'
+import { issueTypeOptions } from '@/types/issueReport.type'
+import { useCreateRenterIssueReportMutation } from '@/app/store/services/reportApi'
 
-const ISSUE_TYPES = [
-        { label: 'Vehicle Condition', value: 'vehicle-condition' },
-        { label: 'Host Behaviour', value: 'host-behaviour' },
-        { label: 'Billing & Payment', value: 'billing-payment' },
-        { label: 'Booking / Reservation', value: 'booking-reservation' },
-        { label: 'Safety Concern', value: 'safety-concern' },
-        { label: 'Accident or Damage', value: 'accident-damage' },
-        { label: 'Late Return', value: 'late-return' },
-        { label: 'Other', value: 'other' },
-]
+const ISSUE_TYPES = issueTypeOptions
 
 const MAX_PHOTOS = 4
 const MAX_PHOTO_SIZE_MB = 5
@@ -45,11 +35,13 @@ type ReportFormValues = {
         bookingReference: string
         issueType: string
         description: string
-        photos?: FileList
         isUrgent: boolean
 }
 
 export default function ReportAnIssueForm() {
+        const [photoUrls, setPhotoUrls] = useState<string[]>([])
+        const [createRenterIssueReport] = useCreateRenterIssueReportMutation()
+
         const {
                 register,
                 handleSubmit,
@@ -60,8 +52,14 @@ export default function ReportAnIssueForm() {
                 defaultValues: { isUrgent: false },
         })
 
-        const onSubmit = (values: ReportFormValues) => {
-                console.log(values)
+        const onSubmit = async (values: ReportFormValues) => {
+                await createRenterIssueReport({
+                        bookingReference: values.bookingReference,
+                        issueType: values.issueType,
+                        description: values.description,
+                        isUrgent: values.isUrgent,
+                        photoUrls,
+                }).unwrap()
         }
 
         return (
@@ -167,13 +165,8 @@ export default function ReportAnIssueForm() {
                                 htmlFor='photos'
                                 description='Attach up to 4 photos that support your report. JPG, PNG · Max 5MB each.'
                                 optional
-                                error={errors.photos?.message}
                         >
-                                <PhotoUpload<ReportFormValues>
-                                        register={register}
-                                        name='photos'
-                                        error={errors.photos?.message as string}
-                                />
+                                <PhotoUpload onUpload={setPhotoUrls} />
                         </FormRow>
 
                         <FieldSeparator />
@@ -230,57 +223,57 @@ export default function ReportAnIssueForm() {
         )
 }
 
-type PhotoUploadProps<T extends FieldValues> = {
-        register: UseFormRegister<T>
-        name: Path<T>
-        error?: string
+type PhotoUploadProps = {
+        onUpload: (urls: string[]) => void
 }
 
-const PhotoUpload = <T extends FieldValues>({ register, name, error }: PhotoUploadProps<T>) => {
+const PhotoUpload = ({ onUpload }: PhotoUploadProps) => {
         const [previews, setPreviews] = useState<{ name: string; url: string }[]>([])
+        const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
+        const [uploading, setUploading] = useState(false)
+        const [error, setError] = useState<string | undefined>()
 
-        const { ref, ...rest } = register(name, {
-                validate: {
-                        maxFiles: (files: FileList) => {
-                                if (!files?.length) return true
-                                return files.length <= MAX_PHOTOS || `Maximum ${MAX_PHOTOS} photos allowed`
-                        },
-                        maxSize: (files: FileList) => {
-                                if (!files?.length) return true
-                                const oversized = Array.from(files).filter(
-                                        f => f.size / (1024 * 1024) > MAX_PHOTO_SIZE_MB
-                                )
-                                return oversized.length === 0 || `Each photo must be under ${MAX_PHOTO_SIZE_MB}MB`
-                        },
-                        fileType: (files: FileList) => {
-                                if (!files?.length) return true
-                                const invalid = Array.from(files).filter(
-                                        f => !['image/jpeg', 'image/png'].includes(f.type)
-                                )
-                                return invalid.length === 0 || 'Only JPG and PNG files are allowed'
-                        },
-                },
-        } as never)
-
-        const inputRef = useRef<HTMLInputElement | null>(null)
-
-        const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                rest.onChange(e)
+        const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 const files = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS)
-                setPreviews(files.map(file => ({
-                        name: file.name,
-                        url: URL.createObjectURL(file),
-                })))
+                if (!files.length) return
+
+                const oversized = files.filter(f => f.size / (1024 * 1024) > MAX_PHOTO_SIZE_MB)
+                if (oversized.length) { setError(`Each photo must be under ${MAX_PHOTO_SIZE_MB}MB`); return }
+                const invalid = files.filter(f => !['image/jpeg', 'image/png'].includes(f.type))
+                if (invalid.length) { setError('Only JPG and PNG files are allowed'); return }
+
+                setError(undefined)
+                setPreviews(files.map(file => ({ name: file.name, url: URL.createObjectURL(file) })))
+                setUploading(true)
+
+                try {
+                        const urls = await Promise.all(files.map(async (file) => {
+                                const fd = new FormData()
+                                fd.append('file', file)
+                                const res = await fetch('/api/upload', { method: 'POST', body: fd })
+                                const data = await res.json()
+                                return data.secure_url as string
+                        }))
+                        setUploadedUrls(urls)
+                        onUpload(urls)
+                } catch {
+                        setError('Upload failed. Please try again.')
+                } finally {
+                        setUploading(false)
+                }
         }
 
         const removePreview = (index: number) => {
+                const nextUrls = uploadedUrls.filter((_, i) => i !== index)
                 setPreviews(prev => prev.filter((_, i) => i !== index))
+                setUploadedUrls(nextUrls)
+                onUpload(nextUrls)
         }
 
         return (
                 <div className='flex flex-col gap-3'>
                         <label
-                                htmlFor={name}
+                                htmlFor='photos'
                                 className={cn(
                                         'flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-5 cursor-pointer transition-colors duration-200 group',
                                         error
@@ -294,26 +287,29 @@ const PhotoUpload = <T extends FieldValues>({ register, name, error }: PhotoUplo
                                                 'text-sm font-medium font-text',
                                                 error ? 'text-[#EF4444]' : 'text-[#1A56DB] group-hover:underline'
                                         )}>
-                                                Click to upload
+                                                {uploading ? 'Uploading...' : 'Click to upload'}
                                         </span>
                                         <span className='text-[#6B7280] text-sm font-text'>
                                                 {' '}or drag and drop
                                         </span>
                                 </div>
                                 <input
-                                        id={name}
+                                        id='photos'
                                         type='file'
                                         accept='image/jpeg, image/png'
                                         multiple
                                         className='hidden'
-                                        {...rest}
-                                        ref={(e) => {
-                                                ref(e)
-                                                inputRef.current = e
-                                        }}
                                         onChange={handleChange}
+                                        disabled={uploading}
                                 />
                         </label>
+
+                        {error && (
+                                <span className='text-[#EF4444] text-xs font-normal font-text flex items-center gap-1'>
+                                        <ErrorIcon />
+                                        {error}
+                                </span>
+                        )}
 
                         {previews.length > 0 && (
                                 <div className='grid grid-cols-2 md:grid-cols-4 gap-2'>
@@ -322,16 +318,25 @@ const PhotoUpload = <T extends FieldValues>({ register, name, error }: PhotoUplo
                                                         <Image
                                                                 src={preview.url}
                                                                 alt={preview.name}
+                                                                width={250}
+                                                                height={250}
                                                                 className='w-full aspect-square object-cover'
                                                         />
-                                                        <button
-                                                                type='button'
-                                                                onClick={() => removePreview(index)}
-                                                                className='absolute top-1 right-1 bg-black/60 hover:bg-[#EF4444] text-white rounded-full p-0.5 transition-colors duration-150 cursor-pointer'
-                                                                aria-label={`Remove ${preview.name}`}
-                                                        >
-                                                                <SmallCloseIcon />
-                                                        </button>
+                                                        {uploading && (
+                                                                <div className='absolute inset-0 bg-black/40 flex items-center justify-center'>
+                                                                        <LoadingSpinner />
+                                                                </div>
+                                                        )}
+                                                        {!uploading && (
+                                                                <button
+                                                                        type='button'
+                                                                        onClick={() => removePreview(index)}
+                                                                        className='absolute top-1 right-1 bg-black/60 hover:bg-[#EF4444] text-white rounded-full p-0.5 transition-colors duration-150 cursor-pointer'
+                                                                        aria-label={`Remove ${preview.name}`}
+                                                                >
+                                                                        <SmallCloseIcon />
+                                                                </button>
+                                                        )}
                                                 </div>
                                         ))}
                                 </div>

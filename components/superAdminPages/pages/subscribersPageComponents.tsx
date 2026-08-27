@@ -101,9 +101,9 @@ export default function SubscribersPageComponents() {
       | undefined,
     plan: (planFilter || undefined) as
       | "all"
-      | "starter"
-      | "professional"
-      | "enterprise"
+      | "flex"
+      | "solo"
+      | "fleet"
       | undefined,
   });
 

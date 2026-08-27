@@ -28,6 +28,7 @@ export default function RenterPageClient({ renterId }: RenterPageClientProps) {
 
   return (
     <RenterPageComponents
+      renterId={renterId}
       renter={renter}
       stats={stats}
       verification={verification}

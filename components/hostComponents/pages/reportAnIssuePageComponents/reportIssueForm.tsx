@@ -24,6 +24,7 @@ import {
         Loader2,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
+import { issueTypeOptions } from '@/types/issueReport.type'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -31,17 +32,7 @@ const MAX_DESCRIPTION_CHARS = 200
 const MAX_PHOTOS = 4
 const MAX_PHOTO_SIZE_MB = 5
 
-const ISSUE_TYPES = [
-        { label: 'Guest Behaviour', value: 'guest-behaviour' },
-        { label: 'Vehicle Damage', value: 'vehicle-damage' },
-        { label: 'Billing & Payment', value: 'billing-payment' },
-        { label: 'Booking / Reservation', value: 'booking-reservation' },
-        { label: 'Late Return', value: 'late-return' },
-        { label: 'Accident or Incident', value: 'accident-incident' },
-        { label: 'Safety Concern', value: 'safety-concern' },
-        { label: 'Platform / Technical', value: 'platform-technical' },
-        { label: 'Other', value: 'other' },
-]
+const ISSUE_TYPES = issueTypeOptions
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
