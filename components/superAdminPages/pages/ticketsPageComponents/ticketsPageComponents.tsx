@@ -34,62 +34,78 @@ import {
         DialogTitle,
         DialogTrigger,
 } from "@/components/ui/dialog";
+import { useGetAdminTicketsQuery, useResolveAdminTicketMutation } from "@/app/store/services/adminApi";
+import { AdminTicketPagination, AdminTicketRow, AdminTicketSummary } from "@/types/admin-tickets.type";
+import ErrorStateUI from "../../dashboard/errorState";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type AdminTicketRow = {
-        id: string
-        ticketId: string
-        submitterName: string
-        submitterEmail: string
-        type: AdminTicketTypesItemsType
-        subject: string
-        status: AdminTicketStatusItemsType
-        photos: string[]
-        date: string
-}
+const ROWS_PER_PAGE = 8
 
-type TicketSummary = {
-        totalTickets: number
-        open: number
-        inProgress: number
-        resolved: number
-        damageReports: number
-}
-
-type TicketPagination = {
-        page: number
-        limit: number
-        total: number
-        totalPages: number
-}
-
-// ─── Sample data ──────────────────────────────────────────────────────────────
-const SAMPLE_SUMMARY: TicketSummary = {
-        totalTickets: 124,
-        open: 38,
-        inProgress: 21,
-        resolved: 57,
-        damageReports: 8,
-}
-
-const SAMPLE_ROWS: AdminTicketRow[] = [
-        { id: "1", ticketId: "TKT-0001", submitterName: "Alice Johnson", submitterEmail: "alice@example.com", type: "billing query", subject: "Overcharged for last booking", status: "open", photos: ["photo1.jpg", "photo2.jpg"], date: "2025-01-10T09:00:00Z" },
-        { id: "2", ticketId: "TKT-0002", submitterName: "Bob Smith", submitterEmail: "bob@example.com", type: "damage report", subject: "Scratch on rear bumper", status: "in progress", photos: ["photo1.jpg", "photo2.jpg", "photo3.jpg", "photo4.jpg"], date: "2025-01-14T11:30:00Z" },
-        { id: "3", ticketId: "TKT-0003", submitterName: "Carol White", submitterEmail: "carol@example.com", type: "dispute", subject: "Host was unresponsive during pickup", status: "resolved", photos: [], date: "2025-01-18T08:15:00Z" },
-        { id: "4", ticketId: "TKT-0004", submitterName: "David Lee", submitterEmail: "david@example.com", type: "technical issue", subject: "App crashed during booking confirmation", status: "open", photos: ["photo1.jpg", "photo2.jpg", "photo3.jpg"], date: "2025-02-01T14:00:00Z" },
-        { id: "5", ticketId: "TKT-0005", submitterName: "Eva Brown", submitterEmail: "eva@example.com", type: "damage report", subject: "Windshield crack not listed in photos", status: "in progress", photos: ["photo1.jpg"], date: "2025-02-05T10:45:00Z" },
-]
-
-const SAMPLE_PAGINATION: TicketPagination = {
-        page: 1,
-        limit: 8,
-        total: SAMPLE_ROWS.length,
-        totalPages: 1,
+const EMPTY_SUMMARY: AdminTicketSummary = {
+        totalTickets: 0,
+        open: 0,
+        inProgress: 0,
+        resolved: 0,
+        damageReports: 0,
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function TicketsPageComponents() {
+        return (
+                <Suspense>
+                        <TicketsPageContent />
+                </Suspense>
+        )
+}
+
+const TicketsPageContent = () => {
+        const router = useRouter()
+        const pathname = usePathname()
+        const searchParams = useSearchParams()
+
+        const search = searchParams.get("search") || undefined
+        const status = (searchParams.get("status") as AdminTicketStatusItemsType) || undefined
+        const issueType = (searchParams.get("type") as AdminTicketTypesItemsType) || undefined
+        const page = Math.max(1, Number(searchParams.get("page") ?? 1))
+
+        const { data, isLoading, isError } = useGetAdminTicketsQuery(
+                { search, status, issueType, page, limit: ROWS_PER_PAGE },
+                { pollingInterval: 30_000 },
+        )
+
+        const [resolveTicket] = useResolveAdminTicketMutation()
+
+        const goToPage = useCallback((p: number) => {
+                const params = new URLSearchParams(searchParams.toString())
+                params.set("page", String(Math.max(1, p)))
+                router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+        }, [router, pathname, searchParams])
+
+        if (isError) {
+                return (
+                        <PageWrapper
+                                pageTitle="Tickets / Complaints"
+                                pageDescription="Manage organization, fleet, billing, and activity"
+                        >
+                                <div className="mt-8">
+                                        <ErrorStateUI
+                                                title="We couldn't load tickets"
+                                                description="Something went wrong while fetching tickets. Please check your connection and try again."
+                                        />
+                                </div>
+                        </PageWrapper>
+                )
+        }
+
+        const summary = data?.data.summary ?? EMPTY_SUMMARY
+        const rows = data?.data.rows ?? []
+        const pagination: AdminTicketPagination = data?.data.pagination ?? {
+                page,
+                limit: ROWS_PER_PAGE,
+                total: 0,
+                totalPages: 1,
+        }
+
         return (
                 <PageWrapper
                         pageTitle="Tickets / Complaints"
@@ -97,11 +113,12 @@ export default function TicketsPageComponents() {
                 >
                         <div>
                                 <TicketContent
-                                        summary={SAMPLE_SUMMARY}
-                                        rows={SAMPLE_ROWS}
-                                        pagination={SAMPLE_PAGINATION}
-                                        isLoading={false}
-                                        goToPage={(p) => console.log("go to page", p)}
+                                        summary={summary}
+                                        rows={rows}
+                                        pagination={pagination}
+                                        isLoading={isLoading}
+                                        goToPage={goToPage}
+                                        onResolve={(ticketId) => resolveTicket({ ticketId })}
                                 />
                         </div>
                 </PageWrapper>
@@ -111,14 +128,15 @@ export default function TicketsPageComponents() {
 // ─── Content ──────────────────────────────────────────────────────────────────
 
 type TicketContentProps = {
-        summary: TicketSummary
+        summary: AdminTicketSummary
         rows: AdminTicketRow[]
-        pagination: TicketPagination
+        pagination: AdminTicketPagination
         isLoading: boolean
         goToPage: (page: number) => void
+        onResolve: (ticketId: string) => void
 }
 
-const TicketContent = ({ summary, rows, pagination, isLoading, goToPage }: TicketContentProps) => {
+const TicketContent = ({ summary, rows, pagination, isLoading, goToPage, onResolve }: TicketContentProps) => {
         return (
                 <div className="flex flex-col gap-5 md:gap-8">
                         <div className="flex flex-wrap gap-4 mt-8">
@@ -134,6 +152,7 @@ const TicketContent = ({ summary, rows, pagination, isLoading, goToPage }: Ticke
                                         pagination={pagination}
                                         isLoading={isLoading}
                                         goToPage={goToPage}
+                                        onResolve={onResolve}
                                 />
                         </Suspense>
                 </div>
@@ -144,39 +163,18 @@ const TicketContent = ({ summary, rows, pagination, isLoading, goToPage }: Ticke
 
 type TicketListTableProps = {
         rows: AdminTicketRow[]
-        pagination: TicketPagination
+        pagination: AdminTicketPagination
         isLoading: boolean
         goToPage: (page: number) => void
+        onResolve: (ticketId: string) => void
 }
 
-const TicketListTable = ({ rows, pagination, isLoading, goToPage }: TicketListTableProps) => {
-        const searchParams = useSearchParams()
+const TicketListTable = ({ rows, pagination, isLoading, goToPage, onResolve }: TicketListTableProps) => {
+        const { page, limit, total } = pagination
+        const totalPages = Math.max(1, pagination.totalPages)
 
-        const search = searchParams.get("search")?.toLowerCase() ?? ""
-        const statusFilter = searchParams.get("status") ?? ""
-        const typeFilter = searchParams.get("type") ?? ""
-        // const priorityFilter = searchParams.get("priority") ?? ""
-
-        // Apply filters locally against the passed-in rows
-        const filtered = rows.filter(row => {
-                const matchSearch = !search ||
-                        row.submitterName.toLowerCase().includes(search) ||
-                        row.submitterEmail.toLowerCase().includes(search) ||
-                        row.ticketId.toLowerCase().includes(search)
-
-                const matchStatus = !statusFilter || row.status === statusFilter
-                const matchType = !typeFilter || row.type.toLowerCase() === typeFilter.toLowerCase()
-
-                return matchSearch && matchStatus && matchType
-        })
-
-        const total = filtered.length
-        const totalPages = Math.ceil(total / pagination.limit)
-        const page = pagination.page
-        const paginated = filtered.slice((page - 1) * pagination.limit, page * pagination.limit)
-
-        const startItem = total === 0 ? 0 : (page - 1) * pagination.limit + 1
-        const endItem = Math.min(page * pagination.limit, total)
+        const startItem = total === 0 ? 0 : (page - 1) * limit + 1
+        const endItem = Math.min(page * limit, total)
 
         return (
                 <div className="space-y-5 md:space-y-8">
@@ -201,17 +199,17 @@ const TicketListTable = ({ rows, pagination, isLoading, goToPage }: TicketListTa
                                                                         Loading tickets…
                                                                 </TableCell>
                                                         </TableRow>
-                                                ) : paginated.length === 0 ? (
+                                                ) : rows.length === 0 ? (
                                                         <TableRow>
                                                                 <TableCell colSpan={8} className="text-center py-16 text-gray-400 text-sm">
                                                                         No tickets match your filters.
                                                                 </TableCell>
                                                         </TableRow>
-                                                ) : paginated.map(item => (
+                                                ) : rows.map(item => (
                                                         <TableRow key={item.id}>
                                                                 <TableCell className="pl-5">
                                                                         <span className="text-blue-700 text-xs font-medium font-text leading-5">
-                                                                                {item.ticketId}
+                                                                                {item.ticketCode}
                                                                         </span>
                                                                 </TableCell>
                                                                 <TableCell className="px-5">
@@ -219,12 +217,12 @@ const TicketListTable = ({ rows, pagination, isLoading, goToPage }: TicketListTa
                                                                 </TableCell>
                                                                 <TableCell className="max-w-26.25 w-full px-5">
                                                                         <span className="text-gray-700 text-xs font-normal font-text leading-5 capitalize">
-                                                                                {item.type}
+                                                                                {item.issueType}
                                                                         </span>
                                                                 </TableCell>
                                                                 <TableCell className="px-5">
                                                                         <span className="text-neutral-950 text-xs font-normal font-text leading-5">
-                                                                                {item.subject}
+                                                                                {item.description}
                                                                         </span>
                                                                 </TableCell>
                                                                 <TableCell className="px-5">
@@ -234,20 +232,21 @@ const TicketListTable = ({ rows, pagination, isLoading, goToPage }: TicketListTa
                                                                         <div className="flex items-center gap-1.5">
                                                                                 <span>📎</span>
                                                                                 <span className="text-blue-700 text-xs font-medium font-text leading-4">
-                                                                                        {item.photos.length} photo{item.photos.length !== 1 ? "s" : ""}
+                                                                                        {item.photoUrls.length} photo{item.photoUrls.length !== 1 ? "s" : ""}
                                                                                 </span>
                                                                         </div>
                                                                 </TableCell>
                                                                 <TableCell className="px-5">
                                                                         <span className="text-gray-500 text-sm font-normal font-text leading-5">
-                                                                                {formatDate(item.date)}
+                                                                                {formatDate(item.dateSubmitted)}
                                                                         </span>
                                                                 </TableCell>
                                                                 <TableCell className="px-5 justify-center">
                                                                         <TableAction
                                                                                 status={item.status}
-                                                                                ticketId={item.ticketId}
-                                                                                handleMarkResolved={() => console.log("Resolved", item.ticketId)}
+                                                                                ticketId={item.id}
+                                                                                ticketCode={item.ticketCode}
+                                                                                handleMarkResolved={() => onResolve(item.id)}
                                                                         />
                                                                 </TableCell>
                                                         </TableRow>
@@ -284,7 +283,7 @@ const SearchFilterSection = () => {
                 const params = new URLSearchParams(searchParams.toString())
                 if (value) params.set(key, value)
                 else params.delete(key)
-                if (key !== "ticket-table-page") params.delete("ticket-table-page")
+                if (key !== "page") params.delete("page")
                 router.replace(`${pathname}?${params.toString()}`, { scroll: false })
         }, [router, pathname, searchParams])
 
@@ -320,10 +319,11 @@ const SearchFilterSection = () => {
 type TableActionProps = {
         status: AdminTicketStatusItemsType
         ticketId: string
+        ticketCode: string
         handleMarkResolved: () => void
 }
 
-const TableAction = ({ status, ticketId, handleMarkResolved }: TableActionProps) => (
+const TableAction = ({ status, ticketId, ticketCode, handleMarkResolved }: TableActionProps) => (
         <Popover>
                 <PopoverTrigger asChild>
                         <EllipsisVertical className="size-5 cursor-pointer" />
@@ -350,7 +350,7 @@ const TableAction = ({ status, ticketId, handleMarkResolved }: TableActionProps)
                                                                         Confirm Resolution
                                                                 </DialogTitle>
                                                                 <DialogDescription className="text-gray-500 text-sm font-normal font-text">
-                                                                        Are you sure you want to mark ticket <span className="font-semibold text-neutral-950">{ticketId}</span> as resolved? This action cannot be undone.
+                                                                        Are you sure you want to mark ticket <span className="font-semibold text-neutral-950">{ticketCode}</span> as resolved? This action cannot be undone.
                                                                 </DialogDescription>
                                                         </DialogHeader>
                                                         <DialogFooter className="mt-4">

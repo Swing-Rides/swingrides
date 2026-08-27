@@ -124,7 +124,7 @@ export type CreateIssueReportPayload = {
 export const reportApi = createApi({
   reducerPath: "reportApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["IssueReports"],
+  tagTypes: ["IssueReports", "RenterIssueReports"],
   endpoints: (builder) => ({
     createIssueReport: builder.mutation<
       ApiEnvelope<IssueReportDetail>,
@@ -161,6 +161,42 @@ export const reportApi = createApi({
         { type: "IssueReports", id: reportId },
       ],
     }),
+
+    createRenterIssueReport: builder.mutation<
+      ApiEnvelope<IssueReportDetail>,
+      CreateIssueReportPayload
+    >({
+      query: (payload) => ({
+        url: "/api/auth/renter/report-issues",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [{ type: "RenterIssueReports", id: "LIST" }],
+    }),
+
+    getRenterIssueReports: builder.query<
+      ApiEnvelope<PaginatedIssueReports>,
+      IssueReportFilters | undefined
+    >({
+      query: (filters) => {
+        const query = toQueryString(filters);
+        return {
+          url: `/api/auth/renter/report-issues${query ? `?${query}` : ""}`,
+          method: "GET",
+        };
+      },
+      providesTags: [{ type: "RenterIssueReports", id: "LIST" }],
+    }),
+
+    getRenterIssueReportById: builder.query<ApiEnvelope<IssueReportDetail>, string>({
+      query: (reportId) => ({
+        url: `/api/auth/renter/report-issues/${reportId}`,
+        method: "GET",
+      }),
+      providesTags: (_result, _error, reportId) => [
+        { type: "RenterIssueReports", id: reportId },
+      ],
+    }),
   }),
 });
 
@@ -168,4 +204,7 @@ export const {
   useCreateIssueReportMutation,
   useGetIssueReportsQuery,
   useGetIssueReportByIdQuery,
+  useCreateRenterIssueReportMutation,
+  useGetRenterIssueReportsQuery,
+  useGetRenterIssueReportByIdQuery,
 } = reportApi;

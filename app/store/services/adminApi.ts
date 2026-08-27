@@ -42,6 +42,12 @@ import {
   AdminReviewDetailResponse,
   AdminReviewActionResponse,
 } from "@/types/admin-reviews.type";
+import {
+  AdminTicketsQuery,
+  AdminTicketsResponse,
+  AdminTicketDetailResponse,
+  ResolveTicketPayload,
+} from "@/types/admin-tickets.type";
 import { toast } from "sonner";
 
 type AxiosBaseQueryArgs =
@@ -134,7 +140,7 @@ const axiosBaseQuery = (): BaseQueryFn<
 type AdminSubscribersQuery = {
   search?: string;
   status?: "all" | "active" | "past_due" | "cancelled";
-  plan?: "all" | "starter" | "professional" | "enterprise";
+  plan?: "all" | "flex" | "solo" | "fleet";
   page?: number;
   limit?: number;
 };
@@ -176,7 +182,7 @@ const toQueryString = <T extends object>(filters?: T) => {
 export const adminApi = createApi({
   reducerPath: "adminApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter", "AdminSettingsUsers", "AdminActivityLog", "PlatformSettings", "EmailSends", "AdminReviews"],
+  tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter", "AdminSubscriber", "AdminSettingsUsers", "AdminActivityLog", "PlatformSettings", "EmailSends", "AdminReviews", "AdminTickets"],
   endpoints: (builder) => ({
     adminLogin: builder.mutation<AdminSignInResponse, AdminSignInPayload>({
       query: (payload) => ({
@@ -209,8 +215,42 @@ export const adminApi = createApi({
     getAdminSubscriberById: builder.query<AdminISubscriberByIdResponse, string>(
       {
         query: (subscriberId) => `/api/auth/admin/subscribers/${subscriberId}`,
+        providesTags: (_result, _error, subscriberId) => [
+          { type: "AdminSubscriber", id: subscriberId },
+        ],
       },
     ),
+    suspendSubscriber: builder.mutation<unknown, string>({
+      query: (subscriberId) => ({
+        url: `/api/auth/admin/subscribers/${subscriberId}/suspend`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (_result, _error, subscriberId) => [
+        { type: "AdminSubscriber", id: subscriberId },
+      ],
+    }),
+    reactivateSubscriber: builder.mutation<unknown, string>({
+      query: (subscriberId) => ({
+        url: `/api/auth/admin/subscribers/${subscriberId}/reactivate`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (_result, _error, subscriberId) => [
+        { type: "AdminSubscriber", id: subscriberId },
+      ],
+    }),
+    changeSubscriberPlan: builder.mutation<
+      unknown,
+      { subscriberId: string; plan: "flex" | "solo" | "fleet" }
+    >({
+      query: ({ subscriberId, plan }) => ({
+        url: `/api/auth/admin/subscribers/${subscriberId}/plan`,
+        method: "PATCH",
+        body: { plan },
+      }),
+      invalidatesTags: (_result, _error, { subscriberId }) => [
+        { type: "AdminSubscriber", id: subscriberId },
+      ],
+    }),
     getAdminSubscriberFleetDetail: builder.query<
       AdminISubscriberFleetDetailResponse,
       AdminSubscriberFleetDetailQuery
@@ -273,6 +313,26 @@ export const adminApi = createApi({
         { type: "AdminRenters", id: "LIST" },
         { type: "AdminVerificationQueue", id: "LIST" },
         { type: "AdminRenter", id: renterId },
+      ],
+    }),
+    approveHostBusinessVerification: builder.mutation<unknown, string>({
+      query: (hostId) => ({
+        url: `/api/auth/admin/hosts/${hostId}/business-verification`,
+        method: "PATCH",
+        body: { status: "approved" },
+      }),
+      invalidatesTags: (_result, _error, hostId) => [
+        { type: "AdminSubscriber", id: hostId },
+      ],
+    }),
+    rejectHostBusinessVerification: builder.mutation<unknown, string>({
+      query: (hostId) => ({
+        url: `/api/auth/admin/hosts/${hostId}/business-verification`,
+        method: "PATCH",
+        body: { status: "rejected" },
+      }),
+      invalidatesTags: (_result, _error, hostId) => [
+        { type: "AdminSubscriber", id: hostId },
       ],
     }),
 
@@ -455,6 +515,35 @@ export const adminApi = createApi({
       }),
       invalidatesTags: [{ type: "AdminReviews", id: "LIST" }],
     }),
+
+    // ─── Tickets ─────────────────────────────────────────────────────────────
+    getAdminTickets: builder.query<
+      AdminTicketsResponse,
+      AdminTicketsQuery | undefined
+    >({
+      query: (filters) => {
+        const query = toQueryString(filters);
+        return `/api/auth/admin/tickets${query ? `?${query}` : ""}`;
+      },
+      providesTags: [{ type: "AdminTickets", id: "LIST" }],
+    }),
+    getAdminTicketDetail: builder.query<AdminTicketDetailResponse, string>({
+      query: (ticketId) => `/api/auth/admin/tickets/${ticketId}`,
+      providesTags: (_result, _error, ticketId) => [
+        { type: "AdminTickets", id: ticketId },
+      ],
+    }),
+    resolveAdminTicket: builder.mutation<AdminTicketDetailResponse, ResolveTicketPayload>({
+      query: ({ ticketId, responseMessage }) => ({
+        url: `/api/auth/admin/tickets/${ticketId}/resolve`,
+        method: "PATCH",
+        body: { responseMessage },
+      }),
+      invalidatesTags: (_result, _error, { ticketId }) => [
+        { type: "AdminTickets", id: "LIST" },
+        { type: "AdminTickets", id: ticketId },
+      ],
+    }),
   }),
 });
 
@@ -464,6 +553,9 @@ export const {
   useGetAdminBillingQuery,
   useGetAdminSubscribersQuery,
   useGetAdminSubscriberByIdQuery,
+  useSuspendSubscriberMutation,
+  useReactivateSubscriberMutation,
+  useChangeSubscriberPlanMutation,
   useGetAdminSubscriberFleetDetailQuery,
   useGetAdminSubscriberBookingDetailQuery,
   useGetAdminRenterByIdQuery,
@@ -471,6 +563,8 @@ export const {
   useGetAdminVerificationPendingRentersQuery,
   useApproveRenterVerificationMutation,
   useRejectRenterVerificationMutation,
+  useApproveHostBusinessVerificationMutation,
+  useRejectHostBusinessVerificationMutation,
   // Settings: Admin Users
   useGetAdminUsersListQuery,
   useInviteAdminMutation,
@@ -497,4 +591,8 @@ export const {
   useFlagAdminReviewMutation,
   useUnflagAdminReviewMutation,
   useDeleteAdminReviewMutation,
+  // Tickets
+  useGetAdminTicketsQuery,
+  useGetAdminTicketDetailQuery,
+  useResolveAdminTicketMutation,
 } = adminApi;

@@ -29,8 +29,17 @@ export default function SubscriberDetailPageClient({
     );
   }
 
-  const { subscriber, stats, trend, fleet, billingHistory, activityLog, actions } =
-    data.data;
+  const {
+    subscriber,
+    stats,
+    trend,
+    fleet,
+    bookings,
+    billingHistory,
+    activityLog,
+    actions,
+    businessVerification,
+  } = data.data;
 
   const revenue = trend.data.map((d) => ({
     month: d.month,
@@ -48,7 +57,7 @@ export default function SubscriberDetailPageClient({
 
   const billingRows = billingHistory.map((b) => ({
     id: b.id,
-    package: b.invoiceNumber,
+    package: b.description,
     status: b.status,
     totalCost: String(b.amount),
     date: b.createdAt,
@@ -65,8 +74,9 @@ export default function SubscriberDetailPageClient({
       totalEarning={stats.totalRevenue}
       revenue={revenue}
       fleet={fleetRows}
-      booking={[]}
+      booking={bookings}
       billingHistory={billingRows}
+      businessVerification={businessVerification}
       canSuspend={actions.canSuspend}
       canUpgradePlan={actions.canUpgradePlan}
       activityLog={activityLog}

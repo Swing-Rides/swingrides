@@ -17,7 +17,7 @@ export interface AdminOverviewTrendPoint {
 }
 
 export interface AdminOverviewSubscriberDistributionItem {
-  plan: "starter" | "professional" | "enterprise";
+  plan: "flex" | "solo" | "fleet";
   count: number;
   percentage: number;
 }
@@ -53,7 +53,7 @@ export type BillingPaymentStatus =
   | "pending"
   | "failed"
   | "refunded";
-export type BillingPlan = "all" | "starter" | "professional" | "enterprise";
+export type BillingPlan = "all" | "flex" | "solo" | "fleet";
 
 export interface AdminBillingFilters {
   tab?: BillingTab;
@@ -84,7 +84,7 @@ export interface AdminBillingTrendPoint {
 }
 
 export interface AdminBillingRevenueByPlanItem {
-  plan: "starter" | "professional" | "enterprise";
+  plan: "flex" | "solo" | "fleet";
   value: number;
   percentage: number;
 }

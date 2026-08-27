@@ -137,6 +137,8 @@ export type CommunicationLogItem = {
   recipient: string;
   message: string;
   status: CommunicationStatus;
+  bookingId?: string;
+  referenceCode?: string;
 };
 
 export type HostCommunicateSettings = {
@@ -192,7 +194,7 @@ export type UpdateAgreementTemplateRequest = {
 
 export type SendAgreementForSignatureRequest = {
   agreementType: AgreementType;
-  email: string;
+  bookingId: string;
   message?: string;
   signatureRequestUrl?: string;
 };
@@ -453,10 +455,10 @@ export const settingsApi = createApi({
       ApiEnvelope<HostAgreementsSettings>,
       SendAgreementForSignatureRequest
     >({
-      query: ({ agreementType, email, message, signatureRequestUrl }) => ({
+      query: ({ agreementType, bookingId, message, signatureRequestUrl }) => ({
         url: `/api/host/settings/agreements/${agreementType}/send-signature`,
         method: "POST",
-        body: { email, message, signatureRequestUrl },
+        body: { bookingId, message, signatureRequestUrl },
       }),
       invalidatesTags: [
         { type: "HostSettings", id: "DASHBOARD" },

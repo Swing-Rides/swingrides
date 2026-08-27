@@ -13,6 +13,19 @@ export const validators = {
                 },
         }),
 
+        // Same shape as email(), but restricted to a single company domain —
+        // used for internal-only forms like admin invites, not general signup.
+        companyEmail: (domain = 'swingrides.com'): RegisterOptions => ({
+                required: 'Email address is required',
+                pattern: {
+                        value: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,8}$/i,
+                        message: 'Please enter a valid email address',
+                },
+                validate: (value: string) =>
+                        value?.toLowerCase().trim().endsWith(`@${domain}`) ||
+                        `Email must be a @${domain} address`,
+        }),
+
         password: (): RegisterOptions => ({
                 required: 'Password is required',
                 minLength: {

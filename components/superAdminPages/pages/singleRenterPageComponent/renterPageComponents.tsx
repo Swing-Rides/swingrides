@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,9 +39,15 @@ import {
 } from "../../dashboard/statusPill";
 import { formatDate } from "../../utils/formatDate";
 import { TableSkeletonRows } from "../subscribersPageComponents";
+import PopupWrapper from "../singleSubscriberPageComponents/popupWrapper";
+import {
+  useApproveRenterVerificationMutation,
+  useRejectRenterVerificationMutation,
+} from "@/app/store/services/adminApi";
 import Image from "next/image";
 
 type RenterPageComponentsProps = {
+  renterId: string;
   renter: AdminRenterByIdResponseRenter;
   stats: AdminRenterByIdResponseStats;
   verification: AdminRenterByIdResponseVerification;
@@ -50,20 +56,23 @@ type RenterPageComponentsProps = {
 };
 
 type ProfileSideCardProps = {
+  renterId: string;
   renter: AdminRenterByIdResponseRenter;
   stats: AdminRenterByIdResponseStats;
   verification: AdminRenterByIdResponseVerification;
 };
 
 type ProfileTabsProps = {
+  renterId: string;
   renter: AdminRenterByIdResponseRenter;
+  verification: AdminRenterByIdResponseVerification;
   documents: AdminRenterByIdResponseDocuments[];
   bookings: AdminRenterByIdResponseBookings;
 };
 
 type ProfileTabProps = {
   renter: AdminRenterByIdResponseRenter;
-  documents: AdminRenterByIdResponseDocuments[];
+  verification: AdminRenterByIdResponseVerification;
 };
 
 type BookingTableProps = {
@@ -72,6 +81,7 @@ type BookingTableProps = {
 };
 
 export default function RenterPageComponents({
+  renterId,
   renter,
   stats,
   verification,
@@ -103,12 +113,15 @@ export default function RenterPageComponents({
       </div>
       <div className="flex flex-col md:items-start md:flex-row mt-4 md:mt-8 gap-4">
         <ProfileSideCard
+          renterId={renterId}
           renter={renter}
           stats={stats}
           verification={verification}
         />
         <ProfileTabs
+          renterId={renterId}
           renter={renter}
+          verification={verification}
           documents={documents}
           bookings={bookings}
         />
@@ -118,10 +131,37 @@ export default function RenterPageComponents({
 }
 
 const ProfileSideCard = ({
+  renterId,
   renter,
   stats,
   verification,
 }: ProfileSideCardProps) => {
+  const [popup, setPopup] = useState<"approve" | "reject" | null>(null);
+  const [approveVerification, { isLoading: approving }] =
+    useApproveRenterVerificationMutation();
+  const [rejectVerification, { isLoading: rejecting }] =
+    useRejectRenterVerificationMutation();
+
+  const handleApprove = async () => {
+    try {
+      await approveVerification(renterId).unwrap();
+    } catch (error) {
+      console.error("Approve renter verification failed:", error);
+    } finally {
+      setPopup(null);
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      await rejectVerification(renterId).unwrap();
+    } catch (error) {
+      console.error("Reject renter verification failed:", error);
+    } finally {
+      setPopup(null);
+    }
+  };
+
   return (
     <div className="md:max-w-64 p-6 bg-white rounded-lg border border-gray-200 flex flex-col justify-start items-start gap-5">
       <div className="mx-auto space-y-3">
@@ -199,12 +239,20 @@ const ProfileSideCard = ({
 
       <div className="w-full space-y-2.5">
         {verification.status.toLowerCase() !== "verified" && (
-          <button className="w-full px-6 py-2 rounded-xs border border-blue-700 bg-blue-700 hover:bg-blue-900 duration-300 transition-colors text-white text-sm font-semibold font-text capitalize cursor-pointer">
+          <button
+            type="button"
+            onClick={() => setPopup("approve")}
+            className="w-full px-6 py-2 rounded-xs border border-blue-700 bg-blue-700 hover:bg-blue-900 duration-300 transition-colors text-white text-sm font-semibold font-text capitalize cursor-pointer"
+          >
             Approve Verification
           </button>
         )}
         {verification.status.toLowerCase() !== "verified" && (
-          <button className="w-full px-6 py-2 rounded-xs border border-red-500 text-red-500 bg-transparent hover:bg-red-700 duration-300 hover:text-red-200 transition-colors text-sm font-semibold font-text capitalize cursor-pointer">
+          <button
+            type="button"
+            onClick={() => setPopup("reject")}
+            className="w-full px-6 py-2 rounded-xs border border-red-500 text-red-500 bg-transparent hover:bg-red-700 duration-300 hover:text-red-200 transition-colors text-sm font-semibold font-text capitalize cursor-pointer"
+          >
             Reject Verification
           </button>
         )}
@@ -213,11 +261,46 @@ const ProfileSideCard = ({
           Flag Renter
         </button>
       </div>
+
+      <PopupWrapper
+        open={popup === "approve"}
+        title="Approve renter verification"
+        onClose={() => setPopup(null)}
+        onConfirm={handleApprove}
+        confirmLabel="Approve"
+        confirmDisabled={approving}
+      >
+        <p className="text-gray-500 text-sm font-normal font-text leading-5">
+          This will mark {renter.name}&apos;s identity verification as
+          verified.
+        </p>
+      </PopupWrapper>
+
+      <PopupWrapper
+        open={popup === "reject"}
+        title="Reject renter verification"
+        onClose={() => setPopup(null)}
+        onConfirm={handleReject}
+        confirmLabel="Reject"
+        confirmVariant="danger"
+        confirmDisabled={rejecting}
+      >
+        <p className="text-gray-500 text-sm font-normal font-text leading-5">
+          This will reject {renter.name}&apos;s submitted verification
+          documents. They will need to resubmit.
+        </p>
+      </PopupWrapper>
     </div>
   );
 };
 
-const ProfileTabs = ({ renter, documents, bookings }: ProfileTabsProps) => {
+const ProfileTabs = ({
+  renterId,
+  renter,
+  verification,
+  documents,
+  bookings,
+}: ProfileTabsProps) => {
   return (
     <div className="w-full p-px bg-white rounded-lg border border-gray-200 flex flex-col gap-6">
       <Tabs defaultValue="profile" className="md:gap-6">
@@ -247,7 +330,7 @@ const ProfileTabs = ({ renter, documents, bookings }: ProfileTabsProps) => {
 
         <div className="px-4 pb-4 md:pb-8 md:px-8">
           <TabsContent value="profile">
-            <ProfileTab renter={renter} documents={documents} />
+            <ProfileTab renter={renter} verification={verification} />
           </TabsContent>
           <TabsContent value="bookings">
             <Suspense>
@@ -258,7 +341,11 @@ const ProfileTabs = ({ renter, documents, bookings }: ProfileTabsProps) => {
             </Suspense>
           </TabsContent>
           <TabsContent value="documents">
-            <DocumentTab documents={documents} />
+            <DocumentTab
+              renterId={renterId}
+              verification={verification}
+              documents={documents}
+            />
           </TabsContent>
         </div>
       </Tabs>
@@ -266,7 +353,7 @@ const ProfileTabs = ({ renter, documents, bookings }: ProfileTabsProps) => {
   );
 };
 
-const ProfileTab = ({ renter, documents }: ProfileTabProps) => {
+const ProfileTab = ({ renter, verification }: ProfileTabProps) => {
   return (
     <div className="space-y-3 md:space-y-6">
       <div className="flex flex-col gap-4">
@@ -285,32 +372,36 @@ const ProfileTab = ({ renter, documents }: ProfileTabProps) => {
           Verification Status
         </h3>
         <div className="p-2.5 md:p-4">
-          {documents.map((document) => (
-            <div className="grid gap-3" key={document.uploadedAt}>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
-                  Status
-                </span>
-                <RenterVerificationStatusPill status={document.status} />
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
-                  Date Submitted
-                </span>
-                <span className="text-neutral-950 text-sm font-normal font-text leading-5">
-                  {formatDate(document.uploadedAt)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
-                  Document Type
-                </span>
-                <span className="text-neutral-950 text-sm font-normal font-text leading-5">
-                  {document.type}
-                </span>
-              </div>
+          <div className="grid gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
+                Status
+              </span>
+              <RenterVerificationStatusPill
+                status={
+                  verification.status.toLowerCase() as RenterVerificationDocumentStatus
+                }
+              />
             </div>
-          ))}
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
+                Date Submitted
+              </span>
+              <span className="text-neutral-950 text-sm font-normal font-text leading-5">
+                {verification.submittedAt
+                  ? formatDate(verification.submittedAt)
+                  : "—"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-gray-500 text-xs font-semibold font-text uppercase leading-4">
+                Document Type
+              </span>
+              <span className="text-neutral-950 text-sm font-normal font-text leading-5">
+                {verification.documentType || "—"}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -319,9 +410,6 @@ const ProfileTab = ({ renter, documents }: ProfileTabProps) => {
 
 const BookingTable = ({ rowData, limit }: BookingTableProps) => {
   const ROWS_PER_PAGE = limit;
-
-  const hostId = "6a01a1cb39a46efd34fe0fe1";
-  const bookingId = "6a01a1ce39a46efd34fe0fe9";
 
   const router = useRouter();
   const pathname = usePathname();
@@ -383,7 +471,7 @@ const BookingTable = ({ rowData, limit }: BookingTableProps) => {
               </TableRow>
             ) : (
               paginated.map((item) => (
-                <TableRow key={item.bookingRef}>
+                <TableRow key={item.id}>
                   <TableCell>
                     <span className="text-neutral-950 text-xs font-normal font-text leading-5">
                       {item.bookingRef}
@@ -418,11 +506,15 @@ const BookingTable = ({ rowData, limit }: BookingTableProps) => {
                     <CarBookingStatusPill status={item.status} />
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/admin/subscribers/${hostId}/bookings/${bookingId}`}
-                    >
-                      <ExternalLink className="size-4 text-[#6B7280]" />
-                    </Link>
+                    {item.hostId ? (
+                      <Link
+                        href={`/admin/subscribers/${item.hostId}/bookings/${item.id}`}
+                      >
+                        <ExternalLink className="size-4 text-[#6B7280]" />
+                      </Link>
+                    ) : (
+                      <ExternalLink className="size-4 text-gray-300" />
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -464,6 +556,8 @@ const BookingTable = ({ rowData, limit }: BookingTableProps) => {
 };
 
 type DocumentTabProps = {
+  renterId: string;
+  verification: AdminRenterByIdResponseVerification;
   documents: AdminRenterByIdResponseDocuments[];
 };
 
@@ -474,40 +568,105 @@ type DocumentCardProps = {
   status: RenterVerificationDocumentStatus;
 };
 
-const DocumentTab = ({ documents }: DocumentTabProps) => {
+const DocumentTab = ({ renterId, verification, documents }: DocumentTabProps) => {
+  const [popup, setPopup] = useState<"approve" | "reject" | null>(null);
+  const [approveVerification, { isLoading: approving }] =
+    useApproveRenterVerificationMutation();
+  const [rejectVerification, { isLoading: rejecting }] =
+    useRejectRenterVerificationMutation();
+
+  const canReview = verification.status.toLowerCase() !== "verified";
+
+  const handleApprove = async () => {
+    try {
+      await approveVerification(renterId).unwrap();
+    } catch (error) {
+      console.error("Approve renter verification failed:", error);
+    } finally {
+      setPopup(null);
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      await rejectVerification(renterId).unwrap();
+    } catch (error) {
+      console.error("Reject renter verification failed:", error);
+    } finally {
+      setPopup(null);
+    }
+  };
+
+  if (documents.length === 0) {
+    return (
+      <div className="p-4 text-sm text-gray-500 font-text">
+        No documents have been uploaded yet.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-4">
-        <DocumentCard
-          url={documents[0].url}
-          title={`Driver's License (Front)`}
-          uploadedAt={documents[0].uploadedAt}
-          status={documents[0].status}
-        />
-        <DocumentCard
-          url={documents[0].url}
-          title={`Driver's License (Back)`}
-          uploadedAt={documents[0].uploadedAt}
-          status={documents[0].status}
-        />
-        <DocumentCard
-          url={documents[0].url}
-          title={`Selfie with License`}
-          uploadedAt={documents[0].uploadedAt}
-          status={documents[0].status}
-        />
+        {documents.map((document) => (
+          <DocumentCard
+            key={`${document.type}-${document.uploadedAt}`}
+            url={document.url}
+            title={document.type}
+            uploadedAt={document.uploadedAt}
+            status={document.status}
+          />
+        ))}
       </div>
-      <div className="flex items-center justify-start gap-2">
-        <button className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-950 transition-colors duration-300 rounded-md px-10 py-2 text-white text-xs font-semibold font-text leading-5 border border-emerald-500 cursor-pointer">
-          <CircleCheckBig className="size-3.5" />
-          <span>Approve</span>
-        </button>
+      {canReview && (
+        <div className="flex items-center justify-start gap-2">
+          <button
+            type="button"
+            onClick={() => setPopup("approve")}
+            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-950 transition-colors duration-300 rounded-md px-10 py-2 text-white text-xs font-semibold font-text leading-5 border border-emerald-500 cursor-pointer"
+          >
+            <CircleCheckBig className="size-3.5" />
+            <span>Approve</span>
+          </button>
 
-        <button className="flex items-center gap-1.5 bg-transparent hover:bg-red-500 transition-colors duration-300 rounded-md px-10 py-2 text-red-500 hover:text-red-100 text-xs font-semibold font-text leading-5 border border-red-500 cursor-pointer">
-          <CircleX className="size-3.5" />
-          <span>Approve</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setPopup("reject")}
+            className="flex items-center gap-1.5 bg-transparent hover:bg-red-500 transition-colors duration-300 rounded-md px-10 py-2 text-red-500 hover:text-red-100 text-xs font-semibold font-text leading-5 border border-red-500 cursor-pointer"
+          >
+            <CircleX className="size-3.5" />
+            <span>Reject</span>
+          </button>
+        </div>
+      )}
+
+      <PopupWrapper
+        open={popup === "approve"}
+        title="Approve renter verification"
+        onClose={() => setPopup(null)}
+        onConfirm={handleApprove}
+        confirmLabel="Approve"
+        confirmDisabled={approving}
+      >
+        <p className="text-gray-500 text-sm font-normal font-text leading-5">
+          This will mark these verification documents as verified.
+        </p>
+      </PopupWrapper>
+
+      <PopupWrapper
+        open={popup === "reject"}
+        title="Reject renter verification"
+        onClose={() => setPopup(null)}
+        onConfirm={handleReject}
+        confirmLabel="Reject"
+        confirmVariant="danger"
+        confirmDisabled={rejecting}
+      >
+        <p className="text-gray-500 text-sm font-normal font-text leading-5">
+          This will reject these verification documents. The renter will need
+          to resubmit.
+        </p>
+      </PopupWrapper>
     </div>
   );
 };

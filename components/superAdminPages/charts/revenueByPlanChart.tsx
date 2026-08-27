@@ -13,9 +13,9 @@ import { formatNumberToUSD } from "../utils/formatNumbertoUSD";
 import { AdminBillingResponseData } from "@/types/admin.type";
 
 const LEGEND_COLORS: Record<string, string> = {
-  starter: "#9CA3AF",
-  professional: "#1A56DB",
-  enterprise: "#10B981",
+  flex: "#9CA3AF",
+  solo: "#1A56DB",
+  fleet: "#10B981",
 };
 
 function CustomLegend({

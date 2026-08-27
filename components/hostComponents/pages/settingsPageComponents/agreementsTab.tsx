@@ -5,6 +5,7 @@ import { FileText, Upload, AlertCircle } from "lucide-react";
 import {
   SendAgreementForm,
   UploadDocumentForm,
+  AgreementBookingOption,
 } from "../../forms/agreementForms";
 import { PopupWrapper } from "../../modals/popupWrapper";
 import type { AgreementType, AgreementData } from "./settingsTabs";
@@ -72,9 +73,10 @@ const AGREEMENT_CARDS: {
 
 export type AgreementsTabProps = {
   agreements: AgreementData[];
+  bookings: AgreementBookingOption[];
 };
 
-export const AgreementsTab = ({ agreements }: AgreementsTabProps) => {
+export const AgreementsTab = ({ agreements, bookings }: AgreementsTabProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {AGREEMENT_CARDS.map((card) => {
@@ -87,6 +89,7 @@ export const AgreementsTab = ({ agreements }: AgreementsTabProps) => {
             label={card.label}
             previewLink={data?.previewLink}
             shareLink={data?.shareLink ?? ""}
+            bookings={bookings}
           />
         );
       })}
@@ -102,6 +105,7 @@ type AgreementsCardProps = {
   label: string;
   previewLink?: string;
   shareLink: string;
+  bookings: AgreementBookingOption[];
 };
 
 const AgreementsCard = ({
@@ -110,6 +114,7 @@ const AgreementsCard = ({
   label,
   previewLink,
   shareLink,
+  bookings,
 }: AgreementsCardProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const isCustom = agreementType === "custom";
@@ -154,6 +159,7 @@ const AgreementsCard = ({
           agreementType={agreementType}
           previewLink={previewLink}
           shareLink={shareLink}
+          bookings={bookings}
           onClose={() => setModalOpen(false)}
         />
       )}
@@ -168,6 +174,7 @@ type AgreementModalProps = {
   agreementType: AgreementType;
   previewLink?: string;
   shareLink: string;
+  bookings: AgreementBookingOption[];
   onClose: () => void;
 };
 
@@ -176,16 +183,17 @@ const AgreementModal = ({
   agreementType,
   previewLink,
   shareLink,
+  bookings,
   onClose,
 }: AgreementModalProps) => {
   const [updateAgreementTemplate] = useUpdateAgreementTemplateMutation();
   const [sendAgreementForSignature] = useSendAgreementForSignatureMutation();
 
-  const handleSendAgreement = async (values: { email: string; message: string }) => {
+  const handleSendAgreement = async (values: { bookingId: string; message: string }) => {
     try {
       await sendAgreementForSignature({
         agreementType: AGREEMENT_TYPE_TO_API[agreementType],
-        email: values.email,
+        bookingId: values.bookingId,
         message: values.message || undefined,
       }).unwrap();
     } catch (error) {
@@ -194,7 +202,7 @@ const AgreementModal = ({
     }
   };
 
-  const handleUploadCustomAgreement = async (values: { email: string; document: FileList }) => {
+  const handleUploadCustomAgreement = async (values: { bookingId: string; document: FileList }) => {
     const file = values.document?.[0];
     if (!file) {
       toast.error("Please select a document to upload");
@@ -210,7 +218,7 @@ const AgreementModal = ({
 
       await sendAgreementForSignature({
         agreementType: AGREEMENT_TYPE_TO_API[agreementType],
-        email: values.email,
+        bookingId: values.bookingId,
       }).unwrap();
 
       toast.success("Custom agreement uploaded and sent successfully");
@@ -220,16 +228,17 @@ const AgreementModal = ({
     }
   };
 
-  // Custom type → always show upload form (with email + file)
+  // Custom type → always show upload form (with a booking selector + file)
   if (isCustom) {
     return (
       <PopupWrapper
         onClose={onClose}
         popupTitle="Upload Custom Agreement"
-        popupDescription="Upload your custom agreement and enter the renter's email to send it"
+        popupDescription="Upload your custom agreement and select the booking to send it for"
       >
         <UploadDocumentForm
           agreementType={agreementType}
+          bookings={bookings}
           onClose={onClose}
           onSubmit={handleUploadCustomAgreement}
         />
@@ -261,6 +270,7 @@ const AgreementModal = ({
         agreementType={agreementType}
         shareLink={shareLink}
         previewLink={previewLink}
+        bookings={bookings}
         onClose={onClose}
         onSubmit={handleSendAgreement}
       />

@@ -2,19 +2,20 @@ import { RenterStatus } from "@/constants/renterTestData";
 import { ReimbursementRequestsStatus, MaintenanceStatusType, BookingPaymentStatusType } from "@/constants/superAdminSidebar";
 import { CarBookingStatus, RenterVerificationDocumentStatus } from "@/types/renters.type";
 import { SubscriberPlan, SubscriberStatus, FleetStatus, BookingStatus, BillingStatus, SubscriberBillingStatus } from "@/types/subscribers.type";
+import { issueTypeOptions, IssueTypeValue } from "@/types/issueReport.type";
 
 export type AdminUsersRoleType = 'super admin' | 'admin' | 'support';
 export type AdminUsersStatusType = 'active' | 'suspended' | 'invited';
 export type ReviewStarRatingType = '1' | '2' | '3' | '4' | '5';
 export type AdminTicketStatusItemsType = 'open' | 'in progress' | 'resolved';
-export type AdminTicketTypesItemsType = 'technical issue' | 'billing query' | 'dispute' | 'relist request' | 'damage report' | 'incidental charge' | 'feature request';
+export type AdminTicketTypesItemsType = IssueTypeValue;
 export type AdminTicketPriorityItemsType = 'yes' | 'no';
 export type AdminUserTypeItemsType = 'host' | 'renter' | 'both';
 
 export const plansItems: { value: SubscriberPlan; label: string }[] = [
-        { value: 'enterprise', label: 'Enterprise' },
-        { value: 'professional', label: 'Professional' },
-        { value: 'starter', label: 'Starter' },
+        { value: 'flex', label: 'Flex' },
+        { value: 'solo', label: 'Solo' },
+        { value: 'fleet', label: 'Fleet' },
 ]
 
 export const statusItems: { value: SubscriberStatus; label: string }[] = [
@@ -43,15 +44,7 @@ export const adminTicketStatusItems: { value: AdminTicketStatusItemsType; label:
         { value: 'resolved', label: 'Resolved' },
 ]
 
-export const adminTicketTypesItems: { value: AdminTicketTypesItemsType; label: string }[] = [
-        { value: 'technical issue', label: 'Technical Issue' },
-        { value: 'billing query', label: 'Billing Query' },
-        { value: 'dispute', label: 'Dispute' },
-        { value: 'relist request', label: 'Relist Request' },
-        { value: 'damage report', label: 'Damage Report' },
-        { value: 'incidental charge', label: 'Incidental Charge' },
-        { value: 'feature request', label: 'Feature Request' },
-]
+export const adminTicketTypesItems: { value: AdminTicketTypesItemsType; label: string }[] = issueTypeOptions
 
 export const adminTicketPriorityItems: { value: AdminTicketPriorityItemsType; label: string }[] = [
         { value: 'yes', label: 'Yes' },
@@ -71,9 +64,9 @@ export const renterStatusItems: { value: RenterStatus; label: string }[] = [
 ]
 
 export const SUBSCRIPTION_PLAN_STYLE: Record<SubscriberPlan, { label: string; textColor: string; bgColor: string }> = {
-        'starter': { label: 'Starter', textColor: '#3B82F6', bgColor: '#E3EEFF' },
-        'professional': { label: 'Professional', textColor: '#92400E', bgColor: '#FEF3C7' },
-        'enterprise': { label: 'Enterprise', textColor: '#3B82F6', bgColor: '#000000' },
+        'flex': { label: 'Flex', textColor: '#3B82F6', bgColor: '#E3EEFF' },
+        'solo': { label: 'Solo', textColor: '#92400E', bgColor: '#FEF3C7' },
+        'fleet': { label: 'Fleet', textColor: '#3B82F6', bgColor: '#000000' },
 }
 
 export const SUBSCRIPTION_BILLING_STATUS_STYLE: Record<SubscriberBillingStatus, { label: string; textColor: string; bgColor: string }> = {

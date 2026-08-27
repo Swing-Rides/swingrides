@@ -25,6 +25,8 @@ import {
   useUpgradePlanMutation,
 } from "@/app/store/services/settingsApi";
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
+import { useListBookingsQuery } from "@/app/store/services/bookingApi";
+import type { AgreementBookingOption } from "../../forms/agreementForms";
 import { toast } from "sonner";
 import ManageBillingModal from "./manageBillingModal";
 import UnlinkStripeDialog from "./unlinkStripeDialog";
@@ -89,8 +91,25 @@ const SettingsPageContent = () => {
     useUnlinkStripeConnectMutation();
   const [upgradePlan] = useUpgradePlanMutation();
   const { refetch } = useGetHostProfileQuery();
+  const { data: bookingsResponse } = useListBookingsQuery();
 
   const settingsData = settingsResponse?.data;
+
+  const agreementBookings = useMemo<AgreementBookingOption[]>(() => {
+    const rows = bookingsResponse?.data ?? [];
+
+    return rows
+      .filter((booking) => booking.status !== "cancelled")
+      .map((booking) => ({
+        id: booking.id,
+        referenceCode: booking.referenceCode,
+        renterName: booking.renterName,
+        renterEmail: booking.renterEmail,
+        vehicleName: booking.vehicleName,
+        pickupDate: booking.pickupDate,
+        returnDate: booking.returnDate,
+      }));
+  }, [bookingsResponse]);
 
   const profileDefaults = useMemo<ProfileCompanyFormValues | null>(() => {
     const profile = settingsData?.profileCompany;
@@ -352,7 +371,7 @@ const SettingsPageContent = () => {
           <CommunicateTab communicationLog={communicationLog} />
         </TabsContent>
         <TabsContent value="agreements">
-          <AgreementsTab agreements={agreements} />
+          <AgreementsTab agreements={agreements} bookings={agreementBookings} />
         </TabsContent>
       </Tabs>
       {showBillingModal && (

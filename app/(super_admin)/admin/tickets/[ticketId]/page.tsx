@@ -8,10 +8,5 @@ export default async function TicketTypePage({
 
         const { ticketId } = await params;
 
-        return (
-                <div>
-                        {ticketId}
-                        <TicketTypePageComponent />
-                </div>
-        )
+        return <TicketTypePageComponent ticketId={ticketId} />
 }

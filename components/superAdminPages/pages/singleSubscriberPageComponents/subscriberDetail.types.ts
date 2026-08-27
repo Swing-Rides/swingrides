@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import {
         AdminSubscriberByIdDataFleet,
+        AdminSubscriberByIdDataBusinessVerification,
         FleetStatus,
         BookingStatus,
         BillingStatus,
@@ -30,6 +31,7 @@ export type SubscriberDetailPageProps = {
         ownerEmail: string;
         plan: string;
         joinedDate: string;
+        businessVerification: AdminSubscriberByIdDataBusinessVerification;
         activityLog: {
                 time: string;
                 eventType: string;
@@ -131,4 +133,16 @@ export type ActionPopupProps = {
         onClose: () => void;
         onConfirm: () => void;
         organisationName: string;
+        confirmDisabled?: boolean;
+};
+
+export type SubscriberPlanKey = "flex" | "solo" | "fleet";
+
+export type UpgradePlanPopupProps = {
+        open: boolean;
+        onClose: () => void;
+        onConfirm: (plan: SubscriberPlanKey) => void | Promise<void>;
+        organisationName: string;
+        currentPlan?: string;
+        confirmDisabled?: boolean;
 };

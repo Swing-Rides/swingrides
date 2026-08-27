@@ -23,8 +23,8 @@ const fields: FormFieldConfig[] = [
                 name: 'email',
                 type: 'email',
                 label: 'Email Address',
-                placeholder: 'johnn@swingrides.ng',
-                validation: validators.email(),
+                placeholder: 'johnn@swingrides.com',
+                validation: validators.companyEmail(),
         },
         {
                 name: 'role',

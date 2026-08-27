@@ -1,13 +1,19 @@
-import { Ban, TrendingUp, ShieldCheck } from "lucide-react";
+import { Ban, CircleCheck, TrendingUp, ShieldCheck } from "lucide-react";
 import { HeaderActionItem } from "./subscriberDetail.types";
 
-export const HEADER_ACTIONS: HeaderActionItem[] = [
-        {
-                id: "suspend",
-                label: "Suspend Account",
-                icon: <Ban className="size-4" />,
-                danger: true,
-        },
+export const getHeaderActions = (isSuspended: boolean): HeaderActionItem[] => [
+        isSuspended
+                ? {
+                        id: "suspend",
+                        label: "Reactivate Account",
+                        icon: <CircleCheck className="size-4" />,
+                }
+                : {
+                        id: "suspend",
+                        label: "Suspend Account",
+                        icon: <Ban className="size-4" />,
+                        danger: true,
+                },
         {
                 id: "upgrade",
                 label: "Upgrade Plan",
