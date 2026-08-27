@@ -20,7 +20,7 @@ import {
   PaymentFormValues,
   PaymentSection,
 } from "@/components/forms/browseCarPaymentSection";
-import { Calendar, Car, Settings, Star, Users } from "lucide-react";
+import { BadgeCheck, BadgeX, Calendar, Car, Settings, Star, Users } from "lucide-react";
 import GallerySlider from "@/components/slider/gallerySlider";
 import { shareContent } from "./util";
 import { writeDraftToStorage } from "@/lib/checkout-helpers";
@@ -44,7 +44,7 @@ export default function CarPageComponent({
   insuranceExpiration,
   insuranceProvider,
   policyNumber,
-  taxRate
+  taxRate,
 }: CarPageComponentProp) {
   return (
     <>
@@ -63,6 +63,7 @@ export default function CarPageComponent({
             tripsCompleted={host.tripsCompleted}
             contactNumber={host.contactNumber}
             rating={host.rating}
+            userVerified={host.userVerified}
           />
           <RightContent
             price={price}
@@ -133,6 +134,7 @@ const LeftContent = memo(
     tripsCompleted,
     contactNumber,
     rating,
+    userVerified,
   }: ImagesSectionProps & CarDetailCardProps & HostInfoType) => {
     return (
       <div className="col-span-1 md:col-span-7 w-full">
@@ -151,6 +153,7 @@ const LeftContent = memo(
             tripsCompleted={tripsCompleted}
             contactNumber={contactNumber}
             rating={rating}
+            userVerified={userVerified}
           />
         </div>
       </div>
@@ -447,6 +450,7 @@ const HostCard = memo(
     tripsCompleted,
     contactNumber,
     rating,
+    userVerified,
   }: HostInfoType) => {
     const initials = getInitials(hostName);
 
@@ -457,15 +461,22 @@ const HostCard = memo(
             <span className="text-white">{initials}</span>
           </div>
           <div className="flex flex-col gap-px">
-            <h4 className="text-[#0B0B0B] text-sm font-semibold font-text leading-5">
-              {hostName}
-            </h4>
+            <div className="flex items-center gap-1">
+              <h4 className="text-neutral-950 text-sm font-semibold font-text leading-5">
+                {hostName}
+              </h4>
+              {userVerified ? (<div title='Verified User'>
+                  <BadgeCheck className={`size-4 text-blue-700`}/>
+              </div>) : (<div title='Unverified User'>
+                  <BadgeX className={`size-4 text-red-500`}/>
+              </div>)}
+            </div>
             <span className="text-[#6B7280] text-xs font-normal font-text leading-4">
               Member since {memberSince} · {tripsCompleted} trips completed
             </span>
             <div className="flex items-center gap-1">
               <Star className="size-4 fill-yellow-400 text-yellow-400" />
-              <span className="text-[#0B0B0B] text-xs font-medium font-text leading-4">
+              <span className="text-neutral-950 text-xs font-medium font-text leading-4">
                 {rating} Host Rating
               </span>
             </div>

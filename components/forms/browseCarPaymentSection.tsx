@@ -41,6 +41,7 @@ import {
   isReturnDateTimeAvailable as checkReturnDateTimeAvailable,
   isScheduleDateDisabled as checkScheduleDateDisabled,
 } from "@/lib/vehicleBookingHelpers";
+import { INSURANCE_LINK } from "@/constants/constant";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -588,13 +589,27 @@ export const PaymentSection = memo(
 
         {/* ── Insurance card ──────────────────────────────── */}
         <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
-          <div className="flex items-center justify-between gap-3">
-            <h4 className="text-neutral-950 text-base font-semibold font-text leading-6">
-              Insurance Details
-            </h4>
-            <span className="block py-0.5 px-3 rounded-full bg-amber-100 text-amber-500 text-xs font-semibold">
-              OPTIONAL
-            </span>
+
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="text-neutral-950 text-base font-semibold font-text leading-6">
+                Insurance Details
+              </h4>
+              <span className="block py-0.5 px-3 rounded-full bg-amber-100 text-amber-500 text-xs font-semibold">
+                OPTIONAL
+              </span>
+            </div>
+
+            <div>
+              <Link
+                href={INSURANCE_LINK}
+                target="_blank"
+                title="Get insurance for yourself"
+                className="text-xs text-blue-700 hover:text-blue-950 duration-300 transition-colors"
+              >
+                Click here to get insurance for yourself
+              </Link>
+            </div>
           </div>
 
           <div className="flex flex-col gap-4">

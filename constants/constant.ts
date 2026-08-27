@@ -9,3 +9,5 @@ export const DISCORD_COMMUNITY_LINK = `https://discord.gg/8gTkpVEHb`
 export const HOST_REGISTRATION_PATH = `/host/register/`
 
 export const DEFAULT_IMAGE_SRC = `/images/swingrides-default-img.webp`
+
+export const INSURANCE_LINK = `https://portal.abiweb.com/quote/retail/period-x/indicative/`

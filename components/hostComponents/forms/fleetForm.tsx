@@ -25,6 +25,8 @@ import {
 } from "@/components/forms/MainForm";
 import { validateVin } from "@/lib/vinChecker";
 import { US_STATES } from "@/constants/addressState";
+import Link from "next/link";
+import { INSURANCE_LINK } from "@/constants/constant";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -287,6 +289,18 @@ export default function FleetForm({
 
           {/* Cell 2: Insurance Details */}
           <Cell icon={<Info />} title="Insurance Details">
+
+            <div>
+              <Link
+                href={INSURANCE_LINK}
+                target="_blank"
+                title="Get insurance for yourself"
+                className="text-xs text-blue-700 hover:text-blue-950 duration-300 transition-colors"
+              >
+                Click here to get insurance for your vehicle if you don&apos;t have one yet.
+              </Link>
+            </div>
+                  
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <FormRow
                 label="Carrier / Company"
