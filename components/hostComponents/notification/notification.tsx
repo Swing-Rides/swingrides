@@ -21,22 +21,44 @@ import {
   useMarkAsReadMutation,
 } from "@/app/store/services/notificationApi";
 import {
+  AdminNotificationType,
   HostNotificationType,
   NotificationCardProps,
+  NotificationRole,
 } from "../types/navbar.type";
-import { HOST_NOTIFICATION_TYPE_CONST } from "../utils/helper";
+import {
+  HOST_NOTIFICATION_TYPE_CONST,
+  ADMIN_NOTIFICATION_TYPE_CONST,
+} from "../utils/helper";
 
 // ---------------------------------------------------------------------------
 // Helpers (exported so header.tsx can build NotificationCardProps from raw data)
 // ---------------------------------------------------------------------------
 
-export type FilterValue = NotificationCategory | "all";
+export type FilterValue =
+  | NotificationCategory
+  | "all"
+  | "renters"
+  | "subscribers"
+  | "tickets";
 
 export const CATEGORY_TO_TYPE: Record<NotificationCategory, HostNotificationType> = {
   bookings: "newBooking",
   payments: "paymentReceived",
   maintenance: "maintenanceAlert",
   general: "communication",
+};
+
+export const ADMIN_CATEGORY_TO_TYPE: Record<string, AdminNotificationType[]> = {
+  renters: ["newRenter"],
+  subscribers: [
+    "subscriberJoin",
+    "subscriberRenew",
+    "subscriberCancel",
+    "subscriberUpgrade",
+    "subscriberDowngrade",
+  ],
+  tickets: ["newTicket"],
 };
 
 export function formatRelativeTime(dateStr: string): string {
@@ -65,11 +87,13 @@ export function isToday(dateStr: string): boolean {
 // Notification (bell button + popover shell)
 // ---------------------------------------------------------------------------
 
-type NotificationProps = {
+export type NotificationProps = {
   unreadCount: number;
   today: NotificationCardProps[];
   earlier: NotificationCardProps[];
   onMarkAllAsRead: () => void;
+  role?: NotificationRole;
+  onItemClick?: (id: string) => void;
 };
 
 export const Notification = ({
@@ -77,6 +101,8 @@ export const Notification = ({
   today,
   earlier,
   onMarkAllAsRead,
+  role = "host",
+  onItemClick,
 }: NotificationProps) => {
   return (
     <Popover>
@@ -123,7 +149,12 @@ export const Notification = ({
             </div>
           </div>
 
-          <NotificationPanel today={today} earlier={earlier} />
+          <NotificationPanel
+            today={today}
+            earlier={earlier}
+            role={role}
+            onItemClick={onItemClick}
+          />
         </div>
       </PopoverContent>
     </Popover>
@@ -134,7 +165,7 @@ export const Notification = ({
 // Filter groups + panel
 // ---------------------------------------------------------------------------
 
-const notificationGroups: { label: string; value: FilterValue }[] = [
+export const HOST_NOTIFICATION_GROUPS: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
   { label: "Bookings", value: "bookings" },
   { label: "Payments", value: "payments" },
@@ -142,16 +173,49 @@ const notificationGroups: { label: string; value: FilterValue }[] = [
   { label: "General", value: "general" },
 ];
 
+export const ADMIN_NOTIFICATION_GROUPS: { label: string; value: FilterValue }[] = [
+  { label: "All", value: "all" },
+  { label: "Renters", value: "renters" },
+  { label: "Subscribers", value: "subscribers" },
+  { label: "Tickets", value: "tickets" },
+];
+
 type NotificationPanelProps = {
   today: NotificationCardProps[];
   earlier: NotificationCardProps[];
+  role?: NotificationRole;
+  onItemClick?: (id: string) => void;
 };
 
-const NotificationPanel = ({ today, earlier }: NotificationPanelProps) => {
+const NotificationPanel = ({
+  today,
+  earlier,
+  role = "host",
+  onItemClick,
+}: NotificationPanelProps) => {
   const [filter, setFilter] = useState<FilterValue>("all");
+  const isSuperAdmin = role === "admin" || role === "superAdmin";
+  const groups = isSuperAdmin ? ADMIN_NOTIFICATION_GROUPS : HOST_NOTIFICATION_GROUPS;
 
   const applyFilter = (list: NotificationCardProps[]) => {
     if (filter === "all") return list;
+    if (isSuperAdmin) {
+      return list.filter((n) => {
+        if (n.category) return n.category === filter;
+        if (filter === "renters") return n.notificationType === "newRenter";
+        if (filter === "subscribers") {
+          return [
+            "subscriberJoin",
+            "subscriberRenew",
+            "subscriberCancel",
+            "subscriberUpgrade",
+            "subscriberDowngrade",
+          ].includes(n.notificationType as AdminNotificationType);
+        }
+        if (filter === "tickets") return n.notificationType === "newTicket";
+        return false;
+      });
+    }
     const targetType = CATEGORY_TO_TYPE[filter as NotificationCategory];
     return list.filter((n) => n.notificationType === targetType);
   };
@@ -170,7 +234,7 @@ const NotificationPanel = ({ today, earlier }: NotificationPanelProps) => {
             <SelectValue placeholder="Filter notifications" />
           </SelectTrigger>
           <SelectContent>
-            {notificationGroups.map((group) => (
+            {groups.map((group) => (
               <SelectItem
                 key={group.value}
                 value={group.value}
@@ -188,6 +252,8 @@ const NotificationPanel = ({ today, earlier }: NotificationPanelProps) => {
         <NotificationTabContent
           today={filteredToday}
           earlier={filteredEarlier}
+          role={role}
+          onItemClick={onItemClick}
         />
       </div>
     </div>
@@ -201,11 +267,15 @@ const NotificationPanel = ({ today, earlier }: NotificationPanelProps) => {
 type NotificationTabContentProps = {
   today: NotificationCardProps[];
   earlier: NotificationCardProps[];
+  role?: NotificationRole;
+  onItemClick?: (id: string) => void;
 };
 
 const NotificationTabContent = ({
   today,
   earlier,
+  role = "host",
+  onItemClick,
 }: NotificationTabContentProps) => {
   const hasToday = today.length > 0;
   const hasEarlier = earlier.length > 0;
@@ -230,7 +300,11 @@ const NotificationTabContent = ({
           <div className="divide-y">
             {today.map((item) => (
               <Fragment key={item.id}>
-                <NotificationCard {...item} />
+                <NotificationCard
+                  {...item}
+                  role={role}
+                  onItemClick={item.onItemClick ?? onItemClick}
+                />
               </Fragment>
             ))}
           </div>
@@ -247,7 +321,11 @@ const NotificationTabContent = ({
           <div className="divide-y">
             {earlier.map((item) => (
               <Fragment key={item.id}>
-                <NotificationCard {...item} />
+                <NotificationCard
+                  {...item}
+                  role={role}
+                  onItemClick={item.onItemClick ?? onItemClick}
+                />
               </Fragment>
             ))}
           </div>
@@ -257,6 +335,10 @@ const NotificationTabContent = ({
   );
 };
 
+type NotificationCardInternalProps = NotificationCardProps & {
+  role?: NotificationRole;
+};
+
 const NotificationCard = ({
   id,
   title,
@@ -264,23 +346,39 @@ const NotificationCard = ({
   description,
   time,
   notificationType,
-}: NotificationCardProps) => {
+  href,
+  icon: customIcon,
+  onItemClick,
+  role = "host",
+}: NotificationCardInternalProps) => {
   const [markAsRead] = useMarkAsReadMutation();
-  const notificationObject = HOST_NOTIFICATION_TYPE_CONST[notificationType];
+  const isSuperAdmin = role === "admin" || role === "superAdmin";
 
-  const icon = notificationObject?.icon ?? (
-    <div className="grid place-content-center size-9 aspect-square bg-blue-200 rounded-full">
-      <Bell className="text-blue-500 size-5" />
-    </div>
-  );
-  const slug = notificationObject?.slug ?? "#";
+  const notificationObject = isSuperAdmin
+    ? ADMIN_NOTIFICATION_TYPE_CONST[notificationType as AdminNotificationType]
+    : HOST_NOTIFICATION_TYPE_CONST[notificationType as HostNotificationType];
+
+  const icon =
+    customIcon ??
+    notificationObject?.icon ?? (
+      <div className="grid place-content-center size-9 aspect-square bg-blue-200 rounded-full">
+        <Bell className="text-blue-500 size-5" />
+      </div>
+    );
+  const slug = href ?? notificationObject?.slug ?? "#";
+
+  const handleClick = () => {
+    if (onItemClick) {
+      onItemClick(id);
+    } else if (!isSuperAdmin && unread) {
+      markAsRead(id);
+    }
+  };
 
   return (
     <Link
       href={slug}
-      onClick={() => {
-        if (unread) markAsRead(id);
-      }}
+      onClick={handleClick}
       className={`${unread ? "bg-indigo-50" : "bg-white"} hover:bg-indigo-100 duration-300 transition-colors block`}
     >
       <div className="flex gap-3 items-start py-3 px-4">
