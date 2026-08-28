@@ -5,11 +5,24 @@ import { RegisterOptions } from "react-hook-form";
 import MainForm from "@/components/forms/MainForm";
 import { FormFieldConfig } from "@/components/forms/types";
 import { validators } from "@/components/forms/form.validators";
-import { issueTypeOptions } from "@/types/issueReport.type";
 import { useCreateRenterIssueReportMutation } from "@/app/store/services/reportApi";
 import { toast } from "sonner";
 
-export default function ReportAnIssueForm() {
+export const accountIssueTypeOptions = [
+  { value: "account_access", label: "Account Access / Login Issue" },
+  { value: "profile_verification", label: "Identity & Profile Verification" },
+  { value: "billing_payment", label: "Payment Method & Billing Issue" },
+  { value: "security_suspicious", label: "Security & Suspicious Activity" },
+  {
+    value: "notifications_settings",
+    label: "Notification & Account Settings",
+  },
+  { value: "deactivation", label: "Account Deactivation / Deletion Request" },
+  { value: "technical issue", label: "Technical App Issue / Bug" },
+  { value: "other", label: "Other Account Issue" },
+];
+
+export default function ReportAccountIssueForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createRenterIssueReport] = useCreateRenterIssueReportMutation();
 
@@ -43,37 +56,42 @@ export default function ReportAnIssueForm() {
 
   const fields: FormFieldConfig[] = [
     {
-      name: "bookingReference",
-      type: "text",
-      label: "Booking Reference",
-      placeholder: "e.g. SR-2026-0042",
+      name: "email",
+      type: "email",
+      label: "Account Email",
+      placeholder: "e.g. user@example.com",
       description:
-        "Find your booking reference in your confirmation email or profile page.",
-      icon: (
-        <span className="font-text font-medium text-sm text-[#9CA3AF]">#</span>
-      ),
-      validation: {
-        ...validators.required("Booking reference"),
-        pattern: {
-          value: /^SR-\d{4}-\d{4}$/,
-          message: "Enter a valid booking reference (e.g. SR-2026-0042)",
-        },
-      } as RegisterOptions,
+        "The email address associated with your Swing Rides account.",
+      validation: validators.email(),
+    },
+    {
+      name: "name",
+      type: "text",
+      label: "Full Name",
+      placeholder: "e.g. Jane Doe",
+      validation: validators.name("Full name"),
     },
     {
       name: "issueType",
       type: "select",
-      label: "Issue Type",
-      placeholder: "Select an issue type",
-      options: issueTypeOptions,
-      validation: validators.required("Issue type"),
+      label: "Account Issue Category",
+      placeholder: "Select issue category",
+      options: accountIssueTypeOptions,
+      validation: validators.required("Issue category"),
+    },
+    {
+      name: "subject",
+      type: "text",
+      label: "Subject / Summary",
+      placeholder: "e.g. Unable to update account phone number",
+      validation: validators.required("Subject"),
     },
     {
       name: "description",
       type: "textarea",
       label: "Describe the Issue",
       placeholder:
-        "Please describe the issue in as much detail as possible. Include dates, times, and any relevant information.",
+        "Please describe the problem with your account in as much detail as possible...",
       rows: 8,
       validation: {
         ...validators.required("Description"),
@@ -83,9 +101,9 @@ export default function ReportAnIssueForm() {
     {
       name: "uploadPhotos",
       type: "image",
-      label: "Upload Photos",
+      label: "Upload Screenshots / Supporting Documents (Optional)",
       description:
-        "Attach up to 4 photos that support your report. JPG, PNG · Max 5MB each.",
+        "Attach up to 4 screenshots or files that support your report. JPG, PNG · Max 5MB each.",
       accept: "image/jpeg, image/png",
       multiple: true,
       maxFiles: 4,
@@ -100,9 +118,9 @@ export default function ReportAnIssueForm() {
     {
       name: "isUrgent",
       type: "checkbox",
-      label: "Mark as Urgent (Safety concern or requires immediate attention)",
-      description:
-        "Select if this is a safety concern or requires immediate attention.",
+      label:
+        "Mark as Urgent (Account compromised or immediate security attention needed)",
+      description: "Select if this is an urgent account security concern.",
     },
   ];
 
@@ -114,23 +132,25 @@ export default function ReportAnIssueForm() {
         photoUrls = await uploadFiles(values.uploadPhotos as FileList | File[]);
       }
 
+      const formattedDescription = `Subject: ${values.subject}\nEmail: ${values.email}\nName: ${values.name}\n\n${values.description}`;
+
       await createRenterIssueReport({
-        bookingReference: values.bookingReference as string,
+        bookingReference: "ACCOUNT-ISSUE",
         issueType: values.issueType as string,
-        description: values.description as string,
+        description: formattedDescription,
         isUrgent: Boolean(values.isUrgent),
         photoUrls,
       }).unwrap();
 
       toast.success(
-        "Issue report submitted successfully. Our support team will review it.",
+        "Account issue report submitted successfully. Our support team will follow up shortly.",
       );
     } catch (error: unknown) {
       const err = error as { data?: { message?: string }; message?: string };
       const message =
         err?.data?.message ??
         err?.message ??
-        "Failed to submit issue report. Please try again.";
+        "Failed to submit account issue report. Please try again.";
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -140,9 +160,11 @@ export default function ReportAnIssueForm() {
   return (
     <MainForm
       fields={fields}
+      rowPairs={[["email", "name"]]}
       onSubmit={onSubmit}
       isLoading={isSubmitting}
-      submitLabel="Submit Report"
+      submitLabel="Submit Account Issue"
     />
   );
 }
+

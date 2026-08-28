@@ -1,20 +1,50 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-import { useAddVehicleMutation } from "@/app/store/services/hostApi";
+import {
+  useAddVehicleMutation,
+  useGetHostProfileQuery,
+  useListVehcleQuery,
+} from "@/app/store/services/hostApi";
 import FleetForm, {
   FleetFormValues,
 } from "@/components/hostComponents/forms/fleetForm";
 import { Spinner } from "@/components/ui/spinner";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
+import { checkVehicleUploadLimit } from "@/constants/hostPlans";
 import { CreateVehicle } from "@/types/vehicle.type";
+import PlanLimitBanner from "./planLimitBanner";
 
 export default function AddFleetPage() {
   const router = useRouter();
   const [addVehicle, { isLoading }] = useAddVehicleMutation();
 
+  const { data: hostProfileResponse } = useGetHostProfileQuery();
+  const { data: vehicleListResponse } = useListVehcleQuery({});
+
+  const hostPlan = hostProfileResponse?.data?.payment?.plan;
+  const currentVehicleCount =
+    vehicleListResponse?.summary?.totalVehicles ??
+    vehicleListResponse?.pagination?.totalItems ??
+    vehicleListResponse?.data?.length ??
+    0;
+
+  const limitCheck = checkVehicleUploadLimit({
+    plan: hostPlan,
+    currentVehicleCount,
+  });
+
   const handleSubmit = async (values: FleetFormValues) => {
+    if (!limitCheck.allowed) {
+      toast.error(
+        limitCheck.message ||
+          "Vehicle limit reached for your plan. Please upgrade to add more vehicles."
+      );
+      return;
+    }
+
     const payload: CreateVehicle = {
       city: values.city,
       colour: values.color,
@@ -45,11 +75,16 @@ export default function AddFleetPage() {
       weeklyPrice: Number(values.priceWeekly),
       year: Number(values.year),
     };
-    const response = await addVehicle(payload).unwrap();
-    if (response.success) {
-      router.push(`${HOST_DASHBOARD_PATH}fleet`);
-    } else {
-      console.error("Failed to add vehicle:", response.message);
+
+    try {
+      const response = await addVehicle(payload).unwrap();
+      if (response.success) {
+        router.push(`${HOST_DASHBOARD_PATH}fleet`);
+      } else {
+        console.error("Failed to add vehicle:", response.message);
+      }
+    } catch {
+      // Handled by base query
     }
   };
 
@@ -75,18 +110,24 @@ export default function AddFleetPage() {
           <button
             type="submit"
             form="fleet-form"
-            className="py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer"
+            disabled={!limitCheck.allowed || isLoading}
+            className="py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <span className="flex items-center gap-2 justify-center">
                 <Spinner /> Adding...
               </span>
+            ) : !limitCheck.allowed ? (
+              "Limit Reached"
             ) : (
               "Add Vehicle"
             )}
           </button>
         </div>
       </div>
+
+      {/* Plan limit banner */}
+      <PlanLimitBanner limitCheck={limitCheck} />
 
       <FleetForm formId="fleet-form" onSubmit={handleSubmit} />
 
@@ -102,12 +143,15 @@ export default function AddFleetPage() {
         <button
           type="submit"
           form="fleet-form"
-          className="flex-1 py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer"
+          disabled={!limitCheck.allowed || isLoading}
+          className="flex-1 py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <span className="flex items-center gap-2 justify-center">
               <Spinner /> Adding...
             </span>
+          ) : !limitCheck.allowed ? (
+            "Limit Reached"
           ) : (
             "Add Vehicle"
           )}

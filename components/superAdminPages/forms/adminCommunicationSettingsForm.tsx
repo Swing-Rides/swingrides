@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useUpdateCommunicationSettingsMutation } from "@/app/store/services/adminApi";
+import {
+  FormField,
+  CheckboxInput,
+  LoadingSpinner,
+} from "@/components/forms/MainForm";
 
 type NotificationRow = {
   id: string;
@@ -50,31 +51,29 @@ export default function AdminCommunicationSettingsForm({
     register,
     handleSubmit,
     control,
-    reset,
+    getValues,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<SettingsFormValues>({
     mode: "onTouched",
     defaultValues: {
-      smsSenderName: "SwingRides",
-      supportEmail: "support@swingrides.ng",
-      notifications: DEFAULT_NOTIFICATIONS,
-    },
-  });
-
-  useEffect(() => {
-    if (!defaultValues) {
-      return;
-    }
-
-    reset({
-      smsSenderName: defaultValues.smsSenderName ?? "SwingRides",
-      supportEmail: defaultValues.supportEmail ?? "support@swingrides.ng",
+      smsSenderName: defaultValues?.smsSenderName ?? "SwingRides",
+      supportEmail: defaultValues?.supportEmail ?? "support@swingrides.ng",
       notifications: {
         ...DEFAULT_NOTIFICATIONS,
-        ...defaultValues.notifications,
+        ...defaultValues?.notifications,
       },
-    });
-  }, [defaultValues, reset]);
+    },
+    values: defaultValues
+      ? {
+        smsSenderName: defaultValues.smsSenderName ?? "SwingRides",
+        supportEmail: defaultValues.supportEmail ?? "support@swingrides.ng",
+        notifications: {
+          ...DEFAULT_NOTIFICATIONS,
+          ...defaultValues.notifications,
+        },
+      }
+      : undefined,
+  });
 
   const onSubmit = async (values: SettingsFormValues) => {
     await updateCommunication({
@@ -94,67 +93,47 @@ export default function AdminCommunicationSettingsForm({
       <div className="p-4 md:p-6 bg-white rounded-lg border border-gray-200">
         <div className="flex flex-col md:flex-row gap-5">
           {/* SMS Sender Name */}
-          <div className="flex flex-col gap-2 w-full">
-            <Label
-              htmlFor="smsSenderName"
-              className="text-gray-700 text-xs font-medium font-text leading-5"
-            >
-              Default SMS Sender Name
-            </Label>
-            <Input
-              id="smsSenderName"
-              type="text"
-              placeholder="e.g. SwingRides"
-              className={cn(
-                "border-[#E5E7EB] focus-visible:ring-[#1A56DB] font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF]",
-                errors.smsSenderName &&
-                  "border-[#EF4444] focus-visible:ring-[#EF4444]",
-              )}
-              {...register("smsSenderName", {
+          <FormField<SettingsFormValues>
+            field={{
+              name: "smsSenderName",
+              type: "text",
+              label: "Default SMS Sender Name",
+              placeholder: "e.g. SwingRides",
+              description: "Max 11 characters — carrier restriction.",
+              validation: {
                 required: "SMS sender name is required",
                 maxLength: {
                   value: 11,
                   message: "SMS sender name cannot exceed 11 characters",
                 },
-              })}
-            />
-            {errors.smsSenderName && (
-              <FieldError message={errors.smsSenderName.message as string} />
-            )}
-            <span className="text-[#9CA3AF] text-xs font-normal font-text">
-              Max 11 characters — carrier restriction.
-            </span>
-          </div>
+              },
+            }}
+            register={register}
+            control={control}
+            getValues={getValues}
+            errors={errors}
+          />
 
           {/* Support Email */}
-          <div className="flex flex-col gap-2 w-full">
-            <Label
-              htmlFor="supportEmail"
-              className="text-gray-700 text-xs font-medium font-text leading-5"
-            >
-              Platform Support Email
-            </Label>
-            <Input
-              id="supportEmail"
-              type="email"
-              placeholder="e.g. support@swingrides.ng"
-              className={cn(
-                "border-[#E5E7EB] focus-visible:ring-[#1A56DB] font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF]",
-                errors.supportEmail &&
-                  "border-[#EF4444] focus-visible:ring-[#EF4444]",
-              )}
-              {...register("supportEmail", {
+          <FormField<SettingsFormValues>
+            field={{
+              name: "supportEmail",
+              type: "email",
+              label: "Platform Support Email",
+              placeholder: "e.g. support@swingrides.ng",
+              validation: {
                 required: "Support email is required",
                 pattern: {
                   value: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,8}$/i,
                   message: "Enter a valid email address",
                 },
-              })}
-            />
-            {errors.supportEmail && (
-              <FieldError message={errors.supportEmail.message as string} />
-            )}
-          </div>
+              },
+            }}
+            register={register}
+            control={control}
+            getValues={getValues}
+            errors={errors}
+          />
         </div>
       </div>
 
@@ -196,35 +175,25 @@ export default function AdminCommunicationSettingsForm({
 
               {/* Email checkbox */}
               <div className="flex justify-center">
-                <Controller
-                  name={`notifications.${row.id}.email`}
+                <CheckboxInput<SettingsFormValues>
+                  field={{
+                    name: `notifications.${row.id}.email`,
+                    type: "checkbox",
+                    className: "justify-center",
+                  }}
                   control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      id={`${row.id}-email`}
-                      checked={!!field.value}
-                      onCheckedChange={field.onChange}
-                      className="border-[#D1D5DC] data-[state=checked]:bg-[#1A56DB] data-[state=checked]:border-[#1A56DB]"
-                      aria-label={`${row.label} email notification`}
-                    />
-                  )}
                 />
               </div>
 
               {/* SMS checkbox */}
               <div className="flex justify-center">
-                <Controller
-                  name={`notifications.${row.id}.sms`}
+                <CheckboxInput<SettingsFormValues>
+                  field={{
+                    name: `notifications.${row.id}.sms`,
+                    type: "checkbox",
+                    className: "justify-center",
+                  }}
                   control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      id={`${row.id}-sms`}
-                      checked={!!field.value}
-                      onCheckedChange={field.onChange}
-                      className="border-[#D1D5DC] data-[state=checked]:bg-[#1A56DB] data-[state=checked]:border-[#1A56DB]"
-                      aria-label={`${row.label} SMS notification`}
-                    />
-                  )}
                 />
               </div>
             </div>
@@ -252,51 +221,3 @@ export default function AdminCommunicationSettingsForm({
     </form>
   );
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const FieldError = ({ message }: { message: string }) => (
-  <span className="text-[#EF4444] text-xs font-normal font-text flex items-center gap-1">
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 12 12"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M6 1L11 10H1L6 1Z"
-        stroke="#EF4444"
-        strokeWidth="1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M6 5V7" stroke="#EF4444" strokeWidth="1" strokeLinecap="round" />
-      <circle cx="6" cy="8.5" r="0.5" fill="#EF4444" />
-    </svg>
-    {message}
-  </span>
-);
-
-const LoadingSpinner = () => (
-  <svg
-    className="animate-spin w-4 h-4"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="4"
-    />
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-    />
-  </svg>
-);

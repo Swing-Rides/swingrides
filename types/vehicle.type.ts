@@ -44,6 +44,7 @@ export type HostInfoType = {
   tripsCompleted: number;
   rating: number;
   contactNumber: string;
+  userVerified?: boolean;
 };
 
 export type CreateVehicle = {

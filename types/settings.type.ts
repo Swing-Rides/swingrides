@@ -73,6 +73,7 @@ export interface PlatformFeaturesSettings {
 }
 
 export interface PlanLimits {
+  name?: string;
   maxVehicles: number;
   monthlyPrice: number;
 }

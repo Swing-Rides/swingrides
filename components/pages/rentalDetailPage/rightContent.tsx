@@ -58,6 +58,7 @@ export default function RightContent({
     (hasCheckedIn && status === "Overdue");
   const isCompleted = status === "Completed";
   const isOverDue = status === "Overdue" && !hasCheckedIn;
+  const isLateReturn = status === "Overdue" && hasCheckedIn;
 
   return (
     <div className="col-span-1 md:col-span-5 w-full space-y-3 md:space-y-6">
@@ -92,7 +93,7 @@ export default function RightContent({
         </>
       )}
 
-      {isActive && (
+      {(isActive || isLateReturn) && (
         <>
           <Suspense>
             <CompleteVehicleReturnModal

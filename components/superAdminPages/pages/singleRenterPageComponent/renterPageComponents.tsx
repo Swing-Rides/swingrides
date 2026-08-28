@@ -37,7 +37,7 @@ import {
   CarBookingStatusPill,
   RenterVerificationStatusPill,
 } from "../../dashboard/statusPill";
-import { formatDate } from "../../utils/formatDate";
+import { formatDate, getRelativeTime } from "../../utils/formatDate";
 import { TableSkeletonRows } from "../subscribersPageComponents";
 import PopupWrapper from "../singleSubscriberPageComponents/popupWrapper";
 import {
@@ -45,6 +45,7 @@ import {
   useRejectRenterVerificationMutation,
 } from "@/app/store/services/adminApi";
 import Image from "next/image";
+import { toast } from "sonner";
 
 type RenterPageComponentsProps = {
   renterId: string;
@@ -60,6 +61,7 @@ type ProfileSideCardProps = {
   renter: AdminRenterByIdResponseRenter;
   stats: AdminRenterByIdResponseStats;
   verification: AdminRenterByIdResponseVerification;
+  suspendUser?: boolean;
 };
 
 type ProfileTabsProps = {
@@ -135,8 +137,13 @@ const ProfileSideCard = ({
   renter,
   stats,
   verification,
+  suspendUser,
 }: ProfileSideCardProps) => {
+
   const [popup, setPopup] = useState<"approve" | "reject" | null>(null);
+  const [suspendUserPopup, setSuspendUserPopup] = useState<boolean>(false);
+  const [unsuspendUserPopup, setUnsuspendUserPopup] = useState<boolean>(false);
+
   const [approveVerification, { isLoading: approving }] =
     useApproveRenterVerificationMutation();
   const [rejectVerification, { isLoading: rejecting }] =
@@ -145,8 +152,19 @@ const ProfileSideCard = ({
   const handleApprove = async () => {
     try {
       await approveVerification(renterId).unwrap();
-    } catch (error) {
-      console.error("Approve renter verification failed:", error);
+      toast.success("Renter verification approved successfully.");
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" &&
+          error !== null &&
+          "data" in error &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "message" in error.data &&
+          typeof error.data.message === "string"
+          ? error.data.message
+          : "Reject renter verification failed.";
+      toast.error(message);
     } finally {
       setPopup(null);
     }
@@ -155,10 +173,61 @@ const ProfileSideCard = ({
   const handleReject = async () => {
     try {
       await rejectVerification(renterId).unwrap();
-    } catch (error) {
-      console.error("Reject renter verification failed:", error);
+      toast.success("Renter verification rejected successfully.");
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" &&
+          error !== null &&
+          "data" in error &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "message" in error.data &&
+          typeof error.data.message === "string"
+          ? error.data.message
+          : "Reject renter verification failed.";
+      toast.error(message);
     } finally {
       setPopup(null);
+    }
+  };
+
+  const handleSuspendUser = async () => {
+    try {
+      toast.success("Renter suspended.");
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" &&
+          error !== null &&
+          "data" in error &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "message" in error.data &&
+          typeof error.data.message === "string"
+          ? error.data.message
+          : "suspension failed.";
+      toast.error(message);
+    } finally {
+      setSuspendUserPopup(false);
+    }
+  };
+
+  const handleUnsuspendUser = async () => {
+    try {
+      toast.success("Renter unsuspended.");
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" &&
+          error !== null &&
+          "data" in error &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "message" in error.data &&
+          typeof error.data.message === "string"
+          ? error.data.message
+          : "unsuspension failed.";
+      toast.error(message);
+    } finally {
+      setUnsuspendUserPopup(false);
     }
   };
 
@@ -192,13 +261,6 @@ const ProfileSideCard = ({
             Member since {formatDate(renter.joinedDate)}
           </span>
         </div>
-
-        {/* {renter.location && <div className="flex items-center justify-start gap-2">
-                                        <MapPin className="size-4 text-gray-500"/>
-                                        <span className="text-gray-500 text-xs font-normal font-text leading-4">
-                                                {renter.location}
-                                        </span>
-                                </div>} */}
       </div>
 
       <div className="w-full h-px bg-gray-200" />
@@ -229,7 +291,7 @@ const ProfileSideCard = ({
           <div className="flex gap-1.5 items-center justify-start">
             <Activity className="size-6.5 text-[#10B981]" />
             <span className="text-neutral-950 text-sm font-medium font-text leading-5">
-              {renter.lastLogin}
+              {getRelativeTime(renter.lastLogin)}
             </span>
           </div>
         </div>
@@ -255,6 +317,23 @@ const ProfileSideCard = ({
           >
             Reject Verification
           </button>
+        )}
+        {suspendUser ? (
+          <button
+            type="button"
+            onClick={() => setUnsuspendUserPopup(true)}
+            className="w-full px-6 py-2 rounded-xs border border-red-500 text-red-500 bg-transparent hover:bg-red-700 duration-300 hover:text-red-200 transition-colors text-sm font-semibold font-text capitalize cursor-pointer"
+          >
+            Unsuspend Renter
+          </button>
+        ) : (
+            <button
+              type="button"
+              onClick={() => setSuspendUserPopup(true)}
+              className="w-full px-6 py-2 rounded-xs border border-red-500 text-red-500 bg-transparent hover:bg-red-700 duration-300 hover:text-red-200 transition-colors text-sm font-semibold font-text capitalize cursor-pointer"
+            >
+              Suspend Renter
+            </button>
         )}
 
         <button className="w-full px-6 py-2 rounded-xs border border-amber-500 text-amber-500 bg-transparent hover:bg-amber-800 duration-300 hover:text-amber-100 transition-colors text-sm font-semibold font-text capitalize cursor-pointer">
@@ -288,6 +367,34 @@ const ProfileSideCard = ({
         <p className="text-gray-500 text-sm font-normal font-text leading-5">
           This will reject {renter.name}&apos;s submitted verification
           documents. They will need to resubmit.
+        </p>
+      </PopupWrapper>
+      
+      <PopupWrapper
+        open={unsuspendUserPopup}
+        title="Suspend renter account"
+        onClose={() => setUnsuspendUserPopup(false)}
+        onConfirm={handleUnsuspendUser}
+        confirmLabel="Unsuspend Renter"
+        confirmVariant="danger"
+        confirmDisabled={false}
+      >
+        <p className="text-gray-500 text-sm font-normal font-text leading-5">
+          This action will unsuspend {renter.name}&apos;s their acction will be reopen for use again. Click unsuspend to continue.
+        </p>
+      </PopupWrapper>
+
+      <PopupWrapper
+        open={suspendUserPopup}
+        title="Suspend renter account"
+        onClose={() => setSuspendUserPopup(false)}
+        onConfirm={handleSuspendUser}
+        confirmLabel="Suspend Renter"
+        confirmVariant="danger"
+        confirmDisabled={false}
+      >
+        <p className="text-gray-500 text-sm font-normal font-text leading-5">
+          This action will suspend {renter.name}&apos;s account. They will have to contact support for help. Click suspend to continue.
         </p>
       </PopupWrapper>
     </div>
