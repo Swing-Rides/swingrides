@@ -10,6 +10,7 @@ import { settingsApi } from "./services/settingsApi";
 import { reportApi } from "./services/reportApi";
 import { dashboardApi } from "./services/dashboardApi";
 import { notificationApi } from "./services/notificationApi";
+import { adminNotificationApi } from "./services/adminNotificationApi";
 import { renterApi } from "./services/renterApi";
 
 import publicReducer from "./reducers/public.reducer";
@@ -28,6 +29,7 @@ export const store = configureStore({
     [reportApi.reducerPath]: reportApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
     [notificationApi.reducerPath]: notificationApi.reducer,
+    [adminNotificationApi.reducerPath]: adminNotificationApi.reducer,
     [renterApi.reducerPath]: renterApi.reducer,
     publicReducer: publicReducer,
   },
@@ -44,6 +46,7 @@ export const store = configureStore({
       reportApi.middleware,
       dashboardApi.middleware,
       notificationApi.middleware,
+      adminNotificationApi.middleware,
       renterApi.middleware,
     ),
 });

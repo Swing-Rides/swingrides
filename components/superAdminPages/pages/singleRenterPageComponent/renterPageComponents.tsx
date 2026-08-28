@@ -43,6 +43,10 @@ import PopupWrapper from "../singleSubscriberPageComponents/popupWrapper";
 import {
   useApproveRenterVerificationMutation,
   useRejectRenterVerificationMutation,
+  useSuspendRenterMutation,
+  useReactivateRenterMutation,
+  useFlagRenterMutation,
+  useUnflagRenterMutation,
 } from "@/app/store/services/adminApi";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -119,6 +123,7 @@ export default function RenterPageComponents({
           renter={renter}
           stats={stats}
           verification={verification}
+          suspendUser={!renter.isActive}
         />
         <ProfileTabs
           renterId={renterId}
@@ -143,11 +148,18 @@ const ProfileSideCard = ({
   const [popup, setPopup] = useState<"approve" | "reject" | null>(null);
   const [suspendUserPopup, setSuspendUserPopup] = useState<boolean>(false);
   const [unsuspendUserPopup, setUnsuspendUserPopup] = useState<boolean>(false);
+  const [flagUserPopup, setFlagUserPopup] = useState<boolean>(false);
+  const [unflagUserPopup, setUnflagUserPopup] = useState<boolean>(false);
 
   const [approveVerification, { isLoading: approving }] =
     useApproveRenterVerificationMutation();
   const [rejectVerification, { isLoading: rejecting }] =
     useRejectRenterVerificationMutation();
+  const [suspendRenter, { isLoading: suspending }] = useSuspendRenterMutation();
+  const [reactivateRenter, { isLoading: reactivating }] =
+    useReactivateRenterMutation();
+  const [flagRenter, { isLoading: flagging }] = useFlagRenterMutation();
+  const [unflagRenter, { isLoading: unflagging }] = useUnflagRenterMutation();
 
   const handleApprove = async () => {
     try {
@@ -193,6 +205,7 @@ const ProfileSideCard = ({
 
   const handleSuspendUser = async () => {
     try {
+      await suspendRenter(renterId).unwrap();
       toast.success("Renter suspended.");
     } catch (error: unknown) {
       const message =
@@ -204,7 +217,7 @@ const ProfileSideCard = ({
           "message" in error.data &&
           typeof error.data.message === "string"
           ? error.data.message
-          : "suspension failed.";
+          : "Suspension failed.";
       toast.error(message);
     } finally {
       setSuspendUserPopup(false);
@@ -213,6 +226,7 @@ const ProfileSideCard = ({
 
   const handleUnsuspendUser = async () => {
     try {
+      await reactivateRenter(renterId).unwrap();
       toast.success("Renter unsuspended.");
     } catch (error: unknown) {
       const message =
@@ -224,10 +238,52 @@ const ProfileSideCard = ({
           "message" in error.data &&
           typeof error.data.message === "string"
           ? error.data.message
-          : "unsuspension failed.";
+          : "Unsuspension failed.";
       toast.error(message);
     } finally {
       setUnsuspendUserPopup(false);
+    }
+  };
+
+  const handleFlagUser = async () => {
+    try {
+      await flagRenter(renterId).unwrap();
+      toast.success("Renter flagged.");
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" &&
+          error !== null &&
+          "data" in error &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "message" in error.data &&
+          typeof error.data.message === "string"
+          ? error.data.message
+          : "Flagging renter failed.";
+      toast.error(message);
+    } finally {
+      setFlagUserPopup(false);
+    }
+  };
+
+  const handleUnflagUser = async () => {
+    try {
+      await unflagRenter(renterId).unwrap();
+      toast.success("Renter unflagged.");
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" &&
+          error !== null &&
+          "data" in error &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "message" in error.data &&
+          typeof error.data.message === "string"
+          ? error.data.message
+          : "Unflagging renter failed.";
+      toast.error(message);
+    } finally {
+      setUnflagUserPopup(false);
     }
   };
 
@@ -336,9 +392,23 @@ const ProfileSideCard = ({
             </button>
         )}
 
-        <button className="w-full px-6 py-2 rounded-xs border border-amber-500 text-amber-500 bg-transparent hover:bg-amber-800 duration-300 hover:text-amber-100 transition-colors text-sm font-semibold font-text capitalize cursor-pointer">
-          Flag Renter
-        </button>
+        {renter.isFlagged ? (
+          <button
+            type="button"
+            onClick={() => setUnflagUserPopup(true)}
+            className="w-full px-6 py-2 rounded-xs border border-amber-500 text-amber-500 bg-transparent hover:bg-amber-800 duration-300 hover:text-amber-100 transition-colors text-sm font-semibold font-text capitalize cursor-pointer"
+          >
+            Unflag Renter
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setFlagUserPopup(true)}
+            className="w-full px-6 py-2 rounded-xs border border-amber-500 text-amber-500 bg-transparent hover:bg-amber-800 duration-300 hover:text-amber-100 transition-colors text-sm font-semibold font-text capitalize cursor-pointer"
+          >
+            Flag Renter
+          </button>
+        )}
       </div>
 
       <PopupWrapper
@@ -372,15 +442,14 @@ const ProfileSideCard = ({
       
       <PopupWrapper
         open={unsuspendUserPopup}
-        title="Suspend renter account"
+        title="Unsuspend renter account"
         onClose={() => setUnsuspendUserPopup(false)}
         onConfirm={handleUnsuspendUser}
         confirmLabel="Unsuspend Renter"
-        confirmVariant="danger"
-        confirmDisabled={false}
+        confirmDisabled={reactivating}
       >
         <p className="text-gray-500 text-sm font-normal font-text leading-5">
-          This action will unsuspend {renter.name}&apos;s their acction will be reopen for use again. Click unsuspend to continue.
+          This action will unsuspend {renter.name}&apos;s account. Their account will be reopened for use again. Click unsuspend to continue.
         </p>
       </PopupWrapper>
 
@@ -391,10 +460,37 @@ const ProfileSideCard = ({
         onConfirm={handleSuspendUser}
         confirmLabel="Suspend Renter"
         confirmVariant="danger"
-        confirmDisabled={false}
+        confirmDisabled={suspending}
       >
         <p className="text-gray-500 text-sm font-normal font-text leading-5">
           This action will suspend {renter.name}&apos;s account. They will have to contact support for help. Click suspend to continue.
+        </p>
+      </PopupWrapper>
+
+      <PopupWrapper
+        open={flagUserPopup}
+        title="Flag renter account"
+        onClose={() => setFlagUserPopup(false)}
+        onConfirm={handleFlagUser}
+        confirmLabel="Flag Renter"
+        confirmVariant="danger"
+        confirmDisabled={flagging}
+      >
+        <p className="text-gray-500 text-sm font-normal font-text leading-5">
+          This will flag {renter.name}&apos;s account for review. Their account will remain active but marked for admin attention. Click flag to continue.
+        </p>
+      </PopupWrapper>
+
+      <PopupWrapper
+        open={unflagUserPopup}
+        title="Unflag renter account"
+        onClose={() => setUnflagUserPopup(false)}
+        onConfirm={handleUnflagUser}
+        confirmLabel="Unflag Renter"
+        confirmDisabled={unflagging}
+      >
+        <p className="text-gray-500 text-sm font-normal font-text leading-5">
+          This will remove the flag from {renter.name}&apos;s account. Click unflag to continue.
         </p>
       </PopupWrapper>
     </div>

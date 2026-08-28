@@ -5,7 +5,7 @@ import { RegisterOptions } from "react-hook-form";
 import MainForm from "@/components/forms/MainForm";
 import { FormFieldConfig } from "@/components/forms/types";
 import { validators } from "@/components/forms/form.validators";
-import { useCreateRenterIssueReportMutation } from "@/app/store/services/reportApi";
+import { useCreatePublicAccountIssueReportMutation } from "@/app/store/services/publicApi";
 import { toast } from "sonner";
 
 export const accountIssueTypeOptions = [
@@ -24,7 +24,8 @@ export const accountIssueTypeOptions = [
 
 export default function ReportAccountIssueForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createRenterIssueReport] = useCreateRenterIssueReportMutation();
+  const [createPublicAccountIssueReport] =
+    useCreatePublicAccountIssueReportMutation();
 
   const uploadFiles = async (files: FileList | File[]): Promise<string[]> => {
     const fileArray = Array.isArray(files)
@@ -132,12 +133,12 @@ export default function ReportAccountIssueForm() {
         photoUrls = await uploadFiles(values.uploadPhotos as FileList | File[]);
       }
 
-      const formattedDescription = `Subject: ${values.subject}\nEmail: ${values.email}\nName: ${values.name}\n\n${values.description}`;
-
-      await createRenterIssueReport({
-        bookingReference: "ACCOUNT-ISSUE",
+      await createPublicAccountIssueReport({
+        email: values.email as string,
+        name: values.name as string,
         issueType: values.issueType as string,
-        description: formattedDescription,
+        subject: values.subject as string,
+        description: values.description as string,
         isUrgent: Boolean(values.isUrgent),
         photoUrls,
       }).unwrap();

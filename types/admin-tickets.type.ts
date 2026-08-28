@@ -1,6 +1,6 @@
 import { AdminTicketStatusItemsType, AdminTicketTypesItemsType } from "@/components/superAdminPages/utils/helpers";
 
-export type AdminTicketSubmitterType = "host" | "renter";
+export type AdminTicketSubmitterType = "host" | "renter" | "account";
 
 export interface AdminTicketsQuery {
   search?: string;

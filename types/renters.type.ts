@@ -96,6 +96,7 @@ export interface AdminRenterByIdResponseRenter {
         email: string
         phone: string
         isActive: boolean
+        isFlagged: boolean
         joinedDate: string
         lastLogin: string
 }

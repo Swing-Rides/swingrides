@@ -75,6 +75,7 @@ export default function CarPage({
         tripsCompleted: 0,
         rating: data.data.host.rating as number,
         contactNumber: data.data.host.phoneNumber,
+        userVerified: data.data.host.isVerified,
       }}
       price={{
         daily: data?.data.price?.daily,

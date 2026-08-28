@@ -179,6 +179,39 @@ export const publicApi = createApi({
       invalidatesTags: [{ type: "PublicBookings", id: "LIST" }],
     }),
 
+    createPublicAccountIssueReport: builder.mutation<
+      {
+        success: boolean;
+        data: {
+          id: string;
+          email: string;
+          name: string;
+          issueType: string;
+          subject: string;
+          description: string;
+          dateSubmitted: string;
+          status: "open" | "inReview" | "resolved";
+          isUrgent: boolean;
+          photoUrls: string[];
+        };
+      },
+      {
+        email: string;
+        name: string;
+        issueType: string;
+        subject: string;
+        description: string;
+        isUrgent?: boolean;
+        photoUrls?: string[];
+      }
+    >({
+      query: (payload) => ({
+        url: "/api/public/account-issues",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
     createCheckoutPaymentIntent: builder.mutation<
       {
         success: boolean;
@@ -218,5 +251,6 @@ export const {
   useGetPublicBrowseVehiclesQuery,
   useGetPublicVehicleByIdQuery,
   useCreatePublicBookingMutation,
+  useCreatePublicAccountIssueReportMutation,
   useCreateCheckoutPaymentIntentMutation,
 } = publicApi;

@@ -112,6 +112,7 @@ export interface VehicleDetails {
     rating: number;
     createdAt: Date;
     totalReviews: number;
+    isVerified: boolean;
   };
 
   policyNumber: string;

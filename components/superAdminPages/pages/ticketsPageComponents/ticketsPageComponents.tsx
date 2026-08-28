@@ -17,6 +17,7 @@ import {
         adminTicketPriorityItems,
         adminTicketStatusItems,
         AdminTicketStatusItemsType,
+        adminTicketSubmitterTypeItems,
         adminTicketTypesItems,
         AdminTicketTypesItemsType,
 } from "../../utils/helpers";
@@ -35,7 +36,7 @@ import {
         DialogTrigger,
 } from "@/components/ui/dialog";
 import { useGetAdminTicketsQuery, useResolveAdminTicketMutation } from "@/app/store/services/adminApi";
-import { AdminTicketPagination, AdminTicketRow, AdminTicketSummary } from "@/types/admin-tickets.type";
+import { AdminTicketPagination, AdminTicketRow, AdminTicketSubmitterType, AdminTicketSummary } from "@/types/admin-tickets.type";
 import ErrorStateUI from "../../dashboard/errorState";
 
 const ROWS_PER_PAGE = 8
@@ -66,10 +67,11 @@ const TicketsPageContent = () => {
         const search = searchParams.get("search") || undefined
         const status = (searchParams.get("status") as AdminTicketStatusItemsType) || undefined
         const issueType = (searchParams.get("type") as AdminTicketTypesItemsType) || undefined
+        const submitterType = (searchParams.get("submitterType") as AdminTicketSubmitterType) || undefined
         const page = Math.max(1, Number(searchParams.get("page") ?? 1))
 
         const { data, isLoading, isError } = useGetAdminTicketsQuery(
-                { search, status, issueType, page, limit: ROWS_PER_PAGE },
+                { search, status, issueType, submitterType, page, limit: ROWS_PER_PAGE },
                 { pollingInterval: 30_000 },
         )
 
@@ -310,6 +312,7 @@ const SearchFilterSection = () => {
                         <SelectUI title="All Status" items={adminTicketStatusItems} paramKey="status" />
                         <SelectUI title="All Types" items={adminTicketTypesItems} paramKey="type" />
                         <SelectUI title="All Priority" items={adminTicketPriorityItems} paramKey="priority" />
+                        <SelectUI title="All Submitters" items={adminTicketSubmitterTypeItems} paramKey="submitterType" />
                 </div>
         )
 }
