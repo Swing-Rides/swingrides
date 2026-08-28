@@ -44,3 +44,4 @@ debug-host-plan-intent-dup.md
 .dbg/trae-debug-log-host-plan-intent-dup.ndjson
 components/providers/socketProvider.tsx
 next.config.ts
+.claude/settings.json
