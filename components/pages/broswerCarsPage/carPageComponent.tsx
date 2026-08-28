@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { HostInfoType } from "@/types/vehicle.type";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ReusableTab, { TabItem } from "@/components/tab";
 import ReviewTab from "./reviewTab";
 import { getInitials } from "../profilePages/utils";
 import {
@@ -327,40 +327,35 @@ const CarDetailCard = memo(
           </Badge>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-5">
-          <TabsList className="justify-start border-b pb-0 border-black rounded-none gap-8 w-full bg-white">
-            <TabsTrigger
-              value="overview"
-              className="max-w-fit p-0  pb-3.5 -mb-0.5 text-gray-500 text-sm font-medium font-text leading-5 border-b-2 border-b-transparent shadow-none shadow-transparent data-active:rounded-none data-active:text-blue-700 data-active:border-b-blue-700 data-active:shadow-none cursor-pointer"
-            >
-              Overview
-            </TabsTrigger>
-            <TabsTrigger
-              value="specifications"
-              className="max-w-fit p-0  pb-3.5 -mb-0.5 text-gray-500 text-sm font-medium font-text leading-5 border-b border-b-transparent shadow-none shadow-transparent data-active:rounded-none data-active:text-blue-700 data-active:border-b-blue-700 data-active:shadow-none cursor-pointer"
-            >
-              Specifications
-            </TabsTrigger>
-            <TabsTrigger
-              value="reviews"
-              className="max-w-fit p-0  pb-3.5 -mb-0.5 text-gray-500 text-sm font-medium font-text leading-5 border-b border-b-transparent shadow-none shadow-transparent data-active:rounded-none data-active:text-blue-700 data-active:border-b-blue-700 data-active:shadow-none cursor-pointer"
-            >
-              Reviews
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview">
-            <OverviewTab
-              overview={overview}
-              features={specifications?.features}
-            />
-          </TabsContent>
-          <TabsContent value="specifications">
-            <SpecificationsTab specifications={specifications} />
-          </TabsContent>
-          <TabsContent value="reviews">
-            <ReviewTab reviewsAndRatings={reviewsAndRatings} />
-          </TabsContent>
-        </Tabs>
+        <ReusableTab
+          defaultValue="overview"
+          items={[
+            {
+              value: "overview",
+              label: "Overview",
+              content: (
+                <OverviewTab
+                  overview={overview}
+                  features={specifications?.features}
+                />
+              ),
+            },
+            {
+              value: "specifications",
+              label: "Specifications",
+              content: (
+                <SpecificationsTab specifications={specifications} />
+              ),
+            },
+            {
+              value: "reviews",
+              label: "Reviews",
+              content: (
+                <ReviewTab reviewsAndRatings={reviewsAndRatings} />
+              ),
+            },
+          ]}
+        />
       </div>
     );
   },
@@ -466,9 +461,9 @@ const HostCard = memo(
                 {hostName}
               </h4>
               {userVerified ? (<div title='Verified User'>
-                  <BadgeCheck className={`size-4 text-blue-700`}/>
+                <BadgeCheck className={`size-4 text-blue-700`} />
               </div>) : (<div title='Unverified User'>
-                  <BadgeX className={`size-4 text-red-500`}/>
+                <BadgeX className={`size-4 text-red-500`} />
               </div>)}
             </div>
             <span className="text-[#6B7280] text-xs font-normal font-text leading-4">
