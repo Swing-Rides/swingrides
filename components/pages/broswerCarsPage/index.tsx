@@ -59,6 +59,7 @@ import { CarCardSkeletonGrid } from "@/components/loading/carCardSkeleton";
 import NotificationConnectHostForm from "./notificationConnectHostForm";
 import { useGetPublicBrowseVehiclesQuery } from "@/app/store/services/publicApi";
 import { PublicBrowseVehicleRow } from "@/types/public-vehicles.type";
+import { getStoredConnectedPhone } from "@/lib/connectedHost";
 import { motion, AnimatePresence } from 'motion/react'
 
 const CARS_PER_PAGE = 12;
@@ -69,6 +70,11 @@ export default function BrowseCarsComponentPage() {
   const pathname = usePathname();
 
   const [isPending, startTransition] = useTransition();
+
+  const [connectedPhone, setConnectedPhone] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    setConnectedPhone(getStoredConnectedPhone() ?? undefined);
+  }, []);
 
   const filterParams = useMemo(
     () => parseFilterParams(searchParams),
@@ -95,6 +101,7 @@ export default function BrowseCarsComponentPage() {
         : undefined,
     locations:
       filterParams.locations.length > 0 ? filterParams.locations : undefined,
+    connectedPhone,
     sort: filterParams.sort,
     page: currentPage,
     limit: CARS_PER_PAGE,
@@ -602,6 +609,7 @@ const PageMainContent = ({
                   dailyPrice={item.price.daily}
                   averageRating={item.reviewsAndRatings.averageRating}
                   totalRatings={item.reviewsAndRatings.totalRatings}
+                  isConnectedHost={item.isConnectedHost}
                 />
               </Fragment>
             ))}

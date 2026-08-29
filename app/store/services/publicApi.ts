@@ -5,6 +5,7 @@ import {
   PublicBrowseVehiclesQuery,
   PublicBrowseVehiclesResponse,
   VehicleDetails,
+  HostConnectionResponse,
 } from "@/types/public-vehicles.type";
 import { toast } from "sonner";
 
@@ -118,7 +119,7 @@ const toQueryString = (filters?: PublicBrowseVehiclesQuery) => {
 export const publicApi = createApi({
   reducerPath: "publicApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["PublicVehicles", "PublicBookings"],
+  tagTypes: ["PublicVehicles", "PublicBookings", "HostConnection"],
   endpoints: (builder) => ({
     getPublicBrowseVehicles: builder.query<
       PublicBrowseVehiclesResponse,
@@ -177,6 +178,36 @@ export const publicApi = createApi({
         body: bookingData,
       }),
       invalidatesTags: [{ type: "PublicBookings", id: "LIST" }],
+    }),
+
+    connectToHost: builder.mutation<HostConnectionResponse, { phoneNumber: string }>({
+      query: (payload) => ({
+        url: "/api/public/connect-host",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [{ type: "HostConnection", id: "CURRENT" }],
+    }),
+
+    getHostConnection: builder.query<HostConnectionResponse, string>({
+      query: (phoneNumber) => ({
+        url: "/api/public/connect-host",
+        method: "GET",
+        params: { phoneNumber },
+      }),
+      providesTags: [{ type: "HostConnection", id: "CURRENT" }],
+    }),
+
+    disconnectHost: builder.mutation<
+      { success: boolean; data: { disconnected: boolean } },
+      string
+    >({
+      query: (phoneNumber) => ({
+        url: "/api/public/connect-host",
+        method: "DELETE",
+        params: { phoneNumber },
+      }),
+      invalidatesTags: [{ type: "HostConnection", id: "CURRENT" }],
     }),
 
     createPublicAccountIssueReport: builder.mutation<
@@ -252,5 +283,8 @@ export const {
   useGetPublicVehicleByIdQuery,
   useCreatePublicBookingMutation,
   useCreatePublicAccountIssueReportMutation,
+  useConnectToHostMutation,
+  useGetHostConnectionQuery,
+  useDisconnectHostMutation,
   useCreateCheckoutPaymentIntentMutation,
 } = publicApi;

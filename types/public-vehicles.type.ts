@@ -18,6 +18,7 @@ export interface PublicBrowseVehiclesQuery {
   seats?: string[];
   transmissions?: string[];
   locations?: string[];
+  connectedPhone?: string;
   sort?: PublicVehicleSortOption;
   page?: number;
   limit?: number;
@@ -52,6 +53,24 @@ export interface PublicBrowseVehicleRow {
     city: string;
     state: string;
     zipCode: string;
+  };
+  isConnectedHost: boolean;
+}
+
+export interface ConnectedHostSummary {
+  id: string;
+  name: string;
+  rating: number;
+  totalReviews: number;
+  totalVehicles: number;
+}
+
+export interface HostConnectionResponse {
+  success: boolean;
+  data: {
+    phoneNumber: string;
+    connectedAt: string;
+    host: ConnectedHostSummary;
   };
 }
 

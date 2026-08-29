@@ -1,123 +1,207 @@
+'use client'
+
 import React, { Fragment, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { FieldSeparator } from '@/components/ui/field'
 import { ListProps } from '.'
 import { benefitOfConnecting } from '@/constants/connectToHost'
+import {
+        useGetHostConnectionQuery,
+        useDisconnectHostMutation,
+} from '@/app/store/services/publicApi'
+import { clearStoredConnectedPhone } from '@/lib/connectedHost'
+
+const formatDate = (dateStr: string): string =>
+        new Date(dateStr).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+        })
 
 export default function ConfirmHostPageComponent() {
         return (
                 <Suspense>
-                        <div className='w-full mx-auto py-12.5 px-4 overflow-clip bg-[#F4F6F9]'>
-                                <div className='max-w-146 mx-auto'>
-                                        <div>
-                                                <Image
-                                                        src={'/images/you-are-connected.svg'}
-                                                        alt='Connect to host'
-                                                        title='Connect to host'
-                                                        width={196}
-                                                        height={156}
-                                                        loading="eager"
-                                                        className='max-w-48 size-full mx-auto'
-                                                />
-                                        </div>
-                                        <div>
-                                                <h2 className="text-center text-neutral-950 text-4xl font-normal leading-10">
-                                                        {`You’re connected`}
-                                                </h2>
-                                                <p className="text-center text-zinc-800 text-base font-medium font-text leading-6 mt-2">
-                                                        {`You are now linked to Metro Car Rentals. Their vehicles will be highlighted when you browse.`}
-                                                </p>
-                                        </div>
-                                </div>
-
-                                <div className='max-w-146 mx-auto w-full p-4 md:p-8 bg-white rounded-[10px] outline outline-offset-[-0.89px] outline-gray-200 mt-8 mb-6'>
-                                        <div className='grid gap-5'>
-
-                                                <HostCard/>
-                                                
-                                                <FieldSeparator />
-
-                                                <div className='grid gap-3'>
-                                                        {benefitOfConnecting.map((item) => (
-                                                                <Fragment key={item.id}>
-                                                                        <List content={item}/>
-                                                                </Fragment>
-                                                        ))}
-                                                </div>
-
-                                                <FieldSeparator />
-
-                                                <div className='flex items-center flex-wrap gap-3'>
-                                                        <Link 
-                                                                href={'/'}
-                                                                className='w-full md:w-fit'  
-                                                        >
-                                                                <button className='w-full px-8 md:px-24 py-3 bg-blue-700 rounded-xs text-white text-base font-semibold leading-6 cursor-pointer'>
-                                                                        Browse Their Fleet →
-                                                                </button>
-                                                        </Link>
-
-                                                        <Link 
-                                                                href={'/'}  
-                                                                className='w-full md:w-fit'                                                      
-                                                        >
-                                                                <button className='w-full px-6 py-3 rounded-xs outline outline-offset-[-0.89px] outline-red-500 text-red-500 text-base font-semibold leading-6 cursor-pointer'>
-                                                                        Disconnect
-                                                                </button>
-                                                        </Link>
-                                                </div>
-                                                <div className='flex justify-center'>
-                                                        <span className='text-center text-zinc-800 text-xs font-normal leading-4'>
-                                                                {`Disconnecting will remove fleet priority from your search results.`}
-                                                        </span>
-                                                </div>
-                                        </div>
-                                </div>
-
-                                <div className='flex flex-col items-center gap-2'>
-                                        <p className='text-center text-zinc-800 text-base font-normal leading-5'>
-                                                {`Don't have a specific host?`}
-                                        </p>
-                                        <Link
-                                                href={'/browse-cars'}
-                                                className='text-blue-700 text-base font-medium leading-5'
-                                        >
-                                                Browse all available cars →
-                                        </Link>
-                                </div>
-                        </div>
+                        <ConfirmHostPageContent />
                 </Suspense>
         )
 }
 
-const HostCard = () => {
+const ConfirmHostPageContent = () => {
+        const router = useRouter()
+        const searchParams = useSearchParams()
+        const phone = searchParams.get('phone') ?? ''
+
+        const { data, isLoading, isError } = useGetHostConnectionQuery(phone, {
+                skip: !phone,
+        })
+        const [disconnectHost, { isLoading: isDisconnecting }] = useDisconnectHostMutation()
+
+        const handleDisconnect = async () => {
+                try {
+                        await disconnectHost(phone).unwrap()
+                        clearStoredConnectedPhone()
+                        toast.success('Host disconnected.')
+                        router.push('/connect-host')
+                } catch {
+                        toast.error('Failed to disconnect host. Please try again.')
+                }
+        }
+
+        if (!phone || isLoading) {
+                return (
+                        <div className='w-full mx-auto py-12.5 px-4 text-center text-gray-500 text-sm font-normal font-text'>
+                                Loading connection…
+                        </div>
+                )
+        }
+
+        if (isError || !data?.data) {
+                return (
+                        <div className='w-full mx-auto py-12.5 px-4 flex flex-col items-center gap-4'>
+                                <p className='text-center text-gray-500 text-sm font-normal font-text'>
+                                        We couldn&apos;t find an active host connection for this phone number.
+                                </p>
+                                <Link href='/connect-host' className='text-blue-700 text-base font-medium leading-5'>
+                                        Try connecting again →
+                                </Link>
+                        </div>
+                )
+        }
+
+        const { host, connectedAt } = data.data
+        const initials = host.name.trim().charAt(0).toUpperCase() || 'H'
+
+        return (
+                <div className='w-full mx-auto py-12.5 px-4 overflow-clip bg-[#F4F6F9]'>
+                        <div className='max-w-146 mx-auto'>
+                                <div>
+                                        <Image
+                                                src={'/images/you-are-connected.svg'}
+                                                alt='Connect to host'
+                                                title='Connect to host'
+                                                width={196}
+                                                height={156}
+                                                loading="eager"
+                                                className='max-w-48 size-full mx-auto'
+                                        />
+                                </div>
+                                <div>
+                                        <h2 className="text-center text-neutral-950 text-4xl font-normal leading-10">
+                                                {`You’re connected`}
+                                        </h2>
+                                        <p className="text-center text-zinc-800 text-base font-medium font-text leading-6 mt-2">
+                                                {`You are now linked to ${host.name}. Their vehicles will be highlighted when you browse.`}
+                                        </p>
+                                </div>
+                        </div>
+
+                        <div className='max-w-146 mx-auto w-full p-4 md:p-8 bg-white rounded-[10px] outline outline-offset-[-0.89px] outline-gray-200 mt-8 mb-6'>
+                                <div className='grid gap-5'>
+
+                                        <HostCard
+                                                name={host.name}
+                                                rating={host.rating}
+                                                totalVehicles={host.totalVehicles}
+                                                connectedAt={connectedAt}
+                                                initials={initials}
+                                        />
+
+                                        <FieldSeparator />
+
+                                        <div className='grid gap-3'>
+                                                {benefitOfConnecting.map((item) => (
+                                                        <Fragment key={item.id}>
+                                                                <List content={item}/>
+                                                        </Fragment>
+                                                ))}
+                                        </div>
+
+                                        <FieldSeparator />
+
+                                        <div className='flex items-center flex-wrap gap-3'>
+                                                <Link
+                                                        href={'/browse-cars'}
+                                                        className='w-full md:w-fit'
+                                                >
+                                                        <button className='w-full px-8 md:px-24 py-3 bg-blue-700 rounded-xs text-white text-base font-semibold leading-6 cursor-pointer'>
+                                                                Browse Their Fleet →
+                                                        </button>
+                                                </Link>
+
+                                                <button
+                                                        type='button'
+                                                        onClick={handleDisconnect}
+                                                        disabled={isDisconnecting}
+                                                        className='w-full md:w-fit px-6 py-3 rounded-xs outline outline-offset-[-0.89px] outline-red-500 text-red-500 text-base font-semibold leading-6 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
+                                                >
+                                                        {isDisconnecting ? 'Disconnecting…' : 'Disconnect'}
+                                                </button>
+                                        </div>
+                                        <div className='flex justify-center'>
+                                                <span className='text-center text-zinc-800 text-xs font-normal leading-4'>
+                                                        {`Disconnecting will remove fleet priority from your search results.`}
+                                                </span>
+                                        </div>
+                                </div>
+                        </div>
+
+                        <div className='flex flex-col items-center gap-2'>
+                                <p className='text-center text-zinc-800 text-base font-normal leading-5'>
+                                        {`Don't have a specific host?`}
+                                </p>
+                                <Link
+                                        href={'/browse-cars'}
+                                        className='text-blue-700 text-base font-medium leading-5'
+                                >
+                                        Browse all available cars →
+                                </Link>
+                        </div>
+                </div>
+        )
+}
+
+const HostCard = ({
+        name,
+        rating,
+        totalVehicles,
+        connectedAt,
+        initials,
+}: {
+        name: string
+        rating: number
+        totalVehicles: number
+        connectedAt: string
+        initials: string
+}) => {
         return (
                 <div className='flex flex-wrap gap-4 justify-between items-start'>
                         <div className='flex flex-col md:flex-row gap-4 md:items-start'>
                                 <div>
                                         <div className='flex items-center justify-center size-12 overflow-hidden rounded-full bg-blue-700'>
                                                 <span className='text-white text-lg font-semibold leading-7'>
-                                                        {'M'}
+                                                        {initials}
                                                 </span>
                                         </div>
                                 </div>
                                 <div className='flex flex-col gap-1.25'>
                                         <h3 className='text-neutral-950 text-base font-bold font-text leading-6'>
-                                                Metro Car Rentals
+                                                {name}
                                         </h3>
                                         <p className='text-[#6B7280] text-sm font-normal leading-5'>
-                                                Connected since Mar 14, 2026
+                                                Connected since {formatDate(connectedAt)}
                                         </p>
                                         <div className='flex items-center gap-1'>
-                                                <StarIcon/> 
+                                                <StarIcon/>
                                                 <span className='text-neutral-950 text-sm font-normal leading-5'>
-                                                        4.9
+                                                        {rating}
                                                 </span>
                                         </div>
                                         <div>
                                                 <p className='text-gray-500 text-sm font-normal leading-5'>
-                                                        47 trips completed
+                                                        {totalVehicles} vehicle{totalVehicles !== 1 ? 's' : ''} in fleet
                                                 </p>
                                         </div>
                                 </div>
