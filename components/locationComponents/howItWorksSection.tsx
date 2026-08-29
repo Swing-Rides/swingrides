@@ -102,7 +102,7 @@ export default function HowItWorksSection({ data }: HowItWorksSectionProps) {
           <div className="lg:col-span-6 relative flex justify-center">
             <div className="relative w-full max-w-lg lg:max-w-none">
               {/* Photo Container with cross-fade images */}
-              <div className="relative w-full h-[360px] sm:h-[420px] lg:h-[480px] rounded-3xl overflow-hidden shadow-xl border border-slate-200/80 bg-slate-200">
+              <div className="relative w-full h-[360px] sm:h-[420px] lg:h-[480px]">
                 {steps.map((step, idx) => {
                   const fallbackImg =
                     defaultSteps[idx % defaultSteps.length]?.image ||
@@ -119,9 +119,9 @@ export default function HowItWorksSection({ data }: HowItWorksSectionProps) {
                       <Image
                         src={stepImgSrc}
                         alt={`${step.title} - SwingRides`}
-                        fill
-                        className="object-cover object-center"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        width={653}
+                        height={519}
+                        className="aspect-653/519 object-cover object-center"
                         priority={idx === 0}
                       />
                     </div>
