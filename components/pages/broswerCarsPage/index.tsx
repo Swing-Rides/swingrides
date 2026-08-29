@@ -59,6 +59,7 @@ import { CarCardSkeletonGrid } from "@/components/loading/carCardSkeleton";
 import NotificationConnectHostForm from "./notificationConnectHostForm";
 import { useGetPublicBrowseVehiclesQuery } from "@/app/store/services/publicApi";
 import { PublicBrowseVehicleRow } from "@/types/public-vehicles.type";
+import { getStoredConnectedPhone } from "@/lib/connectedHost";
 import { motion, AnimatePresence } from 'motion/react'
 
 const CARS_PER_PAGE = 12;
@@ -69,6 +70,11 @@ export default function BrowseCarsComponentPage() {
   const pathname = usePathname();
 
   const [isPending, startTransition] = useTransition();
+
+  const [connectedPhone, setConnectedPhone] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    setConnectedPhone(getStoredConnectedPhone() ?? undefined);
+  }, []);
 
   const filterParams = useMemo(
     () => parseFilterParams(searchParams),
@@ -93,6 +99,9 @@ export default function BrowseCarsComponentPage() {
       filterParams.transmissions.length > 0
         ? filterParams.transmissions
         : undefined,
+    locations:
+      filterParams.locations.length > 0 ? filterParams.locations : undefined,
+    connectedPhone,
     sort: filterParams.sort,
     page: currentPage,
     limit: CARS_PER_PAGE,
@@ -101,6 +110,7 @@ export default function BrowseCarsComponentPage() {
   const vehicleTypeOptions = data?.data.filters.vehicleTypes ?? [];
   const seatOptions = data?.data.filters.seats ?? [];
   const transmissionOptions = data?.data.filters.transmissions ?? [];
+  const locationOptions = data?.data.filters.locations ?? [];
   const priceRange = data?.data.priceRange ?? { min: 0, max: 0 };
 
   const effectivePriceMin = filterParams.priceMin || priceRange.min;
@@ -148,7 +158,7 @@ export default function BrowseCarsComponentPage() {
   }, 300);
 
   const handleCheckboxFilter = (
-    key: "vehicleTypes" | "seats" | "transmissions",
+    key: "vehicleTypes" | "seats" | "transmissions" | "locations",
     value: string,
   ) => {
     const current = filterParams[key];
@@ -176,6 +186,7 @@ export default function BrowseCarsComponentPage() {
             vehicleTypeOptions={vehicleTypeOptions}
             seatOptions={seatOptions}
             transmissionOptions={transmissionOptions}
+            locationOptions={locationOptions}
             onSearch={handleSearch}
             onRentalType={handleRentalType}
             onAvailableOnly={handleAvailableOnly}
@@ -249,6 +260,7 @@ const SideBar = ({
   vehicleTypeOptions,
   seatOptions,
   transmissionOptions,
+  locationOptions,
   onSearch,
   onRentalType,
   onAvailableOnly,
@@ -305,6 +317,13 @@ const SideBar = ({
         content={seatOptions}
         selected={filterParams.seats}
         onChange={(value) => onCheckboxFilter("seats", value)}
+      />
+      <FieldSeparator />
+      <ListFilter
+        filterTitle="Location"
+        content={locationOptions}
+        selected={filterParams.locations}
+        onChange={(value) => onCheckboxFilter("locations", value)}
       />
     </div>
   );
@@ -590,6 +609,7 @@ const PageMainContent = ({
                   dailyPrice={item.price.daily}
                   averageRating={item.reviewsAndRatings.averageRating}
                   totalRatings={item.reviewsAndRatings.totalRatings}
+                  isConnectedHost={item.isConnectedHost}
                 />
               </Fragment>
             ))}

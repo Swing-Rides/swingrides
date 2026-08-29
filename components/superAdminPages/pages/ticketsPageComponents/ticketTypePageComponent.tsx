@@ -123,7 +123,7 @@ export default function TicketTypePageComponent({ ticketId }: TicketTypePageComp
                                         <DetailField label="Type">
                                                 <span className="text-neutral-950 text-sm font-normal font-text capitalize">{ticket.issueType}</span>
                                         </DetailField>
-                                        <DetailField label="Booking Reference">
+                                        <DetailField label={ticket.submitterType === "account" ? "Subject" : "Booking Reference"}>
                                                 <span className="text-neutral-950 text-sm font-normal font-text">{ticket.bookingReference}</span>
                                         </DetailField>
                                         <DetailField label="Date Submitted">

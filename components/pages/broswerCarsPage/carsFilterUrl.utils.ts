@@ -16,6 +16,7 @@ export const parseFilterParams = (
                 vehicleTypes: searchParams.get('vehicleTypes')?.split(',').filter(Boolean) ?? [],
                 seats: searchParams.get('seats')?.split(',').filter(Boolean) ?? [],
                 transmissions: searchParams.get('transmissions')?.split(',').filter(Boolean) ?? [],
+                locations: searchParams.get('locations')?.split(',').filter(Boolean) ?? [],
                 sort: (searchParams.get('sort') as SortOption) ?? 'default',
         }
 }

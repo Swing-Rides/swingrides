@@ -35,30 +35,22 @@ import {
 // Helpers (exported so header.tsx can build NotificationCardProps from raw data)
 // ---------------------------------------------------------------------------
 
-export type FilterValue =
-  | NotificationCategory
-  | "all"
-  | "renters"
-  | "subscribers"
-  | "tickets";
+export type AdminFilterCategory =
+  | "registrations"
+  | "bookings"
+  | "billing"
+  | "reports"
+  | "reviews"
+  | "alerts"
+  | "system";
+
+export type FilterValue = NotificationCategory | AdminFilterCategory | "all";
 
 export const CATEGORY_TO_TYPE: Record<NotificationCategory, HostNotificationType> = {
   bookings: "newBooking",
   payments: "paymentReceived",
   maintenance: "maintenanceAlert",
   general: "communication",
-};
-
-export const ADMIN_CATEGORY_TO_TYPE: Record<string, AdminNotificationType[]> = {
-  renters: ["newRenter"],
-  subscribers: [
-    "subscriberJoin",
-    "subscriberRenew",
-    "subscriberCancel",
-    "subscriberUpgrade",
-    "subscriberDowngrade",
-  ],
-  tickets: ["newTicket"],
 };
 
 export function formatRelativeTime(dateStr: string): string {
@@ -175,9 +167,13 @@ export const HOST_NOTIFICATION_GROUPS: { label: string; value: FilterValue }[] =
 
 export const ADMIN_NOTIFICATION_GROUPS: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
-  { label: "Renters", value: "renters" },
-  { label: "Subscribers", value: "subscribers" },
-  { label: "Tickets", value: "tickets" },
+  { label: "Registrations", value: "registrations" },
+  { label: "Bookings", value: "bookings" },
+  { label: "Billing", value: "billing" },
+  { label: "Tickets", value: "reports" },
+  { label: "Reviews", value: "reviews" },
+  { label: "Alerts", value: "alerts" },
+  { label: "System", value: "system" },
 ];
 
 type NotificationPanelProps = {
@@ -200,21 +196,7 @@ const NotificationPanel = ({
   const applyFilter = (list: NotificationCardProps[]) => {
     if (filter === "all") return list;
     if (isSuperAdmin) {
-      return list.filter((n) => {
-        if (n.category) return n.category === filter;
-        if (filter === "renters") return n.notificationType === "newRenter";
-        if (filter === "subscribers") {
-          return [
-            "subscriberJoin",
-            "subscriberRenew",
-            "subscriberCancel",
-            "subscriberUpgrade",
-            "subscriberDowngrade",
-          ].includes(n.notificationType as AdminNotificationType);
-        }
-        if (filter === "tickets") return n.notificationType === "newTicket";
-        return false;
-      });
+      return list.filter((n) => n.category === filter);
     }
     const targetType = CATEGORY_TO_TYPE[filter as NotificationCategory];
     return list.filter((n) => n.notificationType === targetType);

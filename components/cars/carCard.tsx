@@ -37,6 +37,7 @@ export type CarCardProps = {
   dailyPrice: number;
   averageRating: number;
   totalRatings?: number;
+  isConnectedHost?: boolean;
 };
 
 export default function CarCard({
@@ -47,13 +48,19 @@ export default function CarCard({
   dailyPrice,
   averageRating,
   totalRatings,
+  isConnectedHost,
   id,
 }: CarCardProps) {
   const carUrl = id;
 
   return (
     <div className="bg-white">
-      <Link href={`/browse-cars/${carUrl}`}>
+      <Link href={`/browse-cars/${carUrl}`} className="relative block">
+        {isConnectedHost && (
+          <span className="absolute top-2.5 left-2.5 z-10 px-2.5 py-1 rounded-full bg-blue-700 text-white text-xs font-semibold font-text leading-4">
+            Your Host
+          </span>
+        )}
         <Image
           src={featuredImage?.src}
           alt={featuredImage.alt}

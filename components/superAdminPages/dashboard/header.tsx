@@ -1,121 +1,89 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import { getInitials } from "@/components/pages/profilePages/utils"
 import { useSidebar } from "@/components/ui/sidebar"
-import { ChevronDown, LogOut, Search, Menu } from "lucide-react"
+import { ChevronDown, LogOut, Search, Menu, UserPlus, Calendar, CreditCard, Ticket, Star, TriangleAlert, Bell } from "lucide-react"
 import Image from "next/image"
 import { userContent } from "@/constants/superAdminSidebar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Notification } from "@/components/hostComponents/notification/notification"
+import { Notification, formatRelativeTime, isToday } from "@/components/hostComponents/notification/notification"
 import { NotificationCardProps } from "@/components/hostComponents/types/navbar.type"
+import {
+        AdminNotificationCategory,
+        useGetAdminNotificationsQuery,
+        useMarkAdminNotificationAsReadMutation,
+        useMarkAllAdminNotificationsAsReadMutation,
+} from "@/app/store/services/adminNotificationApi"
 
-const INITIAL_TODAY_NOTIFICATIONS: NotificationCardProps[] = [
-        {
-                id: "admin-notif-1",
-                title: "New Renter Joined",
-                description: "Marcus Chen registered and submitted identity verification documents.",
-                time: "10 mins ago",
-                unread: true,
-                notificationType: "newRenter",
-                category: "renters",
-                href: "/admin/renters",
-        },
-        {
-                id: "admin-notif-2",
-                title: "New Support Ticket",
-                description: "Ticket #TCK-2041 created: Mechanical issue reported during trip.",
-                time: "25 mins ago",
-                unread: true,
-                notificationType: "newTicket",
-                category: "tickets",
-                href: "/admin/tickets",
-        },
-        {
-                id: "admin-notif-3",
-                title: "Subscription Upgraded",
-                description: "Apex Fleet upgraded subscription from Solo to Fleet Plan.",
-                time: "1 hour ago",
-                unread: true,
-                notificationType: "subscriberUpgrade",
-                category: "subscribers",
-                href: "/admin/subscribers",
-        },
-];
-
-const INITIAL_EARLIER_NOTIFICATIONS: NotificationCardProps[] = [
-        {
-                id: "admin-notif-4",
-                title: "New Subscriber Joined",
-                description: "Skyline Auto Group subscribed to the Fleet Plan.",
-                time: "Yesterday",
-                unread: false,
-                notificationType: "subscriberJoin",
-                category: "subscribers",
-                href: "/admin/subscribers",
-        },
-        {
-                id: "admin-notif-5",
-                title: "Subscription Renewed",
-                description: "Horizon Motors renewed their Solo Plan monthly billing.",
-                time: "2 days ago",
-                unread: false,
-                notificationType: "subscriberRenew",
-                category: "subscribers",
-                href: "/admin/subscribers",
-        },
-        {
-                id: "admin-notif-6",
-                title: "Subscription Cancelled",
-                description: "Velo Drive cancelled their Flex Plan subscription.",
-                time: "3 days ago",
-                unread: false,
-                notificationType: "subscriberCancel",
-                category: "subscribers",
-                href: "/admin/subscribers",
-        },
-        {
-                id: "admin-notif-7",
-                title: "Subscription Downgraded",
-                description: "Urban Wheels downgraded from Fleet Plan to Solo Plan.",
-                time: "4 days ago",
-                unread: false,
-                notificationType: "subscriberDowngrade",
-                category: "subscribers",
-                href: "/admin/subscribers",
-        },
-];
+const CATEGORY_ICON: Record<AdminNotificationCategory, React.ReactNode> = {
+        registrations: (
+                <div className="size-9 bg-cyan-600/10 rounded-full flex justify-center items-center">
+                        <UserPlus className="size-5 text-cyan-600" />
+                </div>
+        ),
+        bookings: (
+                <div className="size-9 bg-blue-700/10 rounded-full flex justify-center items-center">
+                        <Calendar className="size-5 text-blue-700" />
+                </div>
+        ),
+        billing: (
+                <div className="size-9 bg-emerald-500/10 rounded-full flex justify-center items-center">
+                        <CreditCard className="size-5 text-emerald-500" />
+                </div>
+        ),
+        reports: (
+                <div className="size-9 bg-amber-500/10 rounded-full flex justify-center items-center">
+                        <Ticket className="size-5 text-amber-500" />
+                </div>
+        ),
+        reviews: (
+                <div className="size-9 bg-indigo-600/10 rounded-full flex justify-center items-center">
+                        <Star className="size-5 text-indigo-600" />
+                </div>
+        ),
+        alerts: (
+                <div className="size-9 bg-red-500/10 rounded-full flex justify-center items-center">
+                        <TriangleAlert className="size-5 text-red-500" />
+                </div>
+        ),
+        system: (
+                <div className="size-9 bg-gray-500/10 rounded-full flex justify-center items-center">
+                        <Bell className="size-5 text-gray-500" />
+                </div>
+        ),
+}
 
 export function DashboardHeader() {
         const { toggleSidebar } = useSidebar()
 
-        const [todayNotifications, setTodayNotifications] = useState<NotificationCardProps[]>(
-                INITIAL_TODAY_NOTIFICATIONS
-        )
-        const [earlierNotifications, setEarlierNotifications] = useState<NotificationCardProps[]>(
-                INITIAL_EARLIER_NOTIFICATIONS
-        )
+        const { data } = useGetAdminNotificationsQuery({ limit: 50 }, { pollingInterval: 30_000 })
+        const [markAsRead] = useMarkAdminNotificationAsReadMutation()
+        const [markAllAsRead] = useMarkAllAdminNotificationsAsReadMutation()
 
-        const unreadCount = useMemo(() => {
-                return (
-                        todayNotifications.filter((n) => n.unread).length +
-                        earlierNotifications.filter((n) => n.unread).length
-                )
-        }, [todayNotifications, earlierNotifications])
+        const { todayNotifications, earlierNotifications } = useMemo(() => {
+                const raw = data?.data.notifications ?? []
+                const today: NotificationCardProps[] = []
+                const earlier: NotificationCardProps[] = []
 
-        const handleMarkAllAsRead = () => {
-                setTodayNotifications((prev) => prev.map((n) => ({ ...n, unread: false })))
-                setEarlierNotifications((prev) => prev.map((n) => ({ ...n, unread: false })))
-        }
+                raw.forEach((n) => {
+                        const card: NotificationCardProps = {
+                                id: n._id,
+                                title: n.title,
+                                unread: !n.isRead,
+                                description: n.message,
+                                time: formatRelativeTime(n.createdAt),
+                                category: n.category,
+                                href: n.actionUrl || "#",
+                                icon: CATEGORY_ICON[n.category],
+                        }
+                        ;(isToday(n.createdAt) ? today : earlier).push(card)
+                })
 
-        const handleItemClick = (id: string) => {
-                setTodayNotifications((prev) =>
-                        prev.map((n) => (n.id === id ? { ...n, unread: false } : n))
-                )
-                setEarlierNotifications((prev) =>
-                        prev.map((n) => (n.id === id ? { ...n, unread: false } : n))
-                )
-        }
+                return { todayNotifications: today, earlierNotifications: earlier }
+        }, [data])
+
+        const unreadCount = data?.data.summary.unreadCount ?? 0
 
         return (
                 <header className="sticky top-0 z-10 flex items-center justify-between gap-4 h-16 px-2.5 md:px-6 bg-white border-b border-gray-100">
@@ -150,8 +118,8 @@ export function DashboardHeader() {
                                         unreadCount={unreadCount}
                                         today={todayNotifications}
                                         earlier={earlierNotifications}
-                                        onMarkAllAsRead={handleMarkAllAsRead}
-                                        onItemClick={handleItemClick}
+                                        onMarkAllAsRead={() => markAllAsRead()}
+                                        onItemClick={(id) => markAsRead(id)}
                                 />
                                 <HeaderAvatar user={userContent} />
                         </div>

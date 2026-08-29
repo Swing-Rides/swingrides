@@ -26,6 +26,7 @@ export type CarsFilterParams = {
   vehicleTypes: string[];
   seats: string[];
   transmissions: string[];
+  locations: string[];
   sort: SortOption;
 };
 

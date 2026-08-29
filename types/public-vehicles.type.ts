@@ -17,6 +17,8 @@ export interface PublicBrowseVehiclesQuery {
   vehicleTypes?: string[];
   seats?: string[];
   transmissions?: string[];
+  locations?: string[];
+  connectedPhone?: string;
   sort?: PublicVehicleSortOption;
   page?: number;
   limit?: number;
@@ -46,6 +48,30 @@ export interface PublicBrowseVehicleRow {
     averageRating: number;
     totalRatings: number;
   };
+  location: {
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  isConnectedHost: boolean;
+}
+
+export interface ConnectedHostSummary {
+  id: string;
+  name: string;
+  rating: number;
+  totalReviews: number;
+  totalVehicles: number;
+}
+
+export interface HostConnectionResponse {
+  success: boolean;
+  data: {
+    phoneNumber: string;
+    connectedAt: string;
+    host: ConnectedHostSummary;
+  };
 }
 
 export interface PublicBrowseVehiclesResponse {
@@ -60,6 +86,7 @@ export interface PublicBrowseVehiclesResponse {
       vehicleTypes: { id: string; title: string }[];
       seats: { id: string; title: string }[];
       transmissions: { id: string; title: string }[];
+      locations: { id: string; title: string }[];
     };
     pagination: {
       page: number;
@@ -112,6 +139,7 @@ export interface VehicleDetails {
     rating: number;
     createdAt: Date;
     totalReviews: number;
+    isVerified: boolean;
   };
 
   policyNumber: string;

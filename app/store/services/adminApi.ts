@@ -315,6 +315,46 @@ export const adminApi = createApi({
         { type: "AdminRenter", id: renterId },
       ],
     }),
+    suspendRenter: builder.mutation<unknown, string>({
+      query: (renterId) => ({
+        url: `/api/auth/admin/renters/${renterId}/suspend`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (_result, _error, renterId) => [
+        { type: "AdminRenters", id: "LIST" },
+        { type: "AdminRenter", id: renterId },
+      ],
+    }),
+    reactivateRenter: builder.mutation<unknown, string>({
+      query: (renterId) => ({
+        url: `/api/auth/admin/renters/${renterId}/reactivate`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (_result, _error, renterId) => [
+        { type: "AdminRenters", id: "LIST" },
+        { type: "AdminRenter", id: renterId },
+      ],
+    }),
+    flagRenter: builder.mutation<unknown, string>({
+      query: (renterId) => ({
+        url: `/api/auth/admin/renters/${renterId}/flag`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (_result, _error, renterId) => [
+        { type: "AdminRenters", id: "LIST" },
+        { type: "AdminRenter", id: renterId },
+      ],
+    }),
+    unflagRenter: builder.mutation<unknown, string>({
+      query: (renterId) => ({
+        url: `/api/auth/admin/renters/${renterId}/unflag`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (_result, _error, renterId) => [
+        { type: "AdminRenters", id: "LIST" },
+        { type: "AdminRenter", id: renterId },
+      ],
+    }),
     approveHostBusinessVerification: builder.mutation<unknown, string>({
       query: (hostId) => ({
         url: `/api/auth/admin/hosts/${hostId}/business-verification`,
@@ -563,6 +603,10 @@ export const {
   useGetAdminVerificationPendingRentersQuery,
   useApproveRenterVerificationMutation,
   useRejectRenterVerificationMutation,
+  useSuspendRenterMutation,
+  useReactivateRenterMutation,
+  useFlagRenterMutation,
+  useUnflagRenterMutation,
   useApproveHostBusinessVerificationMutation,
   useRejectHostBusinessVerificationMutation,
   // Settings: Admin Users

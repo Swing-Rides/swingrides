@@ -32,7 +32,7 @@ export type NotificationCardProps = {
   unread: boolean;
   description: string;
   time: string;
-  notificationType: NotificationType;
+  notificationType?: NotificationType;
   category?: string;
   href?: string;
   icon?: ReactNode;
