@@ -13,18 +13,23 @@ import {
 } from "@/constants/forHostPageContents";
 import { Skeleton } from "@/components/ui/skeleton";
 import PriceSection from "./priceSection";
-import { Building, CalendarCheck, Car, ChartColumn, Phone, Receipt, ThumbsUp, Wrench } from "lucide-react";
-import { StarRating } from "@/components/hostComponents/pages/reviewsPageComponents/reviewsPageComponents";
+import { 
+  // Building, CalendarCheck, 
+  Car, ChartColumn, Phone, Receipt, 
+  // ThumbsUp, 
+  Wrench } from "lucide-react";
+// import { StarRating } from "@/components/hostComponents/pages/reviewsPageComponents/reviewsPageComponents";
 import FAQsSection from "@/components/faqs";
 import { trustContent } from "@/constants/homePage";
 import { TrustContentProps } from "../homepage";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
+import { SwingNumberSection } from "../aboutPage";
 
 export default function ForHostLandingPage() {
     return (
         <>
             <HeroSection />
-            <NumberSection />
+            <SwingNumberSection/>
             <HowItWork />
             <EverythingYouNeedSection />
             <PriceSection pricingContents={pricingContents} />
@@ -54,7 +59,7 @@ const HeroSection = () => {
                 href='#price-list'
               className="py-2 px-6 rounded-xs bg-blue-700 border-blue-700 text-white border text-xs font-semibold capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer"
             >
-                Get Started
+                Become a Host
             </Link>
             <Link
               href={HOST_DASHBOARD_PATH}
@@ -69,9 +74,9 @@ const HeroSection = () => {
                 src={"/images/host-dashboard-screenshot.png"}
                 alt={"SwingRides Host Platform Dashboard - Everything independent rental operators need."}
                 title={"Everything independent rental operators need."}
-                width={1224}
-                height={1056}
-                className="aspect-816/704 object-cover w-full"
+                width={908}
+                height={796}
+                className="aspect-908/796 object-cover w-full"
             />
         </div>
       </div>
@@ -79,66 +84,66 @@ const HeroSection = () => {
   );
 };
 
-const NumberSection = () => {
+// const NumberSection = () => {
 
-	const numberContent = [
-        {
-			icon: <Building className="text-blue-700 size-8" />,
-			number: "2,500+",
-			label: "Rental Businesses",
-        },
-        {
-			icon: <Car className="text-blue-700 size-8" />,
-			number: "2,500+",
-			label: "Vehicles Managed",
-        },
-        {
-			icon: <CalendarCheck className="text-blue-700 size-8" />,
-			number: "150,000+",
-			label: "Bookings Processed",
-        },
-        {
-			icon: <ThumbsUp className="text-blue-700 size-8" />,
-			number: "98%",
-			label: "Customer Satisfaction",
-        },
-	];
+// 	const numberContent = [
+//         {
+// 			icon: <Building className="text-blue-700 size-8" />,
+// 			number: "2,500+",
+// 			label: "Rental Businesses",
+//         },
+//         {
+// 			icon: <Car className="text-blue-700 size-8" />,
+// 			number: "2,500+",
+// 			label: "Vehicles Managed",
+//         },
+//         {
+// 			icon: <CalendarCheck className="text-blue-700 size-8" />,
+// 			number: "150,000+",
+// 			label: "Bookings Processed",
+//         },
+//         {
+// 			icon: <ThumbsUp className="text-blue-700 size-8" />,
+// 			number: "98%",
+// 			label: "Customer Satisfaction",
+//         },
+// 	];
 
 
-    return (
-        <section className="py-12 px-4 md:px-8 md:py-20 bg-indigo-50">
-			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 justify-between divide-x">
-                <div className="">
-					<h3 className="text-neutral-950 text-sm font-bold font-text leading-4">
-						Trusted by rental operators and fleet owners
-					</h3>
-                </div>
-                {numberContent.map((item) => (
-                    <Fragment key={item.label}>
-                        <NumberCard
-                            icon={item.icon}
-                            number={item.number}
-                            label={item.label}
-                        />
-                    </Fragment>
-                ))}
-                <div className="flex flex-col">
-                    <div className="flex gap-2 items-center justify-start">
-						<StarRating
-							rating={4.8}
-						/>
-						<span className="text-neutral-950 text-2xl font-bold font-text leading-8">
-							4.8/5
-						</span>
-					</div>
-					<span className="text-gray-500 text-sm font-normal font-text leading-5">
-						Based on 1,847 reviews
-					</span>
-                </div>
-            </div>
-        </section>
-    );
-};
+//     return (
+//         <section className="py-12 px-4 md:px-8 md:py-20 bg-indigo-50">
+// 			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 justify-between divide-x">
+//                 <div className="">
+// 					<h3 className="text-neutral-950 text-sm font-bold font-text leading-4">
+// 						Trusted by rental operators and fleet owners
+// 					</h3>
+//                 </div>
+//                 {numberContent.map((item) => (
+//                     <Fragment key={item.label}>
+//                         <NumberCard
+//                             icon={item.icon}
+//                             number={item.number}
+//                             label={item.label}
+//                         />
+//                     </Fragment>
+//                 ))}
+//                 <div className="flex flex-col">
+//                     <div className="flex gap-2 items-center justify-start">
+// 						<StarRating
+// 							rating={4.8}
+// 						/>
+// 						<span className="text-neutral-950 text-2xl font-bold font-text leading-8">
+// 							4.8/5
+// 						</span>
+// 					</div>
+// 					<span className="text-gray-500 text-sm font-normal font-text leading-5">
+// 						Based on 1,847 reviews
+// 					</span>
+//                 </div>
+//             </div>
+//         </section>
+//     );
+// };
 
 const HowItWork = () => {
 
