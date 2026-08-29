@@ -17,6 +17,7 @@ export interface PublicBrowseVehiclesQuery {
   vehicleTypes?: string[];
   seats?: string[];
   transmissions?: string[];
+  locations?: string[];
   sort?: PublicVehicleSortOption;
   page?: number;
   limit?: number;
@@ -46,6 +47,12 @@ export interface PublicBrowseVehicleRow {
     averageRating: number;
     totalRatings: number;
   };
+  location: {
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
 }
 
 export interface PublicBrowseVehiclesResponse {
@@ -60,6 +67,7 @@ export interface PublicBrowseVehiclesResponse {
       vehicleTypes: { id: string; title: string }[];
       seats: { id: string; title: string }[];
       transmissions: { id: string; title: string }[];
+      locations: { id: string; title: string }[];
     };
     pagination: {
       page: number;

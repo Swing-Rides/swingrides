@@ -100,12 +100,16 @@ export type SideBarProps = {
     id: string;
     title: string;
   }[];
+  locationOptions: {
+    id: string;
+    title: string;
+  }[];
   onSearch: (value: string) => void;
   onRentalType: (value: string) => void;
   onAvailableOnly: (checked: boolean) => void;
   onPriceRange: (value: [number, number]) => void;
   onCheckboxFilter: (
-    key: "vehicleTypes" | "seats" | "transmissions",
+    key: "vehicleTypes" | "seats" | "transmissions" | "locations",
     value: string,
   ) => void;
   onResetAll: () => void;
