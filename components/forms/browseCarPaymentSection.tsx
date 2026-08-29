@@ -607,7 +607,7 @@ export const PaymentSection = memo(
                 title="Get insurance for yourself"
                 className="text-xs text-blue-700 hover:text-blue-950 duration-300 transition-colors"
               >
-                Click here to get insurance for yourself
+                Click here to get AB insurance for yourself
               </Link>
             </div>
           </div>
