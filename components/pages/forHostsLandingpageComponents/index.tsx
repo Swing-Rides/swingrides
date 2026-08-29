@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PriceSection from "./priceSection";
 import { 
   // Building, CalendarCheck, 
-  Car, ChartColumn, Phone, Receipt, 
+  Car, ChartColumn, Phone, Receipt, Check,
   // ThumbsUp, 
   Wrench } from "lucide-react";
 // import { StarRating } from "@/components/hostComponents/pages/reviewsPageComponents/reviewsPageComponents";
@@ -67,6 +67,16 @@ const HeroSection = () => {
             >
               Login as host
             </Link>
+          </div>
+          <div className="flex gap-3 items-center justify-start flex-wrap">
+            {["No hidden fees","No commission per booking"].map((item) => (
+              <div key={item} className="flex gap-2 items-center justify-start">
+                <Check className="text-blue-700 size-4" />
+                <span className="text-gray-500 text-sm font-normal font-text leading-5">
+                  {item}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
         <div className="flex -mr-10 aspect-816/704 w-full">
