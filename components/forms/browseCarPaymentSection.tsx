@@ -3,7 +3,7 @@
 import { memo, useMemo } from "react";
 import Link from "next/link";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
-import { Shield, AlertTriangle } from "lucide-react";
+import { Shield, ShieldCheck, AlertTriangle } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import {
   type PriceConfig,
@@ -590,7 +590,7 @@ export const PaymentSection = memo(
         {/* ── Insurance card ──────────────────────────────── */}
         <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
 
-          <div>
+          <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <h4 className="text-neutral-950 text-base font-semibold font-text leading-6">
                 Insurance Details
@@ -600,14 +600,28 @@ export const PaymentSection = memo(
               </span>
             </div>
 
-            <div>
+            {/* ABI Insurance Partner Banner */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-[10px] bg-[#F4F8FF] border border-blue-100">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="size-8 text-blue-600 shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-blue-600 font-semibold text-sm sm:text-base leading-tight">
+                    SwingRides partners with ABI Insurance
+                  </span>
+                  <span className="text-gray-500 text-xs sm:text-sm mt-0.5">
+                    Need rental coverage? Get a quote directly from ABI.
+                  </span>
+                </div>
+              </div>
+
               <Link
                 href={INSURANCE_LINK}
                 target="_blank"
-                title="Get insurance for yourself"
-                className="text-xs text-blue-700 hover:text-blue-950 duration-300 transition-colors"
+                rel="noopener noreferrer"
+                title="Get a Quote directly from ABI"
+                className="w-full sm:w-auto text-center px-4 py-2 bg-blue-700 hover:bg-blue-950 active:bg-blue-800 text-white text-xs sm:text-sm font-medium rounded-xs transition-colors duration-300 shrink-0 whitespace-nowrap"
               >
-                Click here to get AB insurance for yourself
+                Get a Quote
               </Link>
             </div>
           </div>

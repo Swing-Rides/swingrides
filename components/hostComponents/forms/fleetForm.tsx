@@ -13,6 +13,7 @@ import {
   Upload,
   X,
   AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -290,14 +291,28 @@ export default function FleetForm({
           {/* Cell 2: Insurance Details */}
           <Cell icon={<Info />} title="Insurance Details">
 
-            <div>
+            {/* ABI Insurance Partner Banner */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-[10px] bg-[#F4F8FF] border border-blue-100">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="size-8 text-blue-600 shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-gray-900 font-semibold text-sm sm:text-base leading-tight">
+                    Need coverage for this vehicle?
+                  </span>
+                  <span className="text-gray-500 text-xs sm:text-sm mt-0.5">
+                    Get Period X + Period Z coverage directly from ABI.
+                  </span>
+                </div>
+              </div>
+
               <Link
                 href={INSURANCE_LINK}
                 target="_blank"
-                title="Get insurance for yourself"
-                className="text-xs text-blue-700 hover:text-blue-950 duration-300 transition-colors"
+                rel="noopener noreferrer"
+                title="Get an ABI Quote"
+                className="w-full sm:w-auto text-center px-4 py-2 bg-blue-700 hover:bg-blue-950 active:bg-blue-800 text-white text-xs sm:text-sm font-medium rounded-xs transition-colors duration-300 shrink-0 whitespace-nowrap"
               >
-                Click here to get insurance for your vehicle if you don&apos;t have one yet.
+                Get an ABI Quote
               </Link>
             </div>
                   
