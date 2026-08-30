@@ -76,17 +76,15 @@ const HeroSection = () => {
 
   return (
     <section className="relative overflow-clip min-h-fit z-2">
-      <div className="w-full min-h-dvh bg-slate-100">
+      <div>
         <Image
-          src="/images/swingRides-homepage.webp"
+          src={"/images/swingRides-homepage.webp"}
           alt="Rent From Local Car Owners. Zero Commission."
           title="Rent From Local Car Owners. Zero Commission."
           width={1440}
           height={774}
           priority={true}
-          loading="eager"
-          unoptimized={true}
-          decoding="sync"
+          preload={true}
           className="w-full min-h-dvh object-cover"
         />
       </div>
