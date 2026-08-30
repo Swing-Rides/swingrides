@@ -31,16 +31,17 @@ export default function HostVerifyAccount({
   const { data: verificationResponse } = useGetHostBusinessVerificationQuery();
   const { data: profileCompanyResponse } = useGetProfileCompanySettingsQuery();
   const verification = verificationResponse?.data;
-  const stripeConnect =
-    profileCompanyResponse?.data.payment.stripeConnect;
+  const stripeConnect = profileCompanyResponse?.data.payment.stripeConnect;
+  const hostPlan = profileCompanyResponse?.data.payment.plan;
   const verificationStatus: HostBusinessVerificationStatus =
-    verification?.status ??
-    (userIsVerified ? "approved" : "not_submitted");
+    verification?.status ?? (userIsVerified ? "approved" : "not_submitted");
   const isVerified = verificationStatus === "approved";
   const isPending = verificationStatus === "pending";
   const isRejected = verificationStatus === "rejected";
-  const [createHostStripeConnectOnboardingLink, { isLoading: isCreatingOnboardingLink }] =
-    useCreateHostStripeConnectOnboardingLinkMutation();
+  const [
+    createHostStripeConnectOnboardingLink,
+    { isLoading: isCreatingOnboardingLink },
+  ] = useCreateHostStripeConnectOnboardingLinkMutation();
 
   const handleCompleteStripeOnboarding = async () => {
     const response = await createHostStripeConnectOnboardingLink().unwrap();
@@ -70,7 +71,7 @@ export default function HostVerifyAccount({
         <PageIntro
           imageSrc="/images/active-plan.svg"
           pageTitle="Your Plan is Active 🎉"
-            description={`You've successfully subscribed to the ${activePlan} plan. You can now start managing your fleet.`}
+          description={`You've successfully subscribed to the ${activePlan} plan. You can now start managing your fleet.`}
         />
       </div>
       {stripeConnect && !stripeConnect.onboardingComplete ? (
@@ -80,7 +81,8 @@ export default function HostVerifyAccount({
               Complete Stripe onboarding
             </h3>
             <span className="block text-gray-500 text-sm font-medium font-text leading-5">
-              Your host account has been created, but Stripe still needs your payout details before you can receive booking payments.
+              Your host account has been created, but Stripe still needs your
+              payout details before you can receive booking payments.
             </span>
           </div>
           <button
@@ -134,8 +136,8 @@ export default function HostVerifyAccount({
             {isRejected ? (
               <div className="flex items-center justify-center text-center p-3 rounded-[10px] bg-red-50 w-full">
                 <span className="flex text-red-700 text-sm font-medium font-text leading-5">
-                  Your previous verification submission needs attention.
-                  Upload an updated business license to continue.
+                  Your previous verification submission needs attention. Upload
+                  an updated business license to continue.
                 </span>
               </div>
             ) : null}
@@ -159,7 +161,9 @@ export default function HostVerifyAccount({
               verificationStatus={verificationStatus}
               submittedAt={verification?.submittedAt}
               businessLicenseUrl={verification?.businessLicenseUrl}
+              idCardUrl={verification?.idCardUrl}
               notes={verification?.notes}
+              plan={hostPlan}
             />
           </>
         )}

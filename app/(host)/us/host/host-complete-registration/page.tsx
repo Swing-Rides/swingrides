@@ -41,21 +41,21 @@ export default function Page() {
   const fleetSize = PLAN_FLEET_SIZE[payment?.plan ?? "flex"] ?? "1 vehicle";
 
   // Skip business registration for Solo plan hosts
-  useEffect(() => {
-    if (!isLoading && isSoloPlan) {
-      router.replace(HOST_DASHBOARD_PATH);
-    }
-  }, [isLoading, isSoloPlan, router]);
+  // useEffect(() => {
+  //   if (!isLoading && isSoloPlan) {
+  //     router.replace(HOST_DASHBOARD_PATH);
+  //   }
+  // }, [isLoading, isSoloPlan, router]);
 
-  if (isLoading || isSoloPlan) {
-    return (
-      <div className="space-y-5 p-3">
-        <div className="h-32 rounded-[10px] bg-gray-100 animate-pulse" />
-        <div className="h-40 rounded-[10px] bg-gray-100 animate-pulse" />
-        <div className="h-64 rounded-[10px] bg-gray-100 animate-pulse" />
-      </div>
-    );
-  }
+  // if (isLoading || isSoloPlan) {
+  //   return (
+  //     <div className="space-y-5 p-3">
+  //       <div className="h-32 rounded-[10px] bg-gray-100 animate-pulse" />
+  //       <div className="h-40 rounded-[10px] bg-gray-100 animate-pulse" />
+  //       <div className="h-64 rounded-[10px] bg-gray-100 animate-pulse" />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div>

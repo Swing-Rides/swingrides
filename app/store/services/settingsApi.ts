@@ -85,6 +85,7 @@ export type HostProfileCompanySettings = {
   businessVerification: {
     status: HostBusinessVerificationStatus;
     businessLicenseUrl?: string;
+    idCardUrl?: string;
     submittedAt?: string;
     reviewedAt?: string;
     notes?: string;
@@ -200,12 +201,14 @@ export type SendAgreementForSignatureRequest = {
 };
 
 export type SubmitHostBusinessVerificationRequest = {
-  businessLicenseUrl: string;
+  idCardUrl: string;
+  businessLicenseUrl?: string;
 };
 
 export type HostBusinessVerificationResponse = {
   status: HostBusinessVerificationStatus;
   businessLicenseUrl?: string;
+  idCardUrl?: string;
   submittedAt?: string;
   reviewedAt?: string;
   notes?: string;

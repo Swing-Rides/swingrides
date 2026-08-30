@@ -6,24 +6,27 @@ import { validators } from "@/components/forms/form.validators";
 import { useState } from 'react';
 import {
   HostBusinessVerificationStatus,
+  HostPlanType,
   useSubmitHostBusinessVerificationMutation,
 } from "@/app/store/services/settingsApi";
 
 export type BusinessLicenseVerificationFormValues = {
-  businessLicenseUrl: string;
+  idCardUrl: string;
+  businessLicenseUrl?: string;
 };
 
 type BusinessLicenseVerificationFormRawValues = {
-  businessLicenseDocument: FileList;
+  IdCard: FileList;
+  businessLicenseDocument?: FileList;
 };
 
 type FormState = 'idle' | 'submitting' | 'submitted' | 'failed'
 
-const fields: FormFieldConfig[] = [
+const buildFields = (isBusinessLicenseRequired: boolean): FormFieldConfig[] => [
   {
-    name: "businessLicenseDocument",
+    name: "IdCard",
     type: "file",
-    label: "Upload Business License",
+    label: "Upload Personal Identity Card",
     description: "PDF, JPG, PNG — up to 10MB",
     accept: "image/*,application/pdf",
     capture: "environment",
@@ -31,6 +34,33 @@ const fields: FormFieldConfig[] = [
     maxFiles: 1,
     showPreview: true,
     validation: validators.file({
+      required: true,
+      maxFiles: 1,
+      maxSizeMB: 10,
+      maxTotalSizeMB: 10,
+      accept: [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/heic",
+        "application/pdf",
+      ],
+    }),
+  },
+  {
+    name: "businessLicenseDocument",
+    type: "file",
+    label: isBusinessLicenseRequired
+      ? "Upload Business License"
+      : "Upload Business License (optional)",
+    description: "PDF, JPG, PNG — up to 10MB",
+    accept: "image/*,application/pdf",
+    capture: "environment",
+    multiple: false,
+    maxFiles: 1,
+    showPreview: true,
+    validation: validators.file({
+      required: isBusinessLicenseRequired,
       maxFiles: 1,
       maxSizeMB: 10,
       maxTotalSizeMB: 10,
@@ -49,7 +79,26 @@ type BusinessLicenseVerificationFormProps = {
   verificationStatus?: HostBusinessVerificationStatus;
   submittedAt?: string;
   businessLicenseUrl?: string;
+  idCardUrl?: string;
   notes?: string;
+  plan?: HostPlanType;
+};
+
+const uploadDocument = async (file: File): Promise<string> => {
+  const fd = new FormData();
+  fd.append("file", file);
+
+  const uploadResponse = await fetch("/api/upload", {
+    method: "POST",
+    body: fd,
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error("Failed to upload document");
+  }
+
+  const uploadData = await uploadResponse.json();
+  return uploadData.secure_url as string;
 };
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -76,7 +125,9 @@ export default function BusinessLicenseVerificationForm({
   verificationStatus = "not_submitted",
   submittedAt,
   businessLicenseUrl,
+  idCardUrl,
   notes,
+  plan = "flex",
 }: BusinessLicenseVerificationFormProps) {
   const [formState, setFormState] = useState<FormState>('idle');
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
@@ -85,20 +136,29 @@ export default function BusinessLicenseVerificationForm({
 
   const isPending = verificationStatus === "pending";
   const isApproved = verificationStatus === "approved";
+  const isBusinessLicenseRequired = plan === "fleet";
+  const fields = buildFields(isBusinessLicenseRequired);
 
   const handleSubmit = async (values: Record<string, unknown>) => {
-    if (!(values.businessLicenseDocument instanceof FileList)) {
+    if (!(values.IdCard instanceof FileList)) {
       setFormState('failed');
-      setFeedbackMessage("Please upload your business license document.");
+      setFeedbackMessage("Please upload your identity card.");
       return;
     }
 
     const raw = values as BusinessLicenseVerificationFormRawValues;
-    const file = raw.businessLicenseDocument?.[0];
+    const idCardFile = raw.IdCard?.[0];
+    const businessLicenseFile = raw.businessLicenseDocument?.[0];
 
-    if (!file) {
+    if (!idCardFile) {
       setFormState('failed');
-      setFeedbackMessage("Please upload your business license document.");
+      setFeedbackMessage("Please upload your identity card.");
+      return;
+    }
+
+    if (isBusinessLicenseRequired && !businessLicenseFile) {
+      setFormState('failed');
+      setFeedbackMessage("Business license is required for the fleet plan.");
       return;
     }
 
@@ -106,22 +166,14 @@ export default function BusinessLicenseVerificationForm({
     setFeedbackMessage(null);
 
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-
-      const uploadResponse = await fetch("/api/upload", {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload business license");
-      }
-
-      const uploadData = await uploadResponse.json();
+      const [idCardUrl, businessLicenseUrl] = await Promise.all([
+        uploadDocument(idCardFile),
+        businessLicenseFile ? uploadDocument(businessLicenseFile) : Promise.resolve(undefined),
+      ]);
 
       await submitHostBusinessVerification({
-        businessLicenseUrl: uploadData.secure_url as string,
+        idCardUrl,
+        ...(businessLicenseUrl ? { businessLicenseUrl } : {}),
       }).unwrap();
 
       setFormState('submitted');
@@ -141,19 +193,31 @@ export default function BusinessLicenseVerificationForm({
 
   return (
     <div className='w-full space-y-4'>
-      {businessLicenseUrl ? (
+      {businessLicenseUrl || idCardUrl ? (
         <div className="w-full rounded-[10px] border border-gray-200 bg-gray-50 p-4">
           <p className="text-sm font-medium text-neutral-950">
-            Current document on file
+            Current documents on file
           </p>
-          <a
-            href={businessLicenseUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-1 block text-sm text-blue-700 underline"
-          >
-            View uploaded business license
-          </a>
+          {idCardUrl ? (
+            <a
+              href={idCardUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 block text-sm text-blue-700 underline"
+            >
+              View uploaded identity card
+            </a>
+          ) : null}
+          {businessLicenseUrl ? (
+            <a
+              href={businessLicenseUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 block text-sm text-blue-700 underline"
+            >
+              View uploaded business license
+            </a>
+          ) : null}
           {submittedAt ? (
             <p className="mt-2 text-xs text-gray-500">
               Submitted on {new Date(submittedAt).toLocaleDateString()}
