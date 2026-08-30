@@ -6,14 +6,13 @@ import {
   trustContent,
   whyRentContent,
 } from "@/constants/homePage";
-import { carsTestData } from "@/constants/carsTestData";
 import CarCard from "@/components/cars/carCard";
 import Link from "next/link";
 import HomePageSearchForm from "@/components/forms/homePageSearchForm";
 import { Check } from "lucide-react";
-import FAQsSection from "@/components/faqs";
 import { PublicBrowseVehicleRow } from "@/types/public-vehicles.type";
 import { useGetPublicBrowseVehiclesQuery } from "@/app/store/services/publicApi";
+import AtlantaLaunch from "../notifications/atlantaLaunch";
 
 type HowItWorksProps = {
   content: {
@@ -34,13 +33,14 @@ export type TrustContentProps = {
 };
 
 export default function HomePageComponent() {
-  const { data, isFetching, isLoading } = useGetPublicBrowseVehiclesQuery({
+  const { data, isLoading } = useGetPublicBrowseVehiclesQuery({
     page: 1,
     limit: 6,
   });
 
   return (
     <div className="z-1">
+      <AtlantaLaunch />
       <HeroSection />
       <Skip />
       <FeaturePillsBar />
@@ -51,7 +51,6 @@ export default function HomePageComponent() {
         isLoading={isLoading}
       />
       <TrustSection />
-      {/* <FAQsSection /> */}
     </div>
   );
 }

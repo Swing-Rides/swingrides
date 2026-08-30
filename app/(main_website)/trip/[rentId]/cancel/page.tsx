@@ -1,49 +1,36 @@
-"use client";
+import type { Metadata } from "next";
+import CancelTripClient from "@/components/pages/cancelTripPageComponents/cancelTripClient";
+import { constructMetadata } from "@/lib/seo/metadata";
+import { JsonLd, getWebPageSchema } from "@/components/seo/jsonLd";
 
-import { useGetBookingByIdQuery } from "@/app/store/services/renterApi";
-import CancelTripPage from "@/components/pages/cancelTripPageComponents";
-import CancelTripLoading from "@/components/pages/cancelTripPageComponents/cancelTripLoading";
-import CancelTripErrorState from "@/components/pages/cancelTripPageComponents/tripErrorState";
-import { useParams } from "next/navigation";
+type PageProps = {
+  params: Promise<{ rentId: string }>;
+};
 
-export default function CancelTrip() {
-
-        const params = useParams();
-        const rentId = params.rentId as string;
-        const { data, isLoading, isError } = useGetBookingByIdQuery({ id: rentId });
-
-        if (isLoading) {
-                return <CancelTripLoading />
-        }
-
-        if (isError || !data?.data) {
-                return (
-                        <CancelTripErrorState
-                                title="Trip not found"
-                                description="We couldn't find a booking matching this link. It may have been removed or the link may be incorrect." 
-                        />
-                );
-        }
-        
-        const rental = data.data;
-        const upcomingTrip = rental.status === "Upcoming" || rental.status === 'Running Late' || rental.status === 'Overdue';
-        
-        if (!upcomingTrip) {
-                return (
-                        <CancelTripErrorState
-                                title="This trip can't be cancelled"
-                                description="Only upcoming trips are eligible for cancellation. If you believe this is an error, please contact support."
-                                tripId={rental.id}
-                        />
-                );
-        }
-        
-        return (
-                <main>
-                        <CancelTripPage 
-                                tripId={rental.id}
-                                upcomingTrip={upcomingTrip}
-                        />
-                </main>
-        )
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { rentId } = await params;
+  return constructMetadata({
+    title: "Cancel Trip",
+    description: "Cancel your upcoming vehicle reservation on Swing Rides.",
+    path: `/trip/${rentId}/cancel`,
+    noIndex: true,
+  });
 }
+
+export default async function CancelTrip({ params }: PageProps) {
+  const { rentId } = await params;
+
+  return (
+    <main>
+      <JsonLd
+        schema={getWebPageSchema({
+          name: "Cancel Trip | Swing Rides",
+          description:
+            "Cancel your upcoming vehicle reservation on Swing Rides.",
+          path: `/trip/${rentId}/cancel`,
+        })}
+      />
+      <CancelTripClient rentId={rentId} />
+    </main>
+  );
+}
