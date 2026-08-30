@@ -115,19 +115,25 @@ export default function GuestSignUpForm({
         toast.error("Unable to create your account. Please try again.");
         return;
       }
-      
-      toast.success("Account created — you're all set!");
+
+      toast.success("Account created! Check your email to verify it.");
+
+      // Callers with onSuccess/route (e.g. mid-checkout) need to keep control
+      // of navigation so the in-progress flow isn't abandoned — only the
+      // bare, standalone signup form sends the user to verify immediately.
       if (onSuccess) {
         await onSuccess();
         return;
       }
-      
+
       if (route) {
         handleClose();
         router.push(route);
       } else {
         handleClose();
-        router.refresh();
+        router.push(
+          `/verify-email?type=renter&email=${encodeURIComponent(values.email)}`,
+        );
       }
     } catch (error) {
       toast.error(getErrorMessage(error, "Sign up failed. Please try again."));

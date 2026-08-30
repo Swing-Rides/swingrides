@@ -38,6 +38,7 @@ export type HostProfile = {
   currency: string;
   paymentStatus: "pending" | "paid" | "quote_required";
   isActive: boolean;
+  emailVerified: boolean;
   createdAt: Date;
   lastLogin?: Date;
 };

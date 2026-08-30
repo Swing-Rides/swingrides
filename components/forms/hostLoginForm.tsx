@@ -47,7 +47,13 @@ export default function HostLoginForm() {
 
     const response = await hostLogin(payload).unwrap();
     if (response.success) {
-      router.push("/us/host");
+      if (response.host && !response.host.emailVerified) {
+        router.push(
+          `/verify-email?type=host&email=${encodeURIComponent(response.host.email)}`,
+        );
+      } else {
+        router.push("/us/host");
+      }
     } else {
       setErrorMessage(response.message || "Sign in failed. Please try again.");
       return;

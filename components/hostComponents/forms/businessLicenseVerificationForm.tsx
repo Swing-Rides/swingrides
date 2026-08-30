@@ -7,81 +7,25 @@ import { useState } from 'react';
 import {
   HostBusinessVerificationStatus,
   HostPlanType,
+  HostVerificationDocument,
+  SubmitHostBusinessVerificationRequest,
   useSubmitHostBusinessVerificationMutation,
 } from "@/app/store/services/settingsApi";
 
-export type BusinessLicenseVerificationFormValues = {
-  idCardUrl: string;
-  businessLicenseUrl?: string;
-};
-
-type BusinessLicenseVerificationFormRawValues = {
-  IdCard: FileList;
-  businessLicenseDocument?: FileList;
-};
-
 type FormState = 'idle' | 'submitting' | 'submitted' | 'failed'
 
-const buildFields = (isBusinessLicenseRequired: boolean): FormFieldConfig[] => [
-  {
-    name: "IdCard",
-    type: "file",
-    label: "Upload Personal Identity Card",
-    description: "PDF, JPG, PNG — up to 10MB",
-    accept: "image/*,application/pdf",
-    capture: "environment",
-    multiple: false,
-    maxFiles: 1,
-    showPreview: true,
-    validation: validators.file({
-      required: true,
-      maxFiles: 1,
-      maxSizeMB: 10,
-      maxTotalSizeMB: 10,
-      accept: [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/heic",
-        "application/pdf",
-      ],
-    }),
-  },
-  {
-    name: "businessLicenseDocument",
-    type: "file",
-    label: isBusinessLicenseRequired
-      ? "Upload Business License"
-      : "Upload Business License (optional)",
-    description: "PDF, JPG, PNG — up to 10MB",
-    accept: "image/*,application/pdf",
-    capture: "environment",
-    multiple: false,
-    maxFiles: 1,
-    showPreview: true,
-    validation: validators.file({
-      required: isBusinessLicenseRequired,
-      maxFiles: 1,
-      maxSizeMB: 10,
-      maxTotalSizeMB: 10,
-      accept: [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/heic",
-        "application/pdf",
-      ],
-    }),
-  },
-]
+const STATUS_LABEL: Record<HostBusinessVerificationStatus, string> = {
+  not_submitted: "Not submitted",
+  pending: "Under review",
+  approved: "Verified",
+  rejected: "Rejected",
+};
 
-type BusinessLicenseVerificationFormProps = {
-  verificationStatus?: HostBusinessVerificationStatus;
-  submittedAt?: string;
-  businessLicenseUrl?: string;
-  idCardUrl?: string;
-  notes?: string;
-  plan?: HostPlanType;
+const STATUS_STYLE: Record<HostBusinessVerificationStatus, string> = {
+  not_submitted: "bg-gray-100 text-gray-500",
+  pending: "bg-blue-50 text-blue-700",
+  approved: "bg-green-50 text-green-700",
+  rejected: "bg-red-50 text-red-700",
 };
 
 const uploadDocument = async (file: File): Promise<string> => {
@@ -121,44 +65,63 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 }
 
-export default function BusinessLicenseVerificationForm({
-  verificationStatus = "not_submitted",
-  submittedAt,
-  businessLicenseUrl,
-  idCardUrl,
-  notes,
-  plan = "flex",
-}: BusinessLicenseVerificationFormProps) {
+type DocumentUploadCardProps = {
+  label: string;
+  fieldName: string;
+  document?: HostVerificationDocument;
+  required: boolean;
+  onSubmit: (url: string) => Promise<void>;
+};
+
+function DocumentUploadCard({
+  label,
+  fieldName,
+  document,
+  required,
+  onSubmit,
+}: DocumentUploadCardProps) {
   const [formState, setFormState] = useState<FormState>('idle');
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [submitHostBusinessVerification] =
-    useSubmitHostBusinessVerificationMutation();
 
-  const isPending = verificationStatus === "pending";
-  const isApproved = verificationStatus === "approved";
-  const isBusinessLicenseRequired = plan === "fleet";
-  const fields = buildFields(isBusinessLicenseRequired);
+  const status = document?.status ?? "not_submitted";
+  const canUpload =
+    (status === "not_submitted" || status === "rejected") &&
+    formState !== "submitted";
+
+  const fields: FormFieldConfig[] = [
+    {
+      name: fieldName,
+      type: "file",
+      label: `Upload ${label}`,
+      description: "PDF, JPG, PNG — up to 10MB",
+      accept: "image/*,application/pdf",
+      capture: "environment",
+      multiple: false,
+      maxFiles: 1,
+      showPreview: true,
+      validation: validators.file({
+        required: true,
+        maxFiles: 1,
+        maxSizeMB: 10,
+        maxTotalSizeMB: 10,
+        accept: [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/heic",
+          "application/pdf",
+        ],
+      }),
+    },
+  ];
 
   const handleSubmit = async (values: Record<string, unknown>) => {
-    if (!(values.IdCard instanceof FileList)) {
-      setFormState('failed');
-      setFeedbackMessage("Please upload your identity card.");
-      return;
-    }
+    const files = values[fieldName];
+    const file = files instanceof FileList ? files[0] : undefined;
 
-    const raw = values as BusinessLicenseVerificationFormRawValues;
-    const idCardFile = raw.IdCard?.[0];
-    const businessLicenseFile = raw.businessLicenseDocument?.[0];
-
-    if (!idCardFile) {
+    if (!file) {
       setFormState('failed');
-      setFeedbackMessage("Please upload your identity card.");
-      return;
-    }
-
-    if (isBusinessLicenseRequired && !businessLicenseFile) {
-      setFormState('failed');
-      setFeedbackMessage("Business license is required for the fleet plan.");
+      setFeedbackMessage(`Please upload your ${label.toLowerCase()}.`);
       return;
     }
 
@@ -166,72 +129,64 @@ export default function BusinessLicenseVerificationForm({
     setFeedbackMessage(null);
 
     try {
-      const [idCardUrl, businessLicenseUrl] = await Promise.all([
-        uploadDocument(idCardFile),
-        businessLicenseFile ? uploadDocument(businessLicenseFile) : Promise.resolve(undefined),
-      ]);
-
-      await submitHostBusinessVerification({
-        idCardUrl,
-        ...(businessLicenseUrl ? { businessLicenseUrl } : {}),
-      }).unwrap();
+      const url = await uploadDocument(file);
+      await onSubmit(url);
 
       setFormState('submitted');
       setFeedbackMessage(
-        "Your business verification has been submitted and is now under review.",
+        `Your ${label.toLowerCase()} has been submitted and is now under review.`,
       );
     } catch (error) {
       setFormState('failed');
       setFeedbackMessage(
         getErrorMessage(
           error,
-          "We couldn't submit your business verification right now.",
+          `We couldn't submit your ${label.toLowerCase()} right now.`,
         ),
       );
     }
-  }
+  };
 
   return (
-    <div className='w-full space-y-4'>
-      {businessLicenseUrl || idCardUrl ? (
-        <div className="w-full rounded-[10px] border border-gray-200 bg-gray-50 p-4">
-          <p className="text-sm font-medium text-neutral-950">
-            Current documents on file
-          </p>
-          {idCardUrl ? (
-            <a
-              href={idCardUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 block text-sm text-blue-700 underline"
-            >
-              View uploaded identity card
-            </a>
-          ) : null}
-          {businessLicenseUrl ? (
-            <a
-              href={businessLicenseUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 block text-sm text-blue-700 underline"
-            >
-              View uploaded business license
-            </a>
-          ) : null}
-          {submittedAt ? (
-            <p className="mt-2 text-xs text-gray-500">
-              Submitted on {new Date(submittedAt).toLocaleDateString()}
-            </p>
-          ) : null}
-          {notes ? (
-            <p className="mt-2 text-xs text-red-600">{notes}</p>
-          ) : null}
-        </div>
+    <div className="w-full rounded-[10px] border border-gray-200 p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="text-sm font-medium text-neutral-950">
+          {label}
+          {required ? null : (
+            <span className="text-gray-400 font-normal"> (optional)</span>
+          )}
+        </h4>
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${STATUS_STYLE[status]}`}
+        >
+          {STATUS_LABEL[status]}
+        </span>
+      </div>
+
+      {document?.url ? (
+        <a
+          href={document.url}
+          target="_blank"
+          rel="noreferrer"
+          className="block text-sm text-blue-700 underline w-fit"
+        >
+          View uploaded document
+        </a>
+      ) : null}
+
+      {document?.submittedAt ? (
+        <p className="text-xs text-gray-500">
+          Submitted on {new Date(document.submittedAt).toLocaleDateString()}
+        </p>
+      ) : null}
+
+      {status === "rejected" && document?.notes ? (
+        <p className="text-xs text-red-600">{document.notes}</p>
       ) : null}
 
       {feedbackMessage ? (
         <div
-          className={`w-full rounded-[10px] p-3 text-sm font-medium ${
+          className={`rounded-[10px] p-3 text-sm font-medium ${
             formState === "failed"
               ? "bg-red-50 text-red-700"
               : "bg-green-50 text-green-700"
@@ -241,19 +196,56 @@ export default function BusinessLicenseVerificationForm({
         </div>
       ) : null}
 
-      {isApproved ? null : isPending ? (
-        <div className="w-full rounded-[10px] bg-blue-50 p-3 text-sm font-medium text-blue-700">
-          Your business verification submission is being reviewed.
-        </div>
-      ) : (
-        <MainForm 
+      {status === "pending" ? (
+        <p className="text-xs text-blue-700">This document is under review.</p>
+      ) : null}
+
+      {canUpload ? (
+        <MainForm
           fields={fields}
-          isLoading={formState === 'submitting' ? true : false}
-          submitLabel={"Submit for verification"}
+          isLoading={formState === 'submitting'}
+          submitLabel={status === "rejected" ? "Resubmit" : "Submit"}
           onSubmit={handleSubmit}
-          className='w-full'
+          className="w-full"
         />
-      )}
+      ) : null}
     </div>
-  )
+  );
+}
+
+type BusinessLicenseVerificationFormProps = {
+  idCard?: HostVerificationDocument;
+  businessLicense?: HostVerificationDocument;
+  plan?: HostPlanType;
+};
+
+export default function BusinessLicenseVerificationForm({
+  idCard,
+  businessLicense,
+  plan = "flex",
+}: BusinessLicenseVerificationFormProps) {
+  const [submitHostBusinessVerification] =
+    useSubmitHostBusinessVerificationMutation();
+
+  const submit = (payload: SubmitHostBusinessVerificationRequest) =>
+    submitHostBusinessVerification(payload).unwrap().then(() => undefined);
+
+  return (
+    <div className="w-full space-y-4">
+      <DocumentUploadCard
+        label="Identity Card"
+        fieldName="IdCard"
+        document={idCard}
+        required
+        onSubmit={(idCardUrl) => submit({ idCardUrl })}
+      />
+      <DocumentUploadCard
+        label="Business License"
+        fieldName="businessLicenseDocument"
+        document={businessLicense}
+        required={plan === "fleet"}
+        onSubmit={(businessLicenseUrl) => submit({ businessLicenseUrl })}
+      />
+    </div>
+  );
 }

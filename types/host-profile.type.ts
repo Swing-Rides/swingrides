@@ -27,12 +27,18 @@ export interface HostInsuranceInfo {
   expiryDate: string;
 }
 
-export interface HostBusinessVerificationInfo {
+export interface HostVerificationDocument {
   status: HostBusinessVerificationStatus;
-  businessLicenseUrl?: string;
+  url?: string;
   submittedAt?: string;
   reviewedAt?: string;
   notes?: string;
+}
+
+export interface HostBusinessVerificationInfo {
+  status: HostBusinessVerificationStatus;
+  idCard: HostVerificationDocument;
+  businessLicense: HostVerificationDocument;
 }
 
 export interface HostStripeConnectInfo {

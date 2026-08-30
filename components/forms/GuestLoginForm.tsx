@@ -61,12 +61,23 @@ export default function GuestLoginForm({
         return;
       }
 
-      toast.success("Welcome back!");
-
+      // Callers with onSuccess/route (e.g. mid-checkout) need to keep control
+      // of navigation so the in-progress flow isn't abandoned — only the
+      // bare, standalone login form redirects an unverified renter to verify.
       if (onSuccess) {
+        toast.success("Welcome back!");
         await onSuccess();
         return;
       }
+
+      if (!response.renter?.emailVerified) {
+        router.push(
+          `/verify-email?type=renter&email=${encodeURIComponent(response.renter?.email ?? "")}`,
+        );
+        return;
+      }
+
+      toast.success("Welcome back!");
 
       if (route) {
         router.push(route);

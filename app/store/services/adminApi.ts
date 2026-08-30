@@ -48,6 +48,7 @@ import {
   AdminTicketDetailResponse,
   ResolveTicketPayload,
 } from "@/types/admin-tickets.type";
+import { HostVerificationDocumentType } from "@/app/store/services/settingsApi";
 import { toast } from "sonner";
 
 type AxiosBaseQueryArgs =
@@ -355,23 +356,29 @@ export const adminApi = createApi({
         { type: "AdminRenter", id: renterId },
       ],
     }),
-    approveHostBusinessVerification: builder.mutation<unknown, string>({
-      query: (hostId) => ({
-        url: `/api/auth/admin/hosts/${hostId}/business-verification`,
+    approveHostBusinessVerification: builder.mutation<
+      unknown,
+      { hostId: string; documentType: HostVerificationDocumentType }
+    >({
+      query: ({ hostId, documentType }) => ({
+        url: `/api/auth/admin/hosts/${hostId}/business-verification/${documentType}`,
         method: "PATCH",
         body: { status: "approved" },
       }),
-      invalidatesTags: (_result, _error, hostId) => [
+      invalidatesTags: (_result, _error, { hostId }) => [
         { type: "AdminSubscriber", id: hostId },
       ],
     }),
-    rejectHostBusinessVerification: builder.mutation<unknown, string>({
-      query: (hostId) => ({
-        url: `/api/auth/admin/hosts/${hostId}/business-verification`,
+    rejectHostBusinessVerification: builder.mutation<
+      unknown,
+      { hostId: string; documentType: HostVerificationDocumentType; notes?: string }
+    >({
+      query: ({ hostId, documentType, notes }) => ({
+        url: `/api/auth/admin/hosts/${hostId}/business-verification/${documentType}`,
         method: "PATCH",
-        body: { status: "rejected" },
+        body: { status: "rejected", notes },
       }),
-      invalidatesTags: (_result, _error, hostId) => [
+      invalidatesTags: (_result, _error, { hostId }) => [
         { type: "AdminSubscriber", id: hostId },
       ],
     }),

@@ -6,6 +6,9 @@ import {
   CreateUserResponse,
   GetRenterProfileResponse,
   LoginUserResponse,
+  VerifyRenterEmailRequest,
+  VerifyRenterEmailResponse,
+  ResendRenterVerificationResponse,
 } from "@/types/renter.types";
 import { SingleRent } from "@/components/pages/profilePages/types";
 import { toast } from "sonner";
@@ -129,6 +132,29 @@ export const renterApi = createApi({
         body: payload,
       }),
       invalidatesTags: [{ type: "Renter", id: "PROFILE" }],
+    }),
+
+    verifyRenterEmail: builder.mutation<
+      VerifyRenterEmailResponse,
+      VerifyRenterEmailRequest
+    >({
+      query: (payload) => ({
+        url: "/api/auth/renter/verify-email",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [{ type: "Renter", id: "PROFILE" }],
+    }),
+
+    resendRenterVerification: builder.mutation<
+      ResendRenterVerificationResponse,
+      { email: string }
+    >({
+      query: (payload) => ({
+        url: "/api/auth/renter/resend-verification",
+        method: "POST",
+        body: payload,
+      }),
     }),
 
     getProfile: builder.query<GetRenterProfileResponse, void>({
@@ -376,6 +402,8 @@ export const renterApi = createApi({
 export const {
   useRenterRegisterMutation,
   useRenterLoginMutation,
+  useVerifyRenterEmailMutation,
+  useResendRenterVerificationMutation,
   useGetProfileQuery,
   useRenterLogoutMutation,
   useGetBookingByIdQuery,
