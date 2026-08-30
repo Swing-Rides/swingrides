@@ -162,7 +162,7 @@ export const SwingNumberSection = () => {
                         <div className="space-y-6 md:space-y-12">
                                 <div>
                                         <h3 className="text-neutral-950 text-4xl md:text-[64px] font-black font-sans text-center">
-                                                Every ride, Every Journey, Every day
+                                                Every <span className='text-blue-700 font-sans'>ride</span>, Every <span className='text-blue-700 font-sans'>Journey</span>, Every <span className='text-blue-700 font-sans'>day</span>.
                                         </h3>
                                 </div>
                                 <div className="flex flex-wrap mx-auto justify-center rounded-2xl shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] overflow-clip bg-slate-100 border border-gray-200 divide-y md:divide-y-0 md:divide-x">
