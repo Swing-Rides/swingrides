@@ -53,7 +53,7 @@ export default function HowItWorksSection({ data }: HowItWorksSectionProps) {
             <ChevronDown className="size-3.5 text-blue-600" />
             {eyebrow}
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-950 uppercase tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-950 uppercase">
             {headline}
           </h2>
         </div>
@@ -102,7 +102,7 @@ export default function HowItWorksSection({ data }: HowItWorksSectionProps) {
           <div className="lg:col-span-6 relative flex justify-center">
             <div className="relative w-full max-w-lg lg:max-w-none">
               {/* Photo Container with cross-fade images */}
-              <div className="relative w-full h-[360px] sm:h-[420px] lg:h-[480px]">
+              <div className="relative w-full h-90 sm:h-105 lg:h-120">
                 {steps.map((step, idx) => {
                   const fallbackImg =
                     defaultSteps[idx % defaultSteps.length]?.image ||

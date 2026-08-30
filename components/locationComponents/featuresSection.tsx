@@ -52,7 +52,7 @@ export default function FeaturesSection({ data, locationName }: FeaturesSectionP
             <span className="size-2 rounded-full bg-blue-600"></span>
             {eyebrow}
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-950 uppercase tracking-tight mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-950 uppercase mb-4">
             {headline}
           </h2>
           <p className="text-slate-600 text-sm sm:text-base italic leading-relaxed">
@@ -76,9 +76,11 @@ export default function FeaturesSection({ data, locationName }: FeaturesSectionP
                   <Image
                     src={imgSrc}
                     alt={feature.title}
-                    fill
-                    className="object-cover object-center hover:scale-105 transition-transform duration-300"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    width={276}
+                    height={240}
+                    // fill
+                    className="w-full object-cover object-center hover:scale-110 transition-transform duration-300"
+                    // sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
                 </div>
 

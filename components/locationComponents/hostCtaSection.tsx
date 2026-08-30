@@ -70,7 +70,7 @@ export default function HostCtaSection({ data, locationName }: HostCtaSectionPro
           <div className="lg:col-span-6 relative flex justify-center order-2 lg:order-1">
             <div className="relative w-full max-w-lg lg:max-w-none">
               {/* Host Photo */}
-              <div className="relative w-full h-[400px] sm:h-[480px] lg:h-[520px] rounded-3xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-800">
+              <div className="relative w-full h-100 sm:h-120 lg:h-130 rounded-3xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-800">
                 <Image
                   src={hostImageSrc}
                   alt={`SwingRides host in ${locationName}`}
@@ -81,7 +81,7 @@ export default function HostCtaSection({ data, locationName }: HostCtaSectionPro
               </div>
 
               {/* Floating Fleet Overview Card */}
-              <div className="absolute -bottom-6 left-4 sm:left-6 bg-white text-slate-900 rounded-2xl p-4 sm:p-5 shadow-2xl border border-slate-100 min-w-[260px] sm:min-w-[290px] z-10">
+              <div className="absolute -bottom-6 left-4 sm:left-6 bg-white text-slate-900 rounded-2xl p-4 sm:p-5 shadow-2xl border border-slate-100 min-w-65 sm:min-w-72.5 z-10">
                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block mb-3 font-text">
                   Your Fleet Overview
                 </span>
@@ -123,7 +123,7 @@ export default function HostCtaSection({ data, locationName }: HostCtaSectionPro
             </div>
 
             {/* Headline */}
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white uppercase tracking-tight leading-[110%] mb-5">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white uppercase leading-[110%] mb-5">
               {headline}
             </h2>
 

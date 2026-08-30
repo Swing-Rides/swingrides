@@ -138,7 +138,7 @@ export default function HeroSection({
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-[58px] leading-[105%] font-extrabold text-slate-950 uppercase tracking-tight mb-5">
+            <h1 className="text-4xl sm:text-5xl lg:text-[58px] leading-[105%] font-extrabold text-slate-950 uppercase mb-5">
               {headline}
             </h1>
 
@@ -178,7 +178,7 @@ export default function HeroSection({
           <div className="lg:col-span-6 relative w-full flex justify-center">
             <div className="relative w-full max-w-xl lg:max-w-none">
               {/* Hero Image */}
-              <div className="relative w-full h-[380px] sm:h-[460px] lg:h-[500px] rounded-3xl overflow-hidden shadow-xl border border-slate-200/60 bg-slate-200">
+              <div className="relative w-full h-95 sm:h-115 lg:h-125 rounded-3xl overflow-hidden shadow-xl border border-slate-200/60 bg-slate-200">
                 <Image
                   src={heroImageSrc}
                   alt={`${locationName} car rental with local hosts`}
@@ -190,7 +190,7 @@ export default function HeroSection({
               </div>
 
               {/* Overlay Search Card using MainForm */}
-              <div className="relative sm:absolute sm:-bottom-8 sm:left-4 lg:left-6 sm:w-[90%] md:w-[380px] bg-white rounded-2xl p-4 sm:p-5 shadow-2xl border border-slate-100 mt-4 sm:mt-0 z-10">
+              <div className="relative sm:absolute sm:-bottom-8 sm:left-4 lg:left-6 sm:w-[90%] md:w-95 bg-white rounded-2xl p-4 sm:p-5 shadow-2xl border border-slate-100 mt-4 sm:mt-0 z-10">
                 <MainForm
                   fields={formFields}
                   rowPairs={[['pickupDate', 'returnDate']]}

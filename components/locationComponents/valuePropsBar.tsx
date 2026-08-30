@@ -37,7 +37,7 @@ export default function ValuePropsBar({ items }: ValuePropsBarProps) {
               className={`flex flex-col items-center text-center ${index !== 0 ? 'lg:pl-6' : ''
                 } ${index !== list.length - 1 ? 'lg:pr-6' : ''} pt-4 sm:pt-0`}
             >
-              <h3 className="text-base sm:text-lg font-bold text-white mb-1 tracking-wide uppercase font-text">
+              <h3 className="text-base sm:text-lg font-bold text-white mb-1 uppercase font-text">
                 {item.title}
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 font-normal leading-normal">
