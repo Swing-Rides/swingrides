@@ -197,12 +197,18 @@ export interface AdminSubscriberByIdData {
   businessVerification: AdminSubscriberByIdDataBusinessVerification;
 }
 
-export interface AdminSubscriberByIdDataBusinessVerification {
+export interface HostVerificationDocument {
   status: HostBusinessVerificationStatus;
-  businessLicenseUrl?: string;
+  url?: string;
   submittedAt?: string;
   reviewedAt?: string;
   notes?: string;
+}
+
+export interface AdminSubscriberByIdDataBusinessVerification {
+  status: HostBusinessVerificationStatus;
+  idCard: HostVerificationDocument;
+  businessLicense: HostVerificationDocument;
 }
 
 export interface AdminSubscriberByIdDataSubscriber {

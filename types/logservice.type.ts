@@ -48,7 +48,7 @@ export interface ServiceHistoryItem {
 export interface ServiceAlertItem {
   vehicleName: string;
   serviceType: string;
-  lastServiceDate: Date;
+  lastServiceDate: Date | null;
   currentMileageKm: number;
   dueDate: Date;
   badge: string;

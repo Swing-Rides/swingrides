@@ -16,6 +16,7 @@ export type RenterUser = {
   email: string;
   phoneNumber: string;
   isActive: boolean;
+  emailVerified: boolean;
   createdAt: Date;
 };
 
@@ -32,6 +33,7 @@ export type LoginRenterData = {
   email: string;
   phoneNumber: string;
   isActive: boolean;
+  emailVerified: boolean;
   createdAt: string;
   lastLogin: string | null;
 };
@@ -39,6 +41,22 @@ export type LoginRenterData = {
 export interface LoginUserResponse {
   success: true;
   renter: LoginRenterData;
+  message: string;
+}
+
+export interface VerifyRenterEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface VerifyRenterEmailResponse {
+  success: true;
+  renter: LoginRenterData;
+  message: string;
+}
+
+export interface ResendRenterVerificationResponse {
+  success: boolean;
   message: string;
 }
 

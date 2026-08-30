@@ -174,9 +174,8 @@ export default function SubscriberDetailPage({
       <div id="business-verification" className="mb-4 md:mb-6 scroll-mt-4">
         <BusinessVerificationCard
           hostId={slug}
-          status={businessVerification.status}
-          businessLicenseUrl={businessVerification.businessLicenseUrl}
-          submittedAt={businessVerification.submittedAt}
+          idCard={businessVerification.idCard}
+          businessLicense={businessVerification.businessLicense}
         />
       </div>
 

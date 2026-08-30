@@ -67,6 +67,14 @@ export type HostBusinessVerificationStatus =
   | "pending"
   | "approved"
   | "rejected";
+export type HostVerificationDocumentType = "idCard" | "businessLicense";
+export type HostVerificationDocument = {
+  status: HostBusinessVerificationStatus;
+  url?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  notes?: string;
+};
 export type StripeConnectCapabilityStatus =
   | "active"
   | "inactive"
@@ -82,13 +90,7 @@ export type HostProfileCompanySettings = {
   address?: string;
   city?: string;
   postalCode?: string;
-  businessVerification: {
-    status: HostBusinessVerificationStatus;
-    businessLicenseUrl?: string;
-    submittedAt?: string;
-    reviewedAt?: string;
-    notes?: string;
-  };
+  businessVerification: HostBusinessVerificationResponse;
   payment: {
     status: "pending" | "paid" | "quote_required";
     hasPaid: boolean;
@@ -199,16 +201,14 @@ export type SendAgreementForSignatureRequest = {
   signatureRequestUrl?: string;
 };
 
-export type SubmitHostBusinessVerificationRequest = {
-  businessLicenseUrl: string;
-};
+export type SubmitHostBusinessVerificationRequest =
+  | { idCardUrl: string; businessLicenseUrl?: never }
+  | { idCardUrl?: never; businessLicenseUrl: string };
 
 export type HostBusinessVerificationResponse = {
   status: HostBusinessVerificationStatus;
-  businessLicenseUrl?: string;
-  submittedAt?: string;
-  reviewedAt?: string;
-  notes?: string;
+  idCard: HostVerificationDocument;
+  businessLicense: HostVerificationDocument;
 };
 
 export type HostPlanType = "flex" | "solo" | "fleet";

@@ -31,16 +31,15 @@ export default function HostVerifyAccount({
   const { data: verificationResponse } = useGetHostBusinessVerificationQuery();
   const { data: profileCompanyResponse } = useGetProfileCompanySettingsQuery();
   const verification = verificationResponse?.data;
-  const stripeConnect =
-    profileCompanyResponse?.data.payment.stripeConnect;
+  const stripeConnect = profileCompanyResponse?.data.payment.stripeConnect;
+  const hostPlan = profileCompanyResponse?.data.payment.plan;
   const verificationStatus: HostBusinessVerificationStatus =
-    verification?.status ??
-    (userIsVerified ? "approved" : "not_submitted");
+    verification?.status ?? (userIsVerified ? "approved" : "not_submitted");
   const isVerified = verificationStatus === "approved";
-  const isPending = verificationStatus === "pending";
-  const isRejected = verificationStatus === "rejected";
-  const [createHostStripeConnectOnboardingLink, { isLoading: isCreatingOnboardingLink }] =
-    useCreateHostStripeConnectOnboardingLinkMutation();
+  const [
+    createHostStripeConnectOnboardingLink,
+    { isLoading: isCreatingOnboardingLink },
+  ] = useCreateHostStripeConnectOnboardingLinkMutation();
 
   const handleCompleteStripeOnboarding = async () => {
     const response = await createHostStripeConnectOnboardingLink().unwrap();
@@ -70,7 +69,7 @@ export default function HostVerifyAccount({
         <PageIntro
           imageSrc="/images/active-plan.svg"
           pageTitle="Your Plan is Active 🎉"
-            description={`You've successfully subscribed to the ${activePlan} plan. You can now start managing your fleet.`}
+          description={`You've successfully subscribed to the ${activePlan} plan. You can now start managing your fleet.`}
         />
       </div>
       {stripeConnect && !stripeConnect.onboardingComplete ? (
@@ -80,7 +79,8 @@ export default function HostVerifyAccount({
               Complete Stripe onboarding
             </h3>
             <span className="block text-gray-500 text-sm font-medium font-text leading-5">
-              Your host account has been created, but Stripe still needs your payout details before you can receive booking payments.
+              Your host account has been created, but Stripe still needs your
+              payout details before you can receive booking payments.
             </span>
           </div>
           <button
@@ -122,24 +122,6 @@ export default function HostVerifyAccount({
           </div>
         ) : (
           <>
-            {isPending ? (
-              <div className="flex items-center justify-center text-center p-3 rounded-[10px] bg-blue-50 w-full">
-                <span className="flex text-blue-700 text-sm font-medium font-text leading-5">
-                  Your business verification is under review. We&apos;ll update
-                  your account once it has been approved.
-                </span>
-              </div>
-            ) : null}
-
-            {isRejected ? (
-              <div className="flex items-center justify-center text-center p-3 rounded-[10px] bg-red-50 w-full">
-                <span className="flex text-red-700 text-sm font-medium font-text leading-5">
-                  Your previous verification submission needs attention.
-                  Upload an updated business license to continue.
-                </span>
-              </div>
-            ) : null}
-
             <div className="flex justify-start items-start gap-3">
               <div className="size-8 aspect-square flex items-center justify-center bg-amber-100 rounded-full">
                 <FileCheck className="text-amber-500 size-4" />
@@ -149,17 +131,16 @@ export default function HostVerifyAccount({
                   One last step — verify your business
                 </h3>
                 <span className="block text-gray-500 text-sm font-medium font-text leading-5">
-                  Upload your business license to complete your host
-                  verification. This helps us maintain a trusted platform for
-                  all renters.
+                  Upload your identity card and business license to complete
+                  your host verification. This helps us maintain a trusted
+                  platform for all renters.
                 </span>
               </div>
             </div>
             <BusinessLicenseVerificationForm
-              verificationStatus={verificationStatus}
-              submittedAt={verification?.submittedAt}
-              businessLicenseUrl={verification?.businessLicenseUrl}
-              notes={verification?.notes}
+              idCard={verification?.idCard}
+              businessLicense={verification?.businessLicense}
+              plan={hostPlan}
             />
           </>
         )}

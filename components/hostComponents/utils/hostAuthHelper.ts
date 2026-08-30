@@ -125,7 +125,7 @@ export function validateHostProfile(
       isPending,
       isRejected,
       isNotSubmitted,
-      licenseUrl: profile.businessVerification?.businessLicenseUrl,
+      licenseUrl: profile.businessVerification?.businessLicense?.url,
     },
     payment: {
       status: paymentStatus,

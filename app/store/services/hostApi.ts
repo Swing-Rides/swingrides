@@ -4,6 +4,7 @@ import apiClient from "@/lib";
 import {
   CreateHostRequest,
   CreateHostResponse,
+  HostProfile,
   HostSignInPayload,
   HostSignInResponse,
 } from "@/app/services/signIn";
@@ -167,6 +168,22 @@ type EndSnoozeEarlyPayload = {
   vehicleId: string;
 };
 
+type VerifyHostEmailPayload = {
+  email: string;
+  code: string;
+};
+
+type VerifyHostEmailResponse = {
+  success: boolean;
+  host: HostProfile;
+  message: string;
+};
+
+type ResendHostVerificationResponse = {
+  success: boolean;
+  message: string;
+};
+
 export const hostApi = createApi({
   reducerPath: "hostApi",
   baseQuery: axiosBaseQuery(),
@@ -183,6 +200,28 @@ export const hostApi = createApi({
     hostRegister: builder.mutation<CreateHostResponse, CreateHostRequest>({
       query: (payload) => ({
         url: "/api/host/register",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
+    verifyHostEmail: builder.mutation<
+      VerifyHostEmailResponse,
+      VerifyHostEmailPayload
+    >({
+      query: (payload) => ({
+        url: "/api/host/verify-email",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
+    resendHostVerification: builder.mutation<
+      ResendHostVerificationResponse,
+      { email: string }
+    >({
+      query: (payload) => ({
+        url: "/api/host/resend-verification",
         method: "POST",
         body: payload,
       }),
@@ -463,6 +502,8 @@ export const hostApi = createApi({
 export const {
   useHostLoginMutation,
   useHostRegisterMutation,
+  useVerifyHostEmailMutation,
+  useResendHostVerificationMutation,
   useAddVehicleMutation,
   useDeleteVehicleMutation,
   useCreateBookingMutation,
