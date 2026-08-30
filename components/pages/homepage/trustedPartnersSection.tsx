@@ -222,13 +222,13 @@ function TrustedPartnersSectionComponent({
           <p className="text-gray-600 text-sm md:text-base font-normal font-text leading-relaxed">
             {description}
           </p>
-          <div className="mt-1">
+          {/* <div className="mt-1">
             <Link href={learnMoreLink}>
               <button className="py-2.5 px-6 rounded-xs bg-blue-700 hover:bg-blue-950 text-white text-sm font-semibold transition-colors duration-300 cursor-pointer shadow-xs">
                 {learnMoreText}
               </button>
             </Link>
-          </div>
+          </div> */}
         </div>
 
         {/* Partners Grid */}
