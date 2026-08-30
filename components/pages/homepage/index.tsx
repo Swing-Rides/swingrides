@@ -13,6 +13,8 @@ import { Check } from "lucide-react";
 import { PublicBrowseVehicleRow } from "@/types/public-vehicles.type";
 import { useGetPublicBrowseVehiclesQuery } from "@/app/store/services/publicApi";
 import AtlantaLaunch from "../notifications/atlantaLaunch";
+import TrustedPartnersSection from "./trustedPartnersSection";
+import type { TrustedPartnersSectionData } from "@/lib/sanity/queries/partners";
 
 type HowItWorksProps = {
   content: {
@@ -32,7 +34,15 @@ export type TrustContentProps = {
   };
 };
 
-export default function HomePageComponent() {
+export { TrustedPartnersSection };
+
+type HomePageComponentProps = {
+  partnersData?: TrustedPartnersSectionData | null;
+};
+
+export default function HomePageComponent({
+  partnersData,
+}: HomePageComponentProps = {}) {
   const { data, isLoading } = useGetPublicBrowseVehiclesQuery({
     page: 1,
     limit: 6,
@@ -50,6 +60,7 @@ export default function HomePageComponent() {
         data={data?.data.rows as PublicBrowseVehicleRow[]}
         isLoading={isLoading}
       />
+      <TrustedPartnersSection data={partnersData} />
       <TrustSection />
     </div>
   );
