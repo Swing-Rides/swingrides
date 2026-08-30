@@ -83,6 +83,8 @@ const HeroSection = () => {
           title="Rent From Local Car Owners. Zero Commission."
           width={1440}
           height={774}
+          priority={true}
+          preload={true}
           className="w-full min-h-dvh object-cover"
         />
       </div>
