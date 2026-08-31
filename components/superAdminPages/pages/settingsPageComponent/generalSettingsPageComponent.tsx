@@ -17,6 +17,7 @@ import AdminCommunicationSettingsForm from "@/components/superAdminPages/forms/a
 import SystemSettingsForm, {
   SystemSettingsFormValues,
 } from "../../forms/systemSettingsForm";
+import HostPlanCouponsSection from "../../forms/hostPlanCouponsSection";
 import SystemSettingsFormSkeleton from "../../loadingSkeletons/systemSettingsFormSkeleton";
 import {
   useGetPlatformSettingsQuery,
@@ -302,10 +303,13 @@ const PageTabs = ({
         </TabsContent>
 
         <TabsContent value="system-settings">
-          <SystemSettings
-            onSubmit={onUpdateSystemSettings}
-            systemSettingsData={systemSettingsData}
-          />
+          <div className="flex flex-col gap-8">
+            <SystemSettings
+              onSubmit={onUpdateSystemSettings}
+              systemSettingsData={systemSettingsData}
+            />
+            <HostPlanCouponsSection />
+          </div>
         </TabsContent>
 
         <TabsContent value="operational-controls">

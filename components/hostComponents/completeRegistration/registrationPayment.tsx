@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -27,7 +27,9 @@ import {
   useCompleteHostPlanPaymentMutation,
   useCreateHostPlanPaymentIntentMutation,
   useCreateHostStripeConnectOnboardingLinkMutation,
+  useValidateHostPlanCouponMutation,
 } from "@/app/store/services/settingsApi";
+import { useGetHostPlanPricesQuery } from "@/app/store/services/publicApi";
 
 type BillingCycle = HostBillingCycle;
 
@@ -77,26 +79,10 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
 
-const VALID_COUPONS: Record<string, { label: string; percentOff: number }> = {
-  SAVE10: { label: "10% off", percentOff: 10 },
-  WELCOME20: { label: "20% off", percentOff: 20 },
-};
-
 const inFlightHostPlanPaymentIntentRequests = new Map<
   string,
   Promise<{ data: CreateHostPlanPaymentIntentResponse }>
 >();
-
-async function validateCoupon(
-  code: string,
-): Promise<{ valid: boolean; label?: string; percentOff?: number }> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const coupon = VALID_COUPONS[code.trim().toUpperCase()];
-      resolve(coupon ? { valid: true, ...coupon } : { valid: false });
-    }, 600);
-  });
-}
 
 // ─── Pricing helpers ────────────────────────────────────────────────────────
 
@@ -157,18 +143,37 @@ export default function RegistrationPayment({
   const redirectedPaymentIntentId = searchParams.get("payment_intent");
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(
-    () => {
-      const resolvedPackageId = initialPackage?.id ?? packageParam;
-      if (!resolvedPackageId) return initialPackage ?? null;
 
-      return (
-        hostSubscriptionPackages.find((pkg) => pkg.id === resolvedPackageId) ??
-        initialPackage ??
-        null
-      );
-    },
+  // Live prices from Stripe, overlaid onto the static package metadata
+  // (name/description/features) below — falls back to hostSubscriptionPackages'
+  // baked-in price while this is loading or if the request fails.
+  const { data: livePricesResponse } = useGetHostPlanPricesQuery();
+  const livePrices = livePricesResponse?.data;
+  const packages = useMemo<Package[]>(
+    () =>
+      hostSubscriptionPackages.map((pkg) =>
+        livePrices?.[pkg.id] !== undefined
+          ? { ...pkg, price: livePrices[pkg.id] }
+          : pkg,
+      ),
+    [livePrices],
   );
+
+  const [selectedPlanId, setSelectedPlanId] = useState<HostPlanType | null>(
+    () => initialPackage?.id ?? (packageParam as HostPlanType | null) ?? null,
+  );
+  // Deriving this from `packages` (rather than holding the whole Package
+  // object in state) means it always reflects the current live price, even
+  // for a plan selected before useGetHostPlanPricesQuery resolved.
+  const selectedPackage = useMemo(() => {
+    if (!selectedPlanId) return initialPackage ?? null;
+    return (
+      packages.find((pkg) => pkg.id === selectedPlanId) ??
+      initialPackage ??
+      null
+    );
+  }, [packages, selectedPlanId, initialPackage]);
+
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(() => {
     const cycle = searchParams.get("billingCycle");
     return cycle === "yearly" ? "yearly" : "monthly";
@@ -177,6 +182,7 @@ export default function RegistrationPayment({
   const [preparedPayment, setPreparedPayment] = useState<{
     key: string;
     clientSecret: string;
+    intentKind: "payment" | "setup";
   } | null>(null);
   const [paymentIntentAttempt, setPaymentIntentAttempt] = useState(0);
   // Tracks which params the current clientSecret was actually prepared for, so
@@ -207,6 +213,7 @@ export default function RegistrationPayment({
     string | null
   >(null);
   const [createHostPlanPaymentIntent] = useCreateHostPlanPaymentIntentMutation();
+  const [validateHostPlanCoupon] = useValidateHostPlanCouponMutation();
   const [completeHostPlanPayment] = useCompleteHostPlanPaymentMutation();
   const [createHostStripeConnectOnboardingLink, { isLoading: isCreatingOnboardingLink }] =
     useCreateHostStripeConnectOnboardingLinkMutation();
@@ -227,19 +234,12 @@ export default function RegistrationPayment({
     paymentRequestKey && preparedPayment?.key === paymentRequestKey
       ? preparedPayment.clientSecret
       : null;
+  const intentKind =
+    paymentRequestKey && preparedPayment?.key === paymentRequestKey
+      ? preparedPayment.intentKind
+      : "payment";
   const isPreparingPayment =
     selectedPackage !== null && preparedFor !== paymentRequestKey;
-
-  useEffect(() => {
-    // #region debug-point A:component-mount
-    fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"A",location:"registrationPayment.tsx:mount",msg:"[DEBUG] RegistrationPayment mounted",data:{packageParam,billingCycle,selectedPackageId:selectedPackage?.id ?? null,paymentRequestKey},ts:Date.now()})}).catch(()=>{});
-    // #endregion
-    return () => {
-      // #region debug-point A:component-unmount
-      fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"A",location:"registrationPayment.tsx:unmount",msg:"[DEBUG] RegistrationPayment unmounted",data:{packageParam,billingCycle,selectedPackageId:selectedPackage?.id ?? null,paymentRequestKey},ts:Date.now()})}).catch(()=>{});
-      // #endregion
-    };
-  }, [billingCycle, packageParam, paymentRequestKey, selectedPackage?.id]);
 
   // (Re)creates the PaymentIntent whenever the package, cycle, or coupon changes.
   // setState only ever happens inside the .then() callback below — never
@@ -254,10 +254,6 @@ export default function RegistrationPayment({
     let cancelled = false;
     const key = paymentRequestKey;
     const existingRequest = inFlightHostPlanPaymentIntentRequests.get(key);
-
-    // #region debug-point B:create-intent-start
-    fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:start",msg:"[DEBUG] createHostPlanPaymentIntent requested",data:{key,plan:selectedPackage.id,billingCycle,couponCode:appliedCoupon?.code ?? null,reusedInFlightRequest:Boolean(existingRequest)},ts:Date.now()})}).catch(()=>{});
-    // #endregion
 
     const requestPromise: Promise<{ data: CreateHostPlanPaymentIntentResponse }> =
       existingRequest ??
@@ -274,21 +270,16 @@ export default function RegistrationPayment({
     void requestPromise
       .then((res) => {
         if (cancelled) return;
-        // #region debug-point B:create-intent-success
-        fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:success",msg:"[DEBUG] createHostPlanPaymentIntent resolved",data:{key,paymentIntentId:res.data.id,subscriptionId:res.data.subscriptionId,clientSecretPresent:Boolean(res.data.clientSecret)},ts:Date.now()})}).catch(()=>{});
-        // #endregion
         setPreparedPayment({
           key,
           clientSecret: res.data.clientSecret,
+          intentKind: res.data.intentKind,
         });
         setPreparedFor(key);
         setError(null);
       })
       .catch((createIntentError) => {
         if (cancelled) return;
-        // #region debug-point B:create-intent-error
-        fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:error",msg:"[DEBUG] createHostPlanPaymentIntent failed",data:{key,errorMessage:getErrorMessage(createIntentError,"unknown error")},ts:Date.now()})}).catch(()=>{});
-        // #endregion
         setPreparedPayment(null);
         setPreparedFor(key);
         setError(
@@ -305,9 +296,6 @@ export default function RegistrationPayment({
       });
 
     return () => {
-      // #region debug-point B:create-intent-cleanup
-      fetch("http://127.0.0.1:7777/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:"host-plan-intent-dup",runId:"pre-fix",hypothesisId:"B",location:"registrationPayment.tsx:create-intent:cleanup",msg:"[DEBUG] createHostPlanPaymentIntent effect cleaned up",data:{key},ts:Date.now()})}).catch(()=>{});
-      // #endregion
       cancelled = true;
     };
   }, [
@@ -368,7 +356,7 @@ export default function RegistrationPayment({
   ]);
 
   const handleSelectPackage = (pkg: Package) => {
-    setSelectedPackage(pkg);
+    setSelectedPlanId(pkg.id);
     setIsDropdownOpen(false);
     setError(null);
   };
@@ -379,21 +367,33 @@ export default function RegistrationPayment({
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) return;
+    if (!selectedPackage) {
+      setCouponError("Select a package first.");
+      return;
+    }
+
     setCouponError(null);
     setIsApplyingCoupon(true);
-    const result = await validateCoupon(couponInput);
-    setIsApplyingCoupon(false);
 
-    if (result.valid && result.label && result.percentOff !== undefined) {
-      const coupon = {
-        code: couponInput.trim().toUpperCase(),
-        label: result.label,
-        percentOff: result.percentOff,
-      };
-      setAppliedCoupon(coupon);
+    try {
+      const response = await validateHostPlanCoupon({
+        plan: selectedPackage.id,
+        billingCycle,
+        couponCode: couponInput.trim(),
+      }).unwrap();
+
+      setAppliedCoupon({
+        code: response.data.couponCode,
+        label: `${response.data.percentOff}% off`,
+        percentOff: response.data.percentOff,
+      });
       setCouponInput("");
-    } else {
-      setCouponError("That coupon code isn't valid.");
+    } catch (validateError) {
+      setCouponError(
+        getErrorMessage(validateError, "That coupon code isn't valid."),
+      );
+    } finally {
+      setIsApplyingCoupon(false);
     }
   };
 
@@ -569,7 +569,7 @@ export default function RegistrationPayment({
 
             {isDropdownOpen && (
               <div className="absolute z-20 mt-2 w-full bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden">
-                {hostSubscriptionPackages.map((pkg) => (
+                {packages.map((pkg) => (
                   <button
                     key={pkg.id}
                     type="button"
@@ -703,7 +703,7 @@ export default function RegistrationPayment({
               <button
                 type="button"
                 onClick={handleApplyCoupon}
-                disabled={!couponInput.trim() || isApplyingCoupon}
+                disabled={!couponInput.trim() || !selectedPackage || isApplyingCoupon}
                 className="px-4 py-3 rounded-xl text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               >
                 {isApplyingCoupon ? (
@@ -791,6 +791,7 @@ export default function RegistrationPayment({
                 billingCycle={billingCycle}
                 address={address}
                 total={total}
+                intentKind={intentKind}
                 error={error}
                 setError={setError}
                 onSuccess={(paymentIntentId) => {
@@ -818,6 +819,7 @@ function StripePaymentFields({
   billingCycle,
   address,
   total,
+  intentKind,
   error,
   setError,
   onSuccess,
@@ -826,6 +828,7 @@ function StripePaymentFields({
   billingCycle: BillingCycle;
   address: BillingAddress;
   total: number;
+  intentKind: "payment" | "setup";
   error: string | null;
   setError: (msg: string | null) => void;
   onSuccess: (paymentIntentId: string) => void;
@@ -855,7 +858,7 @@ function StripePaymentFields({
     params.set("package", selectedPackage.id);
     params.set("billingCycle", billingCycle);
 
-    const result = await stripe.confirmPayment({
+    const confirmParams = {
       elements,
       confirmParams: {
         return_url: `${window.location.origin}${window.location.pathname}?${params.toString()}`,
@@ -870,8 +873,17 @@ function StripePaymentFields({
           },
         },
       },
-      redirect: "if_required",
-    });
+      redirect: "if_required" as const,
+    };
+
+    // A $0 total (e.g. the auto-applied signup coupon) means Stripe issued a
+    // SetupIntent instead of a PaymentIntent — nothing to charge, just a
+    // card to save for when billing resumes — so it needs confirmSetup
+    // instead of confirmPayment.
+    const result =
+      intentKind === "setup"
+        ? await stripe.confirmSetup(confirmParams)
+        : await stripe.confirmPayment(confirmParams);
 
     const confirmError = result.error;
     if (confirmError) {
@@ -883,8 +895,11 @@ function StripePaymentFields({
       return;
     }
 
-    const paymentIntentId = result.paymentIntent?.id;
-    if (!paymentIntentId) {
+    const confirmedId =
+      "paymentIntent" in result
+        ? result.paymentIntent?.id
+        : result.setupIntent?.id;
+    if (!confirmedId) {
       setError("Payment was processed, but no payment reference was returned.");
       setIsProcessing(false);
       return;
@@ -892,11 +907,11 @@ function StripePaymentFields({
 
     try {
       await completeHostPlanPayment({
-        paymentIntentId,
+        paymentIntentId: confirmedId,
         plan: selectedPackage.id,
         billingCycle,
       }).unwrap();
-      onSuccess(paymentIntentId);
+      onSuccess(confirmedId);
     } catch (paymentError) {
       setError(
         getErrorMessage(
@@ -933,8 +948,10 @@ function StripePaymentFields({
         {isProcessing ? (
           <>
             <Loader2 className="size-4 animate-spin" />
-            Processing payment...
+            {intentKind === "setup" ? "Saving card..." : "Processing payment..."}
           </>
+        ) : intentKind === "setup" ? (
+          <>Activate {selectedPackage.name} — free, card saved for later</>
         ) : (
           <>
             Pay {formatPrice(total)} for {selectedPackage.name} (

@@ -7,6 +7,7 @@ import Link from "next/link"
 import { Switch } from '@/components/ui/switch'
 import { PriceCardProps } from "./types"
 import { Check } from "lucide-react"
+import { useGetHostPlanPricesQuery } from "@/app/store/services/publicApi"
 
 const PERCENT_DISCOUNT = 17
 
@@ -18,6 +19,16 @@ export default function PriceSection(
         }) {
 
         const [isYearly, setIsYearly] = useState(false)
+
+        // Live prices from Stripe, overlaid onto the static marketing copy
+        // (name/description/features) in pricingContents — falls back to its
+        // baked-in price while this is loading or if the request fails.
+        const { data: livePricesResponse } = useGetHostPlanPricesQuery()
+        const livePrices = livePricesResponse?.data
+        const resolvedPricingContents = pricingContents.map((item) => {
+                const livePrice = livePrices?.[item.planTier as "solo" | "flex" | "fleet"]
+                return livePrice !== undefined ? { ...item, price: livePrice } : item
+        })
 
         return (
                 <section className='section-bg-gradient' id="price-list">
@@ -50,7 +61,7 @@ export default function PriceSection(
                                 </div>
 
                                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-8 md:gap-4 max-w-310 mx-auto'>
-                                        {pricingContents.map((item) => (
+                                        {resolvedPricingContents.map((item) => (
                                                 <Fragment key={item.cardTitle}>
                                                         <PriceCard
                                                                 {...item}

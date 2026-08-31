@@ -119,8 +119,16 @@ const toQueryString = (filters?: PublicBrowseVehiclesQuery) => {
 export const publicApi = createApi({
   reducerPath: "publicApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["PublicVehicles", "PublicBookings", "HostConnection"],
+  tagTypes: ["PublicVehicles", "PublicBookings", "HostConnection", "HostPlanPrices"],
   endpoints: (builder) => ({
+    getHostPlanPrices: builder.query<
+      { success: boolean; data: Record<"flex" | "solo" | "fleet", number> },
+      void
+    >({
+      query: () => "/api/public/host-plans",
+      providesTags: [{ type: "HostPlanPrices", id: "CURRENT" }],
+    }),
+
     getPublicBrowseVehicles: builder.query<
       PublicBrowseVehiclesResponse,
       PublicBrowseVehiclesQuery | undefined
@@ -279,6 +287,7 @@ export const publicApi = createApi({
 });
 
 export const {
+  useGetHostPlanPricesQuery,
   useGetPublicBrowseVehiclesQuery,
   useGetPublicVehicleByIdQuery,
   useCreatePublicBookingMutation,

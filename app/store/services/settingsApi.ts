@@ -227,6 +227,9 @@ export type CreateHostPlanPaymentIntentResponse = {
   amount: number;
   currency: string;
   clientSecret: string;
+  // "payment" needs stripe.confirmPayment; "setup" (a $0 first invoice, e.g.
+  // from the auto-applied signup coupon) needs stripe.confirmSetup instead.
+  intentKind: "payment" | "setup";
   status: string;
   plan: HostPlanType;
   billingCycle: HostBillingCycle;
@@ -312,6 +315,21 @@ export type UpgradePlanResponse = {
   isUpgrade: boolean;
   scheduled: boolean;
   effectiveAt: string;
+};
+
+export type ValidateHostPlanCouponRequest = {
+  plan: HostPlanType;
+  billingCycle: HostBillingCycle;
+  couponCode: string;
+};
+
+export type ValidateHostPlanCouponResponse = {
+  monthlyPrice: number;
+  subtotal: number;
+  discount: number;
+  totalAmount: number;
+  couponCode: string;
+  percentOff: number;
 };
 
 export const settingsApi = createApi({
@@ -482,6 +500,17 @@ export const settingsApi = createApi({
       ],
     }),
 
+    validateHostPlanCoupon: builder.mutation<
+      ApiEnvelope<ValidateHostPlanCouponResponse>,
+      ValidateHostPlanCouponRequest
+    >({
+      query: (payload) => ({
+        url: "/api/host/settings/plan/validate-coupon",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
     completeHostPlanPayment: builder.mutation<
       ApiEnvelope<CompleteHostPlanPaymentResponse>,
       CompleteHostPlanPaymentRequest
@@ -567,6 +596,7 @@ export const {
   useUpdateAgreementTemplateMutation,
   useSendAgreementForSignatureMutation,
   useCreateHostPlanPaymentIntentMutation,
+  useValidateHostPlanCouponMutation,
   useCompleteHostPlanPaymentMutation,
   useCreateHostStripeConnectOnboardingLinkMutation,
   useUnlinkStripeConnectMutation,
