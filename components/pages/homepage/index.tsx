@@ -84,7 +84,8 @@ const HeroSection = () => {
           width={1440}
           height={774}
           priority={true}
-          preload={true}
+          fetchPriority="high"
+          // preload={true}
           className="w-full min-h-dvh object-cover"
         />
       </div>
