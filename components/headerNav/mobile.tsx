@@ -53,7 +53,7 @@ export default function Mobile() {
                                 createPortal(
                                         <AnimatePresence>
                                                 {isMenuOpen && (
-                                                        <div className='fixed inset-0 z-9999 overflow-hidden'>
+                                                        <div className='fixed inset-0 z-[9999] overflow-hidden'>
                                                                 {/* Backdrop Overlay */}
                                                                 <motion.div
                                                                         initial={{ opacity: 0 }}
@@ -127,7 +127,7 @@ const MobileNav = ({ onClose }: MobileNavProps) => {
                                 <Link
                                         href='/for-hosts#price-list'
                                         onClick={onClose}
-                                        className='w-full block bg-blue-700 hover:bg-blue-900 py-3 px-6 text-white text-sm font-semibold rounded-xs text-center transition-colors shadow-xs'
+                                        className='w-full block bg-blue-700 hover:bg-blue-900 py-3 px-6 text-white text-base font-semibold rounded-xs text-center transition-colors shadow-xs'
                                 >
                                         List Your Car
                                 </Link>
