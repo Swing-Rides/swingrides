@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import Image from "next/image";
 import {
@@ -28,6 +28,7 @@ import { validateVin } from "@/lib/vinChecker";
 import { US_STATES } from "@/constants/addressState";
 import Link from "next/link";
 import { INSURANCE_LINK } from "@/constants/constant";
+import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -138,15 +139,94 @@ export default function FleetForm({
   defaultValues,
   onSubmit,
 }: FleetFormProps) {
+  const { data: hostProfileResponse } = useGetHostProfileQuery();
+  const hostInsurance = hostProfileResponse?.data?.insurance;
+  const isInsuranceConnected = Boolean(hostInsurance?.connected);
+
+  const [useCustomInsurance, setUseCustomInsurance] = useState(false);
+
+  const hostInsuranceCarrier =
+    hostInsurance?.insuranceCarrier ||
+    hostInsurance?.carrier ||
+    hostInsurance?.provider ||
+    hostInsurance?.provvider ||
+    "ABI Insurance";
+  const hostInsurancePolicyNumber =
+    hostInsurance?.insurancePolicyNumber || hostInsurance?.policyNumber || "";
+  const hostInsuranceExpiration =
+    hostInsurance?.insuranceExpiration ||
+    hostInsurance?.expirationDate ||
+    hostInsurance?.expiryDate ||
+    "";
+  const hostDailyInsuranceFee =
+    hostInsurance?.dailyInsuranceFee ?? hostInsurance?.fee ?? "";
+
+  const initialValues = useMemo(() => {
+    const connectedDefaults =
+      isInsuranceConnected && !useCustomInsurance
+        ? {
+          insuranceCarrier: hostInsuranceCarrier,
+          insurancePolicyNumber: hostInsurancePolicyNumber,
+          insuranceExpiration: hostInsuranceExpiration,
+          ...(hostDailyInsuranceFee !== ""
+            ? { dailyInsuranceFee: hostDailyInsuranceFee }
+            : {}),
+        }
+        : {};
+
+    return {
+      ...FALLBACK_DEFAULTS,
+      ...connectedDefaults,
+      ...defaultValues,
+    };
+  }, [
+    isInsuranceConnected,
+    useCustomInsurance,
+    hostInsuranceCarrier,
+    hostInsurancePolicyNumber,
+    hostInsuranceExpiration,
+    hostDailyInsuranceFee,
+    defaultValues,
+  ]);
+
   const {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<FleetFormValues>({
     mode: "onTouched",
-    defaultValues: { ...FALLBACK_DEFAULTS, ...defaultValues },
+    defaultValues: initialValues,
+    values: initialValues,
+    resetOptions: {
+      keepDirtyValues: true,
+    },
   });
+
+  const handleUseDifferentInsurance = () => {
+    setUseCustomInsurance(true);
+    setValue("insuranceCarrier", "", { shouldDirty: true });
+    setValue("insurancePolicyNumber", "", { shouldDirty: true });
+    setValue("insuranceExpiration", "", { shouldDirty: true });
+    setValue("dailyInsuranceFee", "", { shouldDirty: true });
+  };
+
+  const handleUseConnectedInsurance = () => {
+    setUseCustomInsurance(false);
+    setValue("insuranceCarrier", hostInsuranceCarrier, { shouldDirty: true });
+    setValue("insurancePolicyNumber", hostInsurancePolicyNumber, {
+      shouldDirty: true,
+    });
+    setValue("insuranceExpiration", hostInsuranceExpiration, {
+      shouldDirty: true,
+    });
+    if (hostDailyInsuranceFee !== "") {
+      setValue("dailyInsuranceFee", hostDailyInsuranceFee, {
+        shouldDirty: true,
+      });
+    }
+  };
 
   const [imageUrls, setImageUrls] = useState<string[]>(
     defaultValues?.vehicleImageUrls ?? [],
@@ -290,32 +370,58 @@ export default function FleetForm({
 
           {/* Cell 2: Insurance Details */}
           <Cell icon={<Info />} title="Insurance Details">
-
-            {/* ABI Insurance Partner Banner */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-[10px] bg-[#F4F8FF] border border-blue-100">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="size-8 text-blue-600 shrink-0" />
-                <div className="flex flex-col">
-                  <span className="text-gray-900 font-semibold text-sm sm:text-base leading-tight">
-                    Need coverage for this vehicle?
-                  </span>
-                  <span className="text-gray-500 text-xs sm:text-sm mt-0.5">
-                    Get Period X + Period Z coverage directly from ABI.
-                  </span>
+            {isInsuranceConnected && !useCustomInsurance ? (
+              /* ABI Period X Policy Connected Banner (Green) */
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#F0FDF4] border border-green-200">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="size-8 text-green-600 shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-gray-900 font-semibold text-sm sm:text-base leading-tight">
+                      ABI Period X policy connected
+                    </span>
+                    <span className="text-gray-500 text-xs sm:text-sm mt-0.5">
+                      Add this vehicle to your existing policy before listing it.
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              <Link
-                href={INSURANCE_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Get an ABI Quote"
-                className="w-full sm:w-auto text-center px-4 py-2 bg-blue-700 hover:bg-blue-950 active:bg-blue-800 text-white text-xs sm:text-sm font-medium rounded-xs transition-colors duration-300 shrink-0 whitespace-nowrap"
-              >
-                Get an ABI Quote
-              </Link>
-            </div>
-                  
+                <Link
+                  href={INSURANCE_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Add This Vehicle to ABI Policy"
+                  className="w-full sm:w-auto text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors duration-200 shrink-0 whitespace-nowrap"
+                >
+                  Add This Vehicle to ABI Policy
+                </Link>
+              </div>
+            ) : (
+              /* ABI Insurance Partner Banner (Blue) */
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#F4F8FF] border border-blue-100">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="size-8 text-blue-600 shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-gray-900 font-semibold text-sm sm:text-base leading-tight">
+                      Need coverage for this vehicle?
+                    </span>
+                    <span className="text-gray-500 text-xs sm:text-sm mt-0.5">
+                      Get Period X + Period Z coverage directly from ABI.
+                    </span>
+                  </div>
+                </div>
+
+                <Link
+                  href={INSURANCE_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Get an ABI Quote"
+                  className="w-full sm:w-auto text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors duration-200 shrink-0 whitespace-nowrap"
+                >
+                  Get an ABI Quote
+                </Link>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <FormRow
                 label="Carrier / Company"
@@ -393,6 +499,28 @@ export default function FleetForm({
                 />
               </FormRow>
             </div>
+
+            {isInsuranceConnected && !useCustomInsurance ? (
+              <div>
+                <button
+                  type="button"
+                  onClick={handleUseDifferentInsurance}
+                  className="px-4 py-2 text-xs sm:text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
+                >
+                  Use Different Insurance
+                </button>
+              </div>
+            ) : isInsuranceConnected && useCustomInsurance ? (
+              <div>
+                <button
+                  type="button"
+                  onClick={handleUseConnectedInsurance}
+                  className="px-4 py-2 text-xs sm:text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
+                >
+                  Use Connected ABI Insurance
+                </button>
+              </div>
+            ) : null}
           </Cell>
 
           {/* Cell 3: Identification */}
