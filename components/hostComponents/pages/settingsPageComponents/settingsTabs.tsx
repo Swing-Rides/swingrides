@@ -102,6 +102,10 @@ export type BillingTabProps = {
   planName: string;
   planPrice: string;
   renewalDate: string;
+  // Set only while a discount (e.g. the free-signup coupon) is active —
+  // renewalDate alone would misleadingly read as "you'll be charged next
+  // month" during a multi-month free period.
+  freeUntilDate?: string;
   onManageBilling?: () => void;
   onWithdrawFund: () => void;
   onUnlinkStripe: () => void;
@@ -120,6 +124,7 @@ export const BillingTab = ({
   planName,
   planPrice,
   renewalDate,
+  freeUntilDate,
   onManageBilling,
   paymentHistory,
   onWithdrawFund,
@@ -149,7 +154,9 @@ export const BillingTab = ({
               <BillingPlanStatus status={status} />
             </div>
             <span className="text-sm text-gray-400 font-normal mt-2 block">
-              {planPrice} • Renews on {renewalDate}
+              {freeUntilDate
+                ? `Free until ${freeUntilDate} — then ${planPrice}`
+                : `${planPrice} • Renews on ${renewalDate}`}
             </span>
           </div>
           <button

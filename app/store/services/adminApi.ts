@@ -32,6 +32,9 @@ import {
   RecentSendsResponse,
   RecipientsResponse,
   SendEmailPayload,
+  HostPlanCouponsResponse,
+  CreateHostPlanCouponResponse,
+  CreateHostPlanCouponPayload,
   AdminUsersQuery,
   ActivityLogQuery,
   RecentSendsQuery,
@@ -183,7 +186,7 @@ const toQueryString = <T extends object>(filters?: T) => {
 export const adminApi = createApi({
   reducerPath: "adminApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter", "AdminSubscriber", "AdminSettingsUsers", "AdminActivityLog", "PlatformSettings", "EmailSends", "AdminReviews", "AdminTickets"],
+  tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter", "AdminSubscriber", "AdminSettingsUsers", "AdminActivityLog", "PlatformSettings", "EmailSends", "AdminReviews", "AdminTickets", "HostPlanCoupons"],
   endpoints: (builder) => ({
     adminLogin: builder.mutation<AdminSignInResponse, AdminSignInPayload>({
       query: (payload) => ({
@@ -212,6 +215,7 @@ export const adminApi = createApi({
         const query = toQueryString(filters);
         return `/api/auth/admin/subscribers${query ? `?${query}` : ""}`;
       },
+      providesTags: [{ type: "AdminSubscriber", id: "LIST" }],
     }),
     getAdminSubscriberById: builder.query<AdminISubscriberByIdResponse, string>(
       {
@@ -228,6 +232,7 @@ export const adminApi = createApi({
       }),
       invalidatesTags: (_result, _error, subscriberId) => [
         { type: "AdminSubscriber", id: subscriberId },
+        { type: "AdminSubscriber", id: "LIST" },
       ],
     }),
     reactivateSubscriber: builder.mutation<unknown, string>({
@@ -237,6 +242,17 @@ export const adminApi = createApi({
       }),
       invalidatesTags: (_result, _error, subscriberId) => [
         { type: "AdminSubscriber", id: subscriberId },
+        { type: "AdminSubscriber", id: "LIST" },
+      ],
+    }),
+    deleteSubscriber: builder.mutation<unknown, string>({
+      query: (subscriberId) => ({
+        url: `/api/auth/admin/subscribers/${subscriberId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, subscriberId) => [
+        { type: "AdminSubscriber", id: subscriberId },
+        { type: "AdminSubscriber", id: "LIST" },
       ],
     }),
     changeSubscriberPlan: builder.mutation<
@@ -503,6 +519,30 @@ export const adminApi = createApi({
       invalidatesTags: ["PlatformSettings"],
     }),
 
+    // ─── Settings: Host Plan Coupons ─────────────────────────────────────────
+    listHostPlanCoupons: builder.query<HostPlanCouponsResponse, void>({
+      query: () => "/api/auth/admin/settings/coupons",
+      providesTags: ["HostPlanCoupons"],
+    }),
+    createHostPlanCoupon: builder.mutation<
+      CreateHostPlanCouponResponse,
+      CreateHostPlanCouponPayload
+    >({
+      query: (body) => ({
+        url: "/api/auth/admin/settings/coupons",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["HostPlanCoupons"],
+    }),
+    deleteHostPlanCoupon: builder.mutation<unknown, string>({
+      query: (code) => ({
+        url: `/api/auth/admin/settings/coupons/${code}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["HostPlanCoupons"],
+    }),
+
     // ─── Settings: Email Actions ─────────────────────────────────────────────
     getRecentEmailSends: builder.query<RecentSendsResponse, RecentSendsQuery | undefined>({
       query: (filters) => {
@@ -602,6 +642,7 @@ export const {
   useGetAdminSubscriberByIdQuery,
   useSuspendSubscriberMutation,
   useReactivateSubscriberMutation,
+  useDeleteSubscriberMutation,
   useChangeSubscriberPlanMutation,
   useGetAdminSubscriberFleetDetailQuery,
   useGetAdminSubscriberBookingDetailQuery,
@@ -632,6 +673,10 @@ export const {
   useUpdateOperationalControlsMutation,
   useUpdateSecuritySettingsMutation,
   useUpdateCommunicationSettingsMutation,
+  // Settings: Host Plan Coupons
+  useListHostPlanCouponsQuery,
+  useCreateHostPlanCouponMutation,
+  useDeleteHostPlanCouponMutation,
   // Settings: Email Actions
   useGetRecentEmailSendsQuery,
   useSearchEmailRecipientsQuery,

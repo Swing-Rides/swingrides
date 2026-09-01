@@ -169,6 +169,46 @@ export interface SendEmailPayload {
   recipientId: string;
 }
 
+// ─── Host Plan Coupons ────────────────────────────────────────────────────────
+
+export type CouponDuration = 'once' | 'repeating' | 'forever';
+
+export interface HostPlanCoupon {
+  id: string;
+  name?: string | null;
+  percentOff: number | null;
+  duration: CouponDuration;
+  durationInMonths?: number | null;
+  redeemBy?: string;
+  maxRedemptions?: number | null;
+  timesRedeemed: number;
+  valid: boolean;
+  createdAt: string;
+  autoApplyAtSignup: boolean;
+}
+
+export interface HostPlanCouponsResponse {
+  success: boolean;
+  data: HostPlanCoupon[];
+}
+
+export interface CreateHostPlanCouponResponse {
+  success: boolean;
+  message: string;
+  data: HostPlanCoupon;
+}
+
+export interface CreateHostPlanCouponPayload {
+  code: string;
+  name?: string;
+  percentOff: number;
+  duration: CouponDuration;
+  durationInMonths?: number;
+  redeemBy?: string;
+  maxRedemptions?: number;
+  autoApplyAtSignup?: boolean;
+}
+
 // ─── Query arg types ──────────────────────────────────────────────────────────
 
 export interface AdminUsersQuery {
