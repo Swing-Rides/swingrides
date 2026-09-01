@@ -51,7 +51,10 @@ import {
   SubscriberStatus,
 } from "@/types/subscribers.type";
 import { formatDate } from "../utils/formatDate";
-import { useGetAdminSubscribersQuery } from "@/app/store/services/adminApi";
+import {
+  useGetAdminSubscribersQuery,
+  useDeleteSubscriberMutation,
+} from "@/app/store/services/adminApi";
 import { SubscribersPageSkeleton } from "../loadingSkeletons/subscribersPageSkeleton";
 import ErrorStateUI from "../dashboard/errorState";
 
@@ -200,11 +203,21 @@ function SubscribersTableSection({
   // ── Delete dialog state ───────────────────────────────────────────────
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const pendingRow = rows.find((r) => r.id === pendingDeleteId);
+  const [deleteSubscriber] = useDeleteSubscriberMutation();
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!pendingDeleteId) return;
-    setRows((prev) => prev.filter((r) => r.id !== pendingDeleteId));
-    setPendingDeleteId(null);
+    try {
+      await deleteSubscriber(pendingDeleteId).unwrap();
+      // The list refetches from the invalidated "AdminSubscriber" LIST tag,
+      // but drop it from local state immediately too so the row disappears
+      // without waiting on that round-trip.
+      setRows((prev) => prev.filter((r) => r.id !== pendingDeleteId));
+      setPendingDeleteId(null);
+    } catch {
+      // Failure toast is already shown by adminApi's base query; leave the
+      // dialog open so the admin can see the error and retry or cancel.
+    }
   };
 
   // ── Filters from URL ──────────────────────────────────────────────────
@@ -570,12 +583,19 @@ export const DeleteDialogUI = ({
             <span className="font-semibold text-neutral-900">
               {pendingRow?.organization}
             </span>{" "}
-            from the platform. This action cannot be undone.
+            and all of their vehicles, bookings, reviews, and financial
+            records from the platform. This action cannot be undone.
           </span>
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
+        {/* AlertDialogAction (Radix) closes the dialog on click by design,
+            before React state can reflect isLoading in time to gate that —
+            so the delete just runs in the background after it closes; the
+            base query's toast and the list's tag-based refetch (or the
+            immediate local setRows below) are the feedback, not a spinner
+            here. */}
         <AlertDialogAction
           onClick={confirmDelete}
           className="bg-red-600 hover:bg-red-700 focus:ring-red-600"

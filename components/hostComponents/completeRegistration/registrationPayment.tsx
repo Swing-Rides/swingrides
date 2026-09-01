@@ -183,6 +183,10 @@ export default function RegistrationPayment({
     key: string;
     clientSecret: string;
     intentKind: "payment" | "setup";
+    subtotal: number;
+    discount: number;
+    totalAmount: number;
+    couponCode?: string;
   } | null>(null);
   const [paymentIntentAttempt, setPaymentIntentAttempt] = useState(0);
   // Tracks which params the current clientSecret was actually prepared for, so
@@ -218,26 +222,30 @@ export default function RegistrationPayment({
   const [createHostStripeConnectOnboardingLink, { isLoading: isCreatingOnboardingLink }] =
     useCreateHostStripeConnectOnboardingLinkMutation();
 
-  const { subtotal, discount, total } = computeTotals(
-    selectedPackage,
-    billingCycle,
-    appliedCoupon,
-  );
-
   // Identifies the exact params the payment intent should reflect right now.
   // Comparing this to `preparedFor` lets us derive "is a fetch in flight"
   // during render instead of storing it as separate state.
   const paymentRequestKey = selectedPackage
     ? `${selectedPackage.id}|${billingCycle}|${appliedCoupon?.code ?? ""}|${paymentIntentAttempt}`
     : null;
-  const clientSecret =
+  const preparedForCurrentRequest =
     paymentRequestKey && preparedPayment?.key === paymentRequestKey
-      ? preparedPayment.clientSecret
+      ? preparedPayment
       : null;
-  const intentKind =
-    paymentRequestKey && preparedPayment?.key === paymentRequestKey
-      ? preparedPayment.intentKind
-      : "payment";
+  const clientSecret = preparedForCurrentRequest?.clientSecret ?? null;
+  // Prefer the server's actual computed total once the payment intent comes
+  // back — it reflects any coupon the backend applied (including the
+  // signup coupon, auto-applied without the host typing anything), which
+  // computeTotals below can't know about since it only sees local state.
+  // Fall back to the client-side estimate for instant feedback before that.
+  const { subtotal, discount, total } = preparedForCurrentRequest
+    ? {
+        subtotal: preparedForCurrentRequest.subtotal,
+        discount: preparedForCurrentRequest.discount,
+        total: preparedForCurrentRequest.totalAmount,
+      }
+    : computeTotals(selectedPackage, billingCycle, appliedCoupon);
+  const intentKind = preparedForCurrentRequest?.intentKind ?? "payment";
   const isPreparingPayment =
     selectedPackage !== null && preparedFor !== paymentRequestKey;
 
@@ -274,6 +282,10 @@ export default function RegistrationPayment({
           key,
           clientSecret: res.data.clientSecret,
           intentKind: res.data.intentKind,
+          subtotal: res.data.subtotal,
+          discount: res.data.discount,
+          totalAmount: res.data.totalAmount,
+          couponCode: res.data.couponCode,
         });
         setPreparedFor(key);
         setError(null);
@@ -737,9 +749,18 @@ export default function RegistrationPayment({
                 {formatPrice(subtotal)}
               </span>
             </div>
-            {appliedCoupon && (
+            {/* Sourced from the server response (preparedForCurrentRequest),
+                not local appliedCoupon state — a coupon can be active here
+                either because the host typed one in, or because the backend
+                silently applied the signup coupon, which never touches
+                appliedCoupon. */}
+            {(preparedForCurrentRequest?.couponCode ?? appliedCoupon?.code) && (
               <div className="flex items-center justify-between text-sm text-green-700">
-                <span>Coupon ({appliedCoupon.code})</span>
+                <span>
+                  Coupon (
+                  {preparedForCurrentRequest?.couponCode ?? appliedCoupon?.code}
+                  )
+                </span>
                 <span className="font-medium">-{formatPrice(discount)}</span>
               </div>
             )}

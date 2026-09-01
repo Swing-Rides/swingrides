@@ -180,6 +180,22 @@ const SettingsPageContent = () => {
     });
   }, [settingsData]);
 
+  // Set only while a discount (e.g. the free-signup coupon) is active — the
+  // next invoice date above still reads as "you're about to be charged"
+  // every month during a multi-month free period, which is misleading.
+  const freeUntilDate = useMemo(() => {
+    const currentPlan = settingsData?.billing.currentPlan;
+    if (!currentPlan?.discountActive || !currentPlan.discountEndsOn) {
+      return undefined;
+    }
+
+    return new Date(currentPlan.discountEndsOn).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }, [settingsData]);
+
   const paymentHistory = useMemo<PaymentHistoryRow[]>(() => {
     const rows = settingsData?.billing.paymentHistory ?? [];
 
@@ -359,6 +375,7 @@ const SettingsPageContent = () => {
             planName={planName}
             planPrice={planPrice}
             renewalDate={renewalDate}
+            freeUntilDate={freeUntilDate}
             onManageBilling={handleManageBilling}
             paymentHistory={paymentHistory}
             onWithdrawFund={onWithdrawFund}
