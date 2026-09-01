@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
   Suspense,
 } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -62,6 +63,28 @@ import { PublicBrowseVehicleRow } from "@/types/public-vehicles.type";
 import { getStoredConnectedPhone } from "@/lib/connectedHost";
 import { motion, AnimatePresence } from 'motion/react'
 
+const subscribeConnectedPhone = (callback: () => void) => {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+};
+
+const getConnectedPhoneSnapshot = (): string | undefined => {
+  return getStoredConnectedPhone() ?? undefined;
+};
+
+const getConnectedPhoneServerSnapshot = (): string | undefined => {
+  return undefined;
+};
+
+const useStoredConnectedPhone = (): string | undefined => {
+  return useSyncExternalStore(
+    subscribeConnectedPhone,
+    getConnectedPhoneSnapshot,
+    getConnectedPhoneServerSnapshot
+  );
+};
+
 const CARS_PER_PAGE = 12;
 
 export default function BrowseCarsComponentPage() {
@@ -71,10 +94,7 @@ export default function BrowseCarsComponentPage() {
 
   const [isPending, startTransition] = useTransition();
 
-  const [connectedPhone, setConnectedPhone] = useState<string | undefined>(undefined);
-  useEffect(() => {
-    setConnectedPhone(getStoredConnectedPhone() ?? undefined);
-  }, []);
+  const connectedPhone = useStoredConnectedPhone();
 
   const filterParams = useMemo(
     () => parseFilterParams(searchParams),
@@ -212,7 +232,7 @@ export default function BrowseCarsComponentPage() {
 
 const NotificationBar = () => {
 
-  const [ isNotificationOpen, setIsNotificationOpen ] = useState<boolean>(true)
+  const [isNotificationOpen, setIsNotificationOpen] = useState<boolean>(true)
 
   return (
     <AnimatePresence initial={false}>

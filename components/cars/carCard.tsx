@@ -2,6 +2,7 @@ import React from "react";
 import Image from "next/image";
 import { PriBtn } from "../buttons";
 import Link from "next/link";
+import { DEFAULT_IMAGE_SRC } from "@/constants/constant";
 
 export type Content = {
   id: string;
@@ -62,7 +63,7 @@ export default function CarCard({
           </span>
         )}
         <Image
-          src={featuredImage?.src}
+          src={featuredImage?.src || DEFAULT_IMAGE_SRC}
           alt={featuredImage.alt}
           title={featuredImage.alt}
           width={420}
