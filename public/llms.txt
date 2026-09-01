@@ -1,0 +1,31 @@
+# Swing Rides
+
+> Drive your fleet. Own your data.
+
+Swing Rides is a modern peer-to-peer car rental marketplace and host fleet management platform across the United States. We connect vehicle owners (hosts) directly with verified drivers (renters) with 0% commission on host bookings, seamless identity verification, transparent pricing, and instant booking capabilities.
+
+## Public Endpoints & Marketplace
+
+- Home: https://swingrides.com/
+- Browse Cars: https://swingrides.com/browse-cars
+- List Your Car (For Hosts): https://swingrides.com/for-hosts
+- USA Locations: https://swingrides.com/usa
+- About Us: https://swingrides.com/about-us
+- FAQs: https://swingrides.com/faqs
+- Contact Support: https://swingrides.com/contact-support
+- Report an Issue: https://swingrides.com/report-an-issue
+- Connect with Host: https://swingrides.com/connect-host
+- Privacy Policy: https://swingrides.com/legal/privacy-policy
+- Terms and Conditions: https://swingrides.com/legal/terms-and-conditions-of-use
+
+## Key Features & Value Proposition
+
+- **For Renters**: Skip the rental counter, find diverse vehicles from verified local hosts, enjoy transparent pricing with no hidden fees, flexible pickup/drop-off options, and full coverage insurance protection.
+- **For Hosts**: Keep 100% of your booking revenue (0% platform commission), maintain direct customer relationships, access automated fleet management, maintenance tracking, expense logs, and seamless Stripe payout processing.
+
+## Contact & Security
+
+- Customer Support: https://swingrides.com/contact-support
+- Community Discord: https://discord.gg/8gTkpVEHb
+- Security Contact: https://swingrides.com/.well-known/security.txt
+
