@@ -6,14 +6,16 @@ import {
   trustContent,
   whyRentContent,
 } from "@/constants/homePage";
-import { carsTestData } from "@/constants/carsTestData";
 import CarCard from "@/components/cars/carCard";
 import Link from "next/link";
 import HomePageSearchForm from "@/components/forms/homePageSearchForm";
 import { Check } from "lucide-react";
-import FAQsSection from "@/components/faqs";
 import { PublicBrowseVehicleRow } from "@/types/public-vehicles.type";
 import { useGetPublicBrowseVehiclesQuery } from "@/app/store/services/publicApi";
+import AtlantaLaunch from "../notifications/atlantaLaunch";
+import TrustedPartnersSection from "./trustedPartnersSection";
+import type { TrustedPartnersSectionData } from "@/lib/sanity/queries/partners";
+import { CarCardSkeleton } from "@/components/loading/carCardSkeleton";
 
 type HowItWorksProps = {
   content: {
@@ -33,14 +35,23 @@ export type TrustContentProps = {
   };
 };
 
-export default function HomePageComponent() {
-  const { data, isFetching, isLoading } = useGetPublicBrowseVehiclesQuery({
+export { TrustedPartnersSection };
+
+type HomePageComponentProps = {
+  partnersData?: TrustedPartnersSectionData | null;
+};
+
+export default function HomePageComponent({
+  partnersData,
+}: HomePageComponentProps = {}) {
+  const { data, isLoading } = useGetPublicBrowseVehiclesQuery({
     page: 1,
     limit: 6,
   });
 
   return (
     <div className="z-1">
+      <AtlantaLaunch />
       <HeroSection />
       <Skip />
       <FeaturePillsBar />
@@ -50,8 +61,8 @@ export default function HomePageComponent() {
         data={data?.data.rows as PublicBrowseVehicleRow[]}
         isLoading={isLoading}
       />
+      <TrustedPartnersSection data={partnersData} />
       <TrustSection />
-      {/* <FAQsSection /> */}
     </div>
   );
 }
@@ -65,14 +76,18 @@ const HeroSection = () => {
   ];
 
   return (
-    <section className="relative overflow-clip min-h-fit z-2">
-      <div>
+    <section className="relative overflow-clip min-h-fit z-2 bg-slate-100 bg-[url('/images/swingRides-homepage.webp')] bg-cover bg-center bg-no-repeat">
+      <div className="w-full min-h-dvh bg-cover bg-center bg-no-repeat bg-[url('/images/swingRides-homepage.webp')]">
         <Image
-          src={"/images/swingRides-homepage.webp"}
+          src="/images/swingRides-homepage.webp"
           alt="Rent From Local Car Owners. Zero Commission."
           title="Rent From Local Car Owners. Zero Commission."
           width={1440}
           height={774}
+          priority={true}
+          loading="eager"
+          unoptimized={true}
+          decoding="sync"
           className="w-full min-h-dvh object-cover"
         />
       </div>
@@ -263,8 +278,12 @@ const FeaturedCars = ({
           </p>
         </div>
         <div className="flex justify-center">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-5 mt-8">
-            {data ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-5 mt-8 w-full max-w-7xl">
+            {isLoading ? (
+              Array.from({ length: 6 }, (_, i) => (
+                <CarCardSkeleton key={i} />
+              ))
+            ) : data && data.length > 0 ? (
               data.slice(0, 6).map((item) => (
                 <Fragment key={item.id}>
                   <CarCard

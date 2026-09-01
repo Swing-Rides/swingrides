@@ -1,29 +1,28 @@
-"use client";
+import type { Metadata } from "next";
+import ProfileClient from "@/components/pages/profilePages/profileClient";
+import { constructMetadata } from "@/lib/seo/metadata";
+import { JsonLd, getWebPageSchema } from "@/components/seo/jsonLd";
 
-import GuestProfilePage from "@/components/pages/profilePages/guestProfilePage";
-import GuestSignInComponent from "@/components/signIn/guestSignInComponent";
-import { useGetProfileQuery } from "@/app/store/services/renterApi";
-import ProfilePageLoading from "@/components/pages/profilePages/profilePageLoading";
+export const metadata: Metadata = constructMetadata({
+  title: "My Profile & Bookings",
+  description:
+    "Manage your account, view your reservations, and update your profile on Swing Rides.",
+  path: "/profile",
+  noIndex: true,
+});
 
 export default function ProfilePage() {
-  const { data, isLoading } = useGetProfileQuery();
-  const renterProfile = data?.renter ?? null;
-
-  if (isLoading) {
-    return <ProfilePageLoading />;
-  }
-
-  if (!renterProfile) {
-    return (
-      <div className="w-full min-h-screen flex justify-center items-center py-10">
-        <GuestSignInComponent />
-      </div>
-    );
-  }
-
   return (
     <main>
-      <GuestProfilePage {...renterProfile} />
+      <JsonLd
+        schema={getWebPageSchema({
+          name: "My Profile & Bookings | Swing Rides",
+          description:
+            "Manage your account, view your reservations, and update your profile on Swing Rides.",
+          path: "/profile",
+        })}
+      />
+      <ProfileClient />
     </main>
   );
-}
+}

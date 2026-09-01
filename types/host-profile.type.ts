@@ -21,10 +21,19 @@ export type StripeConnectCapabilityStatus =
   | string;
 
 export interface HostInsuranceInfo {
-  fee: number;
-  provvider: string;
-  policyNumber: string;
-  expiryDate: string;
+  connected?: boolean;
+  carrier?: string;
+  insuranceCarrier?: string;
+  provider?: string;
+  provvider?: string;
+  policyNumber?: string;
+  insurancePolicyNumber?: string;
+  expiryDate?: string;
+  expirationDate?: string;
+  insuranceExpiration?: string;
+  fee?: number;
+  dailyInsuranceFee?: number;
+  [key: string]: unknown;
 }
 
 export interface HostVerificationDocument {

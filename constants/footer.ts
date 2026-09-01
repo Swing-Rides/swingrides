@@ -73,6 +73,11 @@ export const footerLinksThree = {
                         label: 'Report an Issue',
                         href: '/report-an-issue',
                 },
+                {
+                        id: 3,
+                        label: 'FAQ',
+                        href: '/faqs',
+                },
         ]
 }
 

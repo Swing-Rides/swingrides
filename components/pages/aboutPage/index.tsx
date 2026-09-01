@@ -1,7 +1,7 @@
 import Image from "next/image"
 import { Fragment } from "react/jsx-runtime"
 import FAQsSection from '@/components/faqs';
-import { Building, Car, Compass, Globe, Handshake, Lightbulb, ShieldCheck, Star, Target, Users } from "lucide-react";
+import { Car, Compass, Handshake, LayoutGrid, Lightbulb, MapPin, Percent, ShieldCheck, Target, Users } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { DISCORD_COMMUNITY_LINK } from "@/constants/constant";
@@ -9,28 +9,28 @@ import { DISCORD_COMMUNITY_LINK } from "@/constants/constant";
 const NumberContent = [
         {
                 icon: <Car className="size-5 text-blue-700" />,
-                number: `25,000+`,
-                label: `Cars available`,
+                number: `One Vehicle or a Fleet`,
+                label: `Built for hosts of every size`,
         },
         {
-                icon: <Building className="size-5 text-blue-700" />,
-                number: `2,500+`,
-                label: `Happy Renters`,
+                icon: <Percent className="size-5 text-blue-700" />,
+                number: `0% Commission`,
+                label: `No percentage taken from bookings`,
         },
         {
                 icon: <Users className="size-5 text-blue-700" />,
-                number: `150,000+`,
-                label: `Active Hosts`,
+                number: `Own Your Customers`,
+                label: `Build direct customer relationships`,
         },
         {
-                icon: <Globe className="size-5 text-blue-700" />,
-                number: `100+`,
-                label: `Average Rating`,
+                icon: <MapPin className="size-5 text-blue-700" />,
+                number: `Reach Local Renters`,
+                label: `List your vehicles on the marketplace`,
         },
         {
-                icon: <Star className="size-5 text-blue-700" />,
-                number: `4.8/5`,
-                label: `Average Rating`,
+                icon: <LayoutGrid className="size-5 text-blue-700" />,
+                number: `All-in-One Platform`,
+                label: `Manage bookings, vehicles, and more`,
         },
 ]
 
@@ -66,7 +66,7 @@ export default function AboutPageComponents() {
                 <>
                         <HeroSection/>
                         <OurMissionSection />
-                        <NumberSection/>
+                        <SwingNumberSection/>
                         <OurStorySection />
                         <FAQsSection />
                 </>
@@ -156,13 +156,13 @@ const OurMissionSection = () => {
         )
 }
 
-const NumberSection = () => {
+export const SwingNumberSection = () => {
         return (
                 <section className="py-12 px-4 md:px-8 md:py-20 bg-white">
                         <div className="space-y-6 md:space-y-12">
                                 <div>
                                         <h3 className="text-neutral-950 text-4xl md:text-[64px] font-black font-sans text-center">
-                                                swingrides by the <span className='text-blue-700 font-sans'> numbers</span>
+                                                Every <span className='text-blue-700 font-sans'>ride</span>, Every <span className='text-blue-700 font-sans'>Journey</span>, Every <span className='text-blue-700 font-sans'>day</span>.
                                         </h3>
                                 </div>
                                 <div className="flex flex-wrap mx-auto justify-center rounded-2xl shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] overflow-clip bg-slate-100 border border-gray-200 divide-y md:divide-y-0 md:divide-x">
@@ -192,7 +192,7 @@ const NumberCard = ({ content }: { content: ContentProps} ) => {
                                 {content.icon}
                         </div>
                         <div className="space-y-1">
-                                <h4 className="text-center justify-center text-neutral-950 text-3xl font-bold font-text leading-7">
+                                <h4 className="text-center justify-center text-neutral-950 text-base font-bold font-text leading-7">
                                         {content.number}
                                 </h4>
                                 <p className="text-center justify-center text-gray-500 text-xs font-normal font-text leading-5">

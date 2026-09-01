@@ -37,7 +37,7 @@ export default function PriceSection(
                                         <Pill
                                                 label='Pricing'
                                         />
-                                        <h3 className='text-6xl font-bold leading-16.25 mt-5 mb-4'>
+                                        <h3 className='text-6xl font-bold leading-16.25 mt-5 mb-4 text-center'>
                                                 SIMPLE,{" "}<span className='text-[#1A56DB] font-sans'>FLAT</span> PRICING
                                         </h3>
                                         <span className="text-center text-[#333333] text-lg font-medium font-text">

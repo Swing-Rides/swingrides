@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import Logo from './logo'
 import { navLinks } from '@/constants/header'
-import { PriBtn } from '../buttons'
 import { ChevronDown, UserCircle } from 'lucide-react'
 import { useGetProfileQuery } from "@/app/store/services/renterApi"
 import { Skeleton } from '../ui/skeleton'
@@ -58,7 +57,7 @@ const NavLinks = ({ navLinks }: NavLinksProps) => {
                                         key={link.id}
                                         href={link.href}
                                         title={link.label}
-                                        className='text-sm font-medium text-neutral-950 hover:text-blue-700 duration-300 transition-colors'
+                                        className='text-base font-medium text-neutral-950 hover:text-blue-700 duration-300 transition-colors'
                                 >
                                         {link.label}
                                 </Link>
@@ -72,9 +71,9 @@ const LoginButtons = ({ isLoggedIn, username }: LoginButtonsProps) => {
                 <div className='relative group'>
                         <button
                                 type='button'
-                                className='flex justify-start items-center gap-2 text-sm font-medium text-neutral-950 group-hover:text-blue-700 duration-300 transition-colors cursor-pointer py-2 max-w-32 truncate'
+                                className='flex justify-start items-center gap-2 text-base font-medium text-neutral-950 group-hover:text-blue-700 duration-300 transition-colors cursor-pointer py-2 max-w-36 truncate'
                         >
-                                {isLoggedIn && (<UserCircle className='size-4 shrink-0' />)}
+                                {isLoggedIn && (<UserCircle className='size-5 shrink-0' />)}
                                 <span className='truncate'>
                                         {isLoggedIn ? username : "My Account"}
                                 </span>
@@ -92,38 +91,28 @@ const LoginButtons = ({ isLoggedIn, username }: LoginButtonsProps) => {
                                         <>
                                                 <Link
                                                         href={'/profile'}
-                                                        className='text-xs font-medium text-neutral-950 py-3 px-5 hover:text-blue-700 hover:bg-gray-200 duration-300 transition-colors'
+                                                        className='text-sm font-medium text-neutral-950 py-3 px-5 hover:text-blue-700 hover:bg-gray-200 duration-300 transition-colors'
                                                 >
                                                         View Profile
                                                 </Link>
                                                 <Link
                                                         href={'/us/host'}
-                                                        className='text-xs font-medium text-neutral-950 py-3 px-5 hover:text-blue-700 hover:bg-gray-200 duration-300 transition-colors'
+                                                        className='text-sm font-medium text-neutral-950 py-3 px-5 hover:text-blue-700 hover:bg-gray-200 duration-300 transition-colors'
                                                 >
                                                         Switch To Host Account
                                                 </Link>
-                                                {/* <button
-                                                        type='button'
-                                                        onClick={() => {
-                                                                // TODO: wire up to your logout mutation/handler
-                                                        }}
-                                                        className='text-xs font-medium text-left text-red-600 py-3 px-5 hover:bg-gray-200 duration-300 transition-colors flex items-center gap-2'
-                                                >
-                                                        <LogOut className='size-4' />
-                                                        Log Out
-                                                </button> */}
                                         </>
                                 ) : (
                                         <>
                                                 <Link
                                                         href={'/profile'}
-                                                        className='text-xs font-medium text-neutral-950 py-3 px-5 hover:text-blue-700 hover:bg-gray-200 duration-300 transition-colors'
+                                                        className='text-sm font-medium text-neutral-950 py-3 px-5 hover:text-blue-700 hover:bg-gray-200 duration-300 transition-colors'
                                                 >
                                                         Login As A Renter
                                                 </Link>
                                                 <Link
                                                         href={'/us/host'}
-                                                        className='text-xs font-medium text-neutral-950 py-3 px-5 hover:text-blue-700 hover:bg-gray-200 duration-300 transition-colors'
+                                                        className='text-sm font-medium text-neutral-950 py-3 px-5 hover:text-blue-700 hover:bg-gray-200 duration-300 transition-colors'
                                                 >
                                                         Login As A Host
                                                 </Link>
@@ -137,12 +126,17 @@ const LoginButtons = ({ isLoggedIn, username }: LoginButtonsProps) => {
 const NavButtons = () => {
         return (
                 <div>
-                        <PriBtn
-                                btn={{
-                                        link: '/for-hosts#price-list',
-                                        label: 'List Your Car'
-                                }}
-                        />
+                        <Link
+                                href='/for-hosts#price-list'
+                                title='List Your Car'
+                        >
+                                <button
+                                        type='button'
+                                        className="text-nowrap py-2 px-6 rounded-xs text-base bg-blue-700 text-white font-semibold capitalize hover:bg-blue-950 transition-colors duration-300 cursor-pointer"
+                                >
+                                        List Your Car
+                                </button>
+                        </Link>
                 </div>
         )
 }
