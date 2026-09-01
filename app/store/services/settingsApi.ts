@@ -130,6 +130,12 @@ export type HostBillingSettings = {
     amountPerMonth?: number;
     currency: string;
     renewsOn?: string;
+    // True while an active Stripe discount (e.g. a free-signup coupon) is
+    // reducing what's actually billed.
+    discountActive: boolean;
+    // Date the discount stops applying and full price billing resumes,
+    // if discountActive is true.
+    discountEndsOn?: string;
   };
   paymentHistory: BillingPaymentHistoryItem[];
 };
@@ -237,6 +243,9 @@ export type CreateHostPlanPaymentIntentResponse = {
   discount: number;
   totalAmount: number;
   couponCode?: string;
+  // Present whenever a coupon applied — including the signup coupon
+  // auto-applied server-side, which the host never typed in.
+  percentOff?: number;
 };
 
 export type CompleteHostPlanPaymentRequest = {

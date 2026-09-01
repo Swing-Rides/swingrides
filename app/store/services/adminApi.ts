@@ -215,6 +215,7 @@ export const adminApi = createApi({
         const query = toQueryString(filters);
         return `/api/auth/admin/subscribers${query ? `?${query}` : ""}`;
       },
+      providesTags: [{ type: "AdminSubscriber", id: "LIST" }],
     }),
     getAdminSubscriberById: builder.query<AdminISubscriberByIdResponse, string>(
       {
@@ -231,6 +232,7 @@ export const adminApi = createApi({
       }),
       invalidatesTags: (_result, _error, subscriberId) => [
         { type: "AdminSubscriber", id: subscriberId },
+        { type: "AdminSubscriber", id: "LIST" },
       ],
     }),
     reactivateSubscriber: builder.mutation<unknown, string>({
@@ -240,6 +242,17 @@ export const adminApi = createApi({
       }),
       invalidatesTags: (_result, _error, subscriberId) => [
         { type: "AdminSubscriber", id: subscriberId },
+        { type: "AdminSubscriber", id: "LIST" },
+      ],
+    }),
+    deleteSubscriber: builder.mutation<unknown, string>({
+      query: (subscriberId) => ({
+        url: `/api/auth/admin/subscribers/${subscriberId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, subscriberId) => [
+        { type: "AdminSubscriber", id: subscriberId },
+        { type: "AdminSubscriber", id: "LIST" },
       ],
     }),
     changeSubscriberPlan: builder.mutation<
@@ -629,6 +642,7 @@ export const {
   useGetAdminSubscriberByIdQuery,
   useSuspendSubscriberMutation,
   useReactivateSubscriberMutation,
+  useDeleteSubscriberMutation,
   useChangeSubscriberPlanMutation,
   useGetAdminSubscriberFleetDetailQuery,
   useGetAdminSubscriberBookingDetailQuery,
