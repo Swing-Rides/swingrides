@@ -64,7 +64,7 @@ import { getStoredConnectedPhone } from "@/lib/connectedHost";
 import { motion, AnimatePresence } from 'motion/react'
 
 const subscribeConnectedPhone = (callback: () => void) => {
-  if (typeof window === "undefined") return () => {};
+  if (typeof window === "undefined") return () => { };
   window.addEventListener("storage", callback);
   return () => window.removeEventListener("storage", callback);
 };
