@@ -35,6 +35,8 @@ export type FormFieldConfig = {
         loadOptions?: () => Promise<SelectOption[]>     // ← add this for async selects
         rows?: number               // for textarea
         height?: number
+        maxLength?: number          // character limit for inputs / textareas
+        showCharCount?: boolean     // whether to display character count
         min?: number | string
         max?: number | string
         step?: number
