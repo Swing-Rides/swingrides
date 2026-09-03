@@ -360,19 +360,148 @@ export const TextareaInput = <T extends FieldValues = FieldValues>({
   register,
   error,
 }: InputProps<T>) => {
+  const maxChars = field.maxLength;
+  const showCount = field.showCharCount ?? Boolean(maxChars);
+  const [charCount, setCharCount] = useState<number>(() =>
+    String(field.defaultValue ?? "").length,
+  );
+
+  const registration = register(
+    field.name as Path<T>,
+    field.validation as RegisterOptions<T, Path<T>>,
+  );
+
+  const isOverLimit = maxChars !== undefined ? charCount > maxChars : false;
+  const isInvalid = Boolean(error || isOverLimit);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (maxChars === undefined) return;
+
+    // Allow modifier combinations (e.g. Ctrl+C, Ctrl+V, Ctrl+A, Ctrl+X, Ctrl+Z, Cmd+V)
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      return;
+    }
+
+    // Allow navigation, deletion, and system keys
+    const allowedKeys = [
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowUp",
+      "ArrowDown",
+      "Home",
+      "End",
+      "PageUp",
+      "PageDown",
+      "Tab",
+      "Escape",
+      "Shift",
+      "Control",
+      "Alt",
+      "Meta",
+      "CapsLock",
+    ];
+    if (allowedKeys.includes(e.key)) {
+      return;
+    }
+
+    // For any key that adds characters (including Enter)
+    const target = e.currentTarget;
+    const selectionLength =
+      (target.selectionEnd ?? 0) - (target.selectionStart ?? 0);
+    const currentLength = target.value.length;
+
+    // Stop them from typing when they reach the character limit
+    if (currentLength - selectionLength >= maxChars) {
+      e.preventDefault();
+    }
+  };
+
+  const handleBeforeInput = (
+    e: React.FormEvent<HTMLTextAreaElement> & {
+      data?: string;
+      inputType?: string;
+    },
+  ) => {
+    if (maxChars === undefined) return;
+
+    // Allow paste/drop so pasted value is accepted and displays the red error ring
+    if (
+      e.inputType === "insertFromPaste" ||
+      e.inputType === "insertFromDrop" ||
+      e.inputType === "insertReplacementText"
+    ) {
+      return;
+    }
+
+    // Block typing that exceeds limit
+    if (
+      e.data &&
+      (e.inputType?.startsWith("insertText") ||
+        e.inputType === "insertCompositionText" ||
+        e.inputType === "insertParagraph")
+    ) {
+      const target = e.currentTarget;
+      const selectionLength =
+        (target.selectionEnd ?? 0) - (target.selectionStart ?? 0);
+      const currentLength = target.value.length;
+
+      if (currentLength - selectionLength + e.data.length > maxChars) {
+        e.preventDefault();
+      }
+    }
+  };
+
   return (
-    <Textarea
-      id={field.name}
-      placeholder={field.placeholder}
-      disabled={field.disabled}
-      rows={field.rows ?? 8}
-      style={field.height ? { height: `${field.height}px` } : undefined}
-      className={cn(inputClass(error), "resize-none")}
-      {...register(
-        field.name as Path<T>,
-        field.validation as RegisterOptions<T, Path<T>>,
+    <div className="flex flex-col gap-1 w-full">
+      <Textarea
+        id={field.name}
+        placeholder={field.placeholder}
+        disabled={field.disabled}
+        rows={field.rows ?? 8}
+        style={field.height ? { height: `${field.height}px` } : undefined}
+        aria-invalid={isInvalid}
+        className={cn(
+          inputClass(isInvalid ? (error || "Exceeded limit") : undefined),
+          "resize-none",
+          isInvalid &&
+          "border-red-500 ring-1 ring-red-500 focus-visible:ring-red-700",
+        )}
+        onKeyDown={handleKeyDown}
+        onBeforeInput={handleBeforeInput}
+        {...registration}
+        ref={(el) => {
+          registration.ref(el);
+          if (el && charCount === 0 && el.value.length > 0) {
+            setCharCount(el.value.length);
+          }
+        }}
+        onInput={(e) => {
+          setCharCount(e.currentTarget.value.length);
+        }}
+        onChange={(e) => {
+          setCharCount(e.target.value.length);
+          registration.onChange(e);
+        }}
+      />
+      {showCount && maxChars !== undefined && (
+        <div className="flex justify-end">
+          <span
+            className={cn(
+              "text-xs font-normal font-text tabular-nums",
+              charCount > maxChars
+                ? "text-[#EF4444] font-medium"
+                : charCount >= maxChars * 0.9
+                  ? "text-amber-500"
+                  : "text-gray-400",
+            )}
+          >
+            {charCount.toLocaleString()} / {maxChars.toLocaleString()}
+          </span>
+        </div>
       )}
-    />
+    </div>
   );
 };
 
@@ -895,11 +1024,11 @@ export const FileInput = <T extends FieldValues = FieldValues>({
 
     let combined = field.multiple
       ? [
-          ...files,
-          ...newlySelected.filter(
-            (nf) => !files.some((existing) => isSameFile(existing, nf)),
-          ),
-        ]
+        ...files,
+        ...newlySelected.filter(
+          (nf) => !files.some((existing) => isSameFile(existing, nf)),
+        ),
+      ]
       : newlySelected;
 
     if (field.maxFiles) {

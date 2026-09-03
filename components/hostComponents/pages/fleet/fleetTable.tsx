@@ -527,12 +527,12 @@ function VehicleDetailSheet({
             >
               Put in Maintenance
             </button>
-            <button
+            {/* <button
               onClick={onCreateBooking}
               className="py-3 px-5 text-white border text-sm font-semibold font-text leading-5 bg-blue-700 hover:bg-blue-900 duration-300 transition-colors cursor-pointer"
             >
               Create Booking
-            </button>
+            </button> */}
           </div>
         )}
         {row.status === "unlisted" && (
@@ -543,12 +543,12 @@ function VehicleDetailSheet({
             >
               Relist Vehicle
             </button>
-            <button
+            {/* <button
               onClick={onCreateBooking}
               className="py-3 px-5 text-white border text-sm font-semibold font-text leading-5 bg-blue-700 hover:bg-blue-900 duration-300 transition-colors cursor-pointer"
             >
               Create Booking
-            </button>
+            </button> */}
           </div>
         )}
         {["snoozed", "maintenance"].includes(row.status) && (

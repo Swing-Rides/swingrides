@@ -48,10 +48,10 @@ const VEHICLE_TYPES = [
 ];
 
 const TRANSMISSION_OPTIONS = ["Automatic", "Manual", "CVT"];
-const FUEL_TYPE_OPTIONS = ["Diesel", "Electric", "Gas/Petrol"];
+const FUEL_TYPE_OPTIONS = ["Diesel", "Electric", "Gasoline", "Hybrid"];
 
 const MAX_IMAGES = 8;
-const MAX_IMAGE_SIZE_MB = 5;
+const MAX_IMAGE_SIZE_MB = 10;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -852,7 +852,16 @@ export default function FleetForm({
               placeholder:
                 "Describe the vehicle's features, unique selling points, and any specific terms...",
               height: 120,
-              validation: { required: "Description is required" },
+              maxLength: 1000,
+              showCharCount: true,
+              defaultValue: defaultValues?.description,
+              validation: {
+                required: "Description is required",
+                maxLength: {
+                  value: 1000,
+                  message: "Vehicle description cannot exceed 1000 characters",
+                },
+              },
             }}
             register={register}
             error={errors.description?.message}
@@ -871,6 +880,15 @@ export default function FleetForm({
               placeholder:
                 "Add any instructions for renters about pickup location, key collection, parking, or vehicle access...",
               height: 120,
+              maxLength: 1000,
+              showCharCount: true,
+              defaultValue: defaultValues?.pickupInstructions,
+              validation: {
+                maxLength: {
+                  value: 1000,
+                  message: "Pickup instructions cannot exceed 1000 characters",
+                },
+              },
             }}
             register={register}
             error={errors.pickupInstructions?.message}
