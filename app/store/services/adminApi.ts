@@ -195,6 +195,14 @@ export const adminApi = createApi({
         body: payload,
       }),
     }),
+    // The admin_session cookie is httpOnly, so only the server can clear it —
+    // logging out has to go through here rather than being done client-side.
+    adminLogout: builder.mutation<void, void>({
+      query: () => ({
+        url: "/api/auth/admin/logout",
+        method: "POST",
+      }),
+    }),
     getAdminOverview: builder.query<AdminOverviewResponse, void>({
       query: () => "/api/auth/admin/overview",
     }),
@@ -636,6 +644,7 @@ export const adminApi = createApi({
 
 export const {
   useAdminLoginMutation,
+  useAdminLogoutMutation,
   useGetAdminOverviewQuery,
   useGetAdminBillingQuery,
   useGetAdminSubscribersQuery,

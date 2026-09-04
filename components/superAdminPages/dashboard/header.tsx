@@ -3,8 +3,11 @@
 import { useMemo } from "react"
 import { getInitials } from "@/components/pages/profilePages/utils"
 import { useSidebar } from "@/components/ui/sidebar"
-import { ChevronDown, LogOut, Search, Menu, UserPlus, Calendar, CreditCard, Ticket, Star, TriangleAlert, Bell } from "lucide-react"
+import { ChevronDown, Loader2, LogOut, Search, Menu, UserPlus, Calendar, CreditCard, Ticket, Star, TriangleAlert, Bell } from "lucide-react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
+import { useDispatch } from "react-redux"
+import { adminApi, useAdminLogoutMutation } from "@/app/store/services/adminApi"
 import { userContent } from "@/constants/superAdminSidebar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Notification, formatRelativeTime, isToday } from "@/components/hostComponents/notification/notification"
@@ -136,9 +139,27 @@ type HeaderAvatarProps = {
 
 const HeaderAvatar = ({ user }: HeaderAvatarProps) => {
         const userInitials = getInitials(user.fullname)
+        const [adminLogout, { isLoading }] = useAdminLogoutMutation()
+        const dispatch = useDispatch()
+        const router = useRouter()
 
-        const handleLogout = () => {
-                console.log("user logout")
+        // Success and failure toasts are raised by adminApi's base query, which
+        // shows the response `message` for any mutating request, so there is
+        // nothing to announce here.
+        const handleLogout = async () => {
+                try {
+                        await adminLogout().unwrap()
+                        // Drop every cached admin response before leaving: the next
+                        // person to sign in on this machine must not briefly see the
+                        // previous admin's data while their own requests are in flight.
+                        dispatch(adminApi.util.resetApiState())
+                        router.replace("/admin/login")
+                } catch (error) {
+                        // Only the server can clear the httpOnly cookie, so a failed
+                        // request means the session is still live — stay put rather
+                        // than redirecting to a page that would bounce straight back.
+                        console.error("Admin logout failed:", error)
+                }
         }
 
         return (
@@ -165,10 +186,15 @@ const HeaderAvatar = ({ user }: HeaderAvatarProps) => {
                                 </PopoverTrigger>
                                 <PopoverContent align="end" className="w-25">
                                         <button
-                                                className="flex items-center justify-start gap-2 cursor-pointer text-red-500 hover:text-red-900 transition-colors duration-300"
+                                                className="flex items-center justify-start gap-2 cursor-pointer text-red-500 hover:text-red-900 transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
                                                 onClick={handleLogout}
+                                                disabled={isLoading}
                                         >
-                                                <LogOut className="size-4" />
+                                                {isLoading ? (
+                                                        <Loader2 className="size-4 animate-spin" />
+                                                ) : (
+                                                        <LogOut className="size-4" />
+                                                )}
                                                 <span>
                                                         logout
                                                 </span>

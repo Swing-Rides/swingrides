@@ -56,6 +56,12 @@ class ApiClient {
               }
               break;
             }
+            // The backend's rate limiters answer with a `message` explaining
+            // how long to wait, and callers already surface that text, so
+            // there's nothing to do here beyond recording it.
+            case 429:
+              console.warn("Rate limited:", error.response.data);
+              break;
             case 500:
               console.error("Server error");
               break;
