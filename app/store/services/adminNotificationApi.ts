@@ -92,6 +92,9 @@ export const adminNotificationApi = createApi({
   reducerPath: "adminNotificationApi",
   baseQuery: axiosBaseQuery(),
   tagTypes: ["AdminNotifications"],
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
     getAdminNotifications: builder.query<
       AdminNotificationListResponse,

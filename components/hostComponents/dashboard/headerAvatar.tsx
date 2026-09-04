@@ -8,6 +8,8 @@ import {
   useGetHostProfileQuery,
   useLogoutMutation,
 } from "@/app/store/services/hostApi";
+import { useDispatch } from "react-redux";
+import { resetHostApiState } from "@/app/store/resetState";
 import {
   Popover,
   PopoverContent,
@@ -16,6 +18,7 @@ import {
 import { toast } from "sonner";
 
 export const HeaderAvatar = () => {
+  const dispatch = useDispatch();
   const { data } = useGetHostProfileQuery();
   const fullName = data?.data.fullName ?? "";
   const avatar = data?.data.profilePictureUrl;
@@ -27,14 +30,17 @@ export const HeaderAvatar = () => {
   const handleLogout = async () => {
     try {
       await logout().unwrap();
+      resetHostApiState(dispatch);
       toast.success("Logged out successfully!");
       router.replace("/host/login");
     } catch (error) {
+      resetHostApiState(dispatch);
       const message =
         error && typeof error === "object" && "data" in error
           ? String((error as { data?: unknown }).data)
           : "Logout failed!";
       toast.error(message);
+      router.replace("/host/login");
     }
   };
 

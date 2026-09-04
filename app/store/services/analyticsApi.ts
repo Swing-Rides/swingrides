@@ -183,6 +183,9 @@ export const analyticsApi = createApi({
 	reducerPath: "analyticsApi",
 	baseQuery: axiosBaseQuery(),
 	tagTypes: ["Analytics"],
+	refetchOnMountOrArgChange: true,
+	refetchOnFocus: true,
+	refetchOnReconnect: true,
 	endpoints: (builder) => ({
 		getAnalyticsKPIs: builder.query<KPIResponse, AnalyticsQuery | undefined>({
 			query: (filters) => {

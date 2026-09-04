@@ -187,6 +187,9 @@ export const adminApi = createApi({
   reducerPath: "adminApi",
   baseQuery: axiosBaseQuery(),
   tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter", "AdminSubscriber", "AdminSettingsUsers", "AdminActivityLog", "PlatformSettings", "EmailSends", "AdminReviews", "AdminTickets", "HostPlanCoupons"],
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
     adminLogin: builder.mutation<AdminSignInResponse, AdminSignInPayload>({
       query: (payload) => ({

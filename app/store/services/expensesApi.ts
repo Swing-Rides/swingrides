@@ -187,6 +187,9 @@ export const expensesApi = createApi({
 	reducerPath: "expensesApi",
 	baseQuery: axiosBaseQuery(),
 	tagTypes: ["Finance"],
+	refetchOnMountOrArgChange: true,
+	refetchOnFocus: true,
+	refetchOnReconnect: true,
 	endpoints: (builder) => ({
 		getFinanceSummary: builder.query<ApiEnvelope<FinanceSummary>, void>({
 			query: () => ({

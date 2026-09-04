@@ -137,13 +137,12 @@ export const renterApi = createApi({
       invalidatesTags: [{ type: "Renter", id: "PROFILE" }],
       async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
         try {
-          const { data } = await queryFulfilled;
+          await queryFulfilled;
           dispatch(renterApi.util.resetApiState());
-        }
         } catch {
-        // ignore
-      }
-    },
+          // ignore
+        }
+      },
     }),
 
   verifyRenterEmail: builder.mutation<

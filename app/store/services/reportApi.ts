@@ -125,6 +125,9 @@ export const reportApi = createApi({
   reducerPath: "reportApi",
   baseQuery: axiosBaseQuery(),
   tagTypes: ["IssueReports", "RenterIssueReports"],
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
     createIssueReport: builder.mutation<
       ApiEnvelope<IssueReportDetail>,

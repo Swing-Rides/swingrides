@@ -84,6 +84,9 @@ export const notificationApi = createApi({
   reducerPath: "notificationApi",
   baseQuery: axiosBaseQuery(),
   tagTypes: ["Notifications"],
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
     getNotifications: builder.query<NotificationListResponse, NotificationFilters | void>({
       query: (filters) => ({

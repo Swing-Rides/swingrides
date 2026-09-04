@@ -345,6 +345,9 @@ export const settingsApi = createApi({
   reducerPath: "settingsApi",
   baseQuery: axiosBaseQuery(),
   tagTypes: ["HostSettings"],
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
     getHostSettingsDashboard: builder.query<
       ApiEnvelope<HostSettingsDashboardData>,

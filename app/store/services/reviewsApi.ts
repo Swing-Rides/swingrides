@@ -171,6 +171,9 @@ export const reviewsApi = createApi({
 	reducerPath: "reviewsApi",
 	baseQuery: axiosBaseQuery(),
 	tagTypes: ["Reviews"],
+	refetchOnMountOrArgChange: true,
+	refetchOnFocus: true,
+	refetchOnReconnect: true,
 	endpoints: (builder) => ({
 		getReviewSummary: builder.query<ApiEnvelope<ReviewSummary>, void>({
 			query: () => ({

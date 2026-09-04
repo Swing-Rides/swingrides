@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { setupListeners } from "@reduxjs/toolkit/query";
 import { adminApi } from "./services/adminApi";
 import { publicApi } from "./services/publicApi";
 import { hostApi } from "./services/hostApi";
@@ -51,7 +52,16 @@ export const store = configureStore({
     ),
 });
 
+setupListeners(store.dispatch);
+
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+
+export {
+  resetHostApiState,
+  resetRenterApiState,
+  resetAdminApiState,
+  resetAllApiState,
+} from "./resetState";

@@ -14,6 +14,8 @@ import { RegisterOptions } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { useHostLoginMutation } from "@/app/store/services/hostApi";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { resetHostApiState } from "@/app/store/resetState";
 
 const fields: FormFieldConfig[] = [
   {
@@ -34,6 +36,7 @@ const fields: FormFieldConfig[] = [
 ];
 
 export default function HostLoginForm() {
+  const dispatch = useDispatch();
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [hostLogin, { isLoading }] = useHostLoginMutation();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -47,6 +50,7 @@ export default function HostLoginForm() {
 
     const response = await hostLogin(payload).unwrap();
     if (response.success) {
+      resetHostApiState(dispatch);
       if (response.host && !response.host.emailVerified) {
         router.push(
           `/verify-email?type=host&email=${encodeURIComponent(response.host.email)}`,

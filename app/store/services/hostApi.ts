@@ -188,6 +188,9 @@ export const hostApi = createApi({
   reducerPath: "hostApi",
   baseQuery: axiosBaseQuery(),
   tagTypes: ["Host", "Fleet", "Maintainance", "Reviews"],
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
     hostLogin: builder.mutation<HostSignInResponse, HostSignInPayload>({
       query: (payload) => ({
@@ -195,6 +198,18 @@ export const hostApi = createApi({
         method: "POST",
         body: payload,
       }),
+      async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.success) {
+            dispatch(hostApi.util.resetApiState());
+            dispatch(analyticsApi.util.resetApiState());
+            dispatch(expensesApi.util.resetApiState());
+          }
+        } catch {
+          // ignore error
+        }
+      },
     }),
 
     hostRegister: builder.mutation<CreateHostResponse, CreateHostRequest>({
@@ -251,6 +266,18 @@ export const hostApi = createApi({
         url: "/api/host/logout",
         method: "POST",
       }),
+      invalidatesTags: ["Host", "Fleet", "Maintainance", "Reviews"],
+      async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+        } catch {
+          // Reset even if request fails (e.g. 401 already expired)
+        } finally {
+          dispatch(hostApi.util.resetApiState());
+          dispatch(analyticsApi.util.resetApiState());
+          dispatch(expensesApi.util.resetApiState());
+        }
+      },
     }),
 
     // vehicle management endpoints

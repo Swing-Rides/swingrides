@@ -82,6 +82,9 @@ export const dashboardApi = createApi({
 	reducerPath: "dashboardApi",
 	baseQuery: axiosBaseQuery(),
 	tagTypes: ["Dashboard"],
+	refetchOnMountOrArgChange: true,
+	refetchOnFocus: true,
+	refetchOnReconnect: true,
 	endpoints: (builder) => ({
 		getHostDashboard: builder.query<HostDashboardResponse, DashboardDuration | undefined>({
 			query: (duration) => ({

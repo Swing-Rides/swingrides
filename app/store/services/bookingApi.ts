@@ -413,6 +413,9 @@ export const bookingApi = createApi({
   reducerPath: "bookingApi",
   baseQuery: axiosBaseQuery(),
   tagTypes: ["Bookings"],
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
     listBookings: builder.query<ListBookingsResponse, void>({
       query: () => ({
