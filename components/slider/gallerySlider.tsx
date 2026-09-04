@@ -11,15 +11,23 @@ import 'swiper/css/thumbs';
 
 import { FreeMode, Navigation, Thumbs } from 'swiper/modules';
 import Image from 'next/image';
+import { DEFAULT_IMAGE_SRC } from '@/constants/constant';
+import { isValidImageSrc } from '@/lib/imageHelpers';
 
 type GallerySliderProps = {
         gallery: {
                 alt: string;
                 src: string;
-        }[];
+        }[] | null | undefined;
 };
 
 export default function GallerySlider({ gallery }: GallerySliderProps) {
+
+        const validGallery = (gallery ?? []).filter((img) => img && isValidImageSrc(img.src));
+
+        const resolvedGallery = validGallery.length > 0
+                ? validGallery
+                : [{ alt: 'Default image', src: DEFAULT_IMAGE_SRC }];
 
         const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
 
@@ -45,8 +53,8 @@ export default function GallerySlider({ gallery }: GallerySliderProps) {
                                         onSwiper={(swiper) => setActiveIndex(swiper.realIndex + 1)}
                                         onSlideChange={(swiper) => setActiveIndex(swiper.realIndex + 1)}
                                 >
-                                        {gallery.map((img, index) => (
-                                                <SwiperSlide 
+                                        {resolvedGallery.map((img, index) => (
+                                                <SwiperSlide
                                                         key={index}
                                                         className='overflow-clip bg-gray-50 rounded-lg aspect-108/40 object-cover'
                                                 >
@@ -78,7 +86,7 @@ export default function GallerySlider({ gallery }: GallerySliderProps) {
                                                 userSelect: 'none',
                                         }}
                                 >
-                                        {activeIndex}&nbsp;/&nbsp;{gallery.length}
+                                        {activeIndex}&nbsp;/&nbsp;{resolvedGallery.length}
                                 </div>
                         </div>
 
@@ -92,8 +100,8 @@ export default function GallerySlider({ gallery }: GallerySliderProps) {
                                 modules={[FreeMode, Navigation, Thumbs]}
                                 className="mySwiper"
                         >
-                                {gallery.map((img, index) => (
-                                        <SwiperSlide 
+                                {resolvedGallery.map((img, index) => (
+                                        <SwiperSlide
                                                 key={index}
                                                 className='overflow-clip rounded-lg aspect-96/76 object-cover'
                                         >
