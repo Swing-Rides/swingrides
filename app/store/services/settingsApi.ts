@@ -6,12 +6,12 @@ import { hostApi } from "./hostApi";
 type AxiosBaseQueryArgs =
   | string
   | {
-      url: string;
-      method?: Method;
-      body?: unknown;
-      data?: unknown;
-      params?: Record<string, string | number | boolean | undefined>;
-    };
+    url: string;
+    method?: Method;
+    body?: unknown;
+    data?: unknown;
+    params?: Record<string, string | number | boolean | undefined>;
+  };
 
 type AxiosBaseQueryError = {
   status?: number;
@@ -28,11 +28,11 @@ const axiosBaseQuery = (): BaseQueryFn<
       typeof args === "string"
         ? { url: args, method: "GET" as Method }
         : {
-            url: args.url,
-            method: args.method ?? "GET",
-            data: args.data ?? args.body,
-            params: args.params,
-          };
+          url: args.url,
+          method: args.method ?? "GET",
+          data: args.data ?? args.body,
+          params: args.params,
+        };
 
     try {
       const result = await apiClient({

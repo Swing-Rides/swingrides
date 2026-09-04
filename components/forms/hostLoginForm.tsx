@@ -200,7 +200,7 @@ const ForgotPasswordDialog = ({ onClose }: { onClose: () => void }) => {
                 className={cn(
                   "pl-9 border-[#E5E7EB] focus-visible:ring-[#1A56DB] font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF]",
                   errors.resetEmail &&
-                    "border-[#EF4444] focus-visible:ring-[#EF4444]",
+                  "border-[#EF4444] focus-visible:ring-[#EF4444]",
                 )}
                 {...register(
                   "resetEmail",

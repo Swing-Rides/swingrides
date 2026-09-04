@@ -10,10 +10,11 @@ import {
   SubscriberPlan,
 } from "@/constants/superAdminSidebar";
 import { VehicleDetailPageSkeleton } from "../loadingSkeletons/vehicleDetailPageSkeleton";
+import { DEFAULT_IMAGE_SRC } from "@/constants/constant";
 
 const FALLBACK_GALLERY = [
   {
-    src: "/images/test-car-1.webp",
+    src: DEFAULT_IMAGE_SRC,
     alt: "Vehicle image",
   },
 ];
@@ -36,7 +37,6 @@ export default function VehicleDetailPageClient() {
   }>();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  // console.log("VehicleDetailPageClient params:", { slug, id });
 
 
   const { data, isLoading, isError } = useGetAdminSubscriberFleetDetailQuery(

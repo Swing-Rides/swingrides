@@ -80,7 +80,7 @@ export function DashboardHeader() {
                                 href: n.actionUrl || "#",
                                 icon: CATEGORY_ICON[n.category],
                         }
-                        ;(isToday(n.createdAt) ? today : earlier).push(card)
+                                ; (isToday(n.createdAt) ? today : earlier).push(card)
                 })
 
                 return { todayNotifications: today, earlierNotifications: earlier }

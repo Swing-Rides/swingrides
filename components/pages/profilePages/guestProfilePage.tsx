@@ -256,7 +256,7 @@ const WarningCard = () => {
   return (
     <div className="bg-amber-100 p-2.5 md:p-3 rounded-md flex gap-2 items-start justify-between">
       <div className="pt-px">
-        <CircleAlert className="size-4 bg-amber-500"/>
+        <CircleAlert className="size-4 bg-amber-500" />
       </div>
       <div className="flex">
         <span className="flex text-zinc-600 text-xs font-normal font-text leading-4">
