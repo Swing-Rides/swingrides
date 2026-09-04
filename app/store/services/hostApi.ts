@@ -30,12 +30,12 @@ import { expensesApi } from "./expensesApi";
 type AxiosBaseQueryArgs =
   | string
   | {
-      url: string;
-      method?: Method;
-      body?: unknown;
-      data?: unknown;
-      params?: Record<string, string | number | boolean | undefined>;
-    };
+    url: string;
+    method?: Method;
+    body?: unknown;
+    data?: unknown;
+    params?: Record<string, string | number | boolean | undefined>;
+  };
 
 type AxiosBaseQueryError = {
   status?: number;
@@ -62,11 +62,11 @@ const axiosBaseQuery = (): BaseQueryFn<
       typeof args === "string"
         ? { url: args, method: "GET" as Method }
         : {
-            url: args.url,
-            method: args.method ?? "GET",
-            data: args.data ?? args.body,
-            params: args.params,
-          };
+          url: args.url,
+          method: args.method ?? "GET",
+          data: args.data ?? args.body,
+          params: args.params,
+        };
 
     const isMutatingMethod = MUTATING_METHODS.includes(
       request.method.toUpperCase() as Method,
@@ -188,6 +188,9 @@ export const hostApi = createApi({
   reducerPath: "hostApi",
   baseQuery: axiosBaseQuery(),
   tagTypes: ["Host", "Fleet", "Maintainance", "Reviews"],
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
     hostLogin: builder.mutation<HostSignInResponse, HostSignInPayload>({
       query: (payload) => ({
@@ -195,6 +198,18 @@ export const hostApi = createApi({
         method: "POST",
         body: payload,
       }),
+      async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.success) {
+            dispatch(hostApi.util.resetApiState());
+            dispatch(analyticsApi.util.resetApiState());
+            dispatch(expensesApi.util.resetApiState());
+          }
+        } catch {
+          // ignore error
+        }
+      },
     }),
 
     hostRegister: builder.mutation<CreateHostResponse, CreateHostRequest>({
@@ -251,6 +266,18 @@ export const hostApi = createApi({
         url: "/api/host/logout",
         method: "POST",
       }),
+      invalidatesTags: ["Host", "Fleet", "Maintainance", "Reviews"],
+      async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+        } catch {
+          // Reset even if request fails (e.g. 401 already expired)
+        } finally {
+          dispatch(hostApi.util.resetApiState());
+          dispatch(analyticsApi.util.resetApiState());
+          dispatch(expensesApi.util.resetApiState());
+        }
+      },
     }),
 
     // vehicle management endpoints

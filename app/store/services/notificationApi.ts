@@ -5,11 +5,11 @@ import apiClient from "@/lib";
 const axiosBaseQuery = (): BaseQueryFn<
   | string
   | {
-      url: string;
-      method?: Method;
-      body?: unknown;
-      params?: Record<string, string | number | boolean | undefined>;
-    },
+    url: string;
+    method?: Method;
+    body?: unknown;
+    params?: Record<string, string | number | boolean | undefined>;
+  },
   unknown,
   { status?: number; data: unknown }
 > => {
@@ -18,11 +18,11 @@ const axiosBaseQuery = (): BaseQueryFn<
       typeof args === "string"
         ? { url: args, method: "GET" as Method }
         : {
-            url: args.url,
-            method: args.method ?? "GET",
-            data: (args as any).body,
-            params: (args as any).params,
-          };
+          url: args.url,
+          method: args.method ?? "GET",
+          data: (args as any).body,
+          params: (args as any).params,
+        };
     try {
       const result = await apiClient(request);
       return { data: result.data };
@@ -84,6 +84,9 @@ export const notificationApi = createApi({
   reducerPath: "notificationApi",
   baseQuery: axiosBaseQuery(),
   tagTypes: ["Notifications"],
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
     getNotifications: builder.query<NotificationListResponse, NotificationFilters | void>({
       query: (filters) => ({

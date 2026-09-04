@@ -57,12 +57,12 @@ import { toast } from "sonner";
 type AxiosBaseQueryArgs =
   | string
   | {
-      url: string;
-      method?: Method;
-      body?: unknown;
-      data?: unknown;
-      params?: Record<string, string | number | boolean | undefined>;
-    };
+    url: string;
+    method?: Method;
+    body?: unknown;
+    data?: unknown;
+    params?: Record<string, string | number | boolean | undefined>;
+  };
 
 type AxiosBaseQueryError = {
   status?: number;
@@ -84,7 +84,7 @@ const axiosBaseQuery = (): BaseQueryFn<
   AxiosBaseQueryArgs,
   unknown,
   AxiosBaseQueryError
-  > => {
+> => {
   return async (args) => {
     const request =
       typeof args === "string"
@@ -187,6 +187,9 @@ export const adminApi = createApi({
   reducerPath: "adminApi",
   baseQuery: axiosBaseQuery(),
   tagTypes: ["AdminRenters", "AdminVerificationQueue", "AdminRenter", "AdminSubscriber", "AdminSettingsUsers", "AdminActivityLog", "PlatformSettings", "EmailSends", "AdminReviews", "AdminTickets", "HostPlanCoupons"],
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
     adminLogin: builder.mutation<AdminSignInResponse, AdminSignInPayload>({
       query: (payload) => ({

@@ -9,6 +9,8 @@ import {
 } from "../utils/hostAuthHelper";
 import HostProfileErrorState from "./hostProfileErrorState";
 import { Loader2 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { resetHostApiState } from "@/app/store/resetState";
 
 export interface HostAuthGuardProps {
   children: ReactNode;
@@ -72,6 +74,7 @@ export default function HostAuthGuard({
   requireVerification = false,
   fallback,
 }: HostAuthGuardProps) {
+  const dispatch = useDispatch();
   const router = useRouter();
   const { data, isLoading, isFetching, isError, error, refetch } =
     useGetHostProfileQuery();
@@ -94,6 +97,7 @@ export default function HostAuthGuard({
   if (isError) {
     // 1. If it's strictly an authentication error (401/403/expired session), redirect to login
     if (isAuthenticationError(error)) {
+      resetHostApiState(dispatch);
       router.replace("/host/login");
       return (
         <div className="flex-1 w-full min-h-[60vh] flex flex-col items-center justify-center p-6 gap-3">
@@ -131,6 +135,7 @@ export default function HostAuthGuard({
 
   // If user data returned null without HTTP error (explicit empty payload), redirect to login
   if (!access.canAccess || !data?.data) {
+    resetHostApiState(dispatch);
     return (
       <div className="flex-1 w-full min-h-[60vh] flex flex-col items-center justify-center p-6 gap-3">
         <Loader2 className="size-8 text-blue-700 animate-spin" />
@@ -151,6 +156,7 @@ export function useHostAuthGuard(options?: {
   requirePayment?: boolean;
   requireVerification?: boolean;
 }) {
+  const dispatch = useDispatch();
   const router = useRouter();
   const { data, isLoading, isFetching, isError, error, refetch } =
     useGetHostProfileQuery();
@@ -172,10 +178,12 @@ export function useHostAuthGuard(options?: {
 
   const enforceRedirect = () => {
     if (!access.canAccess && access.redirectUrl) {
+      if (isAuthFail) {
+        resetHostApiState(dispatch);
+      }
       router.replace(access.redirectUrl);
     }
   };
-
   return {
     host: data?.data,
     profileResponse: data,

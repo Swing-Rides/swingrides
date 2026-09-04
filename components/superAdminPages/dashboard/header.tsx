@@ -18,6 +18,7 @@ import {
         useMarkAdminNotificationAsReadMutation,
         useMarkAllAdminNotificationsAsReadMutation,
 } from "@/app/store/services/adminNotificationApi"
+import { resetAdminApiState } from "@/app/store/resetState"
 
 const CATEGORY_ICON: Record<AdminNotificationCategory, React.ReactNode> = {
         registrations: (
@@ -80,7 +81,7 @@ export function DashboardHeader() {
                                 href: n.actionUrl || "#",
                                 icon: CATEGORY_ICON[n.category],
                         }
-                        ;(isToday(n.createdAt) ? today : earlier).push(card)
+                                ; (isToday(n.createdAt) ? today : earlier).push(card)
                 })
 
                 return { todayNotifications: today, earlierNotifications: earlier }
@@ -152,13 +153,14 @@ const HeaderAvatar = ({ user }: HeaderAvatarProps) => {
                         // Drop every cached admin response before leaving: the next
                         // person to sign in on this machine must not briefly see the
                         // previous admin's data while their own requests are in flight.
-                        dispatch(adminApi.util.resetApiState())
+                        resetAdminApiState(dispatch)
                         router.replace("/admin/login")
                 } catch (error) {
                         // Only the server can clear the httpOnly cookie, so a failed
                         // request means the session is still live — stay put rather
                         // than redirecting to a page that would bounce straight back.
-                        console.error("Admin logout failed:", error)
+                        resetAdminApiState(dispatch)
+                        router.replace("/admin/login")
                 }
         }
 

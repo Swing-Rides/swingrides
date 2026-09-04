@@ -3,6 +3,7 @@ import Image from "next/image";
 import { PriBtn } from "../buttons";
 import Link from "next/link";
 import { DEFAULT_IMAGE_SRC } from "@/constants/constant";
+import { isValidImageSrc } from "@/lib/imageHelpers";
 
 export type Content = {
   id: string;
@@ -63,7 +64,7 @@ export default function CarCard({
           </span>
         )}
         <Image
-          src={featuredImage?.src || DEFAULT_IMAGE_SRC}
+          src={isValidImageSrc(featuredImage?.src) ? featuredImage.src : DEFAULT_IMAGE_SRC}
           alt={featuredImage.alt}
           title={featuredImage.alt}
           width={420}

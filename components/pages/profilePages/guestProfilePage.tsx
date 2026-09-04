@@ -15,6 +15,7 @@ import { renterApi } from "@/app/store/services/renterApi";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import ModifyCheckout from "@/components/modifyTripModal/modify-checkout";
+import { resetRenterApiState } from "@/app/store/resetState";
 
 export default function GuestProfilePage({
   userAvaterUrl,
@@ -88,10 +89,12 @@ const UserCard = ({
   const handleSignOut = async () => {
     try {
       await signoutRentals().unwrap();
-      dispatch(renterApi.util.resetApiState());
+      resetRenterApiState(dispatch);
       router.refresh();
     } catch (error) {
+      resetRenterApiState(dispatch);
       console.error("Renter logout failed:", error);
+      router.refresh();
     }
   };
 
@@ -256,7 +259,7 @@ const WarningCard = () => {
   return (
     <div className="bg-amber-100 p-2.5 md:p-3 rounded-md flex gap-2 items-start justify-between">
       <div className="pt-px">
-        <CircleAlert className="size-4 bg-amber-500"/>
+        <CircleAlert className="size-4 bg-amber-500" />
       </div>
       <div className="flex">
         <span className="flex text-zinc-600 text-xs font-normal font-text leading-4">
