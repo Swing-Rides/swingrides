@@ -56,6 +56,7 @@ import { formatDate } from "../../utils/formatDate";
 import {
   useApproveRenterVerificationMutation,
   useRejectRenterVerificationMutation,
+  useDeleteRenterMutation,
 } from "@/app/store/services/adminApi";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -171,10 +172,21 @@ const TableSection = ({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const pendingRow = rows.find((r) => r.id === pendingDeleteId);
 
-  const confirmDelete = () => {
+  const [deleteRenter] = useDeleteRenterMutation();
+
+  const confirmDelete = async () => {
     if (!pendingDeleteId) return;
-    setRows((prev) => prev.filter((r) => r.id !== pendingDeleteId));
-    setPendingDeleteId(null);
+    try {
+      await deleteRenter(pendingDeleteId).unwrap();
+      // The list refetches from the invalidated "AdminRenters" LIST tag, but
+      // drop the row from local state right away so it disappears without
+      // waiting on that round-trip.
+      setRows((prev) => prev.filter((r) => r.id !== pendingDeleteId));
+      setPendingDeleteId(null);
+    } catch {
+      // Failure toast is already shown by adminApi's base query; leave the
+      // dialog open so the admin can see the error and retry or cancel.
+    }
   };
 
   // ── Filters from URL ──────────────────────────────────────────────────
