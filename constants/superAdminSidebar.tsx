@@ -1,7 +1,8 @@
 import { FleetStatus } from "@/types/subscribers.type"
+import { Building2, CreditCard, LayoutDashboard, Mail, MessageSquare, Settings, Shield, SlidersHorizontalIcon, Star, UserCheck, Users } from "lucide-react"
 
 export const userContent = {
-        fullname: 'Sarah Admin',
+        fullname: 'Super Admin',
         role: 'Super Admin',
 }
 
@@ -11,37 +12,21 @@ export const sidebarContent = [
                 menu: [
                         {
                                 icon: (
-                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M7.49969 2.5H3.33328C2.87307 2.5 2.5 2.87307 2.5 3.33328V9.16625C2.5 9.62646 2.87307 9.99953 3.33328 9.99953H7.49969C7.95989 9.99953 8.33297 9.62646 8.33297 9.16625V3.33328C8.33297 2.87307 7.95989 2.5 7.49969 2.5Z" stroke="currentColor" strokeWidth="1.66656" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M16.6657 2.5H12.4993C12.0391 2.5 11.666 2.87307 11.666 3.33328V5.83312C11.666 6.29333 12.0391 6.6664 12.4993 6.6664H16.6657C17.1259 6.6664 17.499 6.29333 17.499 5.83312V3.33328C17.499 2.87307 17.1259 2.5 16.6657 2.5Z" stroke="currentColor" strokeWidth="1.66656" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M16.6657 9.99902H12.4993C12.0391 9.99902 11.666 10.3721 11.666 10.8323V16.6653C11.666 17.1255 12.0391 17.4986 12.4993 17.4986H16.6657C17.1259 17.4986 17.499 17.1255 17.499 16.6653V10.8323C17.499 10.3721 17.1259 9.99902 16.6657 9.99902Z" stroke="currentColor" strokeWidth="1.66656" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M7.49969 13.332H3.33328C2.87307 13.332 2.5 13.7051 2.5 14.1653V16.6652C2.5 17.1254 2.87307 17.4984 3.33328 17.4984H7.49969C7.95989 17.4984 8.33297 17.1254 8.33297 16.6652V14.1653C8.33297 13.7051 7.95989 13.332 7.49969 13.332Z" stroke="currentColor" strokeWidth="1.66656" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
+                                        <LayoutDashboard />
                                 ),
                                 label: 'Overview',
                                 url: '/admin/'
                         },
                         {
                                 icon: (
-                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M13.3319 17.4987V15.8321C13.3319 14.9481 12.9808 14.1004 12.3557 13.4753C11.7306 12.8502 10.8828 12.499 9.99883 12.499H4.99914C4.11514 12.499 3.26735 12.8502 2.64227 13.4753C2.01718 14.1004 1.66602 14.9481 1.66602 15.8321V17.4987" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M7.49914 9.16625C9.33997 9.16625 10.8323 7.67396 10.8323 5.83312C10.8323 3.99229 9.33997 2.5 7.49914 2.5C5.65831 2.5 4.16602 3.99229 4.16602 5.83312C4.16602 7.67396 5.65831 9.16625 7.49914 9.16625Z" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M18.3319 17.4988V15.8322C18.3313 15.0937 18.0855 14.3763 17.6331 13.7926C17.1806 13.2089 16.5471 12.7921 15.832 12.6074" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M13.332 2.6084C14.049 2.79197 14.6845 3.20894 15.1383 3.79358C15.5921 4.37822 15.8384 5.09727 15.8384 5.83736C15.8384 6.57746 15.5921 7.2965 15.1383 7.88114C14.6845 8.46578 14.049 8.88275 13.332 9.06633" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-
+                                        <Users />
                                 ),
                                 label: 'Subscribers',
                                 url: '/admin/subscribers'
                         },
                         {
                                 icon: (
-                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M13.3319 17.4987V15.8321C13.3319 14.9481 12.9808 14.1004 12.3557 13.4753C11.7306 12.8502 10.8828 12.499 9.99883 12.499H4.99914C4.11514 12.499 3.26735 12.8502 2.64227 13.4753C2.01718 14.1004 1.66602 14.9481 1.66602 15.8321V17.4987" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M7.49914 9.16625C9.33997 9.16625 10.8323 7.67396 10.8323 5.83312C10.8323 3.99229 9.33997 2.5 7.49914 2.5C5.65831 2.5 4.16602 3.99229 4.16602 5.83312C4.16602 7.67396 5.65831 9.16625 7.49914 9.16625Z" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M13.332 9.16656L14.9986 10.8331L18.3317 7.5" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-
+                                        <UserCheck/>
                                 ),
                                 label: 'Renters',
                                 url: '/admin/renters'
@@ -53,22 +38,14 @@ export const sidebarContent = [
                 menu: [
                         {
                                 icon: (
-                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M7.49969 2.5H3.33328C2.87307 2.5 2.5 2.87307 2.5 3.33328V9.16625C2.5 9.62646 2.87307 9.99953 3.33328 9.99953H7.49969C7.95989 9.99953 8.33297 9.62646 8.33297 9.16625V3.33328C8.33297 2.87307 7.95989 2.5 7.49969 2.5Z" stroke="currentColor" strokeWidth="1.66656" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M16.6657 2.5H12.4993C12.0391 2.5 11.666 2.87307 11.666 3.33328V5.83312C11.666 6.29333 12.0391 6.6664 12.4993 6.6664H16.6657C17.1259 6.6664 17.499 6.29333 17.499 5.83312V3.33328C17.499 2.87307 17.1259 2.5 16.6657 2.5Z" stroke="currentColor" strokeWidth="1.66656" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M16.6657 9.99902H12.4993C12.0391 9.99902 11.666 10.3721 11.666 10.8323V16.6653C11.666 17.1255 12.0391 17.4986 12.4993 17.4986H16.6657C17.1259 17.4986 17.499 17.1255 17.499 16.6653V10.8323C17.499 10.3721 17.1259 9.99902 16.6657 9.99902Z" stroke="currentColor" strokeWidth="1.66656" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M7.49969 13.332H3.33328C2.87307 13.332 2.5 13.7051 2.5 14.1653V16.6652C2.5 17.1254 2.87307 17.4984 3.33328 17.4984H7.49969C7.95989 17.4984 8.33297 17.1254 8.33297 16.6652V14.1653C8.33297 13.7051 7.95989 13.332 7.49969 13.332Z" stroke="currentColor" strokeWidth="1.66656" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
+                                        <CreditCard />
                                 ),
                                 label: 'Billing',
                                 url: '/admin/billing'
                         },
                         {
                                 icon: (
-                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M16.6651 4.16602H3.33258C2.41216 4.16602 1.66602 4.91216 1.66602 5.83258V14.1654C1.66602 15.0858 2.41216 15.8319 3.33258 15.8319H16.6651C17.5855 15.8319 18.3316 15.0858 18.3316 14.1654V5.83258C18.3316 4.91216 17.5855 4.16602 16.6651 4.16602Z" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M1.66602 8.33301H18.3316" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
+                                        <Star/>
                                 ),
                                 label: 'Reviews',
                                 url: '/admin/reviews'
@@ -80,37 +57,28 @@ export const sidebarContent = [
                 menu: [
                         {
                                 icon: (
-                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M10.1819 1.66699H9.81523C9.37323 1.66699 8.94933 1.84258 8.63679 2.15512C8.32425 2.46766 8.14867 2.89155 8.14867 3.33355V3.48354C8.14837 3.7758 8.07122 4.06283 7.92497 4.31586C7.77871 4.56888 7.56849 4.77899 7.31539 4.92512L6.95708 5.13344C6.70373 5.27971 6.41634 5.35672 6.1238 5.35672C5.83125 5.35672 5.54386 5.27971 5.29052 5.13344L5.16552 5.06678C4.7831 4.84618 4.32877 4.78633 3.90227 4.90038C3.47577 5.01443 3.11195 5.29304 2.89067 5.67507L2.70734 5.99172C2.48674 6.37414 2.4269 6.82847 2.54094 7.25497C2.65499 7.68148 2.93361 8.0453 3.31564 8.26658L3.44063 8.34991C3.69251 8.49532 3.90195 8.70412 4.04814 8.95556C4.19432 9.207 4.27216 9.49231 4.27391 9.78315V10.2081C4.27508 10.5018 4.19863 10.7905 4.0523 11.0452C3.90597 11.2998 3.69496 11.5112 3.44063 11.658L3.31564 11.733C2.93361 11.9543 2.65499 12.3181 2.54094 12.7446C2.4269 13.1711 2.48674 13.6255 2.70734 14.0079L2.89067 14.3245C3.11195 14.7066 3.47577 14.9852 3.90227 15.0992C4.32877 15.2133 4.7831 15.1534 5.16552 14.9328L5.29052 14.8662C5.54386 14.7199 5.83125 14.6429 6.1238 14.6429C6.41634 14.6429 6.70373 14.7199 6.95708 14.8662L7.31539 15.0745C7.56849 15.2206 7.77871 15.4307 7.92497 15.6837C8.07122 15.9368 8.14837 16.2238 8.14867 16.5161V16.666C8.14867 17.108 8.32425 17.5319 8.63679 17.8445C8.94933 18.157 9.37323 18.3326 9.81523 18.3326H10.1819C10.6239 18.3326 11.0478 18.157 11.3603 17.8445C11.6729 17.5319 11.8484 17.108 11.8484 16.666V16.5161C11.8487 16.2238 11.9259 15.9368 12.0721 15.6837C12.2184 15.4307 12.4286 15.2206 12.6817 15.0745L13.04 14.8662C13.2934 14.7199 13.5808 14.6429 13.8733 14.6429C14.1659 14.6429 14.4532 14.7199 14.7066 14.8662L14.8316 14.9328C15.214 15.1534 15.6683 15.2133 16.0948 15.0992C16.5213 14.9852 16.8852 14.7066 17.1064 14.3245L17.2898 13.9995C17.5104 13.6171 17.5702 13.1628 17.4562 12.7363C17.3421 12.3098 17.0635 11.946 16.6815 11.7247L16.5565 11.658C16.3022 11.5112 16.0911 11.2998 15.9448 11.0452C15.7985 10.7905 15.722 10.5018 15.7232 10.2081V9.79148C15.722 9.49782 15.7985 9.20906 15.9448 8.95444C16.0911 8.69983 16.3022 8.4884 16.5565 8.34157L16.6815 8.26658C17.0635 8.0453 17.3421 7.68148 17.4562 7.25497C17.5702 6.82847 17.5104 6.37414 17.2898 5.99172L17.1064 5.67507C16.8852 5.29304 16.5213 5.01443 16.0948 4.90038C15.6683 4.78633 15.214 4.84618 14.8316 5.06678L14.7066 5.13344C14.4532 5.27971 14.1659 5.35672 13.8733 5.35672C13.5808 5.35672 13.2934 5.27971 13.04 5.13344L12.6817 4.92512C12.4286 4.77899 12.2184 4.56888 12.0721 4.31586C11.9259 4.06283 11.8487 3.7758 11.8484 3.48354V3.33355C11.8484 2.89155 11.6729 2.46766 11.3603 2.15512C11.0478 1.84258 10.6239 1.66699 10.1819 1.66699Z" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                                <path d="M9.99984 12.4997C11.3805 12.4997 12.4997 11.3805 12.4997 9.99984C12.4997 8.61922 11.3805 7.5 9.99984 7.5C8.61922 7.5 7.5 8.61922 7.5 9.99984C7.5 11.3805 8.61922 12.4997 9.99984 12.4997Z" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
+                                        <Settings/>
                                 ),
                                 label: 'Settings',
                                 url: '/admin/settings',
                                 subMenu: [
                                         {
                                                 icon: (
-                                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                <path d="M17.499 12.4994C17.499 12.9413 17.3234 13.3652 17.0109 13.6778C16.6984 13.9903 16.2745 14.1659 15.8325 14.1659H5.83312L2.5 17.499V4.16656C2.5 3.72456 2.67558 3.30066 2.98812 2.98812C3.30066 2.67558 3.72456 2.5 4.16656 2.5H15.8325C16.2745 2.5 16.6984 2.67558 17.0109 2.98812C17.3234 3.30066 17.499 3.72456 17.499 4.16656V12.4994Z" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                                        </svg>
+                                                        <SlidersHorizontalIcon/>
                                                 ),
                                                 label: 'General',
                                                 url: '/admin/settings/general?tab=platform-features'
                                         },
                                         {
                                                 icon: (
-                                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                <path d="M17.499 12.4994C17.499 12.9413 17.3234 13.3652 17.0109 13.6778C16.6984 13.9903 16.2745 14.1659 15.8325 14.1659H5.83312L2.5 17.499V4.16656C2.5 3.72456 2.67558 3.30066 2.98812 2.98812C3.30066 2.67558 3.72456 2.5 4.16656 2.5H15.8325C16.2745 2.5 16.6984 2.67558 17.0109 2.98812C17.3234 3.30066 17.499 3.72456 17.499 4.16656V12.4994Z" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                                        </svg>
+                                                        <Mail/>
                                                 ),
                                                 label: 'Email Actions',
                                                 url: '/admin/settings/email-actions'
                                         },
                                         {
                                                 icon: (
-                                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                <path d="M17.499 12.4994C17.499 12.9413 17.3234 13.3652 17.0109 13.6778C16.6984 13.9903 16.2745 14.1659 15.8325 14.1659H5.83312L2.5 17.499V4.16656C2.5 3.72456 2.67558 3.30066 2.98812 2.98812C3.30066 2.67558 3.72456 2.5 4.16656 2.5H15.8325C16.2745 2.5 16.6984 2.67558 17.0109 2.98812C17.3234 3.30066 17.499 3.72456 17.499 4.16656V12.4994Z" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                                        </svg>
+                                                        <Shield/>
                                                 ),
                                                 label: 'Admin Users',
                                                 url: '/admin/settings/admin-users'
@@ -119,9 +87,7 @@ export const sidebarContent = [
                         },
                         {
                                 icon: (
-                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M17.499 12.4994C17.499 12.9413 17.3234 13.3652 17.0109 13.6778C16.6984 13.9903 16.2745 14.1659 15.8325 14.1659H5.83312L2.5 17.499V4.16656C2.5 3.72456 2.67558 3.30066 2.98812 2.98812C3.30066 2.67558 3.72456 2.5 4.16656 2.5H15.8325C16.2745 2.5 16.6984 2.67558 17.0109 2.98812C17.3234 3.30066 17.499 3.72456 17.499 4.16656V12.4994Z" stroke="currentColor" strokeWidth="1.24992" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
+                                        <MessageSquare/>
                                 ),
                                 label: 'Tickets',
                                 url: '/admin/tickets'
@@ -133,16 +99,7 @@ export const sidebarContent = [
 
 export const ActiveSubscribersOverviewCardContent = {
         icon: (
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M0 9.99999C0 4.47714 4.47715 0 10 0H37.9997C43.5226 0 47.9997 4.47715 47.9997 10V37.9997C47.9997 43.5226 43.5226 47.9997 37.9997 47.9997H9.99999C4.47714 47.9997 0 43.5226 0 37.9997V9.99999Z" fill="#EBF0FB" />
-                        <path d="M17.9941 33.9961V16.0014C17.9941 15.4711 18.2048 14.9625 18.5798 14.5876C18.9547 14.2126 19.4633 14.002 19.9936 14.002H27.9912C28.5215 14.002 29.0301 14.2126 29.405 14.5876C29.78 14.9625 29.9907 15.4711 29.9907 16.0014V33.9961H17.9941Z" stroke="#1A56DB" strokeWidth="1.99942" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M17.9949 23.999H15.9955C15.4652 23.999 14.9567 24.2097 14.5817 24.5846C14.2067 24.9596 13.9961 25.4682 13.9961 25.9984V31.9967C13.9961 32.527 14.2067 33.0355 14.5817 33.4105C14.9567 33.7855 15.4652 33.9961 15.9955 33.9961H17.9949" stroke="#1A56DB" strokeWidth="1.99942" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M29.9902 21H31.9897C32.5199 21 33.0285 21.2107 33.4035 21.5856C33.7784 21.9606 33.9891 22.4691 33.9891 22.9994V31.9968C33.9891 32.5271 33.7784 33.0356 33.4035 33.4106C33.0285 33.7856 32.5199 33.9962 31.9897 33.9962H29.9902" stroke="#1A56DB" strokeWidth="1.99942" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M21.9941 18.001H25.993" stroke="#1A56DB" strokeWidth="1.99942" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M21.9941 22H25.993" stroke="#1A56DB" strokeWidth="1.99942" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M21.9941 25.999H25.993" stroke="#1A56DB" strokeWidth="1.99942" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M21.9941 29.998H25.993" stroke="#1A56DB" strokeWidth="1.99942" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Building2 />
         ),
         title: 'Total Active Subscribers',
         presentDayNumber: 124,

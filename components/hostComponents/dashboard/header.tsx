@@ -77,7 +77,7 @@ export function DashboardHeader() {
         <Menu className="size-5" />
       </button>
       <div className="relative flex items-center w-full max-w-md">
-        <Search className="absolute left-3 size-4 text-gray-400 pointer-events-none shrink-0" />
+        {/* <Search className="absolute left-3 size-4 text-gray-400 pointer-events-none shrink-0" />
         <input
           type="text"
           placeholder="Search vehicles, bookings, customers..."
@@ -88,7 +88,7 @@ export function DashboardHeader() {
             "outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100",
             "transition-all duration-300",
           ].join(" ")}
-        />
+        /> */}
       </div>
 
       <div className="flex items-center gap-4">

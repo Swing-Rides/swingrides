@@ -38,7 +38,7 @@ export default function AdminPageComponents({
     data: overview?.mrrGrowth.data.map((point) => ({
       sales: point.value,
       month: point.month,
-    })) ?? [],                          
+    })) ?? [],
     series: [{ name: "sales", color: "#1A56DB" }],
   }
 
@@ -46,7 +46,7 @@ export default function AdminPageComponents({
     userPackage: item.plan.charAt(0).toUpperCase() + item.plan.slice(1),
     userCount: item.count,
     color: (["#1A56DB", "#10B981", "#F59E0B"][index]) ?? "#6B7280",
-  })) ?? [] 
+  })) ?? []
 
   return (
     <div className="p-3 md:p-8">
@@ -68,7 +68,9 @@ export default function AdminPageComponents({
               title={card.label}
               value={
                 typeof card.value === "number"
-                  ? formatNumberToUSD(card.value)
+                  ? card.key === "monthlyRecurringRevenue"
+                    ? formatNumberToUSD(card.value)
+                    : card.value.toLocaleString()
                   : card.value
               }
               trend={card.trend}

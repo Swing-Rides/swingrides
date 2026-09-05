@@ -1,6 +1,5 @@
 "use client";
 
-// import AdminPageComponents from "@/components/superAdminPages/pages/adminPageComponents";
 import { useGetAdminOverviewQuery } from "@/app/store/services/adminApi";
 import { AdminPageSkeleton } from "../../loadingSkeletons/adminPageSkeleton";
 import AdminPageComponents from "./adminPageComponents";

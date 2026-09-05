@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageWrapper from "../../dashboard/pageWrapper";
@@ -94,7 +94,7 @@ type PageTabsProps = {
     value: boolean,
   ) => void;
   onSecurityChange: (value: boolean) => void;
-  onUpdateSystemSettings: (values: SystemSettingsFormValues) => void | Promise<any>;
+  onUpdateSystemSettings: (values: SystemSettingsFormValues) => void | Promise<void>;
   systemSettingsData?: {
     defaultTaxRate: number;
     platformCurrency: string;
@@ -140,21 +140,28 @@ export default function GeneralSettingsPageComponent() {
   const [updateSystemSettingsMutation] = useUpdateSystemSettingsMutation();
   const [updateOperationalControls] = useUpdateOperationalControlsMutation();
   const [updateSecuritySettings] = useUpdateSecuritySettingsMutation();
+  // Derive initial state from server data, falling back to defaults.
+  // Using a key based on settingsData reference ensures state resets when fresh data arrives.
+  const serverPlatformFeatures = settingsData?.data?.platformFeatures ?? DEFAULT_PLATFORM_FEATURES;
+  const serverOperationalControls = settingsData?.data?.operationalControls ?? DEFAULT_OPERATIONAL_CONTROLS;
+  const serverStrongPassword = settingsData?.data?.security?.strongPasswordRequirements ?? true;
+
   const [platformFeatures, setPlatformFeatures] =
-    useState<PlatformFeaturesSettings>(DEFAULT_PLATFORM_FEATURES);
+    useState<PlatformFeaturesSettings>(serverPlatformFeatures);
   const [operationalControls, setOperationalControls] =
-    useState<OperationalControlsSettings>(DEFAULT_OPERATIONAL_CONTROLS);
-  const [strongPassword, setStrongPassword] = useState(true);
+    useState<OperationalControlsSettings>(serverOperationalControls);
+  const [strongPassword, setStrongPassword] = useState(serverStrongPassword);
 
-  useEffect(() => {
-    if (!settingsData?.data) {
-      return;
+  // Reset local state when server data changes (React pattern: compare previous vs current)
+  const [prevSettingsData, setPrevSettingsData] = useState(settingsData);
+  if (settingsData !== prevSettingsData) {
+    setPrevSettingsData(settingsData);
+    if (settingsData?.data) {
+      setPlatformFeatures(settingsData.data.platformFeatures);
+      setOperationalControls(settingsData.data.operationalControls);
+      setStrongPassword(settingsData.data.security.strongPasswordRequirements);
     }
-
-    setPlatformFeatures(settingsData.data.platformFeatures);
-    setOperationalControls(settingsData.data.operationalControls);
-    setStrongPassword(settingsData.data.security.strongPasswordRequirements);
-  }, [settingsData]);
+  }
 
   const platformFeaturesHandleSaveChanges = async () => {
     await updatePlatformFeatures(platformFeatures).unwrap();
@@ -280,7 +287,23 @@ const PageTabs = ({
       className="flex flex-col gap-4 md:gap-8"
       defaultValue="platform-features"
     >
-      <TabsList variant="line" className="flex gap-6 md:gap-8">
+      {/* Mobile: select dropdown */}
+      <div className="md:hidden">
+        <select
+          value={activeTab}
+          onChange={(e) => handleTabChange(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-neutral-950 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          {tabTitle.map((title) => (
+            <option key={title.value} value={title.value}>
+              {title.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Desktop: tab bar */}
+      <TabsList variant="line" className="hidden md:flex gap-8">
         {tabTitle.map((title) => (
           <TabsTrigger
             key={title.value}
@@ -452,7 +475,7 @@ const SystemSettings = ({
   onSubmit,
   systemSettingsData,
 }: {
-  onSubmit: (values: SystemSettingsFormValues) => void | Promise<any>;
+  onSubmit: (values: SystemSettingsFormValues) => void | Promise<void>;
   systemSettingsData?: PageTabsProps["systemSettingsData"];
 }) => {
   const settings = systemSettingsData ?? DEFAULT_SYSTEM_SETTINGS;
