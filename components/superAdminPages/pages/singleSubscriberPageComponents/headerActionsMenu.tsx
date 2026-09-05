@@ -62,7 +62,7 @@ export default function HeaderActionsMenu({
                                 type="button"
                                 onClick={() => setMenuOpen((v) => !v)}
                                 aria-label="Subscriber actions"
-                                className="size-10 flex items-center justify-center rounded-xs border border-gray-300 text-zinc-700 hover:bg-gray-50 transition-colors duration-300 cursor-pointer"
+                                className="size-10 flex items-center justify-center rounded-xs bg-zinc-100 border border-gray-300 text-zinc-700 hover:bg-gray-50 transition-colors duration-300 cursor-pointer"
                         >
                                 <EllipsisVertical className="size-5" />
                         </button>

@@ -20,8 +20,8 @@ const axiosBaseQuery = (): BaseQueryFn<
         : {
           url: args.url,
           method: args.method ?? "GET",
-          data: (args as any).body,
-          params: (args as any).params,
+          data: args.body,
+          params: args.params,
         };
     try {
       const result = await apiClient(request);
