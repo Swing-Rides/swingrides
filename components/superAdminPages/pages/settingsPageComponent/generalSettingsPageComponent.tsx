@@ -287,6 +287,7 @@ const PageTabs = ({
       className="flex flex-col gap-4 md:gap-8"
       defaultValue="platform-features"
     >
+      <TabsList variant="line" className="flex gap-6 md:gap-8">
       {/* Mobile: select dropdown */}
       <div className="md:hidden">
         <select

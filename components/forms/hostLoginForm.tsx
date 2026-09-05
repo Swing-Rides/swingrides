@@ -13,7 +13,6 @@ import { FormFieldConfig } from "./types";
 import { RegisterOptions } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { useHostLoginMutation } from "@/app/store/services/hostApi";
-import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { resetHostApiState } from "@/app/store/resetState";
 
@@ -40,7 +39,6 @@ export default function HostLoginForm() {
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [hostLogin, { isLoading }] = useHostLoginMutation();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const router = useRouter();
 
   const onSubmit = async (values: Record<string, unknown>) => {
     const payload = {
@@ -52,11 +50,9 @@ export default function HostLoginForm() {
     if (response.success) {
       resetHostApiState(dispatch);
       if (response.host && !response.host.emailVerified) {
-        router.push(
-          `/verify-email?type=host&email=${encodeURIComponent(response.host.email)}`,
-        );
+        window.location.href = `/verify-email?type=host&email=${encodeURIComponent(response.host.email)}`
       } else {
-        router.push("/us/host");
+        window.location.href = "/us/host"
       }
     } else {
       setErrorMessage(response.message || "Sign in failed. Please try again.");
