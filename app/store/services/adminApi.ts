@@ -383,6 +383,17 @@ export const adminApi = createApi({
         { type: "AdminRenter", id: renterId },
       ],
     }),
+    deleteRenter: builder.mutation<unknown, string>({
+      query: (renterId) => ({
+        url: `/api/auth/admin/renters/${renterId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, renterId) => [
+        { type: "AdminRenters", id: "LIST" },
+        { type: "AdminRenter", id: renterId },
+        { type: "AdminVerificationQueue", id: "LIST" },
+      ],
+    }),
     approveHostBusinessVerification: builder.mutation<
       unknown,
       { hostId: string; documentType: HostVerificationDocumentType }
@@ -667,6 +678,7 @@ export const {
   useReactivateRenterMutation,
   useFlagRenterMutation,
   useUnflagRenterMutation,
+  useDeleteRenterMutation,
   useApproveHostBusinessVerificationMutation,
   useRejectHostBusinessVerificationMutation,
   // Settings: Admin Users
