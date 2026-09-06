@@ -45,3 +45,6 @@ debug-host-plan-intent-dup.md
 components/providers/socketProvider.tsx
 next.config.ts
 .claude/settings.json
+
+# Sentry Config File
+.env.sentry-build-plugin
