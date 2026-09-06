@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -110,6 +111,10 @@ export type BillingTabProps = {
   onWithdrawFund: () => void;
   onUnlinkStripe: () => void;
   isUnlinkingStripe?: boolean;
+  onConnectStripe?: () => void;
+  isConnectingStripe?: boolean;
+  onboardingComplete?: boolean;
+  loading?: boolean;
   paymentHistory: PaymentHistoryRow[];
   wallet?: {
     totalEarnings: number;
@@ -130,6 +135,10 @@ export const BillingTab = ({
   onWithdrawFund,
   onUnlinkStripe,
   isUnlinkingStripe,
+  onConnectStripe,
+  isConnectingStripe,
+  onboardingComplete = false,
+  loading = false,
   wallet,
 }: BillingTabProps) => {
   const formatAmount = (amount: number, currency: string) =>
@@ -173,19 +182,34 @@ export const BillingTab = ({
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-base font-text">Payments</h3>
           <div className="flex items-center justify-end gap-3">
-            <button
-              onClick={onWithdrawFund}
-              className="border border-blue-700 text-blue-700 bg-transparent text-xs py-2.5 px-5 rounded-xs hover:bg-blue-900 hover:text-white transition-colors duration-300 cursor-pointer"
-            >
-              Withdraw Funds
-            </button>
-            <button
-              onClick={onUnlinkStripe}
-              disabled={isUnlinkingStripe}
-              className="border border-red-500 bg-red-500 text-white text-xs py-2.5 px-5 rounded-xs hover:bg-red-900 hover:border-red-900 hover:text-white transition-colors duration-300 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isUnlinkingStripe ? "Unlinking…" : "Unlink Stripe"}
-            </button>
+            {loading ? (
+              <Skeleton className="h-9 w-28 rounded-xs" />
+            ) : onboardingComplete ? (
+              <>
+                <button
+                  onClick={onWithdrawFund}
+                  className="border border-blue-700 text-blue-700 bg-transparent text-xs py-2.5 px-5 rounded-xs hover:bg-blue-900 hover:text-white transition-colors duration-300 cursor-pointer"
+                >
+                  Withdraw Funds
+                </button>
+                <button
+                  onClick={onUnlinkStripe}
+                  disabled={isUnlinkingStripe}
+                  className="border border-red-500 bg-red-500 text-white text-xs py-2.5 px-5 rounded-xs hover:bg-red-900 hover:border-red-900 hover:text-white transition-colors duration-300 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isUnlinkingStripe ? "Unlinking…" : "Unlink Stripe"}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={onConnectStripe}
+                disabled={isConnectingStripe}
+                className="border border-blue-700 bg-blue-700 text-white text-xs py-2.5 px-5 rounded-xs hover:bg-blue-900 hover:border-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isConnectingStripe ? "Connecting…" : "Connect to Stripe"}
+              </button>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap justify-start gap-10">
@@ -210,6 +234,23 @@ export const BillingTab = ({
             }
           />
         </div>
+        {!loading && !onboardingComplete && (
+          <div className="pt-2 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-500 font-text">
+            <span>
+              Stripe payout details are required to receive payments for vehicle rentals.
+            </span>
+            <span>
+              If you have previously connected to Stripe,{" "}
+              <Link
+                href={`${HOST_DASHBOARD_PATH}report-an-issue`}
+                className="text-blue-700 underline hover:text-blue-900 font-medium"
+              >
+                submit a report
+              </Link>
+              .
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Payment History */}
@@ -383,4 +424,3 @@ const CommunicationLogStatus = ({ status }: { status: string }) => {
     </Badge>
   );
 };
-

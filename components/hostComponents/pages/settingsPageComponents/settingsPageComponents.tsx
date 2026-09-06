@@ -4,7 +4,7 @@ import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import PageWrapper from "../../dashboard/pageWrapper";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, MessageSquare, User, CreditCard } from "lucide-react";
+import { FileText, MessageSquare, User, CreditCard, ChevronDown } from "lucide-react";
 import { ProfileCompanyFormValues } from "../../forms/profileCompanyForm";
 import {
   ProfileCompanyTab,
@@ -22,6 +22,7 @@ import {
   useGetHostSettingsDashboardQuery,
   useUpdateProfileCompanySettingsMutation,
   useUnlinkStripeConnectMutation,
+  useCreateHostStripeConnectOnboardingLinkMutation,
   useUpgradePlanMutation,
 } from "@/app/store/services/settingsApi";
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
@@ -89,6 +90,10 @@ const SettingsPageContent = () => {
     useUpdateProfileCompanySettingsMutation();
   const [unlinkStripeConnect, { isLoading: isUnlinkingStripe }] =
     useUnlinkStripeConnectMutation();
+  const [
+    createHostStripeConnectOnboardingLink,
+    { isLoading: isConnectingStripe },
+  ] = useCreateHostStripeConnectOnboardingLinkMutation();
   const [upgradePlan] = useUpgradePlanMutation();
   const { refetch } = useGetHostProfileQuery();
   const { data: bookingsResponse } = useListBookingsQuery();
@@ -325,6 +330,23 @@ const SettingsPageContent = () => {
     setShowWithdrawModal(false);
   };
 
+  const handleConnectStripe = async () => {
+    try {
+      const response = await createHostStripeConnectOnboardingLink().unwrap();
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+        return;
+      }
+      await refetch();
+    } catch (error) {
+      toast.error("Failed to connect to Stripe", {
+        description:
+          (error as { data?: { message?: string } })?.data?.message ??
+          "Something went wrong while connecting to Stripe. Please try again.",
+      });
+    }
+  };
+
   const confirmUnlinkStripe = async () => {
     try {
       await unlinkStripeConnect().unwrap();
@@ -342,6 +364,9 @@ const SettingsPageContent = () => {
     }
   };
 
+  const stripeConnect = settingsData?.profileCompany.payment.stripeConnect;
+  const onboardingComplete = Boolean(stripeConnect?.onboardingComplete);
+
   return (
     <div className="mt-4 md:mt-8">
       <Tabs
@@ -349,7 +374,26 @@ const SettingsPageContent = () => {
         onValueChange={handleTabChange}
         className="w-full space-y-5 md:space-y-8"
       >
-        <TabsList variant="line" className="gap-20 border-b-2">
+        {/* Mobile: Select input */}
+        <div className="md:hidden">
+          <div className="relative">
+            <select
+              value={activeTab}
+              onChange={(e) => handleTabChange(e.target.value)}
+              className="w-full appearance-none rounded-[10px] border border-gray-300 bg-white px-3.5 py-2.5 pr-10 text-sm font-medium font-text text-neutral-950 shadow-xs focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700 cursor-pointer"
+            >
+              {settingsTabTitle.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-500" />
+          </div>
+        </div>
+
+        {/* Desktop: Tab list */}
+        <TabsList variant="line" className="hidden md:flex md:gap-8 lg:gap-14 xl:gap-20 border-b-2">
           {settingsTabTitle.map((item) => (
             <TabsTrigger
               key={item.value}
@@ -381,6 +425,10 @@ const SettingsPageContent = () => {
             onWithdrawFund={onWithdrawFund}
             onUnlinkStripe={() => setShowUnlinkStripeDialog(true)}
             isUnlinkingStripe={isUnlinkingStripe}
+            onConnectStripe={handleConnectStripe}
+            isConnectingStripe={isConnectingStripe}
+            onboardingComplete={onboardingComplete}
+            loading={settingsLoading}
             wallet={settingsData?.profileCompany.payment.wallet}
           />
         </TabsContent>
