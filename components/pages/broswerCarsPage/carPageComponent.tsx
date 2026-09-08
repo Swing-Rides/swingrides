@@ -396,8 +396,6 @@ const SpecificationsTab = memo(({ specifications }: SpecificationsTabProps) => {
     { title: "Model", content: specifications.model },
     { title: "Year", content: specifications.year },
     { title: "Body Type", content: specifications.bodyType },
-    { title: "Engine", content: specifications.engine },
-    { title: "Horsepower", content: specifications.horsepower },
     { title: "Transmission", content: specifications.transmission },
     { title: "Drive Type", content: specifications.driveType },
     { title: "Fuel Type", content: specifications.fuelType },

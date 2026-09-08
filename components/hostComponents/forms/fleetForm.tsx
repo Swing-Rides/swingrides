@@ -262,7 +262,10 @@ export default function FleetForm({
                   name: "vehicleName",
                   type: "text",
                   placeholder: "e.g. Luxury Tesla Model S",
-                  validation: { required: "Vehicle name is required" },
+                  validation: {
+                    required: "Vehicle name is required",
+                    maxLength: { value: 100, message: "Vehicle name cannot exceed 100 characters" },
+                  },
                 }}
                 register={register}
                 error={errors.vehicleName?.message}
@@ -280,7 +283,10 @@ export default function FleetForm({
                     name: "make",
                     type: "text",
                     placeholder: "Tesla",
-                    validation: { required: "Make is required" },
+                    validation: {
+                      required: "Make is required",
+                      maxLength: { value: 50, message: "Make cannot exceed 50 characters" },
+                    },
                   }}
                   register={register}
                   error={errors.make?.message}
@@ -296,7 +302,10 @@ export default function FleetForm({
                     name: "model",
                     type: "text",
                     placeholder: "Model S",
-                    validation: { required: "Model is required" },
+                    validation: {
+                      required: "Model is required",
+                      maxLength: { value: 50, message: "Model cannot exceed 50 characters" },
+                    },
                   }}
                   register={register}
                   error={errors.model?.message}
@@ -339,7 +348,10 @@ export default function FleetForm({
                     name: "color",
                     type: "text",
                     placeholder: "White",
-                    validation: { required: "Color is required" },
+                    validation: {
+                      required: "Color is required",
+                      maxLength: { value: 30, message: "Color cannot exceed 30 characters" },
+                    },
                   }}
                   register={register}
                   error={errors.color?.message}
@@ -433,6 +445,9 @@ export default function FleetForm({
                     name: "insuranceCarrier",
                     type: "text",
                     placeholder: "e.g. Progressive",
+                    validation: {
+                      maxLength: { value: 100, message: "Insurance carrier cannot exceed 100 characters" },
+                    },
                   }}
                   register={register}
                   error={errors.insuranceCarrier?.message}
@@ -450,6 +465,7 @@ export default function FleetForm({
                     placeholder: "e.g. PLY-209384",
                     className: "uppercase",
                     validation: {
+                      maxLength: { value: 80, message: "Policy number cannot exceed 80 characters" },
                       setValueAs: (v: string) =>
                         typeof v === "string" ? v.toUpperCase() : v,
                     },
@@ -539,6 +555,7 @@ export default function FleetForm({
                     className: "uppercase",
                     validation: {
                       required: "License plate is required",
+                      maxLength: { value: 20, message: "License plate cannot exceed 20 characters" },
                       setValueAs: (v: string) =>
                         typeof v === "string" ? v.toUpperCase() : v,
                     },
@@ -687,6 +704,7 @@ export default function FleetForm({
                       required: "Seats is required",
                       valueAsNumber: true,
                       min: { value: 1, message: "Must be at least 1" },
+                      max: { value: 20, message: "A vehicle cannot have more than 20 seats" },
                     },
                   }}
                   register={register}
@@ -747,6 +765,7 @@ export default function FleetForm({
                       required: "Number of doors is required",
                       valueAsNumber: true,
                       min: { value: 1, message: "Must be at least 1" },
+                      max: { value: 10, message: "A vehicle cannot have more than 10 doors" },
                     },
                   }}
                   register={register}
@@ -769,7 +788,10 @@ export default function FleetForm({
                     name: "pickupAddressStreet",
                     type: "text",
                     placeholder: "e.g. 123 Main Street",
-                    validation: { required: "Pickup address is required" },
+                    validation: {
+                      required: "Pickup address is required",
+                      maxLength: { value: 200, message: "Pickup address cannot exceed 200 characters" },
+                    },
                   }}
                   register={register}
                   error={errors.pickupAddressStreet?.message}
@@ -785,7 +807,10 @@ export default function FleetForm({
                     name: "city",
                     type: "text",
                     placeholder: "e.g. Bronx",
-                    validation: { required: "City is required" },
+                    validation: {
+                      required: "City is required",
+                      maxLength: { value: 50, message: "City cannot exceed 50 characters" },
+                    },
                   }}
                   register={register}
                   error={errors.city?.message}
@@ -820,7 +845,10 @@ export default function FleetForm({
                     name: "zipCode",
                     type: "text",
                     placeholder: "e.g. 10451",
-                    validation: { required: "Zip code is required" },
+                    validation: {
+                      required: "Zip code is required",
+                      maxLength: { value: 20, message: "Zip code cannot exceed 20 characters" },
+                    },
                   }}
                   register={register}
                   error={errors.zipCode?.message}

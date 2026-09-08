@@ -1,11 +1,11 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
-const backendUrl = "http://localhost:3000";
-  // process.env.BACKEND_URL ||
-  // (process.env.NODE_ENV === "production"
-  //   ? "https://api.swingrides.com"
-  //   : "http://localhost:3000");
+const backendUrl =
+  process.env.BACKEND_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://api.swingrides.com"
+    : "http://localhost:3000");
 
 const nextConfig: NextConfig = {
   turbopack: {

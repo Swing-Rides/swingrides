@@ -33,8 +33,6 @@ type CarDataProps = {
                 model: string;
                 year: number;
                 bodyType: string;
-                engine: string;
-                horsepower: number;
                 driveType: string;
                 fuelEfficiency: string;
                 doors: number;

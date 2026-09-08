@@ -56,8 +56,6 @@ export default function CarPage({
         model: data.data.vehicleModel,
         year: data.data.year,
         bodyType: data.data.vehicleType,
-        engine: data.data.engine,
-        horsepower: Number(data.data.horsepower) || 0,
         transmission: data?.data.specifications?.transmission,
         driveType: data.data.driverType,
         fuelType: data?.data.specifications?.fuelType,

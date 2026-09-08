@@ -152,9 +152,6 @@ export interface VehicleDetails {
   insuranceDaily: number;
   taxRate: number;
   insuranceFee?: number;
-
-  engine: string;
-  horsepower: string;
   driverType: string;
   fuelEfficiency: string;
   doors: string;
