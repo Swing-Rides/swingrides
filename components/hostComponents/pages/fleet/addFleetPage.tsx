@@ -14,6 +14,7 @@ import FleetForm, {
 import { Spinner } from "@/components/ui/spinner";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import { checkVehicleUploadLimit } from "@/constants/hostPlans";
+import { validateVin } from "@/lib/vinChecker";
 import { CreateVehicle } from "@/types/vehicle.type";
 import PlanLimitBanner from "./planLimitBanner";
 
@@ -40,7 +41,16 @@ export default function AddFleetPage() {
     if (!limitCheck.allowed) {
       toast.error(
         limitCheck.message ||
-          "Vehicle limit reached for your plan. Please upgrade to add more vehicles."
+        "Vehicle limit reached for your plan. Please upgrade to add more vehicles."
+      );
+      return;
+    }
+
+    const vinResult = validateVin(values.vin);
+    if (!vinResult.valid) {
+      toast.error(
+        vinResult.errors[0] ||
+        "Invalid VIN number. Please double-check and try again."
       );
       return;
     }

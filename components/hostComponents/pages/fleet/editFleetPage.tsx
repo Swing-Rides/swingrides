@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  useLazyGetVehicleQuery,
+  useGetVehicleQuery,
   useUpdateVehicleMutation,
 } from "@/app/store/services/hostApi";
 import FleetForm, {
@@ -9,8 +9,9 @@ import FleetForm, {
 } from "@/components/hostComponents/forms/fleetForm";
 import { Spinner } from "@/components/ui/spinner";
 import { HOST_DASHBOARD_PATH } from "@/constants/constant";
+import { validateVin } from "@/lib/vinChecker";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { toast } from "sonner";
 
 type EditFleetComponentsProps = {
   fleetId: string;
@@ -41,6 +42,7 @@ const normalizeVehicleType = (value?: string): string => {
     "sports car": "Sports Car",
     luxury: "Luxury",
     electric: "Electric",
+    other: "Other",
   };
   return labels[normalized] ?? value;
 };
@@ -51,7 +53,9 @@ const normalizeFuelType = (value?: string): string => {
   const labels: Record<string, string> = {
     diesel: "Diesel",
     electric: "Electric",
-    "gas/petrol": "Gas/Petrol",
+    gas: "Gas",
+    hybrid: "Hybrid",
+    other: "Other",
   };
   return labels[normalized] ?? value;
 };
@@ -68,26 +72,26 @@ const normalizeState = (value?: string): string => {
   return found ? found.value : value;
 };
 
-const normalizeStatus = (value?: string): string => {
-  if (!value) return "";
-  const lower = value.toLowerCase();
-  if (lower === "active") return "Available";
-  if (lower === "unavailable") return "Maintenance";
-  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
-};
+// const normalizeStatus = (value?: string): string => {
+//   if (!value) return "";
+//   const lower = value.toLowerCase();
+//   if (lower === "active") return "Available";
+//   if (lower === "unavailable") return "Maintenance";
+//   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+// };
 
 export default function EditFleetComponents({
   fleetId,
 }: EditFleetComponentsProps) {
   const router = useRouter();
 
-  // const { data: vehicleResponse } = useGetVehicleQuery(fleetId);
-  const [fetchVehicleByID, { isFetching, data: vehicleResponse }] =
-    useLazyGetVehicleQuery();
-
-  useEffect(() => {
-    fetchVehicleByID(fleetId);
-  }, [fleetId]);
+  const {
+    data: vehicleResponse,
+    isFetching,
+    refetch,
+  } = useGetVehicleQuery(fleetId, {
+    skip: !fleetId,
+  });
 
   const [updateVehicle, { isLoading: isUpdating }] = useUpdateVehicleMutation();
 
@@ -95,38 +99,47 @@ export default function EditFleetComponents({
 
   const vehicleDefaults: Partial<FleetFormValues> = vehicle
     ? {
-        city: vehicle.city,
-        color: vehicle.colour,
-        description: vehicle.description,
-        instantlyAvailable: vehicle.instantlyAvailable,
-        insuranceCarrier: vehicle.insuranceCarrier ?? "",
-        insuranceExpiration: vehicle.insuranceExpiration ?? "",
-        insurancePolicyNumber: vehicle.insurancePolicyNumber ?? "",
-        licensePlate: vehicle.licensePlate,
-        make: vehicle.make,
-        mileage: vehicle.mileage,
-        model: vehicle.vehicleModel,
-        pickupInstructions: vehicle.pickupInstructions ?? "",
-        priceDaily: vehicle.dailyPrice,
-        priceMonthly: vehicle.monthlyPrice,
-        priceWeekly: vehicle.weeklyPrice,
-        seats: vehicle.seats,
-        transmission: normalizeTransmission(vehicle.transmission),
-        vehicleName: vehicle.name,
-        vehicleType: normalizeVehicleType(vehicle.vehicleType),
-        vin: vehicle.vin,
-        year: vehicle.year,
-        vehicleImageUrls: vehicle.images ?? [],
-        pickupAddressStreet: vehicle.pickupLocation,
-        pickupAddressState: normalizeState(vehicle.pickupAddressState),
-        dailyInsuranceFee: vehicle.dailyInsuranceFee,
-        zipCode: vehicle.zipCode,
-        fuelType: normalizeFuelType(vehicle.fuelType),
-        doors: vehicle.doors,
-      }
+      city: vehicle.city,
+      color: vehicle.colour,
+      description: vehicle.description,
+      instantlyAvailable: vehicle.instantlyAvailable,
+      insuranceCarrier: vehicle.insuranceCarrier ?? "",
+      insuranceExpiration: vehicle.insuranceExpiration ?? "",
+      insurancePolicyNumber: vehicle.insurancePolicyNumber ?? "",
+      licensePlate: vehicle.licensePlate,
+      make: vehicle.make,
+      mileage: vehicle.mileage,
+      model: vehicle.vehicleModel,
+      pickupInstructions: vehicle.pickupInstructions ?? "",
+      priceDaily: vehicle.dailyPrice,
+      priceMonthly: vehicle.monthlyPrice,
+      priceWeekly: vehicle.weeklyPrice,
+      seats: vehicle.seats,
+      transmission: normalizeTransmission(vehicle.transmission),
+      vehicleName: vehicle.name,
+      vehicleType: normalizeVehicleType(vehicle.vehicleType),
+      vin: vehicle.vin,
+      year: vehicle.year,
+      vehicleImageUrls: vehicle.images ?? [],
+      pickupAddressStreet: vehicle.pickupLocation,
+      pickupAddressState: normalizeState(vehicle.pickupAddressState),
+      dailyInsuranceFee: vehicle.dailyInsuranceFee,
+      zipCode: vehicle.zipCode,
+      fuelType: normalizeFuelType(vehicle.fuelType),
+      doors: vehicle.doors,
+    }
     : {};
 
   const handleSubmit = async (values: FleetFormValues) => {
+    const vinResult = validateVin(values.vin);
+    if (!vinResult.valid) {
+      toast.error(
+        vinResult.errors[0] ||
+        "Invalid VIN number. Please double-check and try again."
+      );
+      return;
+    }
+
     const payload = {
       city: values.city,
       colour: values.color,
@@ -159,7 +172,7 @@ export default function EditFleetComponents({
     };
 
     await updateVehicle({ vehicleId: fleetId, data: payload }).unwrap();
-    fetchVehicleByID(fleetId);
+    refetch();
     router.push(`${HOST_DASHBOARD_PATH}fleet`);
   };
 

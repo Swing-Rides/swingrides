@@ -45,18 +45,94 @@ import {
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { FormFieldConfig, MainFormProps } from "./types";
+import { FormFieldConfig, FormSectionConfig, MainFormProps } from "./types";
 import Image from "next/image";
 
+const renderFieldsList = (
+  fieldList: FormFieldConfig[],
+  rowGroupsList: string[][] = [],
+  pairs: [string, string][] = [],
+  register: UseFormRegister<FieldValues>,
+  control: Control<FieldValues>,
+  getValues: () => FieldValues,
+  errors: FieldErrors<FieldValues>,
+) => {
+  const allGroups: string[][] = [
+    ...rowGroupsList,
+    ...pairs.map((p) => [p[0], p[1]]),
+  ];
+
+  const renderedInGroup = new Set<string>();
+
+  return fieldList.map((field) => {
+    const group = allGroups.find((g) => g.includes(field.name));
+
+    if (group && group.length > 1) {
+      if (renderedInGroup.has(group[0])) return null;
+      renderedInGroup.add(group[0]);
+
+      const groupFields = group
+        .map((name) => fieldList.find((f) => f.name === name))
+        .filter((f): f is FormFieldConfig => Boolean(f));
+
+      if (groupFields.length === 0) return null;
+
+      const colsClass =
+        groupFields.length === 2
+          ? "grid-cols-1 md:grid-cols-2"
+          : groupFields.length === 3
+            ? "grid-cols-1 md:grid-cols-3"
+            : "grid-cols-1 md:grid-cols-2 lg:grid-cols-4";
+
+      return (
+        <div key={group.join("-")} className={cn("grid gap-4", colsClass)}>
+          {groupFields.map((gf) => (
+            <FormField
+              key={gf.name}
+              field={gf}
+              register={register}
+              control={control}
+              getValues={getValues}
+              errors={errors}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (group && renderedInGroup.has(field.name)) {
+      return null;
+    }
+
+    return (
+      <FormField
+        key={field.name}
+        field={field}
+        register={register}
+        control={control}
+        getValues={getValues}
+        errors={errors}
+      />
+    );
+  });
+};
+
 export default function MainForm({
+  id,
   title,
   description,
   fields,
+  sections,
+  sectionsClassName,
   onSubmit,
   submitLabel = "Submit",
   isLoading = false,
   className,
   rowPairs = [],
+  rowGroups = [],
+  defaultValues,
+  values,
+  hideSubmitButton = false,
   footerSlot,
 }: MainFormProps) {
   const {
@@ -65,17 +141,73 @@ export default function MainForm({
     control,
     getValues,
     formState: { errors },
-  } = useForm({ mode: "onTouched" });
+  } = useForm({
+    mode: "onTouched",
+    defaultValues,
+    values,
+    resetOptions: {
+      keepDirtyValues: true,
+    },
+  });
 
   // Lets a parent read live field values (e.g. for a "preview" action) without
   // needing to submit the form — MainForm owns its own useForm() internally,
   // so this is the only way out for a config-driven form like this one.
   const watchedValues = useWatch({ control });
+  const renderSectionCard = (sec: FormSectionConfig, idx: number) => (
+    <div
+      key={sec.id ?? sec.title ?? `section-${idx}`}
+      className={cn(
+        "bg-white rounded-xs p-4 md:p-6 lg:p-8 flex flex-col gap-5 border border-gray-100 shadow-xs",
+        sec.className,
+      )}
+    >
+      {(sec.title || sec.icon) && (
+        <div className="flex items-center gap-2">
+          {sec.icon && (
+            <span className="text-blue-700 size-5 [&>svg]:size-5 flex items-center justify-center shrink-0">
+              {sec.icon}
+            </span>
+          )}
+          {sec.title && (
+            <h3 className="text-neutral-950 text-base font-semibold font-text">
+              {sec.title}
+            </h3>
+          )}
+        </div>
+      )}
+      {sec.description && (
+        <p className="text-[#6B7280] text-sm font-normal font-text">
+          {sec.description}
+        </p>
+      )}
+      {sec.headerSlot}
+      <div className="flex flex-col gap-4">
+        {renderFieldsList(
+          sec.fields,
+          sec.rowGroups ?? [],
+          sec.rowPairs ?? [],
+          register,
+          control,
+          getValues,
+          errors,
+        )}
+      </div>
+      {sec.footerSlot}
+    </div>
+  );
 
-  const renderedPairs = new Set<string>();
+  const hasColumns = sections?.some(
+    (s) => s.column === "left" || s.column === "right",
+  );
+  const leftSections = sections?.filter((s) => s.column === "left") ?? [];
+  const rightSections = sections?.filter((s) => s.column === "right") ?? [];
+  const fullSections =
+    sections?.filter((s) => !s.column || s.column === "full") ?? [];
 
   return (
     <form
+      id={id}
       onSubmit={handleSubmit(onSubmit)}
       className={cn("flex flex-col gap-5", className)}
       noValidate
@@ -95,71 +227,62 @@ export default function MainForm({
         </div>
       )}
 
-      <div className="flex flex-col gap-4">
-        {fields.map((field) => {
-          const pair = rowPairs.find((p) => p.includes(field.name));
-
-          if (pair) {
-            if (renderedPairs.has(pair[0])) return null;
-            renderedPairs.add(pair[0]);
-
-            const secondField = fields.find((f) => f.name === pair[1]);
-            if (!secondField) return null;
-
-            return (
-              <div
-                key={pair.join("-")}
-                className="flex flex-col md:flex-row gap-4"
-              >
-                <FormField
-                  field={field}
-                  register={register}
-                  control={control}
-                  getValues={getValues}
-                  errors={errors}
-                />
-                <FormField
-                  field={secondField}
-                  register={register}
-                  control={control}
-                  getValues={getValues}
-                  errors={errors}
-                />
+      {sections && sections.length > 0 ? (
+        hasColumns ? (
+          <div className={cn("flex flex-col gap-6", sectionsClassName)}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              <div className="flex flex-col gap-6">
+                {leftSections.map((sec, idx) => renderSectionCard(sec, idx))}
               </div>
-            );
-          }
-
-          return (
-            <FormField
-              key={field.name}
-              field={field}
-              register={register}
-              control={control}
-              getValues={getValues}
-              errors={errors}
-            />
-          );
-        })}
-      </div>
+              <div className="flex flex-col gap-6">
+                {rightSections.map((sec, idx) => renderSectionCard(sec, idx))}
+              </div>
+            </div>
+            {fullSections.length > 0 && (
+              <div className="flex flex-col gap-6">
+                {fullSections.map((sec, idx) => renderSectionCard(sec, idx))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className={cn("flex flex-col gap-6", sectionsClassName)}>
+            {sections.map((sec, idx) => renderSectionCard(sec, idx))}
+          </div>
+        )
+      ) : (
+        <div className="flex flex-col gap-4">
+          {renderFieldsList(
+            fields ?? [],
+            rowGroups,
+            rowPairs,
+            register,
+            control,
+            getValues,
+            errors,
+          )}
+        </div>
+      )}
 
       {typeof footerSlot === "function"
         ? footerSlot(watchedValues)
         : footerSlot}
 
-      <Button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-blue-700 hover:bg-blue-950 text-white font-medium font-text rounded-xs cursor-pointer transition-colors duration-300 disabled:opacity-50 disabled:pointer-events-none"
-      >
-        {isLoading ? (
-          <span className="flex items-center gap-2">
-            <LoadingSpinner />
-            {submitLabel}...
-          </span>
-        ) : (
-          submitLabel
-        )}
-      </Button>
+      {!hideSubmitButton && (
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-blue-700 hover:bg-blue-950 text-white font-medium font-text rounded-xs cursor-pointer transition-colors duration-300 disabled:opacity-50 disabled:pointer-events-none"
+        >
+          {isLoading ? (
+            <span className="flex items-center gap-2">
+              <LoadingSpinner />
+              {submitLabel}...
+            </span>
+          ) : (
+            submitLabel
+          )}
+        </Button>
+      )}
     </form>
   );
 }
@@ -302,6 +425,7 @@ export const TextInput = <T extends FieldValues = FieldValues>({
         min={field.min}
         max={field.max}
         step={field.step}
+        maxLength={field.maxLength}
         defaultValue={field.defaultValue as string}
         className={cn(inputClass(error), hasIcon && "pl-9", field.className)}
         {...register(
@@ -908,12 +1032,12 @@ export type FileInputProps<T extends FieldValues = FieldValues> =
     getValues?: () => T;
   };
 
-export const FileInput = <T extends FieldValues = FieldValues>({
+export function FileInput<T extends FieldValues = FieldValues>({
   field,
   register,
   error,
   getValues,
-}: FileInputProps<T>) => {
+}: FileInputProps<T>) {
   const formContext = useFormContext<T>();
   const getValueFn = getValues ?? formContext?.getValues;
 
@@ -940,10 +1064,19 @@ export const FileInput = <T extends FieldValues = FieldValues>({
     return [];
   };
 
+  const [existingUrls, setExistingUrls] = useState<string[]>(
+    () => field.initialUrls ?? [],
+  );
   const [files, setFiles] = useState<File[]>(getInitialFiles);
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const removeExistingUrl = (index: number) => {
+    const updated = existingUrls.filter((_, i) => i !== index);
+    setExistingUrls(updated);
+    field.onExistingUrlsChange?.(updated);
+  };
 
   const { ref, ...rest } = register(
     field.name as Path<T>,
@@ -1033,6 +1166,8 @@ export const FileInput = <T extends FieldValues = FieldValues>({
 
     if (field.maxFiles) {
       combined = combined.slice(0, field.maxFiles);
+      const allowedCount = Math.max(0, field.maxFiles - existingUrls.length);
+      combined = combined.slice(0, allowedCount);
     }
 
     setFileErrors((prev) => ({ ...prev, ...newErrors }));
@@ -1068,6 +1203,8 @@ export const FileInput = <T extends FieldValues = FieldValues>({
   const activeError = hasFileErrors
     ? "Some uploaded files have errors. Please remove the highlighted files below."
     : error;
+
+  const totalCount = existingUrls.length + files.length;
 
   return (
     <div className="flex flex-col gap-3">
@@ -1127,7 +1264,7 @@ export const FileInput = <T extends FieldValues = FieldValues>({
 
         {field.maxFiles && (
           <span className="text-[#6B7280] text-xs font-text">
-            {files.length}/{field.maxFiles} selected
+            {totalCount}/{field.maxFiles} selected
           </span>
         )}
 
@@ -1167,8 +1304,53 @@ export const FileInput = <T extends FieldValues = FieldValues>({
         </span>
       )}
 
-      {files.length > 0 && (
+      {totalCount > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {existingUrls.map((url, index) => {
+            const fileName = url.split("/").pop() || `Image ${index + 1}`;
+            return (
+              <div
+                key={`existing-${url}-${index}`}
+                className="relative rounded-lg border border-gray-300 overflow-hidden bg-white transition-all duration-200 flex flex-col justify-between"
+              >
+                {field.showPreview !== false ? (
+                  <div className="relative w-full aspect-square bg-gray-100">
+                    <Image
+                      src={url}
+                      alt={fileName}
+                      title={fileName}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-28 bg-zinc-200">
+                    {icon}
+                  </div>
+                )}
+
+                <div className="p-2">
+                  <p
+                    className="text-xs font-text truncate text-[#1F2937]"
+                    title={fileName}
+                  >
+                    {fileName}
+                  </p>
+                  <p className="text-[11px] text-[#9CA3AF]">Uploaded</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => removeExistingUrl(index)}
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full shadow flex items-center justify-center bg-white text-red-500 hover:bg-red-50 transition-colors cursor-pointer z-10"
+                  title="Remove image"
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })}
+
           {files.map((file, index) => {
             const fileKey = getFileKey(file);
             const fileErr = fileErrors[fileKey];
@@ -1247,7 +1429,7 @@ export const FileInput = <T extends FieldValues = FieldValues>({
       )}
     </div>
   );
-};
+}
 
 // Checkbox
 export type CheckboxInputProps<T extends FieldValues = FieldValues> =

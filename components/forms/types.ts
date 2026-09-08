@@ -51,16 +51,39 @@ export type FormFieldConfig = {
         maxFiles?: number
         maxSizeMB?: number
         showPreview?: boolean
+        initialUrls?: string[]
+        onExistingUrlsChange?: (urls: string[]) => void
+}
+
+export type FormSectionConfig = {
+        id?: string
+        title?: string
+        icon?: ReactNode
+        description?: string
+        className?: string
+        column?: "left" | "right" | "full"
+        fields: FormFieldConfig[]
+        rowPairs?: [string, string][]
+        rowGroups?: string[][]
+        headerSlot?: ReactNode
+        footerSlot?: ReactNode
 }
 
 export type MainFormProps = {
+        id?: string
         title?: string
         description?: string
-        fields: FormFieldConfig[]
+        fields?: FormFieldConfig[]
+        sections?: FormSectionConfig[]
+        sectionsClassName?: string
         onSubmit: (values: Record<string, unknown>) => void | Promise<void>
         submitLabel?: string
         isLoading?: boolean
         className?: string
         rowPairs?: [string, string][]
+        rowGroups?: string[][]
+        defaultValues?: Record<string, unknown>
+        values?: Record<string, unknown>
+        hideSubmitButton?: boolean
         footerSlot?: ReactNode | ((values: Record<string, unknown>) => ReactNode)
 }
