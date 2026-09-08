@@ -1,5 +1,5 @@
 import { FleetStatus } from "@/types/subscribers.type"
-import { Building2, CreditCard, LayoutDashboard, Mail, MessageSquare, Settings, Shield, SlidersHorizontalIcon, Star, UserCheck, Users } from "lucide-react"
+import { Building2, CreditCard, KeyRound, LayoutDashboard, Mail, MessageSquare, Settings, Shield, SlidersHorizontalIcon, Star, UserCheck, Users } from "lucide-react"
 
 export const userContent = {
         fullname: 'Super Admin',
@@ -82,6 +82,13 @@ export const sidebarContent = [
                                                 ),
                                                 label: 'Admin Users',
                                                 url: '/admin/settings/admin-users'
+                                        },
+                                        {
+                                                icon: (
+                                                        <KeyRound/>
+                                                ),
+                                                label: 'Security',
+                                                url: '/admin/settings/security'
                                         },
                                 ]
                         },

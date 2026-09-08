@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import MainForm from "./MainForm";
+import ForgotPasswordDialog from "./forgotPasswordDialog";
 
 import { useRenterLoginMutation } from "@/app/store/services/renterApi";
 import { validators } from "./form.validators";
@@ -51,6 +53,7 @@ export default function GuestLoginForm({
 }: GuestLoginFormProps) {
   const router = useRouter();
   const [renterLogin, { isLoading }] = useRenterLoginMutation();
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const handleSubmit = async (values: LoginValues) => {
     try {
@@ -98,6 +101,19 @@ export default function GuestLoginForm({
         submitLabel="Sign In"
         className="w-full"
       />
+      <button
+        type="button"
+        onClick={() => setForgotPasswordOpen(true)}
+        className="text-[#1A56DB] text-xs font-medium font-text hover:underline cursor-pointer self-end"
+      >
+        Forgot password?
+      </button>
+      {forgotPasswordOpen && (
+        <ForgotPasswordDialog
+          accountType="renter"
+          onClose={() => setForgotPasswordOpen(false)}
+        />
+      )}
       {onSwitchToSignUp && (
         <p className="text-xs text-center font-text text-gray-500">
           Don&apos;t have an account?{" "}

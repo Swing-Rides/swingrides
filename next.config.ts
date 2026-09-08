@@ -1,7 +1,7 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
-const backendUrl =
+const backendUrl = 
   process.env.BACKEND_URL ||
   (process.env.NODE_ENV === "production"
     ? "https://api.swingrides.com"

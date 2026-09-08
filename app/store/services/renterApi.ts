@@ -168,6 +168,33 @@ export const renterApi = createApi({
     }),
   }),
 
+  // Sends the reset link. The API answers identically whether or not the
+  // address is registered, so callers must not treat success as proof an
+  // account exists.
+  renterForgotPassword: builder.mutation<
+    { success: boolean; message: string },
+    { email: string }
+  >({
+    query: (payload) => ({
+      url: "/api/auth/renter/forgot-password",
+      method: "POST",
+      body: payload,
+    }),
+  }),
+
+  // Consumes the token from the emailed link. Resetting also signs the account
+  // out of every existing session server-side.
+  renterResetPassword: builder.mutation<
+    { success: boolean; message: string },
+    { token: string; newPassword: string }
+  >({
+    query: (payload) => ({
+      url: "/api/auth/renter/reset-password",
+      method: "POST",
+      body: payload,
+    }),
+  }),
+
   getProfile: builder.query<GetRenterProfileResponse, void>({
     query: () => ({
       url: "/api/auth/renter/me",
@@ -423,6 +450,8 @@ export const {
   useRenterLoginMutation,
   useVerifyRenterEmailMutation,
   useResendRenterVerificationMutation,
+  useRenterForgotPasswordMutation,
+  useRenterResetPasswordMutation,
   useGetProfileQuery,
   useRenterLogoutMutation,
   useGetBookingByIdQuery,

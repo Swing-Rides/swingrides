@@ -68,8 +68,6 @@ export default function CarPageClient({ slug }: { slug: string }) {
           model: vehicle.vehicleModel,
           year: vehicle.year,
           bodyType: vehicle.vehicleType,
-          engine: vehicle.engine,
-          horsepower: Number(vehicle.horsepower) || 0,
           transmission: vehicle.specifications?.transmission,
           driveType: vehicle.driverType,
           fuelType: vehicle.specifications?.fuelType,

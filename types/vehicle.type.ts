@@ -24,8 +24,6 @@ export type CarSpecificationsType = {
   model: string;
   year: number;
   bodyType: string;
-  engine: string;
-  horsepower: number;
   transmission: string;
   driveType: string;
   fuelType: string;
@@ -67,9 +65,7 @@ export type CreateVehicle = {
   fuelType?: string;
   doors?: number;
   fuelEfficiency?: string;
-  engine?: string;
   driveType?: string;
-  horsePower?: number;
   pickupLocation: string;
   city: string;
   pickupAddressState?: string;
@@ -124,9 +120,7 @@ export interface IListVehiclesDatum {
   fuelType?: string;
   doors?: number;
   fuelEfficiency?: string;
-  engine?: string;
   driveType?: string;
-  horsePower?: number;
   pickupAddressState?: string;
   zipCode?: string;
   vehicleRegistrationUrl?: string;
