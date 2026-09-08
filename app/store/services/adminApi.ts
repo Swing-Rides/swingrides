@@ -206,6 +206,19 @@ export const adminApi = createApi({
         method: "POST",
       }),
     }),
+    // Changes the signed-in admin's own password. The server re-issues the
+    // session cookie on success, so this tab stays logged in while every other
+    // device is signed out.
+    changeAdminPassword: builder.mutation<
+      unknown,
+      { currentPassword: string; newPassword: string }
+    >({
+      query: (payload) => ({
+        url: "/api/auth/admin/change-password",
+        method: "POST",
+        body: payload,
+      }),
+    }),
     getAdminOverview: builder.query<AdminOverviewResponse, void>({
       query: () => "/api/auth/admin/overview",
     }),
@@ -659,6 +672,7 @@ export const adminApi = createApi({
 export const {
   useAdminLoginMutation,
   useAdminLogoutMutation,
+  useChangeAdminPasswordMutation,
   useGetAdminOverviewQuery,
   useGetAdminBillingQuery,
   useGetAdminSubscribersQuery,
