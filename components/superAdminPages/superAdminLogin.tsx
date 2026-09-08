@@ -25,12 +25,6 @@ export default function SuperAdminLogin() {
 
         <div className="w-full flex flex-col justify-center gap-3">
           <SuperAdminLoginForm />
-          <Link
-            href={"/"}
-            className="text-center text-blue-700 text-sm font-medium font-text hover:text-blue-900 transition-colors duration-300"
-          >
-            Forgot password?
-          </Link>
         </div>
       </div>
     </div>

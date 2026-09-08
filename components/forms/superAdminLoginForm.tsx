@@ -5,7 +5,6 @@ import MainForm from "./MainForm";
 import { validators } from "./form.validators";
 import { FormFieldConfig } from "./types";
 import { Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useAdminLoginMutation } from "@/app/store/services/adminApi";
 
 const fields: FormFieldConfig[] = [
@@ -27,7 +26,7 @@ const fields: FormFieldConfig[] = [
 ];
 
 export default function SuperAdminLoginForm() {
-  const router = useRouter();
+  
   const [adminLogin, { isLoading }] = useAdminLoginMutation();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -48,7 +47,7 @@ export default function SuperAdminLoginForm() {
         );
         return;
       } else {
-        router.push("/admin");
+        window.location.href = "/admin";
       }
     } catch (error) {
       console.error("Admin login failed:", error);
