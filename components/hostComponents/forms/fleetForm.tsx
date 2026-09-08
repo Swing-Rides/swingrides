@@ -39,7 +39,7 @@ const VEHICLE_TYPES = [
 
 const TRANSMISSION_OPTIONS = ["Automatic", "Manual", "CVT", "Semi-Automatic"];
 const FUEL_TYPE_OPTIONS = [
-  "Gas/Petrol",
+  "Gas",
   "Diesel",
   "Electric",
   "Hybrid",
