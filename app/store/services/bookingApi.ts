@@ -67,6 +67,7 @@ export type BookingResponse = {
   id: string;
   referenceCode: string;
   paymentIntentId?: string;
+  paymentMode?: "stripe" | "offline";
   renterName: string;
   renterEmail: string;
   renterPhone: string;
@@ -300,6 +301,33 @@ type CreateBookingPayload = {
   insuranceExpiry?: string;
 };
 
+export type OfflinePaymentMethod = "cash" | "bank_transfer" | "other";
+
+/**
+ * Booking paid for offline at the counter. No paymentIntentId: this never goes
+ * near Stripe. The three insurance fields are omitted deliberately — the
+ * backend does not read them on the card path either, so there is no point
+ * carrying a known no-op into a new payload.
+ */
+type CreateOfflineBookingPayload = Omit<
+  CreateBookingPayload,
+  "paymentIntentId" | "insuranceProvider" | "policyNumber" | "insuranceExpiry"
+> & {
+  payment: {
+    method: OfflinePaymentMethod;
+    /**
+     * Optional. The server records its own computed booking total as the amount
+     * collected; sending a figure here only asks it to verify agreement, and a
+     * mismatch is rejected rather than silently stored.
+     */
+    amount?: number;
+    reference?: string;
+    note?: string;
+  };
+  paymentConfirmed: true;
+  idempotencyKey: string;
+};
+
 type CreateBookingPaymentIntentPayload = {
   vehicleId: string;
   pickupDate: string;
@@ -454,6 +482,18 @@ export const bookingApi = createApi({
     >({
       query: (payload) => ({
         url: "/api/host/bookings",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [{ type: "Bookings", id: "LIST" }],
+    }),
+
+    createOfflineBooking: builder.mutation<
+      BookingEnvelope<BookingResponse>,
+      CreateOfflineBookingPayload
+    >({
+      query: (payload) => ({
+        url: "/api/host/bookings/offline",
         method: "POST",
         body: payload,
       }),
@@ -635,6 +675,7 @@ export const {
   useGetBookingByReferenceQuery,
   useLazyGetBookingByReferenceQuery,
   useCreateBookingMutation,
+  useCreateOfflineBookingMutation,
   useCreateBookingPaymentIntentMutation,
   useCancelBookingMutation,
   useConfirmBookingMutation,

@@ -75,6 +75,11 @@ export type NewBookingFormValues = {
   insuranceProvider: string;
   insurancePolicyNumber: string;
   insuranceExpiryDate: string;
+  paymentTender: "card" | "cash";
+  cashPaymentMethod: "cash" | "bank_transfer" | "other";
+  cashPaymentConfirmed: boolean;
+  cashPaymentReference: string;
+  cashPaymentNote: string;
 };
 
 export type NewBookingFormProps = {
@@ -87,6 +92,11 @@ export type NewBookingFormProps = {
     endDate: Date,
   ) => Promise<boolean>;
   fetchTax: (subtotal: number) => Promise<TaxResult>;
+  /**
+   * The submit button lives in the parent's PageWrapper and is wired to this
+   * form by id, so the parent needs the tender to label it correctly.
+   */
+  onTenderChange?: (tender: "card" | "cash") => void;
   onCancel?: () => void;
   onSubmit: (values: NewBookingFormValues) => void | Promise<void>;
 };
@@ -107,6 +117,7 @@ function NewBookingFormInner({
   fetchVehicles,
   checkAvailability,
   fetchTax,
+  onTenderChange,
   onCancel,
   onSubmit,
 }: NewBookingFormProps) {
@@ -141,6 +152,11 @@ function NewBookingFormInner({
     insuranceProvider: "",
     insurancePolicyNumber: "",
     insuranceExpiryDate: "",
+    paymentTender: "card",
+    cashPaymentMethod: "cash",
+    cashPaymentConfirmed: false,
+    cashPaymentReference: "",
+    cashPaymentNote: "",
   };
 
   const {
@@ -165,6 +181,8 @@ function NewBookingFormInner({
     control,
     name: "hostProvidesInsurance",
   });
+  const paymentTender = useWatch({ control, name: "paymentTender" });
+  const isCashTender = paymentTender === "cash";
 
   const { data: publicVehicleData } = useGetPublicVehicleByIdQuery(
     { id: vehicleId as string },
@@ -694,6 +712,142 @@ function NewBookingFormInner({
                       />
                     </FormRow>
                   </div>
+                </>
+              )}
+            </FormSection>
+
+            <Separator />
+
+            {/* Section 6: Payment */}
+            {/* Placed last so the Total Amount in the summary is settled before
+                the host attests to having collected it. */}
+            <FormSection title="Payment">
+              <FormRow
+                label="How is the renter paying?"
+                htmlFor="paymentTender"
+                error={errors.paymentTender?.message}
+              >
+                <SelectInput
+                  field={{
+                    name: "paymentTender",
+                    type: "select",
+                    placeholder: "Select payment type",
+                    options: [
+                      { label: "Card (online checkout)", value: "card" },
+                      { label: "Offline (cash or transfer)", value: "cash" },
+                    ],
+                    validation: validators.required("Payment type"),
+                  }}
+                  control={control}
+                  error={errors.paymentTender?.message}
+                  onValueChange={(value: string) => {
+                    const tender = value as "card" | "cash";
+                    onTenderChange?.(tender);
+                    if (tender === "card") {
+                      clearErrors(["cashPaymentMethod", "cashPaymentConfirmed"]);
+                    }
+                  }}
+                />
+              </FormRow>
+
+              {isCashTender && (
+                <>
+                  <FormRow
+                    label="Payment method"
+                    htmlFor="cashPaymentMethod"
+                    error={errors.cashPaymentMethod?.message}
+                  >
+                    <SelectInput
+                      field={{
+                        name: "cashPaymentMethod",
+                        type: "select",
+                        placeholder: "Select method",
+                        options: [
+                          { label: "Cash", value: "cash" },
+                          { label: "Bank transfer", value: "bank_transfer" },
+                          { label: "Other", value: "other" },
+                        ],
+                        validation: {
+                          required: isCashTender
+                            ? "Payment method is required"
+                            : false,
+                        },
+                      }}
+                      control={control}
+                      error={errors.cashPaymentMethod?.message}
+                    />
+                  </FormRow>
+
+                  <FormRow
+                    label="Reference (optional)"
+                    htmlFor="cashPaymentReference"
+                    error={errors.cashPaymentReference?.message}
+                  >
+                    <TextInput
+                      field={{
+                        name: "cashPaymentReference",
+                        type: "text",
+                        placeholder: "e.g. receipt no. 00412",
+                        icon: <Hash className="w-4 h-4" />,
+                      }}
+                      register={register}
+                      error={errors.cashPaymentReference?.message}
+                    />
+                  </FormRow>
+
+                  <FormRow
+                    label="Note (optional)"
+                    htmlFor="cashPaymentNote"
+                    error={errors.cashPaymentNote?.message}
+                  >
+                    <TextInput
+                      field={{
+                        name: "cashPaymentNote",
+                        type: "text",
+                        placeholder: "Anything worth recording about this payment",
+                        icon: <FileText className="w-4 h-4" />,
+                      }}
+                      register={register}
+                      error={errors.cashPaymentNote?.message}
+                    />
+                  </FormRow>
+
+                  <CheckboxInput
+                    field={{
+                      name: "cashPaymentConfirmed",
+                      type: "checkbox",
+                      className:
+                        "p-3 rounded-[10px] border border-gray-200 cursor-pointer gap-2.5",
+                      label: (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[#1F2937] text-sm font-medium font-text flex items-center gap-1.5">
+                            <ShieldCheck className="w-4 h-4 text-blue-700" />
+                            I have collected this payment in full
+                          </span>
+                          <span className="text-[#6B7280] text-xs font-normal font-text">
+                            The booking is recorded as paid for the Total Amount
+                            shown in the summary, and is created immediately
+                            without an online checkout.
+                          </span>
+                        </div>
+                      ),
+                      validation: {
+                        validate: (value: boolean) =>
+                          !isCashTender ||
+                          value === true ||
+                          "Confirm you have collected the payment",
+                      },
+                    }}
+                    control={control}
+                    onCheckedChange={async (checked: boolean) => {
+                      setValue("cashPaymentConfirmed", checked);
+                      if (checked) {
+                        clearErrors(["cashPaymentConfirmed"]);
+                      } else {
+                        await trigger(["cashPaymentConfirmed"]);
+                      }
+                    }}
+                  />
                 </>
               )}
             </FormSection>

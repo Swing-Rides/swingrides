@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { differenceInCalendarDays } from "date-fns";
 import PageWrapper from "../../dashboard/pageWrapper";
@@ -12,7 +12,10 @@ import {
   useGetHostProfileQuery,
   useListVehcleQuery,
 } from "@/app/store/services/hostApi";
-import { useListBookingsQuery } from "@/app/store/services/bookingApi";
+import {
+  useListBookingsQuery,
+  useCreateOfflineBookingMutation,
+} from "@/app/store/services/bookingApi";
 import { checkVehicleAvailability } from "@/lib/checkVehicleDateAvailability";
 import {
   computePricing,
@@ -84,9 +87,22 @@ const calculateBookingAmounts = (
   };
 };
 
+const createIdempotencyKey = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `bk-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
 export default function NewBookingPageComponent() {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [paymentTender, setPaymentTender] = useState<"card" | "cash">("card");
+  const [createOfflineBooking, { isLoading: isCreatingOfflineBooking }] =
+    useCreateOfflineBookingMutation();
+
+  // Generated once per mount, not per submit: a key that changes on every
+  // attempt would make the server's idempotency guard useless against the exact
+  // thing it exists for, which is a double-clicked submit button.
+  const idempotencyKeyRef = useRef(createIdempotencyKey());
   const { data } = useGetHostProfileQuery();
   const {
     data: vehiclesResponse,
@@ -202,20 +218,52 @@ export default function NewBookingPageComponent() {
           .toISOString()
           .split("T")[1];
 
-        const pendingCheckout = {
+        // The subset the booking API itself wants, shared by both tenders so
+        // the field renaming below is written once rather than twice.
+        const bookingFields = {
           vehicleId: values.vehicleId,
           renterName,
           renterEmail: values.email,
           renterPhone: values.phoneNumber,
           pickupDate: values.pickupDate,
           returnDate: values.returnDate,
-          pickupTime: pickupTime,
-          returnTime: returnTime,
+          pickupTime,
+          returnTime,
           location,
           streetAddress: values.streetAddress,
           city: values.pickupCity,
           state: values.pickupState,
           postalCode: values.postalCode,
+        };
+
+        // Offline tender skips the Stripe checkout route entirely: the draft in
+        // sessionStorage exists only to survive the Stripe redirect, and there
+        // is no redirect here.
+        if (values.paymentTender === "cash") {
+          const result = await createOfflineBooking({
+            ...bookingFields,
+            payment: {
+              method: values.cashPaymentMethod,
+              // No amount: the server records its own computed booking total,
+              // so "paid in full" cannot drift from what is actually stored.
+              reference: values.cashPaymentReference || undefined,
+              note: values.cashPaymentNote || undefined,
+            },
+            paymentConfirmed: true,
+            idempotencyKey: idempotencyKeyRef.current,
+          }).unwrap();
+
+          if (!result.success || !result.data?.id) {
+            throw new Error("Booking was not created.");
+          }
+
+          idempotencyKeyRef.current = createIdempotencyKey();
+          router.push(`${HOST_DASHBOARD_PATH}bookings/${result.data.id}`);
+          return;
+        }
+
+        const pendingCheckout = {
+          ...bookingFields,
           subtotal: pricing.subtotal,
           tax: data?.data?.taxFee,
           taxRate: data?.data?.taxFee ?? 0,
@@ -262,7 +310,7 @@ export default function NewBookingPageComponent() {
         setSubmitError(errorMessage);
       }
     },
-    [availableVehicles, router],
+    [availableVehicles, createOfflineBooking, data?.data?.taxFee, router],
   );
 
   const isPageLoading = isVehiclesLoading || isBookingsLoading;
@@ -276,9 +324,14 @@ export default function NewBookingPageComponent() {
         <button
           type="submit"
           form={FORM_ID}
+          disabled={isCreatingOfflineBooking}
           className="px-6 py-2 bg-blue-700 rounded-xs text-center text-white text-sm font-semibold font-text capitalize hover:bg-blue-900 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
         >
-          Continue to Checkout
+          {paymentTender === "cash"
+            ? isCreatingOfflineBooking
+              ? "Creating Booking..."
+              : "Create Booking"
+            : "Continue to Checkout"}
         </button>
       }
     >
@@ -305,6 +358,7 @@ export default function NewBookingPageComponent() {
               fetchVehicles={fetchVehicles}
               checkAvailability={checkAvailability}
               fetchTax={fetchTax}
+              onTenderChange={setPaymentTender}
               onSubmit={handleSubmit}
             />
           </>
