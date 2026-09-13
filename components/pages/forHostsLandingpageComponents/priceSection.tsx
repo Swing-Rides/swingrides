@@ -9,7 +9,7 @@ import { PriceCardProps } from "./types"
 import { Check } from "lucide-react"
 import { useGetHostPlanPricesQuery } from "@/app/store/services/publicApi"
 
-const PERCENT_DISCOUNT = 17
+const PERCENT_DISCOUNT = 15
 
 export default function PriceSection(
         {
@@ -41,7 +41,7 @@ export default function PriceSection(
                                                 SIMPLE,{" "}<span className='text-[#1A56DB] font-sans'>FLAT</span> PRICING
                                         </h3>
                                         <span className="text-center text-[#333333] text-lg font-medium font-text">
-                                                Pay a fixed monthly subscription. No commissions, no hidden fees, no per-booking charges — ever.
+                                                Pay a fixed monthly subscription. No commissions, no hidden fees, no per-booking charges, ever!
                                         </span>
 
                                         <div className="flex items-center justify-center-safe gap-4">
@@ -107,7 +107,7 @@ const PriceCard = ({
         })()
 
         return (
-                <div className="relative flex flex-col gap-10 p-8 bg-white rounded-xs">
+                <div className="relative flex flex-col gap-10 px-5 py-8 bg-white rounded-xs">
                         {badge && (
                                 <div className="absolute top-0 left-1/2 -translate-1/2 px-3.5 py-1.5 bg-blue-700 rounded-full w-fit">
                                         <span className="text-white text-sm font-semibold font-text">
