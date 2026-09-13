@@ -48,7 +48,7 @@ export const contactLink = [
         },
         {
                 icon: <Phone className="text-gray-500 size-5" />,
-                label: '+1 (888) 555-1234',
-                href: 'tel:18885551234',
+                label: '+1 (800) 830 0651',
+                href: 'tel:18008300651',
         },
 ]

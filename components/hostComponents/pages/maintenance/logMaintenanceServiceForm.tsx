@@ -1,44 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  useForm,
-  Controller,
-  useWatch,
-  Control,
-  FieldValues,
-  Path,
-  RegisterOptions,
-} from "react-hook-form";
-import { X } from "lucide-react";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { X, Gauge, CalendarIcon, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { FieldSeparator } from "@/components/ui/field";
-import { Calendar } from "@/components/ui/calendar";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  FormField,
+  LoadingSpinner,
+} from "@/components/forms/MainForm";
+
 import {
   useListVehcleQuery,
   useLogServiceModalMutation,
 } from "@/app/store/services/hostApi";
 import { LogServiceModalRequest } from "@/types/logservice.type";
 import { IListVehiclesDatum } from "@/types/vehicle.type";
+import VehicleSelectField from "./vehicleSelectField";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,7 +33,6 @@ type LogMaintenanceFormValues = {
   mileageAtService: string;
   cost: string;
   provider: string;
-  nextServiceTab: NextServiceTab;
   nextServiceMileage: string;
   nextServiceDate: string;
   notes: string;
@@ -67,12 +48,14 @@ export default function LogMaintenanceServiceForm({
   onClose,
 }: LogMaintenanceServiceFormProps) {
   const [activeTab, setActiveTab] = useState<NextServiceTab>("mileage");
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     control,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<LogMaintenanceFormValues>({
     mode: "onTouched",
@@ -83,7 +66,6 @@ export default function LogMaintenanceServiceForm({
       mileageAtService: "",
       cost: "",
       provider: "",
-      nextServiceTab: "mileage",
       nextServiceMileage: "",
       nextServiceDate: "",
       notes: "",
@@ -93,55 +75,58 @@ export default function LogMaintenanceServiceForm({
   const mileageAtService = useWatch({ control, name: "mileageAtService" });
   const serviceDate = useWatch({ control, name: "serviceDate" });
   const selectedVehicleName = useWatch({ control, name: "vehicleName" });
+
   const [addLogsToBackend, { isLoading }] = useLogServiceModalMutation();
   const {
     data,
     isLoading: vehicleLoading,
-    isError,
+    isError: isVehicleError,
+    refetch: refetchVehicles,
   } = useListVehcleQuery({
     page: 1,
     limit: 40,
   });
 
-  // Auto-fill mileage when vehicle is selected
-  useEffect(() => {
-    if (selectedVehicleName && data?.data) {
-      const selectedVehicle = data.data.find(
-        (vehicle: IListVehiclesDatum) => vehicle.name === selectedVehicleName
-      );
-      if (selectedVehicle && selectedVehicle.mileage !== undefined) {
-        // Format mileage with commas
-        const formattedMileage = selectedVehicle.mileage.toLocaleString();
-        setValue("mileageAtService", formattedMileage);
-      }
-    }
-  }, [selectedVehicleName, data, setValue]);
-
   const onSubmit = async (values: LogMaintenanceFormValues) => {
-    const payload: LogServiceModalRequest = {
-      cost: Number(values.cost.replace(/,/g, "")) || 0,
-      mileageAtServiceKm:
-        Number(values.mileageAtService.replace(/,/g, "")) || 0,
-      nextDueDate:
-        activeTab === "date" && values.nextServiceDate
-          ? values.nextServiceDate
-          : undefined,
-      notes: values.notes,
-      serviceDate: values.serviceDate,
-      serviceType: values.serviceType,
-      nextServiceDueMode: activeTab === "mileage" ? "mileage" : "date",
-      providerOrWorkshop: values.provider,
-      vehicle: values.vehicleName,
-      nextDueMileageKm: values.nextServiceMileage
-        ? Number(values.nextServiceMileage.replace(/,/g, ""))
-        : undefined,
-    };
+    setApiError(null);
+    try {
+      const payload: LogServiceModalRequest = {
+        cost: Number(String(values.cost).replace(/,/g, "")) || 0,
+        mileageAtServiceKm:
+          Number(String(values.mileageAtService).replace(/,/g, "")) || 0,
+        nextDueDate:
+          activeTab === "date" && values.nextServiceDate
+            ? values.nextServiceDate
+            : undefined,
+        notes: values.notes,
+        serviceDate: values.serviceDate,
+        serviceType: values.serviceType,
+        nextServiceDueMode: activeTab === "mileage" ? "mileage" : "date",
+        providerOrWorkshop: values.provider,
+        vehicle: values.vehicleName,
+        nextDueMileageKm:
+          activeTab === "mileage" && values.nextServiceMileage
+            ? Number(String(values.nextServiceMileage).replace(/,/g, ""))
+            : undefined,
+      };
 
-    const response = await addLogsToBackend(payload).unwrap();
-    if (response.success === true) {
-      onClose();
-    } else {
-      console.error("Failed to log service:", response.message);
+      const response = await addLogsToBackend(payload).unwrap();
+      if (response.success) {
+        toast.success("Maintenance service logged successfully");
+        onClose();
+      } else {
+        const message = response.message || "Failed to log service";
+        setApiError(message);
+        toast.error(message);
+      }
+    } catch (err: unknown) {
+      const errorMsg =
+        (err as { data?: { message?: string }; message?: string })?.data
+          ?.message ||
+        (err as { message?: string })?.message ||
+        "An unexpected error occurred while logging service. Please try again.";
+      setApiError(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
@@ -169,225 +154,241 @@ export default function LogMaintenanceServiceForm({
         className="flex flex-col gap-4 px-6 py-5 overflow-y-auto"
         noValidate
       >
-        {/* 1. Vehicle Name */}
-        <FormRow
-          label="Vehicle Name"
-          htmlFor="vehicleName"
-          required
-          error={errors.vehicleName?.message}
-        >
-          <Controller
-            name="vehicleName"
-            control={control}
-            rules={{ required: "Vehicle name is required" }}
-            render={({ field }) => (
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-                disabled={vehicleLoading}
-              >
-                <SelectTrigger className={inputCn(!!errors.vehicleName)}>
-                  <SelectValue
-                    placeholder={
-                      vehicleLoading
-                        ? "Loading vehicles..."
-                        : "Select a vehicle"
-                    }
-                  />
-                </SelectTrigger>
+        {/* ── Submission Error Alert ──────────────────────── */}
+        {apiError && (
+          <div className="flex items-start justify-between gap-2 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-xs font-text">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
+              <div className="flex flex-col gap-0.5">
+                <span className="font-semibold">Unable to log service</span>
+                <span>{apiError}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setApiError(null)}
+              className="text-red-500 hover:text-red-700 cursor-pointer p-0.5"
+              aria-label="Dismiss error"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
-                <SelectContent className="z-[9999]">
-                  {data?.data?.map((vehicle: IListVehiclesDatum) => (
-                    <SelectItem
-                      key={vehicle._id || vehicle._id}
-                      value={vehicle.name}
-                    >
-                      {vehicle.name} ({vehicle.make})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FormRow>
+        {/* 1. Vehicle Selection (Separate component with Framer animation) */}
+        <Controller
+          name="vehicleName"
+          control={control}
+          rules={{ required: "Please select a vehicle" }}
+          render={({ field }) => (
+            <VehicleSelectField
+              value={field.value}
+              onChange={(value) => {
+                field.onChange(value);
+                if (apiError) setApiError(null);
+
+                // Event-driven auto-fill of mileage (no useEffect)
+                const matchedVehicle = data?.data?.find(
+                  (v: IListVehiclesDatum) => v.name === value,
+                );
+                if (
+                  matchedVehicle &&
+                  matchedVehicle.mileage !== undefined &&
+                  matchedVehicle.mileage !== null
+                ) {
+                  const formattedMileage =
+                    matchedVehicle.mileage.toLocaleString();
+                  setValue("mileageAtService", formattedMileage, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                }
+              }}
+              error={errors.vehicleName?.message}
+              vehicles={data?.data}
+              isLoading={vehicleLoading}
+              isError={isVehicleError}
+              onRetry={() => refetchVehicles()}
+            />
+          )}
+        />
 
         {/* 2. Service Type */}
-        <FormRow
-          label="Service Type"
-          htmlFor="serviceType"
-          required
-          error={errors.serviceType?.message}
-        >
-          <Input
-            id="serviceType"
-            type="text"
-            placeholder="e.g. Oil Change, Brake Inspection"
-            className={inputCn(!!errors.serviceType)}
-            {...register("serviceType", {
-              required: "Service type is required",
-            })}
-          />
-        </FormRow>
+        <FormField<LogMaintenanceFormValues>
+          field={{
+            name: "serviceType",
+            type: "text",
+            label: "Service Type",
+            placeholder: "e.g. Oil Change, Brake Inspection",
+            validation: { required: "Service type is required" },
+          }}
+          register={register}
+          control={control}
+          getValues={getValues}
+          errors={errors}
+        />
 
         {/* 3. Service Date + Mileage at Service */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <FormRow
-            label="Service Date"
-            htmlFor="serviceDate"
-            required
-            error={errors.serviceDate?.message}
-            className="w-full"
-          >
-            <DatePickerField<LogMaintenanceFormValues>
-              name="serviceDate"
-              control={control}
-              placeholder="Pick a date"
-              error={errors.serviceDate?.message}
-              rules={{ required: "Service date is required" }}
-            />
-          </FormRow>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField<LogMaintenanceFormValues>
+            field={{
+              name: "serviceDate",
+              type: "date",
+              label: "Service Date",
+              placeholder: "Pick a date",
+              validation: { required: "Service date is required" },
+            }}
+            register={register}
+            control={control}
+            getValues={getValues}
+            errors={errors}
+          />
 
-          <FormRow
-            label="Mileage at Service (km)"
-            htmlFor="mileageAtService"
-            required
-            error={errors.mileageAtService?.message}
-            className="w-full"
-          >
-            <Input
-              id="mileageAtService"
-              type="text"
-              placeholder="e.g. 42,000"
-              className={inputCn(!!errors.mileageAtService)}
-              disabled={!!selectedVehicleName}
-              {...register("mileageAtService", {
+          <FormField<LogMaintenanceFormValues>
+            field={{
+              name: "mileageAtService",
+              type: "text",
+              label: "Mileage at Service (km)",
+              placeholder: "e.g. 42,000",
+              disabled: !selectedVehicleName,
+              description: selectedVehicleName
+                ? "Auto-filled from vehicle odometer"
+                : "Select a vehicle first",
+              validation: {
                 required: "Mileage is required",
                 pattern: {
                   value: /^[\d,]+$/,
                   message: "Enter a valid mileage",
                 },
-              })}
-            />
-          </FormRow>
+              },
+            }}
+            register={register}
+            control={control}
+            getValues={getValues}
+            errors={errors}
+          />
         </div>
 
         {/* 4. Cost + Provider */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <FormRow
-            label="Cost ($)"
-            htmlFor="cost"
-            required
-            error={errors.cost?.message}
-            className="w-full"
-          >
-            <div className="relative flex items-center">
-              <span className="absolute left-3 text-[#6B7280] text-sm font-medium pointer-events-none select-none">
-                $
-              </span>
-              <Input
-                id="cost"
-                type="text"
-                placeholder="e.g. 1,200"
-                className={cn(inputCn(!!errors.cost), "pl-7")}
-                {...register("cost", {
-                  required: "Cost is required",
-                  pattern: {
-                    value: /^[\d,.]+$/,
-                    message: "Enter a valid amount",
-                  },
-                })}
-              />
-            </div>
-          </FormRow>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField<LogMaintenanceFormValues>
+            field={{
+              name: "cost",
+              type: "number-dollar",
+              label: "Cost ($)",
+              placeholder: "e.g. 1200",
+              validation: {
+                required: "Cost is required",
+                min: { value: 0, message: "Cost cannot be negative" },
+              },
+            }}
+            register={register}
+            control={control}
+            getValues={getValues}
+            errors={errors}
+          />
 
-          <FormRow
-            label="Provider / Workshop"
-            htmlFor="provider"
-            error={errors.provider?.message}
-            className="w-full"
-          >
-            <Input
-              id="provider"
-              type="text"
-              placeholder="e.g. AutoCare Plus"
-              className={inputCn(!!errors.provider)}
-              {...register("provider")}
-            />
-          </FormRow>
+          <FormField<LogMaintenanceFormValues>
+            field={{
+              name: "provider",
+              type: "text",
+              label: "Provider / Workshop",
+              placeholder: "e.g. AutoCare Plus",
+            }}
+            register={register}
+            control={control}
+            getValues={getValues}
+            errors={errors}
+          />
         </div>
 
         {/* 5. Next Service Due */}
-        <div className="flex flex-col gap-3">
-          <span className="text-[#1F2937] text-sm font-semibold font-text">
-            Next Service Due <span className="text-[#EF4444]">*</span>
-          </span>
+        <div className="flex flex-col gap-2.5">
+          <Label className="text-zinc-800 text-xs font-semibold font-text uppercase">
+            Next Service Due <span className="text-[#EF4444] ml-1">*</span>
+          </Label>
 
-          {/* Tab buttons */}
-          <div className="flex gap-2">
-            {(["mileage", "date"] as NextServiceTab[]).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "px-4 py-2 rounded-xs text-sm font-medium font-text transition-colors duration-300 cursor-pointer",
-                  activeTab === tab
-                    ? "bg-blue-700 text-white"
-                    : "bg-gray-200 text-[#6B7280] hover:bg-blue-900 hover:text-white",
-                )}
-              >
-                {tab === "mileage" ? "By Mileage" : "By Date"}
-              </button>
-            ))}
+          {/* Segmented Tab Switcher */}
+          <div className="inline-flex p-1 bg-gray-100 rounded-lg border border-gray-200 self-start">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("mileage");
+                setValue("nextServiceDate", "");
+              }}
+              className={cn(
+                "px-3.5 py-1.5 rounded-md text-xs font-medium font-text transition-all duration-200 cursor-pointer flex items-center gap-1.5",
+                activeTab === "mileage"
+                  ? "bg-white text-blue-700 shadow-xs font-semibold"
+                  : "text-gray-600 hover:text-gray-900",
+              )}
+            >
+              <Gauge className="size-3.5" />
+              By Mileage
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("date");
+                setValue("nextServiceMileage", "");
+              }}
+              className={cn(
+                "px-3.5 py-1.5 rounded-md text-xs font-medium font-text transition-all duration-200 cursor-pointer flex items-center gap-1.5",
+                activeTab === "date"
+                  ? "bg-white text-blue-700 shadow-xs font-semibold"
+                  : "text-gray-600 hover:text-gray-900",
+              )}
+            >
+              <CalendarIcon className="size-3.5" />
+              By Date
+            </button>
           </div>
 
-          {/* Tab content */}
+          {/* Tab Content */}
           {activeTab === "mileage" ? (
-            <FormRow
-              label="Next Service Mileage (km)"
-              htmlFor="nextServiceMileage"
-              required
-              error={errors.nextServiceMileage?.message}
-            >
-              <Input
-                id="nextServiceMileage"
-                type="text"
-                placeholder="e.g. 47,000"
-                className={inputCn(!!errors.nextServiceMileage)}
-                {...register("nextServiceMileage", {
+            <FormField<LogMaintenanceFormValues>
+              field={{
+                name: "nextServiceMileage",
+                type: "text",
+                label: "Next Service Mileage (km)",
+                placeholder: "e.g. 47,000",
+                validation: {
                   required:
                     activeTab === "mileage"
                       ? "Next service mileage is required"
                       : false,
                   validate: (value) => {
                     if (activeTab !== "mileage") return true;
-                    const next = parseInt(value.replace(/,/g, ""), 10);
+                    const next = parseInt(
+                      String(value ?? "").replace(/,/g, ""),
+                      10,
+                    );
                     const current = parseInt(
-                      (mileageAtService ?? "").replace(/,/g, ""),
+                      String(mileageAtService ?? "").replace(/,/g, ""),
                       10,
                     );
                     if (isNaN(next)) return "Enter a valid mileage";
                     if (!isNaN(current) && next <= current) {
-                      return `Must be greater than current mileage (${mileageAtService} km)`;
+                      return `Must be greater than current mileage (${mileageAtService || 0} km)`;
                     }
                     return true;
                   },
-                })}
-              />
-            </FormRow>
+                },
+              }}
+              register={register}
+              control={control}
+              getValues={getValues}
+              errors={errors}
+            />
           ) : (
-            <FormRow
-              label="Next Service Date"
-              htmlFor="nextServiceDate"
-              required
-              error={errors.nextServiceDate?.message}
-            >
-              <DatePickerField<LogMaintenanceFormValues>
-                name="nextServiceDate"
-                control={control}
-                placeholder="Pick a date"
-                error={errors.nextServiceDate?.message}
-                rules={{
+            <FormField<LogMaintenanceFormValues>
+              field={{
+                name: "nextServiceDate",
+                type: "date",
+                label: "Next Service Date",
+                placeholder: "Pick a date",
+                minDate: serviceDate ? new Date(serviceDate) : undefined,
+                validation: {
                   required:
                     activeTab === "date"
                       ? "Next service date is required"
@@ -399,23 +400,32 @@ export default function LogMaintenanceServiceForm({
                       ? true
                       : "Must be after the service date";
                   },
-                }}
-                minDate={serviceDate ? new Date(serviceDate) : undefined}
-              />
-            </FormRow>
+                },
+              }}
+              register={register}
+              control={control}
+              getValues={getValues}
+              errors={errors}
+            />
           )}
         </div>
 
-        {/* 6. Notes */}
-        <FormRow label="Notes" htmlFor="notes" optional>
-          <Textarea
-            id="notes"
-            placeholder="Optional notes about service"
-            rows={3}
-            className="resize-none border-[#E5E7EB] focus-visible:ring-[#1A56DB] font-text text-sm text-[#1F2937] rounded-xs placeholder:text-[#9CA3AF]"
-            {...register("notes")}
-          />
-        </FormRow>
+        {/* 6. Notes (max 500 characters) */}
+        <FormField<LogMaintenanceFormValues>
+          field={{
+            name: "notes",
+            type: "textarea",
+            label: "Notes",
+            placeholder: "Optional notes about service (max 500 characters)",
+            height: 120,
+            maxLength: 500,
+            showCharCount: true,
+          }}
+          register={register}
+          control={control}
+          getValues={getValues}
+          errors={errors}
+        />
 
         {/* ── Footer actions ───────────────────────── */}
         <FieldSeparator />
@@ -447,168 +457,3 @@ export default function LogMaintenanceServiceForm({
     </div>
   );
 }
-
-// ─── Date picker ──────────────────────────────────────────────────────────────
-
-type DatePickerFieldProps<T extends FieldValues> = {
-  name: Path<T>;
-  control: Control<T>;
-  placeholder?: string;
-  error?: string;
-  rules?: Omit<RegisterOptions<T>, "deps" | "validate"> & {
-    validate?: (value: string, formValues: T) => boolean | string | undefined;
-  };
-  minDate?: Date;
-};
-
-const DatePickerField = <T extends FieldValues>({
-  name,
-  control,
-  placeholder,
-  error,
-  rules,
-  minDate,
-}: DatePickerFieldProps<T>) => (
-  <Controller
-    name={name}
-    control={control}
-    defaultValue={"" as never}
-    rules={rules}
-    render={({ field }) => {
-      const parsed = field.value ? new Date(field.value) : undefined;
-
-      return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal border-[#E5E7EB] rounded-xs focus-visible:ring-[#1A56DB] font-text text-sm",
-                !parsed && "text-[#9CA3AF]",
-                error && "border-[#EF4444] focus-visible:ring-[#EF4444]",
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF] shrink-0" />
-              {parsed
-                ? format(parsed, "MMM d, yyyy")
-                : (placeholder ?? "Pick a date")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 z-9999" align="start">
-            <Calendar
-              mode="single"
-              selected={parsed}
-              onSelect={(date) => field.onChange(date?.toISOString() ?? "")}
-              disabled={(date) => {
-                if (minDate) {
-                  const minDay = new Date(
-                    new Date(minDate).setHours(0, 0, 0, 0),
-                  );
-                  return date < minDay;
-                }
-                return false;
-              }}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-      );
-    }}
-  />
-);
-
-// ─── Form row ─────────────────────────────────────────────────────────────────
-
-type FormRowProps = {
-  label: string;
-  htmlFor: string;
-  required?: boolean;
-  optional?: boolean;
-  error?: string;
-  className?: string;
-  children: React.ReactNode;
-};
-
-const FormRow = ({
-  label,
-  htmlFor,
-  required,
-  optional,
-  error,
-  className,
-  children,
-}: FormRowProps) => (
-  <div className={cn("flex flex-col gap-1.5", className)}>
-    <Label
-      htmlFor={htmlFor}
-      className="text-[#1F2937] text-sm font-semibold font-text"
-    >
-      {label}
-      {required && <span className="text-[#EF4444] ml-1">*</span>}
-      {optional && (
-        <span className="text-[#9CA3AF] font-normal ml-1">(Optional)</span>
-      )}
-    </Label>
-    {children}
-    {error && (
-      <span className="text-[#EF4444] text-xs font-normal font-text flex items-center gap-1">
-        <ErrorIcon />
-        {error}
-      </span>
-    )}
-  </div>
-);
-
-// ─── Input class helper ───────────────────────────────────────────────────────
-
-const inputCn = (hasError: boolean) =>
-  cn(
-    "border-[#E5E7EB] focus-visible:ring-[#1A56DB] font-text text-sm text-[#1F2937] placeholder:text-[#9CA3AF] w-full rounded-xs",
-    hasError && "border-[#EF4444] focus-visible:ring-[#EF4444]",
-  );
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
-const ErrorIcon = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 12 12"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M6 1L11 10H1L6 1Z"
-      stroke="#EF4444"
-      strokeWidth="1"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path d="M6 5V7" stroke="#EF4444" strokeWidth="1" strokeLinecap="round" />
-    <circle cx="6" cy="8.5" r="0.5" fill="#EF4444" />
-  </svg>
-);
-
-const LoadingSpinner = () => (
-  <svg
-    className="animate-spin w-4 h-4"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="4"
-    />
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-    />
-  </svg>
-);

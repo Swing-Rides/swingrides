@@ -11,8 +11,10 @@ import 'swiper/css/thumbs';
 
 import { FreeMode, Navigation, Thumbs } from 'swiper/modules';
 import Image from 'next/image';
+import { Maximize2 } from 'lucide-react';
 import { DEFAULT_IMAGE_SRC } from '@/constants/constant';
 import { isValidImageSrc } from '@/lib/imageHelpers';
+import GalleryModal from './galleryModal';
 
 type GallerySliderProps = {
         gallery: {
@@ -30,8 +32,22 @@ export default function GallerySlider({ gallery }: GallerySliderProps) {
                 : [{ alt: 'Default image', src: DEFAULT_IMAGE_SRC }];
 
         const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
-
+        const [mainSwiper, setMainSwiper] = useState<SwiperType | null>(null);
         const [activeIndex, setActiveIndex] = useState(1);
+        const [isModalOpen, setIsModalOpen] = useState(false);
+        const [modalInitialIndex, setModalInitialIndex] = useState(0);
+
+        const handleOpenModal = (index: number) => {
+                setModalInitialIndex(index);
+                setIsModalOpen(true);
+        };
+
+        const handleCloseModal = (lastIndex?: number) => {
+                setIsModalOpen(false);
+                if (typeof lastIndex === 'number' && mainSwiper) {
+                        mainSwiper.slideTo(lastIndex);
+                }
+        };
 
         return (
                 <div className='space-y-4.5'>
@@ -48,23 +64,34 @@ export default function GallerySlider({ gallery }: GallerySliderProps) {
                                         navigation={true}
                                         thumbs={{ swiper: thumbsSwiper }}
                                         modules={[FreeMode, Navigation, Thumbs]}
-                                        className="mySwiper2"
+                                        className="mySwiper2 !h-auto"
                                         // Track active slide for the counter
-                                        onSwiper={(swiper) => setActiveIndex(swiper.realIndex + 1)}
+                                        onSwiper={(swiper) => {
+                                                setMainSwiper(swiper);
+                                                setActiveIndex(swiper.realIndex + 1);
+                                        }}
                                         onSlideChange={(swiper) => setActiveIndex(swiper.realIndex + 1)}
                                 >
                                         {resolvedGallery.map((img, index) => (
                                                 <SwiperSlide
                                                         key={index}
-                                                        className='overflow-clip bg-gray-50 rounded-lg aspect-108/40 object-cover'
+                                                        className='overflow-hidden rounded-lg cursor-pointer !h-auto select-none'
+                                                        onClick={() => handleOpenModal(index)}
                                                 >
-                                                        <Image
-                                                                src={img.src}
-                                                                alt={img.alt}
-                                                                width={1080}
-                                                                height={400}
-                                                                className='w-full object-cover'
-                                                        />
+                                                        <div className='group relative w-full aspect-[3/2] bg-gray-50 rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center'>
+                                                                <Image
+                                                                        src={img.src}
+                                                                        alt={img.alt}
+                                                                        fill
+                                                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 800px"
+                                                                        className='!object-contain select-none transition-transform duration-300 group-hover:scale-[1.01]'
+                                                                        priority={index === 0}
+                                                                />
+                                                                <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none backdrop-blur-xs">
+                                                                        <Maximize2 className="size-3.5" />
+                                                                        <span>View Photos</span>
+                                                                </div>
+                                                        </div>
                                                 </SwiperSlide>
                                         ))}
                                 </Swiper>
@@ -103,7 +130,7 @@ export default function GallerySlider({ gallery }: GallerySliderProps) {
                                 {resolvedGallery.map((img, index) => (
                                         <SwiperSlide
                                                 key={index}
-                                                className='overflow-clip rounded-lg aspect-96/76 object-cover'
+                                                className='overflow-clip rounded-lg aspect-96/76 object-cover cursor-pointer'
                                         >
                                                 <Image
                                                         src={img.src}
@@ -115,6 +142,16 @@ export default function GallerySlider({ gallery }: GallerySliderProps) {
                                         </SwiperSlide>
                                 ))}
                         </Swiper>
+
+                        {/* Full-view Modal */}
+                        {isModalOpen && (
+                                <GalleryModal
+                                        isOpen={isModalOpen}
+                                        onClose={handleCloseModal}
+                                        images={resolvedGallery}
+                                        initialIndex={modalInitialIndex}
+                                />
+                        )}
                 </div>
         );
 }

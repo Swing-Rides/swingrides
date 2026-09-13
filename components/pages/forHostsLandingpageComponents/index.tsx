@@ -44,7 +44,7 @@ const HeroSection = () => {
             Spend less time managing. More time growing.
           </h3>
           <p className="text-gray-500 text-lg font-normal font-text leading-6 text-left">
-            SwingRides helps you manage bookings, fleet, customers, maintenance, invoices and more — all in one platform.
+            SwingRides helps you manage bookings, fleet, customers, maintenance, invoices and more. All in one platform.
           </p>
           <div className="flex gap-3 items-center justify-center">
             <Link

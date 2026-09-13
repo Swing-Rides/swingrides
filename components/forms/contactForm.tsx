@@ -45,7 +45,7 @@ const fields: FormFieldConfig[] = [
                 type: 'textarea',
                 label: 'Message',
                 placeholder: 'Tell us more about your question or issue',
-                rows: 5,
+                height: 120,
                 validation: {
                         ...validators.required('Message'),
                         ...validators.minLength(10, 'Message'),

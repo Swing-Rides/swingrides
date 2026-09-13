@@ -24,7 +24,7 @@ export default function Footer() {
                                                 READY TO HIT THE ROAD?
                                         </h3>
                                         <p className='mt-4 mb-6 md:mt-6 text-[#D1D5DC] font-medium text-base md:text-lg '>
-                                                Join thousands of renters and hosts already on SwingRides.
+                                                Join independent rental businesses and renters discovering a smarter way to rent.
                                         </p>
                                         <div className='flex flex-wrap gap-4 md:gap-6'>
                                                 <SecBtn 

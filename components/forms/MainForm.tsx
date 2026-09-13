@@ -749,7 +749,17 @@ export const DateInput = <T extends FieldValues = FieldValues>({
   control,
   error,
 }: ControllerProps<T>) => {
+  const [open, setOpen] = useState(false);
   const minDate = field.minDate ? new Date(field.minDate) : undefined;
+  const currentYear = new Date().getFullYear();
+  const startMonth =
+    field.startMonth ??
+    (field.fromYear ? new Date(field.fromYear, 0) : new Date(1950, 0));
+  const endMonth =
+    field.endMonth ??
+    (field.toYear
+      ? new Date(field.toYear, 11)
+      : new Date(currentYear + 25, 11));
 
   const isDateDisabled = (date: Date) => {
     if (field.disabled) return true;
@@ -764,41 +774,53 @@ export const DateInput = <T extends FieldValues = FieldValues>({
       control={control}
       defaultValue={(field.defaultValue ?? "") as PathValue<T, Path<T>>}
       rules={field.validation as RegisterOptions<T, Path<T>>}
-      render={({ field: ctrl }) => (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              id={field.name}
-              variant="outline"
-              disabled={field.disabled}
-              className={cn(
-                inputClass(error),
-                "w-full justify-start text-left font-normal",
-                !ctrl.value && "text-[#9CA3AF]",
-              )}
+      render={({ field: ctrl }) => {
+        const parsed =
+          ctrl.value && !isNaN(new Date(ctrl.value).getTime())
+            ? new Date(ctrl.value)
+            : undefined;
+
+        return (
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                id={field.name}
+                variant="outline"
+                disabled={field.disabled}
+                className={cn(
+                  inputClass(error),
+                  "w-full justify-start text-left font-normal",
+                  !ctrl.value && "text-[#9CA3AF]",
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF]" />
+                {parsed
+                  ? format(parsed, "PPP")
+                  : (field.placeholder ?? "Pick a date")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-auto p-0 z-[9999] bg-white border border-gray-200 shadow-lg"
+              align="start"
             >
-              <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF]" />
-              {ctrl.value
-                ? format(new Date(ctrl.value), "PPP")
-                : (field.placeholder ?? "Pick a date")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              captionLayout="dropdown"
-              fromYear={1950}
-              toYear={new Date().getFullYear() + 20}
-              selected={ctrl.value ? new Date(ctrl.value) : undefined}
-              onSelect={(date: Date | undefined) =>
-                ctrl.onChange(date?.toISOString() ?? "")
-              }
-              disabled={isDateDisabled}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-      )}
+              <Calendar
+                mode="single"
+                captionLayout={field.captionLayout ?? "dropdown"}
+                startMonth={startMonth}
+                endMonth={endMonth}
+                defaultMonth={parsed ?? new Date()}
+                selected={parsed}
+                onSelect={(date: Date | undefined) => {
+                  ctrl.onChange(date?.toISOString() ?? "");
+                  setOpen(false);
+                }}
+                disabled={isDateDisabled}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        );
+      }}
     />
   );
 };
@@ -810,6 +832,15 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({
   error,
 }: ControllerProps<T>) => {
   const minDate = field.minDate ? new Date(field.minDate) : undefined;
+  const currentYear = new Date().getFullYear();
+  const startMonth =
+    field.startMonth ??
+    (field.fromYear ? new Date(field.fromYear, 0) : new Date(1950, 0));
+  const endMonth =
+    field.endMonth ??
+    (field.toYear
+      ? new Date(field.toYear, 11)
+      : new Date(currentYear + 25, 11));
   const [step, setStep] = useState<"date" | "time">("date");
   const [open, setOpen] = useState(false);
 
@@ -879,14 +910,15 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({
               </Button>
             </PopoverTrigger>
 
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 z-[9999]" align="start">
               {step === "date" ? (
                 <>
                   <Calendar
                     mode="single"
-                    captionLayout="dropdown"
-                    fromYear={1950}
-                    toYear={new Date().getFullYear() + 20}
+                    captionLayout={field.captionLayout ?? "dropdown"}
+                    startMonth={startMonth}
+                    endMonth={endMonth}
+                    defaultMonth={parsed ?? new Date()}
                     selected={parsed}
                     onSelect={handleDateChange}
                     disabled={isDateDisabled}

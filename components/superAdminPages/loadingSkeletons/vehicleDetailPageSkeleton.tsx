@@ -24,7 +24,7 @@ export const VehicleDetailPageSkeleton = () => {
 
                         {/* Gallery */}
                         <div className="p-3 md:p-6 my-4 bg-white rounded-lg border border-gray-200">
-                                <Skeleton className="w-full aspect-108/40 rounded-lg bg-gray-300" />
+                                <Skeleton className="w-full aspect-[3/2] rounded-lg bg-gray-300 border border-gray-200" />
                                 <div className="flex gap-5 mt-5">
                                         <Skeleton className="w-full aspect-96/76 rounded-lg bg-gray-300" />
                                         <Skeleton className="w-full aspect-96/76 rounded-lg bg-gray-300" />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Info,
@@ -19,6 +20,9 @@ import { INSURANCE_LINK } from "@/constants/constant";
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
+
+const ABI_LOGO_URL =
+  "https://res.cloudinary.com/hitivlww/image/upload/v1789304738/american-business-insurance-logo.png";
 
 const VEHICLE_TYPES = [
   "Sedan",
@@ -358,20 +362,20 @@ export default function FleetForm({
                   ABI Period X policy connected
                 </span>
                 <span className="text-gray-500 text-xs sm:text-sm mt-0.5">
-                  Add this vehicle to your existing policy before listing it.
+                  Your policy information has been prefilled.
                 </span>
               </div>
             </div>
 
-            <Link
-              href={INSURANCE_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Add This Vehicle to ABI Policy"
-              className="w-full sm:w-auto text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors duration-200 shrink-0 whitespace-nowrap"
-            >
-              Add This Vehicle to ABI Policy
-            </Link>
+            <div className="shrink-0 flex items-center self-start sm:self-auto">
+              <Image
+                src={ABI_LOGO_URL}
+                alt="American Business Insurance"
+                width={150}
+                height={32}
+                className="h-7 sm:h-8 w-auto object-contain mix-blend-multiply"
+              />
+            </div>
           </div>
         ) : (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#F4F8FF] border border-blue-100">

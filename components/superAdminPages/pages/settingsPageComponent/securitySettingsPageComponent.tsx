@@ -9,12 +9,12 @@ import { FormFieldConfig } from "@/components/forms/types";
 import PageWrapper from "../../dashboard/pageWrapper";
 import { useChangeAdminPasswordMutation } from "@/app/store/services/adminApi";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
+        Dialog,
+        DialogContent,
+        DialogDescription,
+        DialogFooter,
+        DialogHeader,
+        DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
