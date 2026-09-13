@@ -4,6 +4,7 @@ import { PriBtn } from "../buttons";
 import Link from "next/link";
 import { DEFAULT_IMAGE_SRC } from "@/constants/constant";
 import { isValidImageSrc } from "@/lib/imageHelpers";
+import { Fuel, Settings, Users } from "lucide-react";
 
 export type Content = {
   id: string;
@@ -42,6 +43,20 @@ export type CarCardProps = {
   isConnectedHost?: boolean;
 };
 
+const formatFuelType = (fuelType?: string) => {
+  if (!fuelType) return "";
+  const normalized = fuelType.trim().toLowerCase();
+  if (
+    normalized === "gas/petrol" ||
+    normalized === "gas / petrol" ||
+    normalized === "petrol" ||
+    normalized === "gas"
+  ) {
+    return "Gas";
+  }
+  return fuelType;
+};
+
 export default function CarCard({
   // slug,
   featuredImage,
@@ -56,8 +71,8 @@ export default function CarCard({
   const carUrl = id;
 
   return (
-    <div className="bg-white">
-      <Link href={`/browse-cars/${carUrl}`} className="relative block">
+    <div className="bg-white overflow-hidden rounded-xs group">
+      <Link href={`/browse-cars/${carUrl}`} className="relative flex aspect-3/2 overflow-hidden">
         {isConnectedHost && (
           <span className="absolute top-2.5 left-2.5 z-10 px-2.5 py-1 rounded-full bg-blue-700 text-white text-xs font-semibold font-text leading-4">
             Your Host
@@ -67,12 +82,12 @@ export default function CarCard({
           src={isValidImageSrc(featuredImage?.src) ? featuredImage.src : DEFAULT_IMAGE_SRC}
           alt={featuredImage.alt}
           title={featuredImage.alt}
-          width={420}
-          height={215}
-          className="w-full aspect-420/215 object-cover"
+          width={600}
+          height={400}
+          className="w-full aspect-3/2 object-cover group-hover:scale-105 transition-transform duration-500"
         />
       </Link>
-      <div className="flex flex-col gap-3 p-2.5 md:p-5 border border-[#E5E7EB]">
+      <div className="flex flex-col gap-3 p-2.5 md:p-4 border border-[#E5E7EB]">
         <div className="flex items-center gap-1">
           <StarIcon />
           <span className="text-sm text-[#1F2937] font-semibold">
@@ -81,35 +96,35 @@ export default function CarCard({
           <span className="text-sm text-[#6B7280] font-normal">{`(${totalRatings})`}</span>
         </div>
         <Link href={`/browse-cars/${carUrl}`} className="hover:underline">
-          <h4 className="text-lg text-[#1F2937] font-bold font-text">
+          <h4 className="text-base text-[#1F2937] font-bold font-text">
             {carName}
           </h4>
         </Link>
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-1">
-            <PassengersIcon />
-            <span className="text-sm text-[#333333] font-normal">
+            <Users className="size-4 text-gray-400" />
+            <span className="text-xs text-[#333333] font-normal">
               {specifications.seats}
             </span>
           </div>
 
           <div className="flex items-center gap-1">
-            <FuelIcon />
-            <span className="text-sm text-[#333333] font-normal">
-              {specifications.fuelType}
+            <Fuel className="size-4 text-gray-400" />
+            <span className="text-xs text-[#333333] font-normal">
+              {formatFuelType(specifications.fuelType)}
             </span>
           </div>
 
           <div className="flex items-center gap-1">
-            <TransmissionIcon />
-            <span className="text-sm text-[#333333] font-normal">
+            <Settings className="size-4 text-gray-400" />
+            <span className="text-xs text-[#333333] font-normal">
               {specifications.transmission}
             </span>
           </div>
         </div>
         <div className="flex justify-between items-center gap-2">
           <div>
-            <p className="text-2xl text-[#1A56DB] font-medium">
+            <p className="text-2xl text-blue-700 font-medium">
               {"$"}
               {dailyPrice}
             </p>
