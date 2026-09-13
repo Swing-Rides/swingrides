@@ -93,8 +93,7 @@ const NeedHelpSectioin = () => {
                                                 Need help?
                                         </h3>
                                         <p className="text-gray-500 text-base font-normal font-text leading-6">
-                                                Reach out to our support team directly. We`&apos;re here to help with
-                                                booking issues, vehicle concerns, and anything else you need.
+                                                Reach out to our support team directly. We&apos;re here to help with booking issues, vehicle concerns, and anything else you need.
                                         </p>
                                         <div className='space-y-3 mt-2 mb-3 mb:mt-6 mb:mb-8'>
                                                 {contactLink.map((item) => (
