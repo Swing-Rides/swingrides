@@ -17,7 +17,17 @@ export default function CarPageLoading() {
                                         <div className="col-span-1 md:col-span-7 w-full">
                                                 <div className="flex flex-col gap-5">
                                                         {/* Gallery */}
-                                                        <Skeleton className="aspect-video w-full rounded-[10px] bg-gray-300" />
+                                                        <div className="space-y-4.5">
+                                                                <Skeleton className="w-full aspect-[3/2] rounded-lg bg-gray-300 border border-gray-200" />
+                                                                <div className="grid grid-cols-5 gap-4.5">
+                                                                        {Array.from({ length: 5 }).map((_, i) => (
+                                                                                <Skeleton
+                                                                                        key={i}
+                                                                                        className="w-full aspect-96/76 rounded-lg bg-gray-300"
+                                                                                />
+                                                                        ))}
+                                                                </div>
+                                                        </div>
 
                                                         {/* Car detail card */}
                                                         <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
