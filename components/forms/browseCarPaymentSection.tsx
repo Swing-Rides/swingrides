@@ -3,7 +3,7 @@
 import { memo, useMemo } from "react";
 import Link from "next/link";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
-import { Shield, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Shield, ShieldCheck } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import {
   type PriceConfig,
@@ -151,12 +151,13 @@ export const PaymentSection = memo(
       handleSubmit,
       control,
       setValue,
+      clearErrors,
       formState: { errors, isSubmitting },
     } = useForm<PaymentFormValues>({
       mode: "onTouched",
       defaultValues: async () => {
         const savedDraft = vehicleId ? readDraftFromStorage(vehicleId) : null;
-        const usingHostCoverage = savedDraft?.hostProvidingCoverage ?? true;
+        const usingHostCoverage = savedDraft?.hostProvidingCoverage ?? false;
 
         return {
           pickupDate: savedDraft?.pickupDate ?? "",
@@ -211,7 +212,7 @@ export const PaymentSection = memo(
     // If they've entered insurance, unmark host coverage automatically
     const effectiveHostCoverage = hasInsuranceInput
       ? false
-      : hostProvidingCoverage;
+      : (hostProvidingCoverage ?? false);
 
     // Keep the checkbox in sync when insurance is filled in
     const handleInsuranceChange = () => {
@@ -589,7 +590,6 @@ export const PaymentSection = memo(
 
         {/* ── Insurance card ──────────────────────────────── */}
         <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
-
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <h4 className="text-neutral-950 text-base font-semibold font-text leading-6">
@@ -624,142 +624,162 @@ export const PaymentSection = memo(
                 Get a Quote
               </Link>
             </div>
-          </div>
 
-          <div className="flex flex-col gap-4">
-            {/* Insurance Provider */}
-            <FormRow
-              label="Insurance Provider"
-              htmlFor="insuranceProvider"
-              error={errors.insuranceProvider?.message}
+            {/* Host providing coverage checkbox */}
+            <div
+              className={`p-4 rounded-[10px] border transition-colors ${effectiveHostCoverage
+                ? "bg-blue-50/50 border-blue-200"
+                : "bg-gray-50/60 border-gray-200 hover:border-gray-300"
+                }`}
             >
-              <TextInput
+              <CheckboxInput
                 field={{
-                  name: "insuranceProvider",
-                  type: "text",
-                  placeholder: "e.g. Progressive, Geico, State Farm",
-                  validation: { onChange: handleInsuranceChange },
-                }}
-                register={register}
-                error={errors.insuranceProvider?.message}
-              />
-            </FormRow>
-
-            {/* Policy Number */}
-            <FormRow
-              label="Policy Number"
-              htmlFor="policyNumber"
-              error={errors.policyNumber?.message}
-            >
-              <TextInput
-                field={{
-                  name: "policyNumber",
-                  type: "text",
-                  placeholder: "e.g. PLY-123456789",
-                  validation: {
-                    onChange: handleInsuranceChange,
-                    validate: (value: string) => {
-                      if (insuranceProvider && !value) {
-                        return "Policy number is required when provider is entered";
-                      }
-                      // Block submitting the host's own policy number as if it were
-                      // the renter's — this is only meaningful once they've actually
-                      // opted out of host coverage and are claiming their own policy.
-                      if (
-                        value &&
-                        hostInsurancePolicyNumber &&
-                        value.trim().toLowerCase() ===
-                        hostInsurancePolicyNumber.trim().toLowerCase()
-                      ) {
-                        return "This matches the host's policy — enter your own insurance details";
-                      }
-                      return true;
-                    },
-                  },
-                }}
-                register={register}
-                error={errors.policyNumber?.message}
-              />
-            </FormRow>
-
-            {/* Expiry Date — date only, time isn't relevant here */}
-            <FormRow
-              label="Expiry Date"
-              htmlFor="insuranceExpiry"
-              error={errors.insuranceExpiry?.message}
-            >
-              <DateInput
-                field={{
-                  name: "insuranceExpiry",
-                  type: "date",
-                  placeholder: "Pick expiry date",
-                  // Only dates more than 30 days from now are valid
-                  minDate: THIRTY_DAYS_FROM_NOW,
-                  validation: {
-                    validate: (value: string) => {
-                      // Required if either provider or policy number is filled
-                      if ((insuranceProvider || policyNumber) && !value) {
-                        return "Expiry date is required with insurance details";
-                      }
-                      if (!value) return true;
-                      const expiry = new Date(value);
-                      if (expiry <= THIRTY_DAYS_FROM_NOW) {
-                        return "Expiry date must be more than 30 days from today";
-                      }
-                      return true;
-                    },
-                  },
+                  name: "hostProvidingCoverage",
+                  type: "checkbox",
+                  defaultValue: false,
+                  label: (
+                    <div className="flex flex-col gap-0.5 ml-1 cursor-pointer">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <span className="font-semibold text-neutral-950 text-sm">
+                          Host is providing coverage
+                        </span>
+                        {insuranceFeePerDay > 0 && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                            {formatCurrency(insuranceFeePerDay)}/day
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-500 leading-relaxed font-normal">
+                        {effectiveHostCoverage
+                          ? "Coverage provided directly by the host. No personal insurance details required."
+                          : "Check this box if you want the host to provide rental coverage."}
+                      </span>
+                    </div>
+                  ),
                 }}
                 control={control}
-                error={errors.insuranceExpiry?.message}
+                checked={effectiveHostCoverage}
+                onCheckedChange={(checked) => {
+                  setValue("hostProvidingCoverage", checked, {
+                    shouldValidate: false,
+                  });
+                  if (checked) {
+                    // Re-selecting host coverage clears the renter's own insurance details
+                    setValue("insuranceProvider", "", { shouldValidate: false });
+                    setValue("policyNumber", "", { shouldValidate: false });
+                    setValue("insuranceExpiry", "", { shouldValidate: false });
+                    clearErrors([
+                      "insuranceProvider",
+                      "policyNumber",
+                      "insuranceExpiry",
+                    ]);
+                  }
+                }}
               />
-            </FormRow>
+            </div>
+          </div>
 
-            {/* Host providing coverage checkbox — checked state is derived
-                (effectiveHostCoverage), not the raw field value, and it
-                self-disables once insurance details are entered, so it
-                uses CheckboxInput's checked/onCheckedChange overrides */}
-            <CheckboxInput
-              field={{
-                name: "hostProvidingCoverage",
-                type: "checkbox",
-                label: (
-                  <>
-                    Host is providing coverage
-                    {insuranceFeePerDay > 0 && (
-                      <span className="text-[#9CA3AF] font-normal">
-                        {" "}
-                        ({formatCurrency(insuranceFeePerDay)}/day)
-                      </span>
-                    )}
-                  </>
-                ),
-              }}
-              control={control}
-              checked={effectiveHostCoverage}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  // Re-selecting host coverage clears the renter's own insurance details
-                  setValue("insuranceProvider", "", { shouldValidate: false });
-                  setValue("policyNumber", "", { shouldValidate: false });
-                  setValue("insuranceExpiry", "", { shouldValidate: false });
-                }
-                setValue("hostProvidingCoverage", checked, {
-                  shouldValidate: false,
-                });
-              }}
-            />
-
-            {hasInsuranceInput && (
-              <div className="flex items-start gap-2 p-3 bg-amber-500/10 rounded-md text-amber-600">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span className="text-xs font-medium font-text leading-4">
-                  Your own insurance will be used. Host coverage has been
-                  deselected.
+          {/* Renter's own insurance form - only visible if host coverage is not checked */}
+          {!effectiveHostCoverage && (
+            <div className="flex flex-col gap-4 pt-4 border-t border-gray-200">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-semibold text-neutral-950">
+                  Your Insurance Information
+                </span>
+                <span className="text-xs text-gray-500">
+                  Please provide your personal or third-party auto insurance details below.
                 </span>
               </div>
-            )}
-          </div>
+
+              {/* Insurance Provider */}
+              <FormRow
+                label="Insurance Provider"
+                htmlFor="insuranceProvider"
+                error={errors.insuranceProvider?.message}
+              >
+                <TextInput
+                  field={{
+                    name: "insuranceProvider",
+                    type: "text",
+                    placeholder: "e.g. Progressive, Geico, State Farm",
+                    validation: { onChange: handleInsuranceChange },
+                  }}
+                  register={register}
+                  error={errors.insuranceProvider?.message}
+                />
+              </FormRow>
+
+              {/* Policy Number */}
+              <FormRow
+                label="Policy Number"
+                htmlFor="policyNumber"
+                error={errors.policyNumber?.message}
+              >
+                <TextInput
+                  field={{
+                    name: "policyNumber",
+                    type: "text",
+                    placeholder: "e.g. PLY-123456789",
+                    validation: {
+                      onChange: handleInsuranceChange,
+                      validate: (value: string) => {
+                        if (insuranceProvider && !value) {
+                          return "Policy number is required when provider is entered";
+                        }
+                        // Block submitting the host's own policy number as if it were
+                        // the renter's — this is only meaningful once they've actually
+                        // opted out of host coverage and are claiming their own policy.
+                        if (
+                          value &&
+                          hostInsurancePolicyNumber &&
+                          value.trim().toLowerCase() ===
+                          hostInsurancePolicyNumber.trim().toLowerCase()
+                        ) {
+                          return "This matches the host's policy — enter your own insurance details";
+                        }
+                        return true;
+                      },
+                    },
+                  }}
+                  register={register}
+                  error={errors.policyNumber?.message}
+                />
+              </FormRow>
+
+              {/* Expiry Date — date only, time isn't relevant here */}
+              <FormRow
+                label="Expiry Date"
+                htmlFor="insuranceExpiry"
+                error={errors.insuranceExpiry?.message}
+              >
+                <DateInput
+                  field={{
+                    name: "insuranceExpiry",
+                    type: "date",
+                    placeholder: "Pick expiry date",
+                    // Only dates more than 30 days from now are valid
+                    minDate: THIRTY_DAYS_FROM_NOW,
+                    validation: {
+                      validate: (value: string) => {
+                        // Required if either provider or policy number is filled
+                        if ((insuranceProvider || policyNumber) && !value) {
+                          return "Expiry date is required with insurance details";
+                        }
+                        if (!value) return true;
+                        const expiry = new Date(value);
+                        if (expiry <= THIRTY_DAYS_FROM_NOW) {
+                          return "Expiry date must be more than 30 days from today";
+                        }
+                        return true;
+                      },
+                    },
+                  }}
+                  control={control}
+                  error={errors.insuranceExpiry?.message}
+                />
+              </FormRow>
+            </div>
+          )}
         </div>
 
         {/* ── Submit ──────────────────────────────────────── */}
