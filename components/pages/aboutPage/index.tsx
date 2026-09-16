@@ -1,7 +1,7 @@
 import Image from "next/image"
 import { Fragment } from "react/jsx-runtime"
 import FAQsSection from '@/components/faqs';
-import { Car, Compass, Handshake, LayoutGrid, Lightbulb, MapPin, Percent, ShieldCheck, Target, Users } from "lucide-react";
+import { BarChart3, Car, CarFront, Compass, Handshake, LayoutGrid, Lightbulb, MapPin, Percent, Settings, ShieldCheck, Target, Users } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { DISCORD_COMMUNITY_LINK } from "@/constants/constant";
@@ -64,9 +64,9 @@ const ourVisionContent = [
 export default function AboutPageComponents() {
         return (
                 <>
-                        <HeroSection/>
+                        <HeroSection />
                         <OurMissionSection />
-                        <SwingNumberSection/>
+                        <SwingNumberSection />
                         <OurStorySection />
                         <FAQsSection />
                 </>
@@ -76,33 +76,33 @@ export default function AboutPageComponents() {
 const HeroSection = () => {
         return (
                 <section className='relative overflow-clip min-h-fit z-2'>
-                                        <div>
-                                                <Image
-                                                        src={"/images/to-rent-cars.png"}
-                                                        alt={`We' re building a better way, to rent cars..`}
-                                                        title={`We' re building a better way, to rent cars..`}
-                                                        width={1441}
-                                                        height={579}
-                                                        className='w-full min-h-[70dvh] object-cover'
-                                                />
+                        <div>
+                                <Image
+                                        src={"/images/to-rent-cars.png"}
+                                        alt={`We' re building a better way, to rent cars..`}
+                                        title={`We' re building a better way, to rent cars..`}
+                                        width={1441}
+                                        height={579}
+                                        className='w-full min-h-[70dvh] object-cover'
+                                />
+                        </div>
+                        <div className='absolute inset-0 size-full z-10 px-4 md:px-8 flex items-center'>
+                                <div className='py-20 md:py-37.5 md:max-w-7xl space-y-6'>
+                                        <div className='space-y-5'>
+                                                <span className="block text-blue-700 text-sm font-semibold font-text">
+                                                        WHO WE ARE
+                                                </span>
+                                                <h1 className='text-4xl md:text-6xl leading-16 font-black max-w-148'>
+                                                        <span className='text-neutral-950 font-sans'>We&apos;re building a better</span>{' '}
+                                                        <span className='text-blue-700 font-sans'>way to rent cars.</span>
+                                                </h1>
+                                                <p className='max-w-148 w-full text-lg font-normal font-text text-gray-600'>
+                                                        SwingRides connects you with trusted independent rental businesses so you can enjoy quality cars, great service, and real value.
+                                                </p>
                                         </div>
-                                        <div className='absolute inset-0 size-full z-10 px-4 md:px-8 flex items-center'>
-                                                <div className='py-20 md:py-37.5 md:max-w-7xl space-y-6'>
-                                                        <div className='space-y-5'>
-                                                                <span className="block text-blue-700 text-sm font-semibold font-text">
-                                                                        WHO WE ARE
-                                                                </span>
-                                                                <h1 className='text-4xl md:text-6xl leading-16 font-black max-w-148'>
-                                                                        <span className='text-neutral-950 font-sans'>We&apos;re building a better</span>{' '}
-                                                                        <span className='text-blue-700 font-sans'>way to rent cars.</span>
-                                                                </h1>
-                                                                <p className='max-w-148 w-full text-lg font-normal font-text text-gray-600'>
-                                                                        SwingRides connects you with trusted independent rental businesses so you can enjoy quality cars, great service, and real value.
-                                                                </p>
-                                                        </div>
-                                                </div>
-                                        </div>
-                                </section>
+                                </div>
+                        </div>
+                </section>
         )
 }
 
@@ -132,7 +132,7 @@ const OurMissionSection = () => {
                                         </h3>
                                         <div className="flex flex-wrap gap-6">
                                                 {ourVisionContent.map((item) => (
-                                                        <div 
+                                                        <div
                                                                 key={item.title}
                                                                 className="flex flex-col gap-3 basis-51.25 grow shrink"
                                                         >
@@ -168,7 +168,7 @@ export const SwingNumberSection = () => {
                                 <div className="flex flex-wrap mx-auto justify-center rounded-2xl shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] overflow-clip bg-slate-100 border border-gray-200 divide-y md:divide-y-0 md:divide-x">
                                         {NumberContent.map((item) => (
                                                 <Fragment key={item.number}>
-                                                        <NumberCard 
+                                                        <NumberCard
                                                                 content={item}
                                                         />
                                                 </Fragment>
@@ -185,7 +185,7 @@ type ContentProps = {
         label: string;
 }
 
-const NumberCard = ({ content }: { content: ContentProps} ) => {
+const NumberCard = ({ content }: { content: ContentProps }) => {
         return (
                 <div className="grow shrink basis-64 max-w-66 w-full space-y-4 py-6 px-10">
                         <div className='size-10 bg-blue-50 rounded-full flex justify-center items-center mx-auto'>
@@ -203,53 +203,132 @@ const NumberCard = ({ content }: { content: ContentProps} ) => {
         )
 }
 
+const storyFeatures = [
+        {
+                icon: <Users className="size-6 sm:size-7 text-blue-600 shrink-0 mt-0.5" />,
+                title: "Local connections",
+                description: "Renters connect directly with independent hosts.",
+        },
+        {
+                icon: <CarFront className="size-6 sm:size-7 text-blue-600 shrink-0 mt-0.5" />,
+                title: "Host independence",
+                description: "Hosts control their vehicles, pricing and customer relationships.",
+        },
+        {
+                icon: <Settings className="size-6 sm:size-7 text-blue-600 shrink-0 mt-0.5" />,
+                title: "One connected platform",
+                description: "Bookings, payments and business tools in one place.",
+        },
+];
+
+const roadAheadGoals = [
+        {
+                icon: <BarChart3 className="size-5 text-slate-200" />,
+                title: "Grow city by city",
+                description: "Build trusted local rental communities.",
+        },
+        {
+                icon: <Users className="size-5 text-slate-200" />,
+                title: "Strengthen host businesses",
+                description: "Create tools and partnerships that support growth.",
+        },
+        {
+                icon: <MapPin className="size-5 text-slate-200" />,
+                title: "Expand thoughtfully",
+                description: "Bring the SwingRides model to more markets over time.",
+        },
+];
+
 const OurStorySection = () => {
         return (
-                <section className='py-12 px-4 md:px-8 md:py-20 section-bg-gradient'>
-                        <div className="space-y-6 md:space-y-10">
-                                <div>
-                                        <span className="text-blue-700 text-xs font-bold font-text uppercase leading-4 tracking-wider">
-                                                Our Story
-                                        </span>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 justify-center">
-                                        <div className="flex flex-col gap-5 justify-center">
-                                                <h3 className="text-neutral-950 text-2xl font-bold font-text leading-8 max-w-102.5">
-                                                        Built from real experiences. Driven by a simple idea.
-                                                </h3>
-                                                <p className="text-gray-500 text-base font-normal font-text leading-6">
-                                                        SwingRides was founded to solve the challenges renters and car rental businesses face every day. From long lines and hidden fees to lack of transparency and poor customer support, we knew there had to be a better way to rent and manage vehicles for everyone.
-                                                </p>
-                                        </div>
-                                        <div>
-                                                <Image 
-                                                        src={'/images/SwingRides-our_story.webp'}
-                                                        alt={`Built from real experiences. Driven by a simple idea.`}
-                                                        title={`Built from real experiences. Driven by a simple idea.`}
-                                                        width={1536}
-                                                        height={1024}
-                                                        className="aspect-411/395 object-cover w-full rounded-[14px]"
-                                                />
-                                        </div>
-                                        <div className="p-8 bg-blue-950 rounded-2xl flex flex-col gap-6 md:gap-8 justify-between items-stretch">
-                                                <div className="space-y-4">
-                                                        <div className="size-11 bg-blue-700 rounded-full flex justify-center items-center">
-                                                                <Compass className='size-5 text-white' />
-                                                        </div>
-                                                        <h4 className="justify-center text-white text-xl font-bold font-text leading-7">
-                                                                The road ahead
-                                                        </h4>
-                                                        <p className="text-slate-400 text-sm font-normal font-text leading-6">
-                                                                We&apos;re just getting started. Our goal is to become the most trusted car rental platform for renters and the most powerful growth partner for independent rental businesses worldwide.
+                <section className='py-12 px-4 md:px-8 lg:px-12 md:py-20 section-bg-gradient'>
+                        <div className="w-full">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+                                        {/* Column 1: Story Details */}
+                                        <div className="flex flex-col justify-center py-1">
+                                                <div>
+                                                        <span className="text-blue-600 text-xs font-bold font-text uppercase tracking-wider block mb-3">
+                                                                OUR STORY
+                                                        </span>
+                                                        <h2 className="text-neutral-950 text-3xl sm:text-4xl lg:text-[34px] xl:text-[38px] font-bold font-text leading-[1.18] tracking-tight">
+                                                                Built from real experiences. <br className="hidden sm:inline" />
+                                                                Driven by a simple idea.
+                                                        </h2>
+                                                        <p className="text-slate-500 text-sm sm:text-base font-normal font-text leading-relaxed mt-4">
+                                                                SwingRides was created to give renters a more personal way to find vehicles and to give independent hosts the tools to run and grow their businesses.
                                                         </p>
                                                 </div>
-                                                <div className="w-full">
-                                                        <Link 
-                                                                href={DISCORD_COMMUNITY_LINK} 
+
+                                                <div className="mt-8 space-y-6">
+                                                        {storyFeatures.map((item) => (
+                                                                <div key={item.title} className="flex items-start gap-4">
+                                                                        {item.icon}
+                                                                        <div className="space-y-0.5">
+                                                                                <h4 className="text-neutral-950 text-base font-bold font-text leading-snug">
+                                                                                        {item.title}
+                                                                                </h4>
+                                                                                <p className="text-slate-500 text-sm font-normal font-text leading-relaxed">
+                                                                                        {item.description}
+                                                                                </p>
+                                                                        </div>
+                                                                </div>
+                                                        ))}
+                                                </div>
+                                        </div>
+
+                                        {/* Column 2: Center Image */}
+                                        <div className="relative w-full aspect-1536/1024 rounded-2xl overflow-hidden shadow-sm">
+                                                <Image
+                                                        src="/images/SwingRides-our_story.webp"
+                                                        alt="Built from real experiences. Driven by a simple idea."
+                                                        title="Built from real experiences. Driven by a simple idea."
+                                                        fill
+                                                        sizes="(max-width: 1024px) 100vw, 33vw"
+                                                        className="object-cover"
+                                                />
+                                        </div>
+
+                                        {/* Column 3: The Road Ahead Card */}
+                                        <div className="p-6 sm:p-8 bg-[#0f1f38] rounded-2xl flex flex-col justify-between text-white shadow-md">
+                                                <div>
+                                                        <div className="size-10 bg-blue-600 rounded-full flex items-center justify-center mb-5">
+                                                                <Compass className="size-5 text-white" />
+                                                        </div>
+                                                        <h3 className="text-white text-2xl font-bold font-text leading-tight mb-3">
+                                                                The road ahead
+                                                        </h3>
+                                                        <p className="text-slate-400 text-sm font-normal font-text leading-relaxed">
+                                                                We&apos;re building toward a future where renters have more choice and independent hosts have more control.
+                                                        </p>
+
+                                                        <div className="border-t border-slate-700/60 my-6" />
+
+                                                        <div className="space-y-5">
+                                                                {roadAheadGoals.map((item) => (
+                                                                        <div key={item.title} className="flex items-center gap-4">
+                                                                                <div className="size-10 rounded-full border border-slate-600/70 flex items-center justify-center shrink-0">
+                                                                                        {item.icon}
+                                                                                </div>
+                                                                                <div>
+                                                                                        <h4 className="text-white text-sm font-bold font-text leading-tight">
+                                                                                                {item.title}
+                                                                                        </h4>
+                                                                                        <p className="text-slate-400 text-xs font-normal font-text leading-tight mt-0.5">
+                                                                                                {item.description}
+                                                                                        </p>
+                                                                                </div>
+                                                                        </div>
+                                                                ))}
+                                                        </div>
+                                                </div>
+
+                                                <div className="mt-8 pt-2">
+                                                        <Link
+                                                                href={DISCORD_COMMUNITY_LINK}
                                                                 target="_blank"
-                                                                rel="noopener"
-                                                                title="join our community"
-                                                                className="flex justify-center text-white text-base font-semibold font-text leading-6 w-full px-8 py-3.5 rounded-xs border border-white"
+                                                                rel="noopener noreferrer"
+                                                                title="Join the Journey"
+                                                                className="flex justify-center items-center text-white text-sm font-semibold font-text leading-5 w-full py-3 px-6 rounded-lg border border-slate-600/70 hover:border-white hover:bg-white/5 transition-all text-center"
                                                         >
                                                                 Join the Journey
                                                         </Link>
