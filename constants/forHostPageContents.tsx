@@ -4,7 +4,7 @@ import { CalendarDays, Car, ChartColumnBig, CirclePlus, FileText, RotateCw, Scro
 
 export const fleetManagementContent: TabContentProps = {
         image: {
-                src: '/images/fleet-management.png',
+                src: '/images/fleet-management.webp',
                 alt: 'Fleet Management',
         },
         content: [
@@ -31,7 +31,7 @@ export const fleetManagementContent: TabContentProps = {
 
 export const bookingContent: TabContentProps = {
         image: {
-                src: '/images/bookings.png',
+                src: '/images/bookings.webp',
                 alt: 'Booking',
         },
         content: [
@@ -58,7 +58,7 @@ export const bookingContent: TabContentProps = {
 
 export const financesContent: TabContentProps = {
         image: {
-                src: '/images/finances.png',
+                src: '/images/finances.webp',
                 alt: 'Finances',
         },
         content: [
@@ -86,7 +86,7 @@ export const financesContent: TabContentProps = {
 
 export const maintenanceContent: TabContentProps = {
         image: {
-                src: '/images/maintenance.png',
+                src: '/images/maintenance.webp',
                 alt: 'Maintenance',
         },
         content: [
@@ -131,7 +131,7 @@ export const maintenanceContent: TabContentProps = {
 
 export const reportsContent: TabContentProps = {
         image: {
-                src: '/images/reports.png',
+                src: '/images/reports.webp',
                 alt: 'Reports',
         },
         content: [
