@@ -10,29 +10,29 @@ type SocialLinkProps = {
 export default function SocialMediaIconLink() {
         return (
                 <div className='flex items-center gap-3'>
-                       <SocialLink 
+                       {/* <SocialLink 
                                 href={'https://www.facebook.com/swingrides'}
                                 label={'Click to visit our Facebook page'}
                         >
                                 <FacebookIcon />
-                        </SocialLink> 
+                        </SocialLink>  */}
 
                         <SocialLink 
-                                href={'https://www.twitter.com/swingrides'}
+                                href={'https://x.com/swingrides'}
                                 label={'Click to visit our Twitter page'}
                         >
                                 <TwitterIcon />
                         </SocialLink>
 
                         <SocialLink 
-                                href={'https://www.instagram.com/swingrides'}
+                                href={'https://www.instagram.com/swing.rides'}
                                 label={'Click to visit our Instagram page'}
                         >
                                 <InstagramIcon />
                         </SocialLink>
 
                         <SocialLink 
-                                href={'https://www.linkedin.com/company/swingrides'}
+                                href={'https://www.linkedin.com/in/swing-rides-a86262424'}
                                 label={'Click to visit our LinkedIn page'}
                         >
                                 <LinkedInIcon />
@@ -46,21 +46,22 @@ const SocialLink = ({ href, label, children }: SocialLinkProps ) => {
                 <Link 
                         href={href}
                         title={label}
+                        target='_blank'
                 >
                         {children}
                 </Link>
         )
 }
 
-const FacebookIcon = () => {
-        return (
-                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M0 10C0 4.47716 4.47715 0 10 0H25.9946C31.5175 0 35.9946 4.47715 35.9946 10V25.9946C35.9946 31.5175 31.5175 35.9946 25.9946 35.9946H10C4.47716 35.9946 0 31.5175 0 25.9946V10Z" fill="#1A56DB" />
-                        <path d="M21.9959 11.333H19.9965C19.1128 11.333 18.2652 11.6841 17.6403 12.309C17.0154 12.9339 16.6644 13.7814 16.6644 14.6652V16.6645H14.665V19.3303H16.6644V24.6618H19.3301V19.3303H21.3294L21.9959 16.6645H19.3301V14.6652C19.3301 14.4885 19.4003 14.3189 19.5253 14.194C19.6503 14.069 19.8198 13.9988 19.9965 13.9988H21.9959V11.333Z" stroke="white" strokeWidth="1.33288" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+// const FacebookIcon = () => {
+//         return (
+//                 <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+//                         <path d="M0 10C0 4.47716 4.47715 0 10 0H25.9946C31.5175 0 35.9946 4.47715 35.9946 10V25.9946C35.9946 31.5175 31.5175 35.9946 25.9946 35.9946H10C4.47716 35.9946 0 31.5175 0 25.9946V10Z" fill="#1A56DB" />
+//                         <path d="M21.9959 11.333H19.9965C19.1128 11.333 18.2652 11.6841 17.6403 12.309C17.0154 12.9339 16.6644 13.7814 16.6644 14.6652V16.6645H14.665V19.3303H16.6644V24.6618H19.3301V19.3303H21.3294L21.9959 16.6645H19.3301V14.6652C19.3301 14.4885 19.4003 14.3189 19.5253 14.194C19.6503 14.069 19.8198 13.9988 19.9965 13.9988H21.9959V11.333Z" stroke="white" strokeWidth="1.33288" strokeLinecap="round" strokeLinejoin="round" />
+//                 </svg>
 
-        )
-}
+//         )
+// }
 
 const TwitterIcon = () => {
         return (

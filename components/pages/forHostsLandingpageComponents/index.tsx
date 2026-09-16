@@ -86,67 +86,6 @@ const HeroSection = () => {
   );
 };
 
-// const NumberSection = () => {
-
-// 	const numberContent = [
-//         {
-// 			icon: <Building className="text-blue-700 size-8" />,
-// 			number: "2,500+",
-// 			label: "Rental Businesses",
-//         },
-//         {
-// 			icon: <Car className="text-blue-700 size-8" />,
-// 			number: "2,500+",
-// 			label: "Vehicles Managed",
-//         },
-//         {
-// 			icon: <CalendarCheck className="text-blue-700 size-8" />,
-// 			number: "150,000+",
-// 			label: "Bookings Processed",
-//         },
-//         {
-// 			icon: <ThumbsUp className="text-blue-700 size-8" />,
-// 			number: "98%",
-// 			label: "Customer Satisfaction",
-//         },
-// 	];
-
-
-//     return (
-//         <section className="py-12 px-4 md:px-8 md:py-20 bg-indigo-50">
-// 			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 justify-between divide-x">
-//                 <div className="">
-// 					<h3 className="text-neutral-950 text-sm font-bold font-text leading-4">
-// 						Trusted by rental operators and fleet owners
-// 					</h3>
-//                 </div>
-//                 {numberContent.map((item) => (
-//                     <Fragment key={item.label}>
-//                         <NumberCard
-//                             icon={item.icon}
-//                             number={item.number}
-//                             label={item.label}
-//                         />
-//                     </Fragment>
-//                 ))}
-//                 <div className="flex flex-col">
-//                     <div className="flex gap-2 items-center justify-start">
-// 						<StarRating
-// 							rating={4.8}
-// 						/>
-// 						<span className="text-neutral-950 text-2xl font-bold font-text leading-8">
-// 							4.8/5
-// 						</span>
-// 					</div>
-// 					<span className="text-gray-500 text-sm font-normal font-text leading-5">
-// 						Based on 1,847 reviews
-// 					</span>
-//                 </div>
-//             </div>
-//         </section>
-//     );
-// };
-
 const HowItWork = () => {
 
   const content: HowItWorksCardProps[] = [
@@ -256,30 +195,6 @@ export const Pill = ({ label }: { label: string }) => {
     </div>
   );
 };
-
-// type NumberCardProps = {
-//   icon: ReactNode;
-//   number: string;
-//   label: string;
-// };
-
-// const NumberCard = ({ icon, number, label }: NumberCardProps) => {
-//   return (
-//     <div className="px-4 flex gap-4 overflow-hidden">
-//       <div>
-//         {icon}
-//       </div>
-//       <div className="flex flex-col gap-3">
-//         <h3 className="text-neutral-950 text-2xl font-bold font-text leading-8">
-//           {number}
-//         </h3>
-//         <span className="text-gray-500 text-sm font-normal font-text leading-5">
-//           {label}
-//         </span>
-//       </div>
-//     </div>
-//   );
-// };
 
 const TrustSection = () => {
   return (
