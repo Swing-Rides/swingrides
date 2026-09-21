@@ -858,12 +858,18 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({
       defaultValue={(field.defaultValue ?? "") as PathValue<T, Path<T>>}
       rules={field.validation as RegisterOptions<T, Path<T>>}
       render={({ field: ctrl }) => {
-        const parsed = ctrl.value ? new Date(ctrl.value) : undefined;
+        const parsed =
+          ctrl.value && !isNaN(new Date(ctrl.value).getTime())
+            ? new Date(ctrl.value)
+            : undefined;
 
         const handleDateChange = (date?: Date) => {
           if (!date) return;
-          const existing = ctrl.value ? new Date(ctrl.value) : new Date();
-          date.setHours(existing.getHours(), existing.getMinutes());
+          const existing =
+            ctrl.value && !isNaN(new Date(ctrl.value).getTime())
+              ? new Date(ctrl.value)
+              : new Date();
+          date.setHours(existing.getHours(), existing.getMinutes(), 0, 0);
           ctrl.onChange(date.toISOString());
         };
 
@@ -874,15 +880,18 @@ export const DateTimeInput = <T extends FieldValues = FieldValues>({
         const minute = parsed ? parsed.getMinutes() : 0;
 
         const applyTime = (h12: number, m: number, p: "AM" | "PM") => {
-          const base = ctrl.value ? new Date(ctrl.value) : new Date();
+          const base =
+            ctrl.value && !isNaN(new Date(ctrl.value).getTime())
+              ? new Date(ctrl.value)
+              : new Date();
           let h24 = h12 % 12;
           if (p === "PM") h24 += 12;
-          base.setHours(h24, m);
+          base.setHours(h24, m, 0, 0);
           ctrl.onChange(base.toISOString());
         };
 
         const hourOptions = Array.from({ length: 12 }, (_, i) => i + 1);
-        const minuteOptions = Array.from({ length: 59 }, (_, i) => i + 1);
+        const minuteOptions = Array.from({ length: 60 }, (_, i) => i);
 
         return (
           <Popover

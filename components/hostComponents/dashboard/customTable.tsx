@@ -127,6 +127,10 @@ export type EditAction<TRow> =
         | {
                 type: "link";
                 href: (row: TRow) => string;
+        }
+        | {
+                type: "modal" | "popup";
+                onClick: (row: TRow) => void;
         };
 
 /**
@@ -817,7 +821,7 @@ export function DataTable<TRow extends { id: string }>({
         };
 
         const handleEditConfirm = () => {
-                if (activeRow && editAction && editAction.type !== "link") {
+                if (activeRow && editAction && (!editAction.type || editAction.type === "dialog")) {
                         editAction.onConfirm(activeRow);
                         closePanel();
                 }
@@ -910,8 +914,18 @@ export function DataTable<TRow extends { id: string }>({
                                                                                                                 >
                                                                                                                         <Pencil className="size-4 text-gray-500" />
                                                                                                                 </Link>
+                                                                                                        ) : editAction.type === "modal" || editAction.type === "popup" ? (
+                                                                                                                <button
+                                                                                                                        type="button"
+                                                                                                                        onClick={() => editAction.onClick(row)}
+                                                                                                                        className="p-1.5 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                                                                                                                        title="Edit"
+                                                                                                                >
+                                                                                                                        <Pencil className="size-4 text-gray-500" />
+                                                                                                                </button>
                                                                                                         ) : (
                                                                                                                 <button
+                                                                                                                        type="button"
                                                                                                                         onClick={() => openPanel("edit", row)}
                                                                                                                         className="p-1.5 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
                                                                                                                         title="Edit"
@@ -975,7 +989,7 @@ export function DataTable<TRow extends { id: string }>({
                         </div>
 
                         {/* Edit dialog — only rendered when editAction is the dialog variant */}
-                        {editAction && editAction.type !== "link" && (
+                        {editAction && (!editAction.type || editAction.type === "dialog") && (
                                 <TableDialog
                                         open={panelKind === "edit"}
                                         onClose={closePanel}

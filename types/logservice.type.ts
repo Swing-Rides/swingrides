@@ -79,7 +79,7 @@ export interface MaintenanceDashboardQuery {
   limit?: number;
 }
 
-export type NextServiceDueMode = "mileage" | "date";
+export type NextServiceDueMode = "mileage" | "date" | "both";
 
 export interface LogServiceModalRequest {
   vehicle: string;
@@ -88,7 +88,7 @@ export interface LogServiceModalRequest {
   mileageAtServiceKm: number;
   cost: number;
   providerOrWorkshop: string;
-  nextServiceDueMode: NextServiceDueMode;
+  nextServiceDueMode?: NextServiceDueMode;
   nextDueMileageKm?: number;
   nextDueDate?: string;
   notes?: string;

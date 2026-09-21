@@ -172,12 +172,7 @@ export default function FleetPageComponents() {
   const handleMarkMaintenance = async (vehicle: IListVehiclesDatum) => {
     setVehicleActionError(null);
 
-    try {
-      await markUnavailable(vehicle._id).unwrap();
-      loadVehicles();
-    } catch (error) {
-      setVehicleActionError(getMutationErrorMessage(error));
-    }
+    router.push(`${HOST_DASHBOARD_PATH}maintenance?log-service=${vehicle._id}`);
   };
 
   const submitRelistRequest = async (values: RequestRelistFormValues) => {

@@ -11,7 +11,7 @@ import {
   Wrench,
   XCircle,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLazyGetVehicleMaintenanceDashboardQuery } from "@/app/store/services/hostApi";
 import LogMaintenanceServiceForm from "./logMaintenanceServiceForm";
 import {
@@ -27,10 +27,32 @@ import EmptyMaintenanceState from "./emptyMaintenanceState";
 import { ServiceAlertItem } from "@/types/logservice.type";
 
 export default function MaintenancePageComponents() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [fetchVehicleMaintainance, { data, isLoading, isError }] =
     useLazyGetVehicleMaintenanceDashboardQuery();
   const [modelOpen, setModelOpen] = useState(false);
+
+  const logServiceParam = searchParams.get("log-service");
+  const isModalOpen = Boolean(logServiceParam !== null || modelOpen);
+
+  const handleOpenModal = (vehicleId?: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("log-service", vehicleId ?? "true");
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    setModelOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModelOpen(false);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("log-service");
+    const newQuery = params.toString();
+    router.replace(newQuery ? `${pathname}?${newQuery}` : pathname, {
+      scroll: false,
+    });
+  };
 
   // Computed once on mount (client-only) instead of calling Date.now()
   // inline during render. Reading Date.now() directly in JSX means the
@@ -94,7 +116,7 @@ export default function MaintenancePageComponents() {
     }
 
     if (hasNoMaintenanceData) {
-      return <EmptyMaintenanceState onLogService={() => setModelOpen(true)} />;
+      return <EmptyMaintenanceState onLogService={() => handleOpenModal()} />;
     }
 
     return (
@@ -223,12 +245,21 @@ export default function MaintenancePageComponents() {
     <PageWrapper
       pageTitle="Maintenance"
       pageDescription="Track service history, alerts, and vehicle health across your fleet."
-      pageButton={<PageButton onClick={() => setModelOpen(true)} />}
+      pageButton={<PageButton onClick={() => handleOpenModal()} />}
     >
       {renderBody()}
-      {modelOpen && (
-        <Modal onClose={() => setModelOpen(false)}>
-          <LogMaintenanceServiceForm onClose={() => setModelOpen(false)} />
+      {isModalOpen && (
+        <Modal onClose={handleCloseModal}>
+          <LogMaintenanceServiceForm
+            onClose={handleCloseModal}
+            initialVehicleId={
+              logServiceParam &&
+              logServiceParam !== "true" &&
+              logServiceParam !== "open"
+                ? logServiceParam
+                : undefined
+            }
+          />
         </Modal>
       )}
     </PageWrapper>
