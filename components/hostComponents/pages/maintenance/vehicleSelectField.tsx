@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
 import { Car, AlertCircle, RefreshCw } from "lucide-react";
@@ -20,7 +20,7 @@ import { IListVehiclesDatum } from "@/types/vehicle.type";
 
 export type VehicleSelectFieldProps = {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, vehicle?: IListVehiclesDatum) => void;
   error?: string;
   vehicles?: IListVehiclesDatum[];
   isLoading?: boolean;
@@ -41,8 +41,27 @@ export default function VehicleSelectField({
 }: VehicleSelectFieldProps) {
   const [open, setOpen] = useState(false);
 
-  const selectedVehicle = vehicles?.find(
-    (vehicle: IListVehiclesDatum) => vehicle.name === value,
+  // Deduplicate and ensure each vehicle has a unique identifier
+  const uniqueVehicles = useMemo(() => {
+    if (!vehicles || vehicles.length === 0) return [];
+    const seen = new Set<string>();
+    const result: IListVehiclesDatum[] = [];
+
+    for (let i = 0; i < vehicles.length; i++) {
+      const v = vehicles[i];
+      if (!v) continue;
+      const uniqueId = v._id || `${v.name || "vehicle"}-${i}`;
+      if (!seen.has(uniqueId)) {
+        seen.add(uniqueId);
+        result.push(v._id ? v : { ...v, _id: uniqueId });
+      }
+    }
+    return result;
+  }, [vehicles]);
+
+  const selectedVehicle = uniqueVehicles.find(
+    (vehicle: IListVehiclesDatum) =>
+      vehicle._id === value || vehicle.name === value,
   );
 
   return (
@@ -67,8 +86,11 @@ export default function VehicleSelectField({
       </div>
 
       <Select
-        value={value}
-        onValueChange={onChange}
+        value={selectedVehicle?._id ?? ""}
+        onValueChange={(selectedId) => {
+          const matched = uniqueVehicles.find((v) => v._id === selectedId);
+          onChange(selectedId, matched);
+        }}
         open={open}
         onOpenChange={setOpen}
         disabled={disabled || isLoading}
@@ -143,15 +165,15 @@ export default function VehicleSelectField({
                   </Button>
                 )}
               </div>
-            ) : !isLoading && (!vehicles || vehicles.length === 0) ? (
+            ) : !isLoading && uniqueVehicles.length === 0 ? (
               <div className="p-4 text-center text-xs text-gray-500 font-text">
                 No vehicles found in your fleet
               </div>
             ) : (
-              vehicles?.map((vehicle: IListVehiclesDatum) => (
+              uniqueVehicles.map((vehicle: IListVehiclesDatum) => (
                 <SelectItem
                   key={vehicle._id}
-                  value={vehicle.name}
+                  value={vehicle._id}
                   className="py-2.5 px-3 cursor-pointer hover:bg-blue-50/60 focus:bg-blue-50/80 transition-colors border-b border-gray-100 last:border-b-0 rounded-sm"
                 >
                   <div className="flex items-center gap-3 w-full">
