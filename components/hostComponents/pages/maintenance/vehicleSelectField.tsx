@@ -99,6 +99,7 @@ export default function VehicleSelectField({
           className={cn(
             inputClass(error),
             "h-auto min-h-11 py-2 px-3 transition-all duration-200",
+            disabled && "cursor-not-allowed bg-gray-50 opacity-80",
           )}
         >
           <SelectValue
@@ -129,6 +130,15 @@ export default function VehicleSelectField({
                 </span>
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-semibold uppercase tracking-wider shrink-0 border border-blue-100">
                   {selectedVehicle.vehicleType}
+                </span>
+              </div>
+            ) : value ? (
+              <div className="flex items-center gap-2.5 min-w-0 text-left">
+                <div className="size-7 rounded bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 text-gray-400">
+                  <Car className="size-4" />
+                </div>
+                <span className="font-semibold text-sm text-neutral-900 truncate">
+                  {value}
                 </span>
               </div>
             ) : null}

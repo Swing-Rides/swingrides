@@ -31,6 +31,10 @@ export type LogMaintenanceFormProps = {
   defaultVehicleId?: string;
   defaultVehicleName?: string;
   defaultMileageAtService?: string;
+  initialValues?: Partial<LogMaintenanceFormValues>;
+  disableVehicleSelect?: boolean;
+  submitButtonText?: string;
+  loadingButtonText?: string;
   onSubmit: (values: LogMaintenanceFormValues) => void | Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
@@ -47,6 +51,10 @@ export default function LogMaintenanceForm({
   defaultVehicleId = "",
   defaultVehicleName = "",
   defaultMileageAtService = "",
+  initialValues,
+  disableVehicleSelect = false,
+  submitButtonText = "Log Service",
+  loadingButtonText = "Logging...",
   onSubmit,
   onCancel,
   isLoading = false,
@@ -62,16 +70,18 @@ export default function LogMaintenanceForm({
   } = useForm<LogMaintenanceFormValues>({
     mode: "onTouched",
     defaultValues: {
-      vehicleId: defaultVehicleId || defaultVehicleName,
-      vehicleName: defaultVehicleName,
-      serviceType: "",
-      serviceDate: "",
-      mileageAtService: defaultMileageAtService,
-      cost: "",
-      provider: "",
-      nextServiceMileage: "",
-      nextServiceDate: "",
-      notes: "",
+      vehicleId:
+        initialValues?.vehicleId ?? (defaultVehicleId || defaultVehicleName),
+      vehicleName: initialValues?.vehicleName ?? defaultVehicleName,
+      serviceType: initialValues?.serviceType ?? "",
+      serviceDate: initialValues?.serviceDate ?? "",
+      mileageAtService:
+        initialValues?.mileageAtService ?? defaultMileageAtService,
+      cost: initialValues?.cost ?? "",
+      provider: initialValues?.provider ?? "",
+      nextServiceMileage: initialValues?.nextServiceMileage ?? "",
+      nextServiceDate: initialValues?.nextServiceDate ?? "",
+      notes: initialValues?.notes ?? "",
     },
   });
 
@@ -93,7 +103,9 @@ export default function LogMaintenanceForm({
         render={({ field }) => (
           <VehicleSelectField
             value={getValues("vehicleId") || field.value}
+            disabled={disableVehicleSelect}
             onChange={(selectedId, matchedVehicle) => {
+              if (disableVehicleSelect) return;
               setValue("vehicleId", selectedId, { shouldDirty: true });
               const name = matchedVehicle?.name ?? selectedId;
               field.onChange(name);
@@ -316,10 +328,10 @@ export default function LogMaintenanceForm({
           {isLoading ? (
             <span className="flex items-center gap-2">
               <LoadingSpinner />
-              Logging...
+              {loadingButtonText}
             </span>
           ) : (
-            "Log Service"
+            submitButtonText
           )}
         </Button>
       </div>
