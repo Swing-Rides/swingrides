@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { format, addDays, addMonths } from 'date-fns'
-import { CalendarIcon, Loader2, AlertTriangle } from 'lucide-react'
+import { CalendarIcon, Clock, Loader2, AlertTriangle } from 'lucide-react'
 import { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -40,6 +40,22 @@ const getTodayStart = () => {
         return today
 }
 
+const getDayStart = (d: Date) => {
+        const copy = new Date(d)
+        copy.setHours(0, 0, 0, 0)
+        return copy
+}
+
+const applyTimeToDate = (date: Date, timeStr: string): Date => {
+        const result = new Date(date)
+        if (!timeStr) return result
+        const [hoursStr, minutesStr] = timeStr.split(':')
+        const hours = parseInt(hoursStr ?? '0', 10)
+        const minutes = parseInt(minutesStr ?? '0', 10)
+        result.setHours(isNaN(hours) ? 0 : hours, isNaN(minutes) ? 0 : minutes, 0, 0)
+        return result
+}
+
 const computeEndDate = (duration: SnoozeDuration, start: Date): Date => {
         switch (duration) {
                 case '1-day': return addDays(start, 1)
@@ -53,6 +69,14 @@ const computeEndDate = (duration: SnoozeDuration, start: Date): Date => {
 
 export default function SnoozeForm({ defaultValues, onCancel, onSubmit }: SnoozeFormProps) {
         const today = getTodayStart()
+        const isEditing = !!defaultValues
+
+        const minDate = isEditing && defaultValues?.startDate && defaultValues.startDate < today
+                ? getDayStart(defaultValues.startDate)
+                : today
+
+        const startMonth = minDate
+        const endMonth = new Date(today.getFullYear() + 10, 11)
 
         const [duration, setDuration] = useState<SnoozeDuration>(defaultValues?.duration ?? '1-day')
         const [customRange, setCustomRange] = useState<DateRange | undefined>(
@@ -60,10 +84,20 @@ export default function SnoozeForm({ defaultValues, onCancel, onSubmit }: Snooze
                         ? { from: defaultValues.startDate, to: defaultValues.endDate }
                         : undefined
         )
+        const [startTime, setStartTime] = useState<string>(() => {
+                if (defaultValues?.startDate) {
+                        return format(defaultValues.startDate, 'HH:mm')
+                }
+                return ''
+        })
+        const [endTime, setEndTime] = useState<string>(() => {
+                if (defaultValues?.endDate) {
+                        return format(defaultValues.endDate, 'HH:mm')
+                }
+                return ''
+        })
         const [error, setError] = useState<string | null>(null)
         const [isSubmitting, setIsSubmitting] = useState(false)
-
-        const isEditing = !!defaultValues
 
         const handleDurationChange = (value: SnoozeDuration) => {
                 setDuration(value)
@@ -71,6 +105,16 @@ export default function SnoozeForm({ defaultValues, onCancel, onSubmit }: Snooze
                 if (value !== 'custom') {
                         setCustomRange(undefined)
                 }
+        }
+
+        const handleStartTimeChange = (value: string) => {
+                setStartTime(value)
+                setError(null)
+        }
+
+        const handleEndTimeChange = (value: string) => {
+                setEndTime(value)
+                setError(null)
         }
 
         const handleSubmit = async (e: React.FormEvent) => {
@@ -82,14 +126,44 @@ export default function SnoozeForm({ defaultValues, onCancel, onSubmit }: Snooze
 
                 if (duration === 'custom') {
                         if (!customRange?.from || !customRange?.to) {
-                                setError('Please select a start and end date')
+                                setError('Please select both a start and end date')
                                 return
                         }
-                        startDate = customRange.from
-                        endDate = customRange.to
+                        if (!startTime && !endTime) {
+                                setError('Please select both start and end times')
+                                return
+                        }
+                        if (!startTime) {
+                                setError('Please select a start time')
+                                return
+                        }
+                        if (!endTime) {
+                                setError('Please select an end time')
+                                return
+                        }
+
+                        startDate = applyTimeToDate(customRange.from, startTime)
+                        endDate = applyTimeToDate(customRange.to, endTime)
+
+                        if (endDate.getTime() <= startDate.getTime()) {
+                                setError('End date and time must be after start date and time')
+                                return
+                        }
                 } else {
-                        startDate = today
-                        endDate = computeEndDate(duration, today)
+                        if (!endTime) {
+                                setError('Please select an end time')
+                                return
+                        }
+
+                        const now = new Date()
+                        startDate = now
+                        const computedEnd = computeEndDate(duration, now)
+                        endDate = applyTimeToDate(computedEnd, endTime)
+
+                        if (endDate.getTime() <= startDate.getTime()) {
+                                setError('End date and time must be in the future')
+                                return
+                        }
                 }
 
                 setIsSubmitting(true)
@@ -140,28 +214,141 @@ export default function SnoozeForm({ defaultValues, onCancel, onSubmit }: Snooze
                                 </div>
                         </div>
 
+                        {/* End time selection for preset durations */}
+                        {duration !== 'custom' && (
+                                <div className='flex flex-col gap-3'>
+                                        <div className='flex flex-col gap-1.5'>
+                                                <Label htmlFor='preset-end-time' className='text-xs font-semibold font-text text-[#374151]'>
+                                                        End Time <span className='text-[#EF4444]'>*</span>
+                                                </Label>
+                                                <div className='relative flex items-center'>
+                                                        <Clock className='absolute left-3 size-4 text-[#9CA3AF] pointer-events-none' />
+                                                        <input
+                                                                type='time'
+                                                                id='preset-end-time'
+                                                                value={endTime}
+                                                                onChange={(e) => handleEndTimeChange(e.target.value)}
+                                                                className='w-full pl-9 pr-3 py-2 border border-[#E5E7EB] rounded-md text-sm font-text text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent transition-all'
+                                                        />
+                                                </div>
+                                        </div>
+
+                                        {/* Preset snooze preview */}
+                                        <div className='flex items-center gap-2 text-xs font-text text-[#4B5563] bg-[#F9FAFB] border border-[#E5E7EB] rounded-md p-2.5'>
+                                                <CalendarIcon className='w-4 h-4 text-[#1A56DB] shrink-0' />
+                                                <span>
+                                                        {endTime ? (
+                                                                <>
+                                                                        Snooze until{' '}
+                                                                        <span className='font-medium text-[#111827]'>
+                                                                                {format(applyTimeToDate(computeEndDate(duration, new Date()), endTime), 'MMM d, yyyy, h:mm a')}
+                                                                        </span>
+                                                                </>
+                                                        ) : (
+                                                                <span>
+                                                                        Snooze until{' '}
+                                                                        <span className='font-medium text-[#111827]'>
+                                                                                {format(computeEndDate(duration, new Date()), 'MMM d, yyyy')}
+                                                                        </span>
+                                                                        <span className='text-[#6B7280]'> (Please pick an end time)</span>
+                                                                </span>
+                                                        )}
+                                                </span>
+                                        </div>
+                                </div>
+                        )}
+
                         {/* Custom date range calendar — only shown when "custom" is selected */}
                         {duration === 'custom' && (
-                                <div className='flex flex-col gap-2'>
+                                <div className='flex flex-col gap-3'>
                                         <Label className='text-[#1F2937] text-sm font-semibold font-text'>
                                                 Select Date Range <span className='text-[#EF4444]'>*</span>
                                         </Label>
                                         <div className='border border-[#E5E7EB] rounded-md p-2 flex justify-center'>
                                                 <Calendar
                                                         mode='range'
+                                                        captionLayout='dropdown'
+                                                        startMonth={startMonth}
+                                                        endMonth={endMonth}
                                                         selected={customRange}
-                                                        onSelect={setCustomRange}
-                                                        disabled={(date) => date < today}
+                                                        onSelect={(range) => {
+                                                                setCustomRange(range)
+                                                                setError(null)
+                                                        }}
+                                                        disabled={(date) => date < minDate}
                                                         defaultMonth={customRange?.from ?? today}
                                                         numberOfMonths={1}
                                                         initialFocus
                                                 />
                                         </div>
-                                        {customRange?.from && customRange?.to && (
-                                                <div className='flex items-center gap-2 text-sm font-text text-[#6B7280]'>
-                                                        <CalendarIcon className='w-4 h-4 shrink-0' />
-                                                        <span>
-                                                                {format(customRange.from, 'MMM d, yyyy')} — {format(customRange.to, 'MMM d, yyyy')}
+
+                                        {/* Time selection */}
+                                        <div className='grid grid-cols-2 gap-3'>
+                                                <div className='flex flex-col gap-1.5'>
+                                                        <Label htmlFor='snooze-start-time' className='text-xs font-semibold font-text text-[#374151]'>
+                                                                Start Time <span className='text-[#EF4444]'>*</span>
+                                                        </Label>
+                                                        <div className='relative flex items-center'>
+                                                                <Clock className='absolute left-3 size-4 text-[#9CA3AF] pointer-events-none' />
+                                                                <input
+                                                                        type='time'
+                                                                        id='snooze-start-time'
+                                                                        value={startTime}
+                                                                        onChange={(e) => handleStartTimeChange(e.target.value)}
+                                                                        className='w-full pl-9 pr-3 py-2 border border-[#E5E7EB] rounded-md text-sm font-text text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent transition-all'
+                                                                />
+                                                        </div>
+                                                </div>
+
+                                                <div className='flex flex-col gap-1.5'>
+                                                        <Label htmlFor='snooze-end-time' className='text-xs font-semibold font-text text-[#374151]'>
+                                                                End Time <span className='text-[#EF4444]'>*</span>
+                                                        </Label>
+                                                        <div className='relative flex items-center'>
+                                                                <Clock className='absolute left-3 size-4 text-[#9CA3AF] pointer-events-none' />
+                                                                <input
+                                                                        type='time'
+                                                                        id='snooze-end-time'
+                                                                        value={endTime}
+                                                                        onChange={(e) => handleEndTimeChange(e.target.value)}
+                                                                        className='w-full pl-9 pr-3 py-2 border border-[#E5E7EB] rounded-md text-sm font-text text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent transition-all'
+                                                                />
+                                                        </div>
+                                                </div>
+                                        </div>
+
+                                        {/* Range & Time Summary */}
+                                        {customRange?.from && (
+                                                <div className='flex items-center gap-2 text-xs font-text text-[#4B5563] bg-[#F9FAFB] border border-[#E5E7EB] rounded-md p-2.5'>
+                                                        <CalendarIcon className='w-4 h-4 text-[#1A56DB] shrink-0' />
+                                                        <span className='truncate'>
+                                                                {customRange.to ? (
+                                                                        <>
+                                                                                <span className='font-medium text-[#111827]'>
+                                                                                        {startTime
+                                                                                                ? format(applyTimeToDate(customRange.from, startTime), 'MMM d, yyyy, h:mm a')
+                                                                                                : format(customRange.from, 'MMM d, yyyy')}
+                                                                                </span>
+                                                                                {!startTime && <span className='text-[#6B7280]'> (Pick start time)</span>}
+                                                                                {' — '}
+                                                                                <span className='font-medium text-[#111827]'>
+                                                                                        {endTime
+                                                                                                ? format(applyTimeToDate(customRange.to, endTime), 'MMM d, yyyy, h:mm a')
+                                                                                                : format(customRange.to, 'MMM d, yyyy')}
+                                                                                </span>
+                                                                                {!endTime && <span className='text-[#6B7280]'> (Pick end time)</span>}
+                                                                        </>
+                                                                ) : (
+                                                                        <>
+                                                                                <span className='font-medium text-[#111827]'>
+                                                                                        {startTime
+                                                                                                ? format(applyTimeToDate(customRange.from, startTime), 'MMM d, yyyy, h:mm a')
+                                                                                                : format(customRange.from, 'MMM d, yyyy')}
+                                                                                </span>
+                                                                                {!startTime && <span className='text-[#6B7280]'> (Pick start time)</span>}
+                                                                                <span className='text-[#6B7280]'> (Select an end date)</span>
+                                                                        </>
+                                                                )}
                                                         </span>
                                                 </div>
                                         )}
