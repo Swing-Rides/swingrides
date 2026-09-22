@@ -17,7 +17,7 @@ import { HOST_DASHBOARD_PATH } from "@/constants/constant";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { SheetFooter } from "@/components/ui/sheet";
+import { SheetClose, SheetFooter } from "@/components/ui/sheet";
 import {
   Popover,
   PopoverContent,
@@ -211,6 +211,9 @@ function VehicleDetailSheet({
       <div className="flex flex-wrap gap-2 justify-start">
         <div className="grow p-3 bg-white rounded-[10px] border border-gray-200 inline-flex flex-col justify-center items-center gap-0.5">
           <StatusBadge status={row.status} />
+          <span className="text-gray-500 text-xs font-normal font-text uppercase">
+            Instant Booking
+          </span>
         </div>
         <div className="grow p-3 bg-white rounded-[10px] border border-gray-200 inline-flex flex-col justify-center items-center gap-0.5">
           <span className="text-blue-700 text-base font-medium font-text leading-6">
@@ -661,38 +664,46 @@ const SheetHeader = ({
             className="p-0 space-y-0 gap-0 max-w-40 bg-white border rounded-[10px] overflow-clip divide-y"
           >
             {["available", "snoozed", "rented"].includes(normalizedStatus) && (
-              <button
-                className="p-3.5 text-left text-red-500 text-sm font-semibold font-text leading-4 cursor-pointer bg-transparent hover:bg-gray-200 duration-300 transition-colors"
-                onClick={onUnlistVehicle}
-              >
-                Unlist Vehicle
-              </button>
+              <SheetClose asChild>
+                <button
+                  className="p-3.5 text-left text-red-500 text-sm font-semibold font-text leading-4 cursor-pointer bg-transparent hover:bg-gray-200 duration-300 transition-colors"
+                  onClick={onUnlistVehicle}
+                >
+                  Unlist Vehicle
+                </button>
+              </SheetClose>
             )}
             {["unlisted", "maintenance"].includes(normalizedStatus) && (
-              <button
-                className="p-3.5 text-left text-emerald-500 text-sm font-semibold font-text leading-4 cursor-pointer bg-transparent hover:bg-gray-200 duration-300 transition-colors"
-                onClick={onRelistVehicle}
-              >
-                Relist Vehicle
-              </button>
+              <SheetClose asChild>
+                <button
+                  className="p-3.5 text-left text-emerald-500 text-sm font-semibold font-text leading-4 cursor-pointer bg-transparent hover:bg-gray-200 duration-300 transition-colors"
+                  onClick={onRelistVehicle}
+                >
+                  Relist Vehicle
+                </button>
+              </SheetClose>
             )}
             {normalizedStatus === "snoozed" && (
-              <button
-                className="p-3.5 text-left text-blue-700 text-sm font-semibold font-text leading-4 cursor-pointer bg-transparent hover:bg-gray-200 duration-300 transition-colors"
-                onClick={onEditSnoozeVehicle}
-              >
-                Edit Snooze
-              </button>
+              <SheetClose asChild>
+                <button
+                  className="p-3.5 text-left text-blue-700 text-sm font-semibold font-text leading-4 cursor-pointer bg-transparent hover:bg-gray-200 duration-300 transition-colors"
+                  onClick={onEditSnoozeVehicle}
+                >
+                  Edit Snooze
+                </button>
+              </SheetClose>
             )}
             {["available", "unlisted", "maintenance", "rented"].includes(
               normalizedStatus,
             ) && (
-                <button
-                  className="p-3.5 text-left text-blue-700 text-sm font-semibold font-text leading-4 cursor-pointer bg-transparent hover:bg-gray-200 duration-300 transition-colors"
-                  onClick={onSnoozeVehicle}
-                >
-                  Snooze Vehicle
-                </button>
+                <SheetClose asChild>
+                  <button
+                    className="p-3.5 text-left text-blue-700 text-sm font-semibold font-text leading-4 cursor-pointer bg-transparent hover:bg-gray-200 duration-300 transition-colors"
+                    onClick={onSnoozeVehicle}
+                  >
+                    Snooze Vehicle
+                  </button>
+                </SheetClose>
               )}
           </PopoverContent>
         </Popover>
