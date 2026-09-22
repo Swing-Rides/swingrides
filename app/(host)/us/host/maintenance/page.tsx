@@ -3,7 +3,6 @@ import MaintenancePageComponents from "@/components/hostComponents/pages/mainten
 import MaintenanceLoading from "@/components/hostComponents/pages/maintenance/maintenanceLoading";
 
 export default function MaintenancePage() {
-  return <MaintenancePageComponents />;
   return (
     <Suspense fallback={<MaintenanceLoading />}>
       <MaintenancePageComponents />

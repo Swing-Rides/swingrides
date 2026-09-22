@@ -90,3 +90,45 @@ export const isScheduleDateDisabled = (
     return dayStart < schedReturnDateWithBuffer && dayEnd >= schedPickupDate;
   });
 };
+
+type SnoozeWindow = {
+  status?: string;
+  snoozeStart?: string | Date | null;
+  snoozeEnd?: string | Date | null;
+};
+
+const toDateOrNull = (value?: string | Date | null): Date | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+/**
+ * Mirrors the backend's assertVehicleNotSnoozed: a snoozed vehicle is blocked
+ * until dates outside its window are chosen, and a scheduled (future) snooze
+ * blocks only the periods that overlap it.
+ */
+export const isBlockedBySnooze = (
+  vehicle: SnoozeWindow | undefined,
+  pickupDateTime?: Date | null,
+  returnDateTime?: Date | null,
+): boolean => {
+  if (!vehicle) return false;
+
+  const snoozeStart = toDateOrNull(vehicle.snoozeStart);
+  const snoozeEnd = toDateOrNull(vehicle.snoozeEnd);
+  const isSnoozed = vehicle.status === "snoozed";
+
+  if (!isSnoozed && !snoozeStart && !snoozeEnd) return false;
+  if (!isSnoozed && snoozeEnd && snoozeEnd <= new Date()) return false;
+
+  if (!pickupDateTime || !returnDateTime) return isSnoozed;
+
+  const windowStart = snoozeStart?.getTime() ?? Number.NEGATIVE_INFINITY;
+  const windowEnd = snoozeEnd?.getTime() ?? Number.POSITIVE_INFINITY;
+
+  return (
+    pickupDateTime.getTime() < windowEnd &&
+    returnDateTime.getTime() > windowStart
+  );
+};

@@ -6,6 +6,7 @@ import {
   Activity,
   Clock,
   CheckCircle,
+  CircleDashed,
   DollarSign,
   TriangleAlert,
   Wrench,
@@ -20,17 +21,22 @@ import {
 } from "./maintenanceOverviewCards";
 import { ServiceAlertData, ServiceAlertRow } from "./serviceAlertSection";
 import { ServiceHistoryTableSection } from "./serviceHistoryTable";
-import { formatDaysDelta, formatDateOrFallback } from "./maintenanceutils";
+import { formatDateOrFallback } from "./maintenanceutils";
 import MaintenanceLoading from "./maintenanceLoading";
 import MaintenanceErrorState from "./maintenanceErrorState";
 import EmptyMaintenanceState from "./emptyMaintenanceState";
 import { ServiceAlertItem } from "@/types/logservice.type";
+import { formatCurrency } from "@/lib/pricing";
+import { DUE_SOON_DAYS, DUE_SOON_KM } from "@/constants/maintenance";
+
+/** Rows per page requested from the API. */
+const PAGE_SIZE = 10;
 
 export default function MaintenancePageComponents() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [fetchVehicleMaintainance, { data, isLoading, isError }] =
+  const [fetchVehicleMaintainance, { data, isFetching, isError }] =
     useLazyGetVehicleMaintenanceDashboardQuery();
   const [modelOpen, setModelOpen] = useState(false);
 
@@ -54,57 +60,78 @@ export default function MaintenancePageComponents() {
     });
   };
 
-  // Computed once on mount (client-only) instead of calling Date.now()
-  // inline during render. Reading Date.now() directly in JSX means the
-  // server-rendered pass and the client hydration pass can each compute a
-  // different value, which React/Next.js flags as a hydration mismatch.
-  // Seeding this from useState's lazy initializer keeps it stable for the
-  // lifetime of the mount.
-  const [now] = useState(() => new Date());
-
-  const page = Number(searchParams.get("fleet_page") ?? 1);
+  // The service history is paginated and filtered on the server, so each
+  // control below reads the namespaced param the table itself writes
+  // (`<tableId>_<key>` — see useTableParam in customTable.tsx). Page used to
+  // read `fleet_page`, which this table never sets, so paging never advanced.
+  const page = Number(searchParams.get("ServiceHistory_page") ?? 1);
   const search = searchParams.get("ServiceHistory_search") ?? "";
   const vehicleName = searchParams.get("ServiceHistory_vehicleName") ?? "";
   const serviceType = searchParams.get("ServiceHistory_serviceType") ?? "";
+  const workshop = searchParams.get("ServiceHistory_workshop") ?? "";
 
   const loadMaintenanceData = () => {
     fetchVehicleMaintainance({
-      limit: 10,
-      page: page,
+      limit: PAGE_SIZE,
+      page: Number.isFinite(page) && page > 0 ? page : 1,
       search: search,
       serviceType: serviceType,
       vehicle: vehicleName,
+      workshop: workshop,
     });
   };
 
   useEffect(() => {
     loadMaintenanceData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, fetchVehicleMaintainance, page, search, serviceType, vehicleName]);
+  }, [
+    fetchVehicleMaintainance,
+    page,
+    search,
+    serviceType,
+    vehicleName,
+    workshop,
+  ]);
 
-  const toAlertRow = (d: ServiceAlertItem): ServiceAlertRow => ({
-    id: `${d.vehicleName}-${d.serviceType}`,
+  const toAlertRow = (d: ServiceAlertItem, index: number): ServiceAlertRow => ({
+    // vehicleName + serviceType alone collide when one vehicle has two alerts
+    // of the same type, which duplicates React keys.
+    id: `${d.vehicleName}-${d.serviceType}-${index}`,
     dueDate: formatDateOrFallback(d.dueDate),
     lastServiceDate: formatDateOrFallback(d.lastServiceDate),
-    mileage: d.currentMileageKm.toLocaleString(),
-    pastDue: formatDaysDelta(d.dueDate, now),
+    mileage: `${d.currentMileageKm.toLocaleString()} km`,
+    badge: d.badge,
     serviceType: d.serviceType,
     vehicleName: d.vehicleName,
-    badge: d.badge,
     currentMileageKm: d.currentMileageKm,
   });
 
   const summary = data?.data.summary;
   const health = data?.data.vehicleHealthOverview;
   const alerts = data?.data.serviceAlerts;
-  const serviceHistoryItems = data?.data.serviceHistory.items ?? [];
+  const history = data?.data.serviceHistory;
+  const filterOptions = data?.data.filterOptions;
+  const serviceHistoryItems = history?.items ?? [];
 
-  const isInitialLoading = isLoading && !data;
+  const isFiltered = Boolean(summary?.isFiltered);
+  const hasAnyAlerts =
+    (alerts?.overdue.length ?? 0) +
+      (alerts?.dueSoon.length ?? 0) +
+      (alerts?.upcoming.length ?? 0) >
+    0;
+
+  // This is a lazy query, so before the effect fires there is no data *and*
+  // no in-flight flag — treating that as "loaded and empty" flashes the empty
+  // state on every visit.
+  const isInitialLoading = !data && !isError;
+  // Counts come from `serviceHistory.total` (every page) rather than the
+  // length of the current page, so an empty page 2 or a filter that matches
+  // nothing no longer reads as "this host has never logged anything".
   const hasNoMaintenanceData =
     !isInitialLoading &&
     !isError &&
-    (summary?.totalServices ?? 0) === 0 &&
-    serviceHistoryItems.length === 0;
+    !isFiltered &&
+    (history?.total ?? 0) === 0;
 
   const renderBody = () => {
     if (isInitialLoading) {
@@ -127,34 +154,40 @@ export default function MaintenancePageComponents() {
             iconBgColor="bg-indigo-50"
             title="Total Services"
             number={
-              summary?.totalServices != null ? String(summary.totalServices) : "0"
+              summary?.totalServices != null
+                ? String(summary.totalServices)
+                : "0"
             }
+            label={isFiltered ? "Matching current filters" : undefined}
           />
           <MaintenanceOverviewCard
             icon={<DollarSign className="size-6 text-red-500" />}
             iconBgColor="bg-rose-100"
             title="Total Maintenance Cost"
-            number={
-              summary?.totalMaintenanceCost != null
-                ? `$${summary.totalMaintenanceCost}`
-                : "$0"
-            }
+            number={formatCurrency(summary?.totalMaintenanceCost)}
+            label={isFiltered ? "Matching current filters" : undefined}
           />
           <MaintenanceOverviewCard
             icon={<Clock className="size-6 text-amber-500" />}
             iconBgColor="bg-orange-50"
             title="Vehicles Due Soon"
             number={
-              summary?.vehiclesDueSoon != null ? String(summary.vehiclesDueSoon) : "0"
+              summary?.vehiclesDueSoon != null
+                ? String(summary.vehiclesDueSoon)
+                : "0"
             }
+            label={isFiltered ? "Across your whole fleet" : undefined}
           />
           <MaintenanceOverviewCard
             icon={<TriangleAlert className="size-6 text-red-500" />}
             iconBgColor="bg-red-100"
             title="Past-due Vehicles"
             number={
-              summary?.overdueVehicles != null ? String(summary.overdueVehicles) : "0"
+              summary?.overdueVehicles != null
+                ? String(summary.overdueVehicles)
+                : "0"
             }
+            label={isFiltered ? "Across your whole fleet" : undefined}
           />
         </div>
 
@@ -170,59 +203,73 @@ export default function MaintenancePageComponents() {
               iconBgColor="bg-green-100"
               title="Healthy"
               number={health?.healthy != null ? String(health.healthy) : "0"}
-              label="No service due within 30 days"
+              label={`No service due within ${DUE_SOON_DAYS} days`}
             />
             <HealthOverviewCard
               icon={<Clock className="size-6 text-amber-500" />}
               iconBgColor="bg-orange-50"
               title="Due Soon"
               number={health?.dueSoon != null ? String(health.dueSoon) : "0"}
-              label="Service due within 30 days"
+              label={`Service due within ${DUE_SOON_DAYS} days or ${DUE_SOON_KM.toLocaleString()} km`}
             />
             <HealthOverviewCard
               icon={<XCircle className="size-6 text-red-500" />}
               iconBgColor="bg-rose-100"
               title="Past-due"
               number={health?.overdue != null ? String(health.overdue) : "0"}
-              label="Service past due date"
+              label="Service past its due date or mileage"
+            />
+            <HealthOverviewCard
+              icon={<CircleDashed className="size-6 text-gray-500" />}
+              iconBgColor="bg-gray-100"
+              title="Never Serviced"
+              number={
+                health?.neverServiced != null
+                  ? String(health.neverServiced)
+                  : "0"
+              }
+              label="No service logged yet"
             />
           </div>
         </div>
 
-        <div className="my-4 md:my-6 space-y-6">
-          <div>
-            <span className="text-neutral-950 text-base font-semibold font-text leading-6">
-              Service Alerts
-            </span>
+        {hasAnyAlerts && (
+          <div className="my-4 md:my-6 space-y-6">
+            <div>
+              <span className="text-neutral-950 text-base font-semibold font-text leading-6">
+                Service Alerts
+              </span>
+            </div>
+            <ServiceAlertData
+              icon={<TriangleAlert className="size-4 text-red-500" />}
+              title="Past-due"
+              serviceData={(alerts?.overdue ?? []).map(toAlertRow)}
+              alertIconColor="text-red-500"
+              alertIconBgColor="bg-red-500/10"
+              alertBgColor="bg-red-500"
+              alertBorderColor="border-red-500"
+              isOverdue
+            />
+            <ServiceAlertData
+              icon={<Clock className="size-4 text-amber-500" />}
+              title="Due Soon"
+              serviceData={(alerts?.dueSoon ?? []).map(toAlertRow)}
+              alertIconColor="text-amber-500"
+              alertIconBgColor="bg-amber-500/10"
+              alertBgColor="bg-amber-500"
+              alertBorderColor="border-amber-500"
+            />
+            <ServiceAlertData
+              icon={<Activity className="size-4 text-blue-700" />}
+              title="Upcoming"
+              serviceData={(alerts?.upcoming ?? []).map(toAlertRow)}
+              alertIconColor="text-blue-700"
+              alertIconBgColor="bg-blue-700/10"
+              alertBgColor="bg-blue-700"
+              alertBorderColor="border-blue-700"
+            />
           </div>
-          <ServiceAlertData
-            icon={<TriangleAlert className="size-4 text-red-500" />}
-            title="past-due"
-            serviceData={(alerts?.overdue ?? []).map(toAlertRow)}
-            alertIconColor="text-red-500"
-            alertIconBgColor="bg-red-500/10"
-            alertBgColor="bg-red-500"
-            alertBorderColor="border-red-500"
-          />
-          <ServiceAlertData
-            icon={<Clock className="size-4 text-amber-500" />}
-            title="Due Soon"
-            serviceData={(alerts?.dueSoon ?? []).map(toAlertRow)}
-            alertIconColor="text-amber-500"
-            alertIconBgColor="bg-amber-500/10"
-            alertBgColor="bg-amber-500"
-            alertBorderColor="border-amber-500"
-          />
-          <ServiceAlertData
-            icon={<Activity className="size-4 text-blue-700" />}
-            title="upcoming"
-            serviceData={(alerts?.upcoming ?? []).map(toAlertRow)}
-            alertIconColor="text-blue-700"
-            alertIconBgColor="bg-blue-700/10"
-            alertBgColor="bg-blue-700"
-            alertBorderColor="border-blue-700"
-          />
-        </div>
+        )}
 
         <div className="space-y-5">
           <div>
@@ -233,7 +280,11 @@ export default function MaintenancePageComponents() {
           <div>
             <ServiceHistoryTableSection
               tableData={serviceHistoryItems}
-              isLoading={isLoading}
+              filterOptions={filterOptions}
+              total={history?.total ?? 0}
+              totalPages={history?.totalPages ?? 1}
+              rowsPerPage={history?.limit ?? PAGE_SIZE}
+              isLoading={isFetching}
             />
           </div>
         </div>
@@ -283,16 +334,29 @@ const Modal = ({
 }: {
   children: React.ReactNode;
   onClose: () => void;
-}) => (
-  <div
-    className="fixed inset-0 z-999 flex items-center justify-center backdrop-blur-md bg-black/50 px-4"
-    onClick={onClose}
-  >
+}) => {
+  // This overlay is a plain div rather than a Dialog, so nothing gives it
+  // escape-to-close for free.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
     <div
-      className="w-full flex items-center justify-center"
-      onClick={(e) => e.stopPropagation()}
+      className="fixed inset-0 z-999 flex items-center justify-center backdrop-blur-md bg-black/50 px-4"
+      onClick={onClose}
+      role="presentation"
     >
-      {children}
+      <div
+        className="w-full flex items-center justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
     </div>
-  </div>
-);
+  );
+};

@@ -32,7 +32,9 @@ export interface PublicBrowseVehicleRow {
     alt: string;
   };
   carName: string;
-  status: "available" | "unavailable";
+  status: "available" | "unavailable" | "snoozed";
+  snoozeStart?: string | null;
+  snoozeEnd?: string | null;
   price: {
     hourly: number;
     daily: number;
@@ -113,7 +115,9 @@ export interface VehicleDetails {
   year: number;
   color: string;
   description: string;
-  status: "available" | "unavailable";
+  status: "available" | "unavailable" | "snoozed";
+  snoozeStart?: string | null;
+  snoozeEnd?: string | null;
   price: {
     hourly: number;
     daily: number;
@@ -170,7 +174,7 @@ export type VehicleSchedule = {
   status: string;
   bookingId?: string;
   maintenanceId?: string;
-  source?: "booking" | "maintenance";
+  source?: "booking" | "maintenance" | "snooze";
   serviceType?: string;
 };
 

@@ -5,6 +5,8 @@ export type MaintenanceOverviewCardProps = {
         iconBgColor?: string;
         title: string;
         number: string;
+        /** Optional caption clarifying what the figure counts. */
+        label?: string;
 };
 
 export const MaintenanceOverviewCard = ({
@@ -12,6 +14,7 @@ export const MaintenanceOverviewCard = ({
         iconBgColor,
         title,
         number,
+        label,
 }: MaintenanceOverviewCardProps) => {
         return (
                 <div className="basis-62.5 shrink-0 grow p-4 md:p-6 bg-white rounded-md border border-gray-200 flex flex-col justify-start items-start gap-2">
@@ -30,6 +33,13 @@ export const MaintenanceOverviewCard = ({
                                         {number}
                                 </span>
                         </div>
+                        {label ? (
+                                <div>
+                                        <span className="text-gray-500 text-xs font-medium font-text">
+                                                {label}
+                                        </span>
+                                </div>
+                        ) : null}
                 </div>
         );
 };

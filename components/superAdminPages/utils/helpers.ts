@@ -96,6 +96,7 @@ export const FLEET_STATUS_STYLE: Record<FleetStatus, { label: string; textColor:
         'maintenance': { label: 'Maintenance', textColor: '#EF4444', bgColor: '#FEE2E2' },
         'active': { label: 'Active', textColor: '#10B981', bgColor: '#DAFFF3' }, 
         'inactive': { label: 'Inactive', textColor: '#6B7280', bgColor: '#F4F6F9' },
+        'snoozed': { label: 'Snoozed', textColor: '#B45309', bgColor: '#FFFBEB' },
 }
 
 export const BOOKING_STATUS_STYLE: Record<BookingStatus, { label: string; textColor: string; bgColor: string }> = {

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { X, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
 
 import { FieldSeparator } from "@/components/ui/field";
 import { LoadingSpinner } from "@/components/forms/MainForm";
@@ -27,19 +26,29 @@ export type LogMaintenanceServiceModalProps = {
 
 // ─── Helper Functions ─────────────────────────────────────────────────────────
 
+/** "42,000" -> 42000; empty or unparseable -> undefined. */
+export const parseNumericInput = (value?: string): number | undefined => {
+  if (value === undefined || value === null || String(value).trim() === "") {
+    return undefined;
+  }
+  const parsed = Number(String(value).replace(/,/g, ""));
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
 export const buildLogServicePayload = (
   values: LogMaintenanceFormValues,
 ): LogServiceModalRequest => ({
-  cost: Number(String(values.cost).replace(/,/g, "")) || 0,
-  mileageAtServiceKm:
-    Number(String(values.mileageAtService).replace(/,/g, "")) || 0,
+  cost: parseNumericInput(values.cost) ?? 0,
+  mileageAtServiceKm: parseNumericInput(values.mileageAtService) ?? 0,
   nextDueDate: values.nextServiceDate
     ? new Date(values.nextServiceDate).toISOString()
     : undefined,
-  nextDueMileageKm: values.nextServiceMileage
-    ? Number(String(values.nextServiceMileage).replace(/,/g, ""))
-    : undefined,
-  nextServiceDueMode: "date",
+  nextDueMileageKm: parseNumericInput(values.nextServiceMileage),
+  // The form collects a next-due date *and* a next-due mileage, and both are
+  // required. Sending "date" made the API discard the mileage and substitute
+  // `mileageAtServiceKm + 10000`, which then drove the due-soon / overdue
+  // counts on the dashboard off invented data.
+  nextServiceDueMode: "both",
   notes: values.notes,
   serviceDate: values.serviceDate
     ? new Date(values.serviceDate).toISOString()
@@ -96,12 +105,11 @@ export default function LogMaintenanceServiceForm({
       const payload = buildLogServicePayload(values);
       const response = await addLogsToBackend(payload).unwrap();
       if (response.success) {
-        toast.success("Maintenance service logged successfully");
+        // The axios base query already raises the success toast from the
+        // API's own message, so raising a second one here double-toasts.
         onClose();
       } else {
-        const message = response.message || "Failed to log service";
-        setApiError(message);
-        toast.error(message);
+        setApiError(response.message || "Failed to log service");
       }
     } catch (err: unknown) {
       const errorMsg =
@@ -110,7 +118,6 @@ export default function LogMaintenanceServiceForm({
         (err as { message?: string })?.message ||
         "An unexpected error occurred while logging service. Please try again.";
       setApiError(errorMsg);
-      toast.error(errorMsg);
     }
   };
 
