@@ -20,7 +20,7 @@ import {
   PaymentFormValues,
   PaymentSection,
 } from "@/components/forms/browseCarPaymentSection";
-import { BadgeCheck, BadgeX, Calendar, Car, Settings, Star, Users } from "lucide-react";
+import { Calendar, Car, Settings, ShieldAlert, ShieldCheck, Star, Users } from "lucide-react";
 import GallerySlider from "@/components/slider/gallerySlider";
 import { shareContent } from "./util";
 import { writeDraftToStorage } from "@/lib/checkout-helpers";
@@ -275,16 +275,16 @@ const CarDetailCard = memo(
     return (
       <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
         <div className="flex flex-col gap-2">
-          <div className="flex gap-2 justify-between items-start">
+          <div className="flex gap-2 justify-between items-start flex-wrap">
             <h3 className="text-neutral-950 text-2xl font-bold font-text leading-8">
               {carName}
             </h3>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-gray-500 text-xs font-semibold font-text uppercase">
+            <div className="flex-1 flex flex-col items-end gap-0.5">
+              <span className="text-gray-500 text-xs font-semibold font-text uppercase text-right text-nowrap">
                 Instant Booking
               </span>
               <div
-                className={`w-fit px-3 py-0.5 capitalize text-xs font-medium font-text leading-5 rounded-full ${notAvailable ? "text-red-500 bg-red-100" : "text-green-500 bg-green-100"}`}
+                className={`w-fit px-3 py-0.5 text-[10px] tracking-wider font-semibold font-text uppercase leading-5 rounded-full ${notAvailable ? "text-red-500 bg-red-100" : "text-green-700 bg-green-100"}`}
               >
                 <span>{notAvailable ? "unavailable" : "available"}</span>
               </div>
@@ -459,15 +459,27 @@ const HostCard = memo(
             <span className="text-white">{initials}</span>
           </div>
           <div className="flex flex-col gap-px">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <h4 className="text-neutral-950 text-sm font-semibold font-text leading-5">
                 {hostName}
               </h4>
-              {userVerified ? (<div title='Verified User'>
-                <BadgeCheck className={`size-4 text-blue-700`} />
-              </div>) : (<div title='Unverified User'>
-                <BadgeX className={`size-4 text-red-500`} />
-              </div>)}
+              {userVerified ? (
+                <div
+                  title="Verified User"
+                  className="inline-flex items-center gap-1 rounded-full bg-[#ebf0fb] px-2.5 py-0.5 text-xs font-semibold font-text text-[#1a56db]"
+                >
+                  <ShieldCheck className="size-3.5 text-[#1a56db]" />
+                  <span>Verified</span>
+                </div>
+              ) : (
+                <div
+                  title="Unverified User"
+                  className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold font-text text-amber-700"
+                >
+                  <ShieldAlert className="size-3.5 text-amber-600" />
+                  <span>Unverified</span>
+                </div>
+              )}
             </div>
             <span className="text-[#6B7280] text-xs font-normal font-text leading-4">
               Member since {memberSince} · {tripsCompleted} trips completed
