@@ -270,19 +270,24 @@ const CarDetailCard = memo(
     overview,
   }: CarDetailCardProps) => {
 
-    const notAvailable = status === "unlisted" || status === "maintenance";
+    const notAvailable = status !== "inactive";
 
     return (
       <div className="flex flex-col gap-5 p-4 md:p-6 rounded-[10px] border border-gray-200 bg-white">
         <div className="flex flex-col gap-2">
-          <div className="flex gap-2 justify-between items-center">
+          <div className="flex gap-2 justify-between items-start">
             <h3 className="text-neutral-950 text-2xl font-bold font-text leading-8">
               {carName}
             </h3>
-            <div
-              className={`px-3 py-0.5 capitalize text-xs font-medium font-text leading-5 rounded-full ${notAvailable ? "text-red-500 bg-red-100" : "text-green-500 bg-green-100"}`}
-            >
-              <span>{notAvailable ? "unavailable" : "available"}</span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-gray-500 text-xs font-semibold font-text uppercase">
+                Instant Booking
+              </span>
+              <div
+                className={`w-fit px-3 py-0.5 capitalize text-xs font-medium font-text leading-5 rounded-full ${notAvailable ? "text-red-500 bg-red-100" : "text-green-500 bg-green-100"}`}
+              >
+                <span>{notAvailable ? "unavailable" : "available"}</span>
+              </div>
             </div>
           </div>
 
