@@ -8,8 +8,12 @@ export interface ServiceAlertRow {
         lastServiceDate: string;
         mileage: string;
         dueDate: string;
-        pastDue: string;
-        badge?: string;
+        /**
+         * Pre-formatted status text from the API — "DUE IN 14 DAYS",
+         * "12,000 KM OVERDUE", "8,500 KM REMAINING". It already says whether the
+         * service is late, so nothing here should append wording of its own.
+         */
+        badge: string;
         currentMileageKm?: number;
 }
 
@@ -21,6 +25,11 @@ type ServiceAlertDataProps = {
         alertIconBgColor: string;
         alertBgColor: string;
         alertBorderColor: string;
+        /**
+         * Past-due rows describe a date that has already passed; due-soon and
+         * upcoming rows describe one still ahead. Only the wording differs.
+         */
+        isOverdue?: boolean;
 };
 
 export const ServiceAlertData = ({
@@ -31,7 +40,10 @@ export const ServiceAlertData = ({
         alertIconBgColor,
         alertBgColor,
         alertBorderColor,
+        isOverdue = false,
 }: ServiceAlertDataProps) => {
+        if (serviceData.length === 0) return null;
+
         return (
                 <div className="space-y-3">
                         <div className="flex items-center gap-2">
@@ -60,7 +72,8 @@ export const ServiceAlertData = ({
                                                         dueDate={item.dueDate}
                                                         dueBgColor={alertBgColor}
                                                         className={alertBorderColor}
-                                                        pastDue={item.pastDue}
+                                                        badge={item.badge}
+                                                        isOverdue={isOverdue}
                                                 />
                                         </Fragment>
                                 ))}
@@ -78,7 +91,8 @@ type ServiceDataListProps = {
         mileage: string;
         dueDate: string;
         dueBgColor: string;
-        pastDue: string;
+        badge: string;
+        isOverdue: boolean;
 };
 
 const ServiceDataList = ({
@@ -90,7 +104,8 @@ const ServiceDataList = ({
         mileage,
         dueDate,
         dueBgColor,
-        pastDue,
+        badge,
+        isOverdue,
 }: ServiceDataListProps) => {
         return (
                 <div
@@ -124,7 +139,7 @@ const ServiceDataList = ({
                                 </div>
                                 <div className="flex flex-col gap-0.5">
                                         <span className="text-gray-500 text-xs font-normal font-text leading-4">
-                                                Was Due
+                                                {isOverdue ? "Was Due" : "Due"}
                                         </span>
                                         <span className="text-neutral-950 text-xs font-medium font-text leading-4">
                                                 {dueDate}
@@ -134,7 +149,7 @@ const ServiceDataList = ({
                                         <span
                                                 className={`py-1 px-3 text-white text-xs font-medium font-text leading-4 rounded-full ${dueBgColor}`}
                                         >
-                                                {pastDue} PAST-DUE
+                                                {badge}
                                         </span>
                                 </div>
                         </div>

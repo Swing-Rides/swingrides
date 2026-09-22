@@ -20,7 +20,9 @@ import {
   LogServiceRequest,
   MaintenanceDashboardQuery,
   MaintenanceDashboardResponse,
+  MaintenanceMutationResponse,
   ServiceHistoryItem,
+  UpdateServiceRequest,
 } from "@/types/logservice.type";
 import { toast } from "sonner";
 import { HostProfileResponse } from "@/types/host-profile.type";
@@ -414,6 +416,12 @@ export const hostApi = createApi({
       providesTags: [{ type: "Maintainance", id: "LIST" }],
     }),
 
+    /**
+     * @deprecated Unused by the UI. `POST /api/host/maintenance/services` is a
+     * second, divergent field shape for the same operation (vehicleName /
+     * mileageKm / workshop / receiptUrl) that predates the modal endpoint
+     * below. The route still exists on the API; nothing here calls this hook.
+     */
     logMaintenanceService: builder.mutation<void, LogServiceRequest>({
       query: (payload) => ({
         url: "/api/host/maintenance/services",
@@ -466,6 +474,75 @@ export const hostApi = createApi({
       async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
+          dispatch(
+            analyticsApi.util.invalidateTags([
+              { type: "Analytics", id: "KPIS" },
+              { type: "Analytics", id: "EXPENSE_BREAKDOWN" },
+              { type: "Analytics", id: "DASHBOARD" },
+            ]),
+          );
+          dispatch(
+            expensesApi.util.invalidateTags([
+              { type: "Finance", id: "SUMMARY" },
+              { type: "Finance", id: "EXPENSES" },
+            ]),
+          );
+        } catch {
+          // The base query already surfaces mutation errors to the UI.
+        }
+      },
+    }),
+    updateMaintenanceService: builder.mutation<
+      MaintenanceMutationResponse,
+      { id: string; payload: UpdateServiceRequest }
+    >({
+      query: ({ id, payload }) => ({
+        url: `/api/host/maintenance/services/${id}`,
+        method: "PATCH",
+        body: payload,
+      }),
+      invalidatesTags: [
+        { type: "Maintainance", id: "LIST" },
+        { type: "Fleet", id: "LIST" },
+      ],
+      async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          // Editing a log rewrites its linked Expense, so the finance and
+          // analytics figures derived from it are now stale.
+          dispatch(
+            analyticsApi.util.invalidateTags([
+              { type: "Analytics", id: "KPIS" },
+              { type: "Analytics", id: "EXPENSE_BREAKDOWN" },
+              { type: "Analytics", id: "DASHBOARD" },
+            ]),
+          );
+          dispatch(
+            expensesApi.util.invalidateTags([
+              { type: "Finance", id: "SUMMARY" },
+              { type: "Finance", id: "EXPENSES" },
+            ]),
+          );
+        } catch {
+          // The base query already surfaces mutation errors to the UI.
+        }
+      },
+    }),
+
+    deleteMaintenanceService: builder.mutation<MaintenanceMutationResponse, string>({
+      query: (id) => ({
+        url: `/api/host/maintenance/services/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [
+        { type: "Maintainance", id: "LIST" },
+        { type: "Fleet", id: "LIST" },
+      ],
+      async onQueryStarted(_payload, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          // Deleting a log also removes its Expense and frees the schedule
+          // block-out it was holding on the booking calendar.
           dispatch(
             analyticsApi.util.invalidateTags([
               { type: "Analytics", id: "KPIS" },
@@ -552,6 +629,8 @@ export const {
   useLazyGetVehicleMaintenanceDashboardQuery,
   useLogMaintenanceServiceMutation,
   useLogServiceModalMutation,
+  useUpdateMaintenanceServiceMutation,
+  useDeleteMaintenanceServiceMutation,
   // maintenance endpoints
 
   useLogoutMutation,

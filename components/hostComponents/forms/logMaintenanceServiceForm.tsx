@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { FormField, LoadingSpinner } from "@/components/forms/MainForm";
 import VehicleSelectField from "@/components/hostComponents/pages/maintenance/vehicleSelectField";
 import { IListVehiclesDatum } from "@/types/vehicle.type";
+import {
+  DEFAULT_SERVICE_INTERVAL_KM,
+  DEFAULT_SERVICE_INTERVAL_MONTHS,
+  DUE_SOON_DAYS,
+  DUE_SOON_KM,
+  SERVICE_TYPE_PRESETS,
+} from "@/constants/maintenance";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,6 +46,55 @@ export type LogMaintenanceFormProps = {
   onCancel: () => void;
   isLoading?: boolean;
   onValueChange?: () => void;
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const toNumber = (value?: string): number => {
+  const parsed = parseInt(String(value ?? "").replace(/,/g, ""), 10);
+  return Number.isNaN(parsed) ? NaN : parsed;
+};
+
+/**
+ * Plain-language summary of the gap between the service just logged and the
+ * next one due, so the host can sanity-check two numbers they typed without
+ * doing the arithmetic themselves.
+ */
+const describeInterval = (
+  serviceDate: string,
+  nextServiceDate: string,
+  mileageAtService: string,
+  nextServiceMileage: string,
+): string | null => {
+  const parts: string[] = [];
+
+  const from = new Date(serviceDate);
+  const to = new Date(nextServiceDate);
+  if (
+    serviceDate &&
+    nextServiceDate &&
+    !isNaN(from.getTime()) &&
+    !isNaN(to.getTime()) &&
+    to > from
+  ) {
+    const days = Math.round(
+      (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    if (days < 45) {
+      parts.push(`in ${days} day${days === 1 ? "" : "s"}`);
+    } else {
+      const months = Math.round(days / 30);
+      parts.push(`in about ${months} month${months === 1 ? "" : "s"}`);
+    }
+  }
+
+  const current = toNumber(mileageAtService);
+  const next = toNumber(nextServiceMileage);
+  if (!isNaN(current) && !isNaN(next) && next > current) {
+    parts.push(`every ${(next - current).toLocaleString()} km`);
+  }
+
+  return parts.length > 0 ? `Next service ${parts.join(" · ")}` : null;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -87,7 +143,47 @@ export default function LogMaintenanceForm({
 
   const mileageAtService = useWatch({ control, name: "mileageAtService" });
   const serviceDate = useWatch({ control, name: "serviceDate" });
-  const selectedVehicleName = useWatch({ control, name: "vehicleName" });
+  const nextServiceDate = useWatch({ control, name: "nextServiceDate" });
+  const nextServiceMileage = useWatch({ control, name: "nextServiceMileage" });
+  const selectedServiceType = useWatch({ control, name: "serviceType" });
+
+  const intervalSummary = describeInterval(
+    serviceDate,
+    nextServiceDate,
+    mileageAtService,
+    nextServiceMileage,
+  );
+
+  const canQuickFill =
+    Boolean(serviceDate) && !isNaN(toNumber(mileageAtService));
+
+  /**
+   * Fills both next-due fields from the service just entered, using the
+   * typical interval. Faster than picking a date a year out by hand, and still
+   * editable afterwards.
+   */
+  const applyQuickFill = () => {
+    const from = new Date(serviceDate);
+    if (!isNaN(from.getTime())) {
+      const next = new Date(from);
+      next.setMonth(next.getMonth() + DEFAULT_SERVICE_INTERVAL_MONTHS);
+      setValue("nextServiceDate", next.toISOString(), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+
+    const current = toNumber(mileageAtService);
+    if (!isNaN(current)) {
+      setValue(
+        "nextServiceMileage",
+        (current + DEFAULT_SERVICE_INTERVAL_KM).toLocaleString(),
+        { shouldValidate: true, shouldDirty: true },
+      );
+    }
+
+    onValueChange?.();
+  };
 
   return (
     <form
@@ -134,20 +230,59 @@ export default function LogMaintenanceForm({
         )}
       />
 
-      {/* 2. Service Type */}
-      <FormField<LogMaintenanceFormValues>
-        field={{
-          name: "serviceType",
-          type: "text",
-          label: "Service Type",
-          placeholder: "e.g. Oil Change, Brake Inspection",
-          validation: { required: "Service type is required" },
-        }}
-        register={register}
-        control={control}
-        getValues={getValues}
-        errors={errors}
-      />
+      {/* 2. Service Type — presets for the common cases, free text for the rest.
+          The API stores this as free text and filters on exact equality, so
+          consistent wording keeps the service-type filter usable. */}
+      <div className="flex flex-col gap-2">
+        <FormField<LogMaintenanceFormValues>
+          field={{
+            name: "serviceType",
+            type: "text",
+            label: "Service Type",
+            placeholder: "e.g. Oil Change, Brake Inspection",
+            validation: {
+              required: "Service type is required",
+              minLength: {
+                value: 2,
+                message: "Service type must be at least 2 characters",
+              },
+              maxLength: {
+                value: 120,
+                message: "Service type cannot exceed 120 characters",
+              },
+            },
+          }}
+          register={register}
+          control={control}
+          getValues={getValues}
+          errors={errors}
+        />
+        <div className="flex flex-wrap gap-1.5">
+          {SERVICE_TYPE_PRESETS.map((preset) => {
+            const isActive = selectedServiceType === preset;
+            return (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => {
+                  setValue("serviceType", preset, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                  onValueChange?.();
+                }}
+                className={`px-2.5 py-1 rounded-full border text-xs font-medium font-text cursor-pointer transition-colors duration-200 ${
+                  isActive
+                    ? "bg-blue-700 border-blue-700 text-white"
+                    : "bg-white border-[#E5E7EB] text-[#6B7280] hover:border-blue-700 hover:text-blue-700"
+                }`}
+              >
+                {preset}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* 3. Service Date & Time + Mileage at Service */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -171,10 +306,11 @@ export default function LogMaintenanceForm({
             type: "text",
             label: "Mileage at Service (km)",
             placeholder: "e.g. 42,000",
-            disabled: !selectedVehicleName,
-            description: selectedVehicleName
-              ? "Auto-filled from vehicle odometer"
-              : "Select a vehicle first",
+            // Left editable: the odometer reading at the garage is often
+            // ahead of whatever is stored on the vehicle record, and locking
+            // the field until a vehicle was picked just hid that.
+            description:
+              "Pre-filled from the vehicle odometer — edit if the garage recorded something different",
             validation: {
               required: "Mileage is required",
               pattern: {
@@ -198,6 +334,8 @@ export default function LogMaintenanceForm({
             type: "number-dollar",
             label: "Cost ($)",
             placeholder: "e.g. 1200",
+            step: 0.01,
+            description: "Also recorded as a maintenance expense",
             validation: {
               required: "Cost is required",
               min: { value: 0, message: "Cost cannot be negative" },
@@ -209,12 +347,25 @@ export default function LogMaintenanceForm({
           errors={errors}
         />
 
+        {/* The API requires 2–120 characters here and answers with an error if
+            it is missing, so validate it rather than letting the submit fail. */}
         <FormField<LogMaintenanceFormValues>
           field={{
             name: "provider",
             type: "text",
             label: "Provider / Workshop",
             placeholder: "e.g. AutoCare Plus",
+            validation: {
+              required: "Provider / workshop is required",
+              minLength: {
+                value: 2,
+                message: "Provider must be at least 2 characters",
+              },
+              maxLength: {
+                value: 120,
+                message: "Provider cannot exceed 120 characters",
+              },
+            },
           }}
           register={register}
           control={control}
@@ -223,11 +374,26 @@ export default function LogMaintenanceForm({
         />
       </div>
 
-      {/* 5. Next Service Due (Both Date & Time and Mileage) */}
+      {/* 5. Next Service Due — both a date and a mileage, whichever comes
+          first is what flips the vehicle into Due Soon. */}
       <div className="flex flex-col gap-2">
-        <Label className="text-zinc-800 text-xs font-semibold font-text uppercase">
-          Next Service Due <span className="text-[#EF4444] ml-1">*</span>
-        </Label>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label className="text-zinc-800 text-xs font-semibold font-text uppercase">
+            Next Service Due <span className="text-[#EF4444] ml-1">*</span>
+          </Label>
+          <button
+            type="button"
+            onClick={applyQuickFill}
+            disabled={!canQuickFill}
+            className="text-xs font-medium font-text text-blue-700 hover:text-blue-900 cursor-pointer transition-colors duration-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+          >
+            {`Use +${DEFAULT_SERVICE_INTERVAL_MONTHS} months / +${DEFAULT_SERVICE_INTERVAL_KM.toLocaleString()} km`}
+          </button>
+        </div>
+
+        <p className="text-xs text-gray-500 font-text -mt-1">
+          {`This vehicle shows as Due Soon within ${DUE_SOON_DAYS} days or ${DUE_SOON_KM.toLocaleString()} km of whichever comes first.`}
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField<LogMaintenanceFormValues>
@@ -268,14 +434,8 @@ export default function LogMaintenanceForm({
                 },
                 validate: (value) => {
                   if (!value) return "Next service mileage is required";
-                  const next = parseInt(
-                    String(value ?? "").replace(/,/g, ""),
-                    10,
-                  );
-                  const current = parseInt(
-                    String(mileageAtService ?? "").replace(/,/g, ""),
-                    10,
-                  );
+                  const next = toNumber(String(value));
+                  const current = toNumber(mileageAtService);
                   if (isNaN(next)) return "Enter a valid mileage";
                   if (!isNaN(current) && next <= current) {
                     return `Must be greater than current mileage (${mileageAtService || 0} km)`;
@@ -290,6 +450,12 @@ export default function LogMaintenanceForm({
             errors={errors}
           />
         </div>
+
+        {intervalSummary && (
+          <p className="text-xs font-medium font-text text-blue-700">
+            {intervalSummary}
+          </p>
+        )}
       </div>
 
       {/* 6. Notes (max 500 characters) */}
@@ -338,4 +504,3 @@ export default function LogMaintenanceForm({
     </form>
   );
 }
-

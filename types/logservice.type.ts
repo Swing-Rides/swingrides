@@ -15,12 +15,27 @@ export interface MaintenanceSummary {
   totalMaintenanceCost: number;
   vehiclesDueSoon: number;
   overdueVehicles: number;
+  /**
+   * True when a filter narrowed the service history. The two vehicle counts
+   * above stay fleet-wide, so the cards need to say so when the totals beside
+   * them only describe the filtered rows.
+   */
+  isFiltered: boolean;
 }
 
 export interface VehicleHealthOverview {
   healthy: number;
   dueSoon: number;
   overdue: number;
+  /** Vehicles with no maintenance log yet — otherwise invisible on this page. */
+  neverServiced: number;
+}
+
+/** Distinct values across the whole history, for the table's filter dropdowns. */
+export interface MaintenanceFilterOptions {
+  serviceTypes: string[];
+  vehicleNames: string[];
+  workshops: string[];
 }
 
 export interface PaginatedServiceHistory {
@@ -63,6 +78,7 @@ export interface MaintainanceData {
     upcoming: ServiceAlertItem[];
   };
   serviceHistory: PaginatedServiceHistory;
+  filterOptions: MaintenanceFilterOptions;
 }
 
 export interface MaintenanceDashboardResponse {
@@ -75,6 +91,7 @@ export interface MaintenanceDashboardQuery {
   search?: string;
   vehicle?: string;
   serviceType?: string;
+  workshop?: string;
   page?: number;
   limit?: number;
 }
@@ -92,4 +109,23 @@ export interface LogServiceModalRequest {
   nextDueMileageKm?: number;
   nextDueDate?: string;
   notes?: string;
+}
+
+/** Partial edit of an existing log — only changed fields are sent. */
+export interface UpdateServiceRequest {
+  vehicle?: string;
+  serviceType?: string;
+  serviceDate?: string;
+  mileageAtServiceKm?: number;
+  cost?: number;
+  providerOrWorkshop?: string;
+  nextDueMileageKm?: number;
+  nextDueDate?: string;
+  notes?: string;
+}
+
+export interface MaintenanceMutationResponse {
+  success: boolean;
+  message: string;
+  data?: ServiceHistoryItem;
 }

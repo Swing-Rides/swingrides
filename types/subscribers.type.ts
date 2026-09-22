@@ -41,7 +41,8 @@ export type FleetStatus =
   | "unlisted"
   | "maintenance"
   | "active"
-  | "inactive";
+  | "inactive"
+  | "snoozed";
 export type BookingStatus = "upcoming" | "active" | "completed" | "cancelled";
 export type BillingStatus =
   | "successful"

@@ -40,6 +40,7 @@ import {
   isPickupDateTimeAvailable as checkPickupDateTimeAvailable,
   isReturnDateTimeAvailable as checkReturnDateTimeAvailable,
   isScheduleDateDisabled as checkScheduleDateDisabled,
+  isBlockedBySnooze,
 } from "@/lib/vehicleBookingHelpers";
 import { INSURANCE_LINK } from "@/constants/constant";
 
@@ -254,7 +255,19 @@ export const PaymentSection = memo(
       ? format(new Date(returnDate), "MMM d, h:mm a")
       : null;
 
+    const snoozeEnd = data?.data.snoozeEnd;
+    const isSnoozeBlocked = isBlockedBySnooze(
+      data?.data,
+      pickupDate ? new Date(pickupDate) : null,
+      returnDate ? new Date(returnDate) : null,
+    );
+    const snoozeMessage = snoozeEnd
+      ? `This vehicle is unavailable until ${format(new Date(snoozeEnd), "MMM d, yyyy, h:mm a")}.`
+      : "This vehicle is currently unavailable.";
+
     const onFormSubmit = async (values: PaymentFormValues) => {
+      if (isSnoozeBlocked) return;
+
       const breakdown = pricing
         ? computeTotal(pricing.total, insuranceFee, taxRate)
         : computeTotal(0, 0, taxRate);
@@ -783,9 +796,14 @@ export const PaymentSection = memo(
         </div>
 
         {/* ── Submit ──────────────────────────────────────── */}
+        {isSnoozeBlocked && (
+          <p className="text-sm font-medium font-text text-red-500">
+            {snoozeMessage}
+          </p>
+        )}
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSnoozeBlocked}
           className="w-full font-text text-white px-10 py-3 bg-blue-700 rounded-xs cursor-pointer hover:bg-blue-900 duration-300 transition-colors disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
         >
           {isSubmitting ? (

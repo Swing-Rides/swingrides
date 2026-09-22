@@ -2,22 +2,48 @@
 
 import { useState } from "react";
 import { X, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
 
 import { FieldSeparator } from "@/components/ui/field";
-import { useListVehcleQuery } from "@/app/store/services/hostApi";
-import { ServiceHistoryItem } from "@/types/logservice.type";
+import {
+  useListVehcleQuery,
+  useUpdateMaintenanceServiceMutation,
+} from "@/app/store/services/hostApi";
+import {
+  ServiceHistoryItem,
+  UpdateServiceRequest,
+} from "@/types/logservice.type";
 import { IListVehiclesDatum } from "@/types/vehicle.type";
 import LogMaintenanceForm, {
   LogMaintenanceFormValues,
 } from "@/components/hostComponents/forms/logMaintenanceServiceForm";
+import { parseNumericInput } from "./logMaintenanceServiceForm";
 
 export type EditMaintenanceServiceModalProps = {
   service: ServiceHistoryItem;
   onClose: () => void;
   onSuccess?: () => void;
-  onSave?: (values: LogMaintenanceFormValues) => Promise<void> | void;
 };
+
+/**
+ * The vehicle select is locked while editing, so `vehicle` is deliberately not
+ * sent — the log stays on the vehicle it was filed against.
+ */
+export const buildUpdateServicePayload = (
+  values: LogMaintenanceFormValues,
+): UpdateServiceRequest => ({
+  serviceType: values.serviceType,
+  serviceDate: values.serviceDate
+    ? new Date(values.serviceDate).toISOString()
+    : undefined,
+  mileageAtServiceKm: parseNumericInput(values.mileageAtService),
+  cost: parseNumericInput(values.cost),
+  providerOrWorkshop: values.provider,
+  nextDueDate: values.nextServiceDate
+    ? new Date(values.nextServiceDate).toISOString()
+    : undefined,
+  nextDueMileageKm: parseNumericInput(values.nextServiceMileage),
+  notes: values.notes,
+});
 
 const toIsoDateString = (d?: Date | string | null): string => {
   if (!d) return "";
@@ -29,10 +55,10 @@ export default function EditMaintenanceServiceModal({
   service,
   onClose,
   onSuccess,
-  onSave,
 }: EditMaintenanceServiceModalProps) {
   const [apiError, setApiError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [updateMaintenanceService, { isLoading: isSubmitting }] =
+    useUpdateMaintenanceServiceMutation();
 
   const {
     data,
@@ -70,12 +96,15 @@ export default function EditMaintenanceServiceModal({
 
   const handleSubmit = async (values: LogMaintenanceFormValues) => {
     setApiError(null);
-    setIsSubmitting(true);
     try {
-      if (onSave) {
-        await onSave(values);
-      }
-      toast.success("Maintenance service updated successfully");
+      // This used to call an optional `onSave` that no caller ever supplied
+      // and then report success regardless, so edits were silently dropped.
+      await updateMaintenanceService({
+        id: service.id,
+        payload: buildUpdateServicePayload(values),
+      }).unwrap();
+
+      // The base query raises the success toast from the API's own message.
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
@@ -85,9 +114,6 @@ export default function EditMaintenanceServiceModal({
         (err as { message?: string })?.message ||
         "An unexpected error occurred while updating service. Please try again.";
       setApiError(errorMsg);
-      toast.error(errorMsg);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
