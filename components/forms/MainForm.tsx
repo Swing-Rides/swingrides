@@ -44,6 +44,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 import { FormFieldConfig, FormSectionConfig, MainFormProps } from "./types";
 import Image from "next/image";
@@ -1105,16 +1107,38 @@ export function FileInput<T extends FieldValues = FieldValues>({
     return [];
   };
 
+  type UploadingFileItem = {
+    id: string;
+    file: File;
+    previewUrl: string;
+    abortController: AbortController;
+  };
+
   const [existingUrls, setExistingUrls] = useState<string[]>(
     () => field.initialUrls ?? [],
   );
+  const [prevInitialUrls, setPrevInitialUrls] = useState(field.initialUrls);
+  if (field.initialUrls !== prevInitialUrls) {
+    setPrevInitialUrls(field.initialUrls);
+    setExistingUrls(field.initialUrls ?? []);
+  }
+
+  const [uploadingItems, setUploadingItems] = useState<UploadingFileItem[]>([]);
+  const uploadingItemsRef = useRef<UploadingFileItem[]>([]);
+  uploadingItemsRef.current = uploadingItems;
+
+  const inFlightCountRef = useRef(0);
+  const existingUrlsRef = useRef<string[]>(existingUrls);
+  existingUrlsRef.current = existingUrls;
+
   const [files, setFiles] = useState<File[]>(getInitialFiles);
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const removeExistingUrl = (index: number) => {
-    const updated = existingUrls.filter((_, i) => i !== index);
+    const updated = existingUrlsRef.current.filter((_, i) => i !== index);
+    existingUrlsRef.current = updated;
     setExistingUrls(updated);
     field.onExistingUrlsChange?.(updated);
   };
@@ -1174,6 +1198,84 @@ export function FileInput<T extends FieldValues = FieldValues>({
     return null;
   };
 
+  const uploadSingleFile = async (item: UploadingFileItem) => {
+    try {
+      const fd = new FormData();
+      fd.append("file", item.file);
+
+      const endpoint = field.uploadEndpoint ?? "/api/upload";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        body: fd,
+        signal: item.abortController.signal,
+      });
+
+      if (!res.ok) {
+        let errorMsg = `Failed to upload "${item.file.name}"`;
+        try {
+          const errData = await res.json();
+          if (errData?.error) {
+            errorMsg =
+              typeof errData.error === "string"
+                ? errData.error
+                : errData.error.message || errorMsg;
+          }
+        } catch {
+          // ignore
+        }
+        throw new Error(errorMsg);
+      }
+
+      const data = await res.json();
+      const secureUrl = (data?.secure_url || data?.url) as string;
+      if (!secureUrl) {
+        throw new Error(
+          `Upload failed for "${item.file.name}": No URL returned from server.`,
+        );
+      }
+
+      const nextUrls = [...existingUrlsRef.current, secureUrl];
+      existingUrlsRef.current = nextUrls;
+      setExistingUrls(nextUrls);
+      field.onExistingUrlsChange?.(nextUrls);
+      field.onUploadSuccess?.(secureUrl, item.file);
+    } catch (err: unknown) {
+      if (item.abortController.signal.aborted) {
+        return;
+      }
+      const msg =
+        err instanceof Error
+          ? err.message
+          : `Failed to upload "${item.file.name}". Please try again.`;
+      toast.error(msg);
+      field.onUploadError?.(
+        err instanceof Error ? err : new Error(msg),
+        item.file,
+      );
+    } finally {
+      URL.revokeObjectURL(item.previewUrl);
+      setUploadingItems((prev) => prev.filter((i) => i.id !== item.id));
+
+      inFlightCountRef.current = Math.max(0, inFlightCountRef.current - 1);
+      if (inFlightCountRef.current === 0) {
+        field.onUploadingChange?.(false);
+      }
+    }
+  };
+
+  const cancelUploadingItem = (id: string) => {
+    const item = uploadingItemsRef.current.find((i) => i.id === id);
+    if (item) {
+      item.abortController.abort();
+      URL.revokeObjectURL(item.previewUrl);
+      setUploadingItems((prev) => prev.filter((i) => i.id !== id));
+      inFlightCountRef.current = Math.max(0, inFlightCountRef.current - 1);
+      if (inFlightCountRef.current === 0) {
+        field.onUploadingChange?.(false);
+      }
+    }
+  };
+
   const syncInputFiles = (updated: File[]) => {
     if (!inputRef.current) return;
 
@@ -1186,6 +1288,65 @@ export function FileInput<T extends FieldValues = FieldValues>({
 
   const handleFilesSelected = (newlySelected: File[]) => {
     if (!newlySelected.length) return;
+
+    if (field.autoUpload) {
+      const maxFiles = field.maxFiles ?? Infinity;
+      const currentCount =
+        existingUrlsRef.current.length + uploadingItemsRef.current.length;
+      const availableSlots = Math.max(0, maxFiles - currentCount);
+
+      if (availableSlots <= 0) {
+        toast.error(
+          `Maximum ${maxFiles} image${maxFiles === 1 ? "" : "s"} allowed`,
+        );
+        if (inputRef.current) inputRef.current.value = "";
+        return;
+      }
+
+      const filesToProcess = newlySelected.slice(0, availableSlots);
+      if (filesToProcess.length < newlySelected.length) {
+        toast.warning(
+          `Only ${availableSlots} more image${availableSlots === 1 ? "" : "s"} can be added.`,
+        );
+      }
+
+      const validFiles: File[] = [];
+      for (const file of filesToProcess) {
+        const err = validateFile(file);
+        if (err) {
+          toast.error(`"${file.name}": ${err}`);
+        } else if (
+          uploadingItemsRef.current.some((item) => isSameFile(item.file, file))
+        ) {
+          toast.warning(`"${file.name}" is already uploading.`);
+        } else {
+          validFiles.push(file);
+        }
+      }
+
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+
+      if (!validFiles.length) return;
+
+      const newItems: UploadingFileItem[] = validFiles.map((file) => ({
+        id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 9)}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        abortController: new AbortController(),
+      }));
+
+      inFlightCountRef.current += newItems.length;
+      field.onUploadingChange?.(true);
+
+      setUploadingItems((prev) => [...prev, ...newItems]);
+
+      newItems.forEach((item) => {
+        uploadSingleFile(item);
+      });
+      return;
+    }
 
     const newErrors: Record<string, string> = {};
 
@@ -1245,7 +1406,9 @@ export function FileInput<T extends FieldValues = FieldValues>({
     ? "Some uploaded files have errors. Please remove the highlighted files below."
     : error;
 
-  const totalCount = existingUrls.length + files.length;
+  const totalCount =
+    existingUrls.length +
+    (field.autoUpload ? uploadingItems.length : files.length);
 
   return (
     <div className="flex flex-col gap-3">
@@ -1392,80 +1555,131 @@ export function FileInput<T extends FieldValues = FieldValues>({
             );
           })}
 
-          {files.map((file, index) => {
-            const fileKey = getFileKey(file);
-            const fileErr = fileErrors[fileKey];
-            const isImage = file.type.startsWith("image/");
-            const preview = isImage ? URL.createObjectURL(file) : null;
+          {field.autoUpload
+            ? uploadingItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="relative rounded-lg border border-blue-200 overflow-hidden bg-white transition-all duration-200 flex flex-col justify-between"
+                >
+                  {field.showPreview !== false ? (
+                    <div className="relative w-full aspect-square bg-gray-100">
+                      <Image
+                        src={item.previewUrl}
+                        alt={item.file.name}
+                        title={item.file.name}
+                        fill
+                        className="object-cover opacity-75"
+                      />
+                      <div className="absolute inset-0 bg-neutral-900/40 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2 p-2 text-white">
+                        <Spinner className="size-6 text-white" />
+                        <span className="text-xs font-medium font-text tracking-wide drop-shadow-sm">
+                          Uploading...
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-28 bg-blue-50 gap-2">
+                      <Spinner className="size-6 text-blue-700" />
+                      <span className="text-xs text-blue-700 font-medium">Uploading...</span>
+                    </div>
+                  )}
 
-            return (
-              <div
-                key={`${file.name}-${file.lastModified}-${index}`}
-                className={cn(
-                  "relative rounded-lg border overflow-hidden bg-white transition-all duration-200 flex flex-col justify-between",
-                  fileErr
-                    ? "border-red-500 ring-2 ring-red-500 bg-[#FFF5F5]"
-                    : "border-gray-300",
-                )}
-              >
-                {isImage && field.showPreview !== false ? (
-                  <div className="relative w-full aspect-square bg-gray-100">
-                    <Image
-                      src={preview!}
-                      alt={file.name}
-                      title={file.name}
-                      fill
-                      className="object-cover"
-                    />
+                  <div className="p-2">
+                    <p
+                      className="text-xs font-text truncate text-[#1F2937]"
+                      title={item.file.name}
+                    >
+                      {item.file.name}
+                    </p>
+                    <p className="text-[11px] text-blue-600 font-medium">
+                      {(item.file.size / 1024 / 1024).toFixed(2)} MB • Uploading
+                    </p>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center h-28 bg-zinc-200">
-                    {icon}
-                  </div>
-                )}
 
-                <div className="p-2">
-                  <p
+                  <button
+                    type="button"
+                    onClick={() => cancelUploadingItem(item.id)}
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full shadow flex items-center justify-center bg-white/90 text-red-500 hover:bg-white hover:text-red-700 transition-colors cursor-pointer z-10"
+                    title="Cancel upload"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))
+            : files.map((file, index) => {
+                const fileKey = getFileKey(file);
+                const fileErr = fileErrors[fileKey];
+                const isImage = file.type.startsWith("image/");
+                const preview = isImage ? URL.createObjectURL(file) : null;
+
+                return (
+                  <div
+                    key={`${file.name}-${file.lastModified}-${index}`}
                     className={cn(
-                      "text-xs font-text truncate",
+                      "relative rounded-lg border overflow-hidden bg-white transition-all duration-200 flex flex-col justify-between",
                       fileErr
-                        ? "text-[#EF4444] font-semibold"
-                        : "text-[#1F2937]",
+                        ? "border-red-500 ring-2 ring-red-500 bg-[#FFF5F5]"
+                        : "border-gray-300",
                     )}
                   >
-                    {file.name}
-                  </p>
+                    {isImage && field.showPreview !== false ? (
+                      <div className="relative w-full aspect-square bg-gray-100">
+                        <Image
+                          src={preview!}
+                          alt={file.name}
+                          title={file.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-28 bg-zinc-200">
+                        {icon}
+                      </div>
+                    )}
 
-                  <p className="text-[11px] text-[#9CA3AF]">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
+                    <div className="p-2">
+                      <p
+                        className={cn(
+                          "text-xs font-text truncate",
+                          fileErr
+                            ? "text-[#EF4444] font-semibold"
+                            : "text-[#1F2937]",
+                        )}
+                      >
+                        {file.name}
+                      </p>
 
-                  {fileErr && (
-                    <p className="text-[11px] text-[#EF4444] font-medium font-text mt-1 flex items-center gap-1">
-                      <ErrorIcon />
-                      <span className="truncate" title={fileErr}>
-                        {fileErr}
-                      </span>
-                    </p>
-                  )}
-                </div>
+                      <p className="text-[11px] text-[#9CA3AF]">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
 
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className={cn(
-                    "absolute top-2 right-2 w-6 h-6 rounded-full shadow flex items-center justify-center transition-colors",
-                    fileErr
-                      ? "bg-[#EF4444] text-white hover:bg-red-700"
-                      : "bg-white text-red-500 hover:bg-red-50",
-                  )}
-                  title="Remove file"
-                >
-                  ×
-                </button>
-              </div>
-            );
-          })}
+                      {fileErr && (
+                        <p className="text-[11px] text-[#EF4444] font-medium font-text mt-1 flex items-center gap-1">
+                          <ErrorIcon />
+                          <span className="truncate" title={fileErr}>
+                            {fileErr}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className={cn(
+                        "absolute top-2 right-2 w-6 h-6 rounded-full shadow flex items-center justify-center transition-colors",
+                        fileErr
+                          ? "bg-[#EF4444] text-white hover:bg-red-700"
+                          : "bg-white text-red-500 hover:bg-red-50",
+                      )}
+                      title="Remove file"
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
         </div>
       )}
     </div>

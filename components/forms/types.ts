@@ -56,6 +56,11 @@ export type FormFieldConfig = {
         maxFiles?: number
         maxSizeMB?: number
         showPreview?: boolean
+        autoUpload?: boolean
+        uploadEndpoint?: string
+        onUploadingChange?: (isUploading: boolean) => void
+        onUploadSuccess?: (url: string, file: File) => void
+        onUploadError?: (error: Error, file: File) => void
         initialUrls?: string[]
         onExistingUrlsChange?: (urls: string[]) => void
 }
