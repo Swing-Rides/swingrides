@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   useGetVehicleQuery,
   useUpdateVehicleMutation,
@@ -94,6 +95,7 @@ export default function EditFleetComponents({
   });
 
   const [updateVehicle, { isLoading: isUpdating }] = useUpdateVehicleMutation();
+  const [isUploading, setIsUploading] = useState(false);
 
   const vehicle = vehicleResponse?.data;
 
@@ -171,9 +173,14 @@ export default function EditFleetComponents({
       images: values.vehicleImageUrls ?? [],
     };
 
-    await updateVehicle({ vehicleId: fleetId, data: payload }).unwrap();
-    refetch();
-    router.push(`${HOST_DASHBOARD_PATH}fleet`);
+    try {
+      await updateVehicle({ vehicleId: fleetId, data: payload }).unwrap();
+      toast.success("Vehicle updated successfully");
+      refetch();
+      router.push(`${HOST_DASHBOARD_PATH}fleet`);
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Failed to update vehicle");
+    }
   };
 
   return (
@@ -200,10 +207,16 @@ export default function EditFleetComponents({
           <button
             type="submit"
             form="fleet-form"
-            disabled={isFetching || isUpdating}
-            className="py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer"
+            disabled={isFetching || isUpdating || isUploading}
+            className="py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isUpdating ? "Saving..." : "Save Changes"}
+            {isUpdating || isUploading ? (
+              <span className="flex items-center gap-2 justify-center">
+                <Spinner /> {isUploading ? "Uploading images..." : "Saving..."}
+              </span>
+            ) : (
+              "Save Changes"
+            )}
           </button>
         </div>
       </div>
@@ -213,6 +226,7 @@ export default function EditFleetComponents({
         formId="fleet-form"
         defaultValues={vehicleDefaults}
         onSubmit={handleSubmit}
+        onUploadingChange={setIsUploading}
       />
 
       {/* BOTTOM BUTTONS */}
@@ -227,11 +241,12 @@ export default function EditFleetComponents({
         <button
           type="submit"
           form="fleet-form"
-          className="flex-1 py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer"
+          disabled={isFetching || isUpdating || isUploading}
+          className="flex-1 py-2.5 px-6 border border-blue-700 bg-blue-700 hover:bg-blue-950 hover:border-blue-950 text-white text-xs rounded-xs font-medium font-text transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isUpdating ? (
-            <span className="flex items-center gap-2 justify-start">
-              <Spinner /> Saving...
+          {isUpdating || isUploading ? (
+            <span className="flex items-center gap-2 justify-center">
+              <Spinner /> {isUploading ? "Uploading images..." : "Saving..."}
             </span>
           ) : (
             "Save Changes"

@@ -18,6 +18,7 @@ import { validateVin } from "@/lib/vinChecker";
 import { US_STATES } from "@/constants/addressState";
 import { INSURANCE_LINK } from "@/constants/constant";
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
+import { toast } from "sonner";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -99,6 +100,7 @@ export type FleetFormProps = {
   formId: string;
   defaultValues?: Partial<FleetFormValues>;
   onSubmit: (values: FleetFormValues) => void | Promise<void>;
+  onUploadingChange?: (isUploading: boolean) => void;
 };
 
 const FALLBACK_DEFAULTS: FleetFormValues = {
@@ -138,6 +140,7 @@ export default function FleetForm({
   formId,
   defaultValues,
   onSubmit,
+  onUploadingChange,
 }: FleetFormProps) {
   const { data: hostProfileResponse } = useGetHostProfileQuery();
   const hostInsurance = hostProfileResponse?.data?.insurance;
@@ -221,28 +224,50 @@ export default function FleetForm({
       filesToUpload.push(rawFiles);
     }
 
-    let newUrls: string[] = [];
-    if (filesToUpload.length > 0) {
-      newUrls = await Promise.all(
-        filesToUpload.map(async (file) => {
+    onUploadingChange?.(true);
+
+    try {
+      const newUrls: string[] = [];
+      if (filesToUpload.length > 0) {
+        for (const file of filesToUpload) {
           const fd = new FormData();
           fd.append("file", file);
           const res = await fetch("/api/upload", { method: "POST", body: fd });
           if (!res.ok) {
-            throw new Error("Failed to upload image");
+            let errorMsg = `Failed to upload image "${file.name}"`;
+            try {
+              const errData = await res.json();
+              if (errData?.error) {
+                errorMsg =
+                  typeof errData.error === "string"
+                    ? errData.error
+                    : errData.error.message || errorMsg;
+              }
+            } catch {
+              // fallback
+            }
+            throw new Error(errorMsg);
           }
           const data = await res.json();
-          return data.secure_url as string;
-        }),
-      );
+          newUrls.push(data.secure_url as string);
+        }
+      }
+
+      const mergedUrls = [...imageUrls, ...newUrls].slice(0, MAX_IMAGES);
+
+      await onSubmit({
+        ...(rawValues as unknown as FleetFormValues),
+        vehicleImageUrls: mergedUrls,
+      });
+    } catch (error) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Failed to upload vehicle images. Please try again.";
+      toast.error(msg);
+    } finally {
+      onUploadingChange?.(false);
     }
-
-    const mergedUrls = [...imageUrls, ...newUrls].slice(0, MAX_IMAGES);
-
-    await onSubmit({
-      ...(rawValues as unknown as FleetFormValues),
-      vehicleImageUrls: mergedUrls,
-    });
   };
 
   const currentYear = new Date().getFullYear();
