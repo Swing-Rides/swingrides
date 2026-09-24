@@ -150,6 +150,20 @@ export default function FleetForm({
   const [imageUrls, setImageUrls] = useState<string[]>(
     () => defaultValues?.vehicleImageUrls ?? [],
   );
+  const [prevDefaultUrls, setPrevDefaultUrls] = useState(
+    defaultValues?.vehicleImageUrls,
+  );
+  if (defaultValues?.vehicleImageUrls !== prevDefaultUrls) {
+    setPrevDefaultUrls(defaultValues?.vehicleImageUrls);
+    setImageUrls(defaultValues?.vehicleImageUrls ?? []);
+  }
+
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleUploadingChange = (uploading: boolean) => {
+    setIsUploading(uploading);
+    onUploadingChange?.(uploading);
+  };
 
   const hostInsuranceCarrier =
     hostInsurance?.insuranceCarrier ||
@@ -211,62 +225,22 @@ export default function FleetForm({
   };
 
   const handleFormSubmit = async (rawValues: Record<string, unknown>) => {
-    const rawFiles = rawValues.vehicleImages;
-    const filesToUpload: File[] = [];
-
-    if (typeof FileList !== "undefined" && rawFiles instanceof FileList) {
-      filesToUpload.push(...Array.from(rawFiles));
-    } else if (Array.isArray(rawFiles)) {
-      filesToUpload.push(
-        ...rawFiles.filter((f): f is File => typeof File !== "undefined" && f instanceof File),
-      );
-    } else if (typeof File !== "undefined" && rawFiles instanceof File) {
-      filesToUpload.push(rawFiles);
+    if (isUploading) {
+      toast.error("Please wait for images to finish uploading before submitting.");
+      return;
     }
 
-    onUploadingChange?.(true);
-
     try {
-      const newUrls: string[] = [];
-      if (filesToUpload.length > 0) {
-        for (const file of filesToUpload) {
-          const fd = new FormData();
-          fd.append("file", file);
-          const res = await fetch("/api/upload", { method: "POST", body: fd });
-          if (!res.ok) {
-            let errorMsg = `Failed to upload image "${file.name}"`;
-            try {
-              const errData = await res.json();
-              if (errData?.error) {
-                errorMsg =
-                  typeof errData.error === "string"
-                    ? errData.error
-                    : errData.error.message || errorMsg;
-              }
-            } catch {
-              // fallback
-            }
-            throw new Error(errorMsg);
-          }
-          const data = await res.json();
-          newUrls.push(data.secure_url as string);
-        }
-      }
-
-      const mergedUrls = [...imageUrls, ...newUrls].slice(0, MAX_IMAGES);
-
       await onSubmit({
         ...(rawValues as unknown as FleetFormValues),
-        vehicleImageUrls: mergedUrls,
+        vehicleImageUrls: imageUrls,
       });
     } catch (error) {
       const msg =
         error instanceof Error
           ? error.message
-          : "Failed to upload vehicle images. Please try again.";
+          : "Failed to submit vehicle. Please try again.";
       toast.error(msg);
-    } finally {
-      onUploadingChange?.(false);
     }
   };
 
@@ -775,35 +749,17 @@ export default function FleetForm({
           maxFiles: MAX_IMAGES,
           maxSizeMB: MAX_IMAGE_SIZE_MB,
           showPreview: true,
+          autoUpload: true,
+          uploadEndpoint: "/api/upload",
           initialUrls: imageUrls,
           onExistingUrlsChange: setImageUrls,
+          onUploadingChange: handleUploadingChange,
           validation: {
             validate: {
-              maxFiles: (files: FileList | undefined) => {
-                const count = (files?.length ?? 0) + imageUrls.length;
+              maxFiles: () => {
                 return (
-                  count <= MAX_IMAGES || `Maximum ${MAX_IMAGES} images allowed`
-                );
-              },
-              maxSize: (files: FileList | undefined) => {
-                if (!files?.length) return true;
-                const oversized = Array.from(files).filter(
-                  (f) => f.size / (1024 * 1024) > MAX_IMAGE_SIZE_MB,
-                );
-                return (
-                  oversized.length === 0 ||
-                  `Each image must be under ${MAX_IMAGE_SIZE_MB}MB`
-                );
-              },
-              fileType: (files: FileList | undefined) => {
-                if (!files?.length) return true;
-                const invalid = Array.from(files).filter(
-                  (f) =>
-                    !["image/png", "image/jpeg", "image/webp"].includes(f.type),
-                );
-                return (
-                  invalid.length === 0 ||
-                  "Only PNG, JPG and WEBP files are allowed"
+                  imageUrls.length <= MAX_IMAGES ||
+                  `Maximum ${MAX_IMAGES} images allowed`
                 );
               },
             },
