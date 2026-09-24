@@ -19,6 +19,9 @@ import { US_STATES } from "@/constants/addressState";
 import { INSURANCE_LINK } from "@/constants/constant";
 import { useGetHostProfileQuery } from "@/app/store/services/hostApi";
 import { toast } from "sonner";
+import { extractApiErrorMessages } from "@/utils";
+
+export { extractApiErrorMessages };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -236,11 +239,11 @@ export default function FleetForm({
         vehicleImageUrls: imageUrls,
       });
     } catch (error) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : "Failed to submit vehicle. Please try again.";
-      toast.error(msg);
+      const messages = extractApiErrorMessages(
+        error,
+        "Failed to submit vehicle. Please try again.",
+      );
+      Array.from(new Set(messages)).forEach((msg) => toast.error(msg));
     }
   };
 
