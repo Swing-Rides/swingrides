@@ -79,9 +79,13 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
 
+type InFlightPaymentIntentResult =
+  | { success: true; data: CreateHostPlanPaymentIntentResponse }
+  | { success: false; error: unknown };
+
 const inFlightHostPlanPaymentIntentRequests = new Map<
   string,
-  Promise<{ data: CreateHostPlanPaymentIntentResponse }>
+  Promise<InFlightPaymentIntentResult>
 >();
 
 // ─── Pricing helpers ────────────────────────────────────────────────────────
@@ -113,20 +117,25 @@ const computeTotals = (
 };
 
 const getErrorMessage = (error: unknown, fallback: string) => {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "data" in error &&
-    typeof error.data === "object" &&
-    error.data !== null &&
-    "message" in error.data &&
-    typeof error.data.message === "string"
-  ) {
-    return error.data.message;
-  }
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
 
-  if (error instanceof Error) {
-    return error.message;
+  if (typeof error === "object" && error !== null) {
+    if ("data" in error) {
+      const data = (error as { data: unknown }).data;
+      if (typeof data === "string") return data;
+      if (typeof data === "object" && data !== null) {
+        if ("message" in data && typeof (data as { message: unknown }).message === "string") {
+          return (data as { message: string }).message;
+        }
+        if ("error" in data && typeof (data as { error: unknown }).error === "string") {
+          return (data as { error: string }).error;
+        }
+      }
+    }
+    if ("message" in error && typeof (error as { message: unknown }).message === "string") {
+      return (error as { message: string }).message;
+    }
   }
 
   return fallback;
@@ -263,13 +272,28 @@ export default function RegistrationPayment({
     const key = paymentRequestKey;
     const existingRequest = inFlightHostPlanPaymentIntentRequests.get(key);
 
-    const requestPromise: Promise<{ data: CreateHostPlanPaymentIntentResponse }> =
-      existingRequest ??
-      createHostPlanPaymentIntent({
-        plan: selectedPackage.id,
-        billingCycle,
-        couponCode: appliedCoupon?.code,
-      }).unwrap();
+    const fetchPaymentIntent = async (): Promise<InFlightPaymentIntentResult> => {
+      try {
+        const result = await createHostPlanPaymentIntent({
+          plan: selectedPackage.id,
+          billingCycle,
+          couponCode: appliedCoupon?.code,
+        });
+
+        if ("data" in result && result.data?.data) {
+          return { success: true, data: result.data.data };
+        }
+        return {
+          success: false,
+          error: "error" in result ? result.error : result,
+        };
+      } catch (err) {
+        return { success: false, error: err };
+      }
+    };
+
+    const requestPromise: Promise<InFlightPaymentIntentResult> =
+      existingRequest ?? fetchPaymentIntent();
 
     if (!existingRequest) {
       inFlightHostPlanPaymentIntentRequests.set(key, requestPromise);
@@ -278,17 +302,28 @@ export default function RegistrationPayment({
     void requestPromise
       .then((res) => {
         if (cancelled) return;
-        setPreparedPayment({
-          key,
-          clientSecret: res.data.clientSecret,
-          intentKind: res.data.intentKind,
-          subtotal: res.data.subtotal,
-          discount: res.data.discount,
-          totalAmount: res.data.totalAmount,
-          couponCode: res.data.couponCode,
-        });
-        setPreparedFor(key);
-        setError(null);
+        if (res.success) {
+          setPreparedPayment({
+            key,
+            clientSecret: res.data.clientSecret,
+            intentKind: res.data.intentKind,
+            subtotal: res.data.subtotal,
+            discount: res.data.discount,
+            totalAmount: res.data.totalAmount,
+            couponCode: res.data.couponCode,
+          });
+          setPreparedFor(key);
+          setError(null);
+        } else {
+          setPreparedPayment(null);
+          setPreparedFor(key);
+          setError(
+            getErrorMessage(
+              res.error,
+              "Unable to prepare your host plan payment.",
+            ),
+          );
+        }
       })
       .catch((createIntentError) => {
         if (cancelled) return;
@@ -330,22 +365,33 @@ export default function RegistrationPayment({
 
     let cancelled = false;
 
-    void completeHostPlanPayment({
-      paymentIntentId: redirectedPaymentIntentId,
-      plan: selectedPackage.id,
-      billingCycle,
-    })
-      .unwrap()
-      .then((response) => {
+    const finalizePayment = async () => {
+      try {
+        const result = await completeHostPlanPayment({
+          paymentIntentId: redirectedPaymentIntentId,
+          plan: selectedPackage.id,
+          billingCycle,
+        });
+
         if (cancelled) return;
-        setFinalizedPaymentIntentId(redirectedPaymentIntentId);
-        setOnboardingUrl(response.data.onboardingUrl ?? null);
-        setIsStripeOnboardingComplete(
-          response.data.stripeConnect?.onboardingComplete ?? false,
-        );
-        setIsSuccess(true);
-      })
-      .catch((paymentError) => {
+
+        if ("data" in result && result.data?.data) {
+          const response = result.data;
+          setFinalizedPaymentIntentId(redirectedPaymentIntentId);
+          setOnboardingUrl(response.data.onboardingUrl ?? null);
+          setIsStripeOnboardingComplete(
+            response.data.stripeConnect?.onboardingComplete ?? false,
+          );
+          setIsSuccess(true);
+        } else {
+          setError(
+            getErrorMessage(
+              "error" in result ? result.error : result,
+              "Payment succeeded, but we could not activate your host plan.",
+            ),
+          );
+        }
+      } catch (paymentError) {
         if (cancelled) return;
         setError(
           getErrorMessage(
@@ -353,7 +399,10 @@ export default function RegistrationPayment({
             "Payment succeeded, but we could not activate your host plan.",
           ),
         );
-      });
+      }
+    };
+
+    void finalizePayment();
 
     return () => {
       cancelled = true;
@@ -388,18 +437,27 @@ export default function RegistrationPayment({
     setIsApplyingCoupon(true);
 
     try {
-      const response = await validateHostPlanCoupon({
+      const result = await validateHostPlanCoupon({
         plan: selectedPackage.id,
         billingCycle,
         couponCode: couponInput.trim(),
-      }).unwrap();
-
-      setAppliedCoupon({
-        code: response.data.couponCode,
-        label: `${response.data.percentOff}% off`,
-        percentOff: response.data.percentOff,
       });
-      setCouponInput("");
+
+      if ("data" in result && result.data?.data) {
+        setAppliedCoupon({
+          code: result.data.data.couponCode,
+          label: `${result.data.data.percentOff}% off`,
+          percentOff: result.data.data.percentOff,
+        });
+        setCouponInput("");
+      } else {
+        setCouponError(
+          getErrorMessage(
+            "error" in result ? result.error : result,
+            "That coupon code isn't valid.",
+          ),
+        );
+      }
     } catch (validateError) {
       setCouponError(
         getErrorMessage(validateError, "That coupon code isn't valid."),
@@ -426,14 +484,23 @@ export default function RegistrationPayment({
     }
 
     try {
-      const response = await createHostStripeConnectOnboardingLink().unwrap();
-      if (response.data.url) {
-        window.location.href = response.data.url;
-        return;
+      const result = await createHostStripeConnectOnboardingLink();
+      if ("data" in result && result.data?.data) {
+        if (result.data.data.url) {
+          window.location.href = result.data.data.url;
+          return;
+        }
+        setIsStripeOnboardingComplete(
+          result.data.data.stripeConnect.onboardingComplete,
+        );
+      } else {
+        setError(
+          getErrorMessage(
+            "error" in result ? result.error : result,
+            "We couldn't start Stripe onboarding right now.",
+          ),
+        );
       }
-      setIsStripeOnboardingComplete(
-        response.data.stripeConnect.onboardingComplete,
-      );
     } catch (onboardingError) {
       setError(
         getErrorMessage(
@@ -927,12 +994,22 @@ function StripePaymentFields({
     }
 
     try {
-      await completeHostPlanPayment({
+      const result = await completeHostPlanPayment({
         paymentIntentId: confirmedId,
         plan: selectedPackage.id,
         billingCycle,
-      }).unwrap();
-      onSuccess(confirmedId);
+      });
+
+      if ("data" in result && result.data?.data) {
+        onSuccess(confirmedId);
+      } else {
+        setError(
+          getErrorMessage(
+            "error" in result ? result.error : result,
+            "Payment succeeded, but we could not activate your host plan.",
+          ),
+        );
+      }
     } catch (paymentError) {
       setError(
         getErrorMessage(

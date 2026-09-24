@@ -25,7 +25,6 @@ import {
   BookingLifecycleStatus,
 } from "@/app/store/services/dashboardApi";
 import { useGetProfileCompanySettingsQuery } from "@/app/store/services/settingsApi";
-import HostPackageModal from "@/components/hostComponents/modals/hostPackageModal";
 import CompleteRegistrationNotification from "./completeRegistrationNotification";
 import AddVehicleCard from "./addVehicleCard";
 import { getTimeGreeting } from "../../utils/getTimeGreeting";
@@ -231,7 +230,6 @@ export default function DashboardPageComponent() {
           )}
         </div>
       )}
-      <HostPackageModal packageId={hostPayment?.plan} />
     </PageWrapper>
   );
 }
