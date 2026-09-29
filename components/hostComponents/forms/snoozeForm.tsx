@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { format, addDays, addMonths } from 'date-fns'
-import { CalendarIcon, Clock, Loader2, AlertTriangle } from 'lucide-react'
+import { CalendarIcon, Loader2, AlertTriangle } from 'lucide-react'
 import { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Calendar } from '@/components/ui/calendar'
+import { TimePicker } from '@/components/ui/time-picker'
 import { cn } from '@/lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -221,16 +222,12 @@ export default function SnoozeForm({ defaultValues, onCancel, onSubmit }: Snooze
                                                 <Label htmlFor='preset-end-time' className='text-xs font-semibold font-text text-[#374151]'>
                                                         End Time <span className='text-[#EF4444]'>*</span>
                                                 </Label>
-                                                <div className='relative flex items-center'>
-                                                        <Clock className='absolute left-3 size-4 text-[#9CA3AF] pointer-events-none' />
-                                                        <input
-                                                                type='time'
-                                                                id='preset-end-time'
-                                                                value={endTime}
-                                                                onChange={(e) => handleEndTimeChange(e.target.value)}
-                                                                className='w-full pl-9 pr-3 py-2 border border-[#E5E7EB] rounded-md text-sm font-text text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent transition-all'
-                                                        />
-                                                </div>
+                                                <TimePicker
+                                                        id='preset-end-time'
+                                                        value={endTime}
+                                                        onChange={handleEndTimeChange}
+                                                        placeholder='Select end time'
+                                                />
                                         </div>
 
                                         {/* Preset snooze preview */}
@@ -283,37 +280,29 @@ export default function SnoozeForm({ defaultValues, onCancel, onSubmit }: Snooze
                                         </div>
 
                                         {/* Time selection */}
-                                        <div className='grid grid-cols-2 gap-3'>
+                                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                                                 <div className='flex flex-col gap-1.5'>
                                                         <Label htmlFor='snooze-start-time' className='text-xs font-semibold font-text text-[#374151]'>
                                                                 Start Time <span className='text-[#EF4444]'>*</span>
                                                         </Label>
-                                                        <div className='relative flex items-center'>
-                                                                <Clock className='absolute left-3 size-4 text-[#9CA3AF] pointer-events-none' />
-                                                                <input
-                                                                        type='time'
-                                                                        id='snooze-start-time'
-                                                                        value={startTime}
-                                                                        onChange={(e) => handleStartTimeChange(e.target.value)}
-                                                                        className='w-full pl-9 pr-3 py-2 border border-[#E5E7EB] rounded-md text-sm font-text text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent transition-all'
-                                                                />
-                                                        </div>
+                                                        <TimePicker
+                                                                id='snooze-start-time'
+                                                                value={startTime}
+                                                                onChange={handleStartTimeChange}
+                                                                placeholder='Select start time'
+                                                        />
                                                 </div>
 
                                                 <div className='flex flex-col gap-1.5'>
                                                         <Label htmlFor='snooze-end-time' className='text-xs font-semibold font-text text-[#374151]'>
                                                                 End Time <span className='text-[#EF4444]'>*</span>
                                                         </Label>
-                                                        <div className='relative flex items-center'>
-                                                                <Clock className='absolute left-3 size-4 text-[#9CA3AF] pointer-events-none' />
-                                                                <input
-                                                                        type='time'
-                                                                        id='snooze-end-time'
-                                                                        value={endTime}
-                                                                        onChange={(e) => handleEndTimeChange(e.target.value)}
-                                                                        className='w-full pl-9 pr-3 py-2 border border-[#E5E7EB] rounded-md text-sm font-text text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent transition-all'
-                                                                />
-                                                        </div>
+                                                        <TimePicker
+                                                                id='snooze-end-time'
+                                                                value={endTime}
+                                                                onChange={handleEndTimeChange}
+                                                                placeholder='Select end time'
+                                                        />
                                                 </div>
                                         </div>
 
