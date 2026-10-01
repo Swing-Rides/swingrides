@@ -220,7 +220,13 @@ export default function FleetPageComponents() {
     try {
       await snoozeVehicle({
         vehicleId: selectedVehicle._id,
-        snoozeStart: values.startDate.toISOString(),
+        // Presets start "now". Leaving the start out lets the server use its
+        // own clock; the browser's "now" can read as future on a server whose
+        // clock lags, which parks the snooze until the next scheduler run.
+        snoozeStart:
+          values.duration === "custom"
+            ? values.startDate.toISOString()
+            : undefined,
         snoozeEnd: values.endDate.toISOString(),
       }).unwrap();
 

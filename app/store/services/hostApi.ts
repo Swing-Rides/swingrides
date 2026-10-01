@@ -162,7 +162,8 @@ type RelistVehiclePayload = {
 
 type SnoozeVehiclePayload = {
   vehicleId: string;
-  snoozeStart: string;
+  /** Omit to start now by the server's clock. */
+  snoozeStart?: string;
   snoozeEnd: string;
 };
 
