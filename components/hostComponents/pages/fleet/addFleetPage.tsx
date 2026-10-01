@@ -69,7 +69,7 @@ export default function AddFleetPage() {
       instantlyAvailable: values.instantlyAvailable,
       licensePlate: values.licensePlate,
       insuranceCarrier: values.insuranceCarrier,
-      insuranceExpiration: values.insuranceExpiration,
+      insuranceExpiration: values.insuranceExpiration || undefined,
       insurancePolicyNumber: values.insurancePolicyNumber,
       make: values.make,
       mileage: Number(values.mileage),
@@ -94,10 +94,10 @@ export default function AddFleetPage() {
         toast.success("Vehicle added successfully");
         router.push(`${HOST_DASHBOARD_PATH}fleet`);
       } else {
-        toast.error(response.message || "Failed to add vehicle");
+        throw new Error(response.message || "Failed to add vehicle");
       }
-    } catch (err: any) {
-      toast.error(err?.data?.message || err?.message || "Failed to add vehicle");
+    } catch (err: unknown) {
+      throw err;
     }
   };
 

@@ -178,8 +178,8 @@ export default function EditFleetComponents({
       toast.success("Vehicle updated successfully");
       refetch();
       router.push(`${HOST_DASHBOARD_PATH}fleet`);
-    } catch (err: any) {
-      toast.error(err?.data?.message || err?.message || "Failed to update vehicle");
+    } catch (err: unknown) {
+      throw err;
     }
   };
 
