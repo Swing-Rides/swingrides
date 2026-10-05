@@ -262,7 +262,6 @@ const SettingsPageContent = () => {
               : "Custom Agreement",
       label: item.description,
       previewLink: item.pdfUrl,
-      shareLink: item.signatureRequestUrl || item.pdfUrl || "",
     }));
   }, [settingsData]);
 
