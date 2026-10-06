@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { FileText, Upload, AlertCircle } from "lucide-react";
 import {
   SendAgreementForm,
@@ -12,6 +12,7 @@ import type { AgreementType, AgreementData } from "./settingsTabs";
 import {
   useUpdateAgreementTemplateMutation,
   useSendAgreementForSignatureMutation,
+  useCreateAgreementShareLinkMutation,
 } from "@/app/store/services/settingsApi";
 import { toast } from "sonner";
 
@@ -88,7 +89,6 @@ export const AgreementsTab = ({ agreements, bookings }: AgreementsTabProps) => {
             title={card.title}
             label={card.label}
             previewLink={data?.previewLink}
-            shareLink={data?.shareLink ?? ""}
             bookings={bookings}
           />
         );
@@ -104,7 +104,6 @@ type AgreementsCardProps = {
   title: string;
   label: string;
   previewLink?: string;
-  shareLink: string;
   bookings: AgreementBookingOption[];
 };
 
@@ -113,7 +112,6 @@ const AgreementsCard = ({
   title,
   label,
   previewLink,
-  shareLink,
   bookings,
 }: AgreementsCardProps) => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -158,7 +156,6 @@ const AgreementsCard = ({
           isCustom={isCustom}
           agreementType={agreementType}
           previewLink={previewLink}
-          shareLink={shareLink}
           bookings={bookings}
           onClose={() => setModalOpen(false)}
         />
@@ -173,7 +170,6 @@ type AgreementModalProps = {
   isCustom: boolean;
   agreementType: AgreementType;
   previewLink?: string;
-  shareLink: string;
   bookings: AgreementBookingOption[];
   onClose: () => void;
 };
@@ -182,12 +178,36 @@ const AgreementModal = ({
   isCustom,
   agreementType,
   previewLink,
-  shareLink,
   bookings,
   onClose,
 }: AgreementModalProps) => {
   const [updateAgreementTemplate] = useUpdateAgreementTemplateMutation();
   const [sendAgreementForSignature] = useSendAgreementForSignatureMutation();
+  const [createAgreementShareLink] = useCreateAgreementShareLinkMutation();
+  const apiAgreementType = AGREEMENT_TYPE_TO_API[agreementType];
+
+  // Stable identities: SendAgreementForm regenerates the share link whenever
+  // these change, so a new function per render would loop.
+  const createShareLink = useCallback(
+    async (bookingId: string) => {
+      if (apiAgreementType === "custom") {
+        throw new Error("Custom agreements have no generated share link");
+      }
+      const response = await createAgreementShareLink({
+        agreementType: apiAgreementType,
+        bookingId,
+      }).unwrap();
+      return response.data.url;
+    },
+    [apiAgreementType, createAgreementShareLink],
+  );
+
+  // Same-origin via the /backend rewrite, so the host's session cookie is sent.
+  const getBookingPreviewLink = useCallback(
+    (bookingId: string) =>
+      `/backend/api/host/settings/agreements/${apiAgreementType}/preview?bookingId=${encodeURIComponent(bookingId)}`,
+    [apiAgreementType],
+  );
 
   const handleSendAgreement = async (values: { bookingId: string; message: string }) => {
     try {
@@ -268,11 +288,12 @@ const AgreementModal = ({
     >
       <SendAgreementForm
         agreementType={agreementType}
-        shareLink={shareLink}
         previewLink={previewLink}
         bookings={bookings}
         onClose={onClose}
         onSubmit={handleSendAgreement}
+        createShareLink={createShareLink}
+        getBookingPreviewLink={getBookingPreviewLink}
       />
     </PopupWrapper>
   );

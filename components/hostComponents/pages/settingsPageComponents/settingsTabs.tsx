@@ -45,7 +45,6 @@ export interface AgreementData {
   title: string;
   label: string;
   previewLink?: string;
-  shareLink: string;
 }
 
 // ─── Profile & Company Tab ──────────────────────────────────────────────────

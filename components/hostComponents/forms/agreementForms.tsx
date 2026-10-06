@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, UseFormRegister } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -79,11 +79,14 @@ type DocumentCardProps = {
 
 type SendAgreementFormProps = {
 	agreementType: AgreementType
-	shareLink: string
 	previewLink?: string
 	bookings: AgreementBookingOption[]
 	onClose: () => void
 	onSubmit?: (values: SendAgreementFormValues) => void | Promise<void>
+	/** Returns a renter-openable link to the agreement filled with this booking. */
+	createShareLink?: (bookingId: string) => Promise<string>
+	/** URL of the agreement PDF filled with this booking, for the host's preview. */
+	getBookingPreviewLink?: (bookingId: string) => string
 }
 
 type UploadDocumentFormProps = {
@@ -138,13 +141,16 @@ const documentFieldConfig: FormFieldConfig = {
 
 export const SendAgreementForm = ({
 	agreementType,
-	shareLink,
 	previewLink,
 	bookings,
 	onClose,
 	onSubmit: onSubmitProp,
+	createShareLink,
+	getBookingPreviewLink,
 }: SendAgreementFormProps) => {
 	const [copied, setCopied] = useState(false)
+	const [shareLink, setShareLink] = useState('')
+	const [shareLinkLoading, setShareLinkLoading] = useState(false)
 
 	const {
 		register,
@@ -154,9 +160,40 @@ export const SendAgreementForm = ({
 		formState: { errors, isSubmitting },
 	} = useForm<SendAgreementFormValues>({ mode: 'onTouched' })
 
-	const selectedBooking = bookings.find((b) => b.id === watch('bookingId'))
+	const bookingId = watch('bookingId')
+	const selectedBooking = bookings.find((b) => b.id === bookingId)
+
+	// The share link is generated per booking so the renter opens a PDF with
+	// their own details filled in - never the blank template.
+	useEffect(() => {
+		setShareLink('')
+		setCopied(false)
+		if (!bookingId || !createShareLink) return
+
+		let cancelled = false
+		setShareLinkLoading(true)
+		createShareLink(bookingId)
+			.then((url) => {
+				if (!cancelled) setShareLink(url)
+			})
+			.catch(() => {
+				if (!cancelled) toast.error('Failed to generate share link')
+			})
+			.finally(() => {
+				if (!cancelled) setShareLinkLoading(false)
+			})
+
+		return () => {
+			cancelled = true
+		}
+	}, [bookingId, createShareLink])
+
+	const shareLinkPlaceholder = shareLinkLoading
+		? 'Generating link...'
+		: 'Select a booking to generate a link'
 
 	const handleCopy = async () => {
+		if (!shareLink) return
 		try {
 			await navigator.clipboard.writeText(shareLink)
                         toast.success("Link copied to clipboard")
@@ -174,7 +211,7 @@ export const SendAgreementForm = ({
                         onClose()
 		} else {
 			// TODO: replace with real API call
-			console.log('sending agreement:', { ...values, agreementType, shareLink })
+			console.log('sending agreement:', { ...values, agreementType })
 			toast.error("Failed to send agreement")
 		}
 	}
@@ -213,6 +250,7 @@ export const SendAgreementForm = ({
 						id='shareLink'
 						type='text'
 						value={shareLink}
+						placeholder={shareLinkPlaceholder}
 						readOnly
 						disabled
 						className={cn(inputClass(), 'bg-[#F9FAFB] cursor-not-allowed opacity-80')}
@@ -220,14 +258,17 @@ export const SendAgreementForm = ({
 					<button
 						type='button'
 						onClick={handleCopy}
+						disabled={!shareLink}
 						className={cn(
-							'flex items-center gap-1.5 px-3 py-2 rounded-xs text-white text-xs font-medium font-text text-nowrap transition-colors duration-200 cursor-pointer shrink-0',
+							'flex items-center gap-1.5 px-3 py-2 rounded-xs text-white text-xs font-medium font-text text-nowrap transition-colors duration-200 cursor-pointer shrink-0 disabled:opacity-50 disabled:pointer-events-none',
 							copied
 								? 'bg-emerald-600 hover:bg-emerald-700'
 								: 'bg-blue-700 hover:bg-blue-900'
 						)}
 					>
-						{copied
+						{shareLinkLoading
+							? <><Loader2 className='w-3.5 h-3.5 animate-spin' /> Copy</>
+							: copied
 							? <><Check className='w-3.5 h-3.5' /> Copied</>
 							: <><Copy className='w-3.5 h-3.5' /> Copy</>
 						}
@@ -252,7 +293,11 @@ export const SendAgreementForm = ({
 			{/* 4. Document preview card */}
 			<DocumentCard
 				agreementType={agreementType}
-				previewLink={previewLink}
+				previewLink={
+					bookingId && getBookingPreviewLink
+						? getBookingPreviewLink(bookingId)
+						: previewLink
+				}
 			/>
 
 			<Separator />

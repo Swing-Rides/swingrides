@@ -207,6 +207,18 @@ export type SendAgreementForSignatureRequest = {
   signatureRequestUrl?: string;
 };
 
+export type PresetAgreementType = Exclude<AgreementType, "custom">;
+
+export type CreateAgreementShareLinkRequest = {
+  agreementType: PresetAgreementType;
+  bookingId: string;
+};
+
+export type AgreementShareLink = {
+  url: string;
+  expiresAt: string;
+};
+
 export type SubmitHostBusinessVerificationRequest =
   | { idCardUrl: string; businessLicenseUrl?: never }
   | { idCardUrl?: never; businessLicenseUrl: string };
@@ -496,6 +508,19 @@ export const settingsApi = createApi({
       ],
     }),
 
+    // Expiring public link to the agreement PDF with the booking's details
+    // filled in. Nothing is cached server-side, so no tags to invalidate.
+    createAgreementShareLink: builder.mutation<
+      ApiEnvelope<AgreementShareLink>,
+      CreateAgreementShareLinkRequest
+    >({
+      query: ({ agreementType, bookingId }) => ({
+        url: `/api/host/settings/agreements/${agreementType}/share-link`,
+        method: "POST",
+        body: { bookingId },
+      }),
+    }),
+
     createHostPlanPaymentIntent: builder.mutation<
       ApiEnvelope<CreateHostPlanPaymentIntentResponse>,
       CreateHostPlanPaymentIntentRequest
@@ -607,6 +632,7 @@ export const {
   useGetAgreementsSettingsQuery,
   useUpdateAgreementTemplateMutation,
   useSendAgreementForSignatureMutation,
+  useCreateAgreementShareLinkMutation,
   useCreateHostPlanPaymentIntentMutation,
   useValidateHostPlanCouponMutation,
   useCompleteHostPlanPaymentMutation,
